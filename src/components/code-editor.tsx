@@ -760,6 +760,237 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   }
                 }
 
+                // Handle code editor shortcuts (before vim mode to allow vim to override if needed)
+                const textarea = textareaRef.current;
+                if (textarea && !disabled) {
+                  const { selectionStart, selectionEnd } = textarea;
+                  const currentValue = textarea.value;
+                  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                  const cmdKey = isMac ? e.metaKey : e.ctrlKey;
+
+                  // Tab for indentation
+                  if (e.key === "Tab" && !e.shiftKey) {
+                    e.preventDefault();
+                    const spaces = " ".repeat(tabSize);
+                    
+                    if (selectionStart === selectionEnd) {
+                      // No selection - insert tab at cursor
+                      const newValue = 
+                        currentValue.substring(0, selectionStart) + 
+                        spaces + 
+                        currentValue.substring(selectionStart);
+                      onChange(newValue);
+                      
+                      requestAnimationFrame(() => {
+                        if (textarea) {
+                          const newPos = selectionStart + spaces.length;
+                          textarea.setSelectionRange(newPos, newPos);
+                        }
+                      });
+                    } else {
+                      // Has selection - indent selected lines
+                      const lines = currentValue.split('\n');
+                      const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+                      const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
+                      
+                      for (let i = startLine; i <= endLine; i++) {
+                        lines[i] = spaces + lines[i];
+                      }
+                      
+                      const newValue = lines.join('\n');
+                      onChange(newValue);
+                      
+                      requestAnimationFrame(() => {
+                        if (textarea) {
+                          const newStart = selectionStart + spaces.length;
+                          const newEnd = selectionEnd + (spaces.length * (endLine - startLine + 1));
+                          textarea.setSelectionRange(newStart, newEnd);
+                        }
+                      });
+                    }
+                    return;
+                  }
+
+                  // Shift+Tab for unindentation
+                  if (e.key === "Tab" && e.shiftKey) {
+                    e.preventDefault();
+                    const lines = currentValue.split('\n');
+                    const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+                    const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
+                    
+                    let removedChars = 0;
+                    for (let i = startLine; i <= endLine; i++) {
+                      const line = lines[i];
+                      const leadingSpaces = line.match(/^ */)?.[0].length || 0;
+                      const spacesToRemove = Math.min(leadingSpaces, tabSize);
+                      lines[i] = line.substring(spacesToRemove);
+                      if (i === startLine) removedChars = spacesToRemove;
+                    }
+                    
+                    const newValue = lines.join('\n');
+                    onChange(newValue);
+                    
+                    requestAnimationFrame(() => {
+                      if (textarea) {
+                        const newStart = Math.max(0, selectionStart - removedChars);
+                        const totalRemoved = (endLine - startLine + 1) * Math.min(tabSize, 2); // Estimate
+                        const newEnd = Math.max(newStart, selectionEnd - totalRemoved);
+                        textarea.setSelectionRange(newStart, newEnd);
+                      }
+                    });
+                    return;
+                  }
+
+                  // Alt/Option + Arrow Up/Down for moving lines
+                  if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+                    e.preventDefault();
+                    const lines = currentValue.split('\n');
+                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+                    const targetLine = e.key === "ArrowUp" ? currentLine - 1 : currentLine + 1;
+                    
+                    if (targetLine >= 0 && targetLine < lines.length) {
+                      // Swap lines
+                      [lines[currentLine], lines[targetLine]] = [lines[targetLine], lines[currentLine]];
+                      const newValue = lines.join('\n');
+                      onChange(newValue);
+                      
+                      requestAnimationFrame(() => {
+                        if (textarea) {
+                          // Calculate new cursor position
+                          const targetLineStart = lines.slice(0, targetLine).join('\n').length + (targetLine > 0 ? 1 : 0);
+                          const currentLineText = lines[targetLine];
+                          const cursorOffsetInLine = selectionStart - (currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1);
+                          const newPos = targetLineStart + Math.min(cursorOffsetInLine, currentLineText.length);
+                          textarea.setSelectionRange(newPos, newPos);
+                        }
+                      });
+                    }
+                    return;
+                  }
+
+                  // Cmd/Ctrl + D for duplicate line
+                  if (cmdKey && e.key === "d") {
+                    e.preventDefault();
+                    const lines = currentValue.split('\n');
+                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+                    const lineToClone = lines[currentLine];
+                    
+                    lines.splice(currentLine + 1, 0, lineToClone);
+                    const newValue = lines.join('\n');
+                    onChange(newValue);
+                    
+                    requestAnimationFrame(() => {
+                      if (textarea) {
+                        const newPos = selectionStart + lineToClone.length + 1;
+                        textarea.setSelectionRange(newPos, newPos);
+                      }
+                    });
+                    return;
+                  }
+
+                  // Cmd/Ctrl + / for toggle comment
+                  if (cmdKey && e.key === "/") {
+                    e.preventDefault();
+                    const lines = currentValue.split('\n');
+                    const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+                    const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
+                    
+                    // Determine comment syntax based on language
+                    const getCommentSyntax = (lang: string) => {
+                      const singleLineComments: { [key: string]: string } = {
+                        javascript: "//",
+                        typescript: "//",
+                        java: "//",
+                        css: "/*",
+                        python: "#",
+                        ruby: "#",
+                        bash: "#",
+                        yaml: "#",
+                        sql: "--",
+                      };
+                      return singleLineComments[lang] || "//";
+                    };
+                    
+                    const commentPrefix = getCommentSyntax(language);
+                    const commentPattern = new RegExp(`^(\\s*)${commentPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s?`);
+                    
+                    // Check if all selected lines are commented
+                    const allCommented = lines.slice(startLine, endLine + 1).every(line => 
+                      line.trim() === '' || commentPattern.test(line)
+                    );
+                    
+                    for (let i = startLine; i <= endLine; i++) {
+                      if (lines[i].trim() === '') continue; // Skip empty lines
+                      
+                      if (allCommented) {
+                        // Uncomment
+                        lines[i] = lines[i].replace(commentPattern, '$1');
+                      } else {
+                        // Comment
+                        const leadingWhitespace = lines[i].match(/^\s*/)?.[0] || '';
+                        lines[i] = leadingWhitespace + commentPrefix + ' ' + lines[i].substring(leadingWhitespace.length);
+                      }
+                    }
+                    
+                    const newValue = lines.join('\n');
+                    onChange(newValue);
+                    return;
+                  }
+
+                  // Cmd/Ctrl + Enter for new line below (like VS Code)
+                  if (cmdKey && e.key === "Enter") {
+                    e.preventDefault();
+                    const lines = currentValue.split('\n');
+                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+                    const currentLineEnd = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1 + lines[currentLine].length;
+                    
+                    const newValue = 
+                      currentValue.substring(0, currentLineEnd) + 
+                      '\n' + 
+                      currentValue.substring(currentLineEnd);
+                    onChange(newValue);
+                    
+                    requestAnimationFrame(() => {
+                      if (textarea) {
+                        const newPos = currentLineEnd + 1;
+                        textarea.setSelectionRange(newPos, newPos);
+                      }
+                    });
+                    return;
+                  }
+
+                  // Cmd/Ctrl + Shift + Enter for new line above
+                  if (cmdKey && e.shiftKey && e.key === "Enter") {
+                    e.preventDefault();
+                    const currentLineStart = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1;
+                    
+                    const newValue = 
+                      currentValue.substring(0, currentLineStart) + 
+                      '\n' + 
+                      currentValue.substring(currentLineStart);
+                    onChange(newValue);
+                    
+                    requestAnimationFrame(() => {
+                      if (textarea) {
+                        textarea.setSelectionRange(currentLineStart, currentLineStart);
+                      }
+                    });
+                    return;
+                  }
+
+                  // Cmd/Ctrl + Z for undo - let browser handle it
+                  if (cmdKey && e.key === "z" && !e.shiftKey) {
+                    // Don't prevent default - let the browser handle undo
+                    return;
+                  }
+
+                  // Cmd/Ctrl + Y or Cmd/Ctrl + Shift + Z for redo - let browser handle it
+                  if ((cmdKey && e.key === "y") || (cmdKey && e.shiftKey && e.key === "z")) {
+                    // Don't prevent default - let the browser handle redo
+                    return;
+                  }
+                }
+
                 // Handle vim mode if enabled
                 if (vimEnabled && onKeyDown) {
                   onKeyDown(e);
