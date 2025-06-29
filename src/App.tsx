@@ -12,7 +12,7 @@ import {
   MessageSquare,
   Bug,
 } from "lucide-react";
-import { readFile, writeFile } from "./utils/platform";
+import { readFile, writeFile, isMac } from "./utils/platform";
 import {
   isSQLiteFile,
   isImageFile,
@@ -135,6 +135,20 @@ function App() {
   const codeEditorRef = useRef<CodeEditorRef>(null);
   const searchViewRef = useRef<SearchViewRef>(null);
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
+
+  // Apply platform-specific CSS class on mount
+  useEffect(() => {
+    if (isMac()) {
+      document.documentElement.classList.add('platform-macos');
+    } else {
+      document.documentElement.classList.add('platform-other');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.documentElement.classList.remove('platform-macos', 'platform-other');
+    };
+  }, []);
 
   // Load recent folders from localStorage on mount
   useEffect(() => {

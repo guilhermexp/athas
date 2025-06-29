@@ -679,7 +679,11 @@ body {
 /* Window container styling - rounded but no borders */
 .window-container {
     overflow: hidden;
-    border-radius: 2px;
+}
+
+/* Only apply border radius on macOS */
+.platform-macos .window-container {
+    border-radius: 12px;
 }
 
 /* Ensure scrolling works properly in all browsers */
