@@ -87,7 +87,7 @@ const CustomTitleBar = ({
         data-tauri-drag-region
         className={`flex items-center justify-between select-none relative z-50 ${
           isMacOS
-            ? "h-11 bg-transparent pt-2"
+            ? "h-11 bg-transparent"
             : "h-7 bg-[var(--secondary-bg)] backdrop-blur-sm border-b border-[var(--border-color)]"
         }`}
       >
@@ -163,7 +163,7 @@ const CustomTitleBar = ({
     return (
       <div
         data-tauri-drag-region
-        className="flex items-center justify-between select-none relative z-50 h-11 bg-transparent pt-2"
+        className="flex items-center justify-between select-none relative z-50 h-11 bg-transparent"
       >
         {/* macOS traffic light controls */}
         <div className="flex items-center space-x-2 pl-4">
