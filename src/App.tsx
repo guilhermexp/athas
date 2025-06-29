@@ -756,11 +756,11 @@ function App() {
     // Update the buffer content
     updateBufferContent(activeBuffer.id, newContent);
 
-    // Update the textarea selection to show the new text
-    setTimeout(() => {
+    // Update the textarea selection to show the new text - use requestAnimationFrame for immediate execution
+    requestAnimationFrame(() => {
       textarea.focus();
       textarea.setSelectionRange(start, start + editedText.length);
-    }, 100);
+    });
 
     setIsQuickEditVisible(false);
   };
@@ -785,12 +785,12 @@ function App() {
     // Update the buffer content
     updateBufferContent(activeBuffer.id, newContent);
 
-    // Focus and position cursor after inserted code
-    setTimeout(() => {
+    // Focus and position cursor after inserted code - use requestAnimationFrame for immediate execution
+    requestAnimationFrame(() => {
       textarea.focus();
       const newCursorPosition = start + code.length;
       textarea.setSelectionRange(newCursorPosition, newCursorPosition);
-    }, 100);
+    });
   };
 
 
@@ -995,7 +995,8 @@ function App() {
 
         // Navigate to specific line/column if provided
         if (line && column) {
-          setTimeout(() => {
+          // Use requestAnimationFrame for immediate but smooth execution
+          requestAnimationFrame(() => {
             if (codeEditorRef.current?.textarea) {
               const textarea = codeEditorRef.current.textarea;
               const lines = content.split("\n");
@@ -1023,15 +1024,16 @@ function App() {
               );
               textarea.scrollTop = scrollTop;
             }
-          }, 200);
+          });
         }
 
         // Reset vim mode when opening new file
         if (vimEnabled) {
           setVimMode("normal");
-          setTimeout(() => {
+          // Update cursor position immediately after vim mode change
+          requestAnimationFrame(() => {
             updateCursorPosition();
-          }, 0);
+          });
         }
       } catch (error) {
         console.error("Error reading file:", error);

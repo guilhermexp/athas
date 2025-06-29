@@ -177,7 +177,7 @@ impl TerminalConnection {
                 cmd.env("TERM", "xterm-256color");
                 cmd
             },
-            TerminalKind::GitBash { working_directory: _ } => {
+            TerminalKind::GitBash { working_directory } => {
                 #[cfg(target_os = "windows")]
                 {
                     let git_bash_paths = [
@@ -186,16 +186,17 @@ impl TerminalConnection {
                         "C:\\Git\\bin\\bash.exe",
                     ];
                     
-                    let mut cmd = None;
+                    let mut cmd_builder = None;
                     for path in &git_bash_paths {
                         if std::path::Path::new(path).exists() {
-                            cmd = Some(CommandBuilder::new(path));
+                            cmd_builder = Some(CommandBuilder::new(path));
                             break;
                         }
                     }
                     
-                    let mut cmd = cmd.ok_or_else(|| anyhow!("Git Bash not found"))?;
-                    cmd.arg("--login").arg("-i");
+                    let mut cmd = cmd_builder.ok_or_else(|| anyhow!("Git Bash not found"))?;
+                    cmd.arg("--login");
+                    cmd.arg("-i");
                     
                     if let Some(working_dir) = working_directory.as_ref().or(config.working_dir.as_ref()) {
                         cmd.cwd(working_dir);
@@ -209,17 +210,19 @@ impl TerminalConnection {
                     return Err(anyhow!("Git Bash is only available on Windows"));
                 }
             },
-            TerminalKind::Wsl { distribution: _, working_directory: _ } => {
+            TerminalKind::Wsl { distribution, working_directory } => { 
                 #[cfg(target_os = "windows")]
                 {
                     let mut cmd = CommandBuilder::new("wsl");
                     
-                    if let Some(distribution) = distribution {
-                        cmd.arg("-d").arg(distribution);
+                    if let Some(dist) = distribution {
+                        cmd.arg("-d");
+                        cmd.arg(dist);
                     }
                     
-                    if let Some(working_dir) = working_directory.as_ref().or(config.working_dir.as_ref()) {
-                        cmd.arg("--cd").arg(working_dir);
+                    if let Some(wd) = working_directory.as_ref().or(config.working_dir.as_ref()) {
+                        cmd.arg("--cd");
+                        cmd.arg(wd);
                     }
                     
                     cmd.env("TERM", "xterm-256color");
@@ -231,18 +234,18 @@ impl TerminalConnection {
                 }
             },
         };
-
+    
         if let Some(shell_command) = &config.shell_command {
             cmd.arg("-c");
             cmd.arg(shell_command);
         }
-
+    
         if let Some(env_vars) = &config.environment {
             for (key, value) in env_vars {
                 cmd.env(key, value);
             }
         }
-
+    
         Ok(cmd)
     }
 
