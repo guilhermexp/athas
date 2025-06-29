@@ -11,6 +11,8 @@ import {
   Server,
   Terminal as TerminalIcon,
 } from "lucide-react";
+
+import { readFile, writeFile, isMac } from "./utils/platform";
 import { BottomPaneTab, QuickEditSelection } from "./types/ui-state";
 import CodeEditor, { CodeEditorRef } from "./components/code-editor";
 import CommandPalette, { CommandPaletteRef } from "./components/command-palette";
@@ -22,7 +24,6 @@ import {
   isImageFile,
   isSQLiteFile,
 } from "./utils/file-utils";
-import { readFile, writeFile } from "./utils/platform";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import AIChat from "./components/ai-chat/ai-chat";
@@ -133,6 +134,20 @@ function App() {
   const codeEditorRef = useRef<CodeEditorRef>(null);
   const searchViewRef = useRef<SearchViewRef>(null);
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
+
+  // Apply platform-specific CSS class on mount
+  useEffect(() => {
+    if (isMac()) {
+      document.documentElement.classList.add('platform-macos');
+    } else {
+      document.documentElement.classList.add('platform-other');
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.documentElement.classList.remove('platform-macos', 'platform-other');
+    };
+  }, []);
 
   // Load recent folders from localStorage on mount
   useEffect(() => {
@@ -1269,7 +1284,7 @@ function App() {
   if (shouldShowWelcome) {
     return (
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
-        <div className="window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden rounded-xl">
+        <div className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && 'rounded-xl'}`}>
           <CustomTitleBar showMinimal={true} />
           <WelcomeScreen
             onOpenFolder={handleOpenFolder}
@@ -1283,7 +1298,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
-      <div className="window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden rounded-xl">
+      <div className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && 'rounded-xl'}`}>
         {/* Custom Titlebar */}
         <CustomTitleBar
           projectName={
