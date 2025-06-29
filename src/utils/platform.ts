@@ -183,8 +183,8 @@ export const writeFile = async (path: string, content: string): Promise<void> =>
 };
 
 // Web-specific file caching (since we can't access filesystem directly)
-let webFileCache: Map<string, File> = new Map();
-let webFileStructure: Map<string, any[]> = new Map();
+const webFileCache: Map<string, File> = new Map();
+const webFileStructure: Map<string, any[]> = new Map();
 
 export const setWebFiles = (files: FileList) => {
   webFileCache.clear();
