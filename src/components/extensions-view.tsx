@@ -111,14 +111,6 @@ const AVAILABLE_EXTENSIONS: Extension[] = [
     themeId: "catppuccin-mocha",
   },
   {
-    id: "vercel-dark",
-    name: "Vercel Dark",
-    description: "Dark and warm flavor of Vercel",
-    category: "theme",
-    status: "inactive",
-    themeId: "vercel-dark",
-  },
-  {
     id: "catppuccin-macchiato",
     name: "Catppuccin Macchiato",
     description: "Balanced dark flavor of Catppuccin",

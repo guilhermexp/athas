@@ -1,66 +1,65 @@
-import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Folder,
-  GitBranch,
-  Terminal as TerminalIcon,
   AlertCircle,
+  Bug,
+  FilePlus,
+  Folder,
+  FolderOpen,
+  GitBranch,
+  MessageSquare,
+  Package,
   Search,
   Server,
-  Package,
-  FolderOpen,
-  FilePlus,
-  MessageSquare,
-  Bug,
+  Terminal as TerminalIcon,
 } from "lucide-react";
+
 import { readFile, writeFile, isMac } from "./utils/platform";
+import { BottomPaneTab, QuickEditSelection } from "./types/ui-state";
+import CodeEditor, { CodeEditorRef } from "./components/code-editor";
+import CommandPalette, { CommandPaletteRef } from "./components/command-palette";
+import { CoreFeature, CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
+import SearchView, { SearchViewRef } from "./components/search-view";
 import {
-  isSQLiteFile,
-  isImageFile,
-  getLanguageFromFilename,
   getFilenameFromPath,
+  getLanguageFromFilename,
+  isImageFile,
+  isSQLiteFile,
 } from "./utils/file-utils";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import AIChat from "./components/ai-chat/ai-chat";
+import BottomPane from "./components/bottom-pane";
+import Button from "./components/button";
+import CommandBar from "./components/command-bar";
+import CustomTitleBar from "./components/window/custom-title-bar";
+import { Diagnostic } from "./components/diagnostics-pane";
+import DiffViewer from "./components/diff-viewer";
+import ExtensionsView from "./components/extensions-view";
 import { FileEntry } from "./types/app";
+import FileTree from "./components/file-tree";
+import FindBar from "./components/find-bar";
+import { GitDiff } from "./utils/git";
+import GitHubCopilotSettings from "./components/github-copilot-settings";
+import GitView from "./components/git-view";
+import ImageGenerationModal from "./components/image-generation-modal";
+import ImageViewer from "./components/image-viewer";
+import QuickEditInline from "./components/quick-edit-modal";
+import { RecentFolder } from "./types/recent-folders";
+import RemoteConnectionView from "./components/remote-connection-view";
+import ResizableRightPane from "./components/resizable-right-pane";
+import ResizableSidebar from "./components/resizable-sidebar";
+import SQLiteViewer from "./components/sqlite-viewer";
+import TabBar from "./components/tab-bar";
+import { ThemeType } from "./types/theme";
+import WelcomeScreen from "./components/welcome-screen";
+import { useBreadcrumbToggles } from "./hooks/use-breadcrumb-toggles";
 import { useBuffers } from "./hooks/use-buffers";
-import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
 import { useFileOperations } from "./hooks/use-file-operations";
+import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
+import { useLSP } from "./hooks/use-lsp";
+import { useMenuEvents } from "./hooks/use-menu-events";
+import { useRemoteConnection } from "./hooks/use-remote-connection";
 import { useSearch } from "./hooks/use-search";
 import { useVim } from "./hooks/use-vim";
-import { useLSP } from "./hooks/use-lsp";
-
-import CodeEditor, { CodeEditorRef } from "./components/code-editor";
-import SQLiteViewer from "./components/sqlite-viewer";
-import ImageViewer from "./components/image-viewer";
-import DiffViewer from "./components/diff-viewer";
-import { GitDiff } from "./utils/git";
-import TabBar from "./components/tab-bar";
-import ResizableSidebar from "./components/resizable-sidebar";
-import ResizableRightPane from "./components/resizable-right-pane";
-import FindBar from "./components/find-bar";
-import CommandBar from "./components/command-bar";
-import AIChat from "./components/ai-chat/ai-chat";
-
-import WelcomeScreen from "./components/welcome-screen";
-import FileTree from "./components/file-tree";
-import GitView from "./components/git-view";
-import SearchView, { SearchViewRef } from "./components/search-view";
-import GitHubCopilotSettings from "./components/github-copilot-settings";
-import RemoteConnectionView from "./components/remote-connection-view";
-import ExtensionsView from "./components/extensions-view";
-
-import { Diagnostic } from "./components/diagnostics-pane";
-import BottomPane from "./components/bottom-pane";
-import CommandPalette, { CommandPaletteRef } from "./components/command-palette";
-import QuickEditInline from "./components/quick-edit-modal";
-import { useMenuEvents } from "./hooks/use-menu-events";
-import CustomTitleBar from "./components/window/custom-title-bar";
-import ImageGenerationModal from "./components/image-generation-modal";
-import { useBreadcrumbToggles } from "./hooks/use-breadcrumb-toggles";
-import { useRemoteConnection } from "./hooks/use-remote-connection";
-import { ThemeType } from "./types/theme";
-import { RecentFolder } from "./types/recent-folders";
-import { BottomPaneTab, QuickEditSelection } from "./types/ui-state";
-import { CoreFeature, CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
-import Button from "./components/button";
 
 function App() {
   const {
@@ -395,8 +394,9 @@ function App() {
 
     if (rootFolderPath) {
       // Extract the folder name from the full path
-      const folderName =
-        rootFolderPath.split("/").pop() || rootFolderPath.split("\\").pop();
+
+      const normalizedPath = rootFolderPath.replace(/\\/g, "/");
+      const folderName = normalizedPath.split("/").pop();
       return folderName || "Folder";
     }
 
