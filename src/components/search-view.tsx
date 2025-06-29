@@ -229,8 +229,8 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
               }),
             );
 
-            // Allow UI to update between chunks
-            await new Promise((resolve) => setTimeout(resolve, 0));
+            // Allow UI to update between chunks - use requestAnimationFrame for better performance
+            await new Promise((resolve) => requestAnimationFrame(resolve));
           }
 
           if (!signal.aborted) {
