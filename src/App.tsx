@@ -44,7 +44,7 @@ import ImageGenerationModal from "./components/image-generation-modal";
 import ImageViewer from "./components/image-viewer";
 import QuickEditInline from "./components/quick-edit-modal";
 import { RecentFolder } from "./types/recent-folders";
-import RemoteConnectionView from "./components/remote-connection-view";
+import RemoteConnectionView from "./components/remote/remote-connection-view";
 import ResizableRightPane from "./components/resizable-right-pane";
 import ResizableSidebar from "./components/resizable-sidebar";
 import SQLiteViewer from "./components/sqlite-viewer";
