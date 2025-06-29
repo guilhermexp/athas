@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 use std::io::{Read, Write};
+use std::sync::{Arc, Mutex};
 use std::thread;
 
-use anyhow::{Result, anyhow};
-use portable_pty::{PtySize, CommandBuilder, Child, PtyPair};
+use anyhow::{anyhow, Result};
+use portable_pty::{Child, CommandBuilder, PtyPair, PtySize};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, State, Emitter};
+use tauri::{AppHandle, Emitter, State};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,9 +52,22 @@ pub struct TerminalConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Color {
     Default,
-    Black, Red, Green, Yellow, Blue, Magenta, Cyan, White,
-    BrightBlack, BrightRed, BrightGreen, BrightYellow, 
-    BrightBlue, BrightMagenta, BrightCyan, BrightWhite,
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+    BrightBlack,
+    BrightRed,
+    BrightGreen,
+    BrightYellow,
+    BrightBlue,
+    BrightMagenta,
+    BrightCyan,
+    BrightWhite,
     Extended(u8),
     Rgb(u8, u8, u8),
 }
@@ -76,13 +89,24 @@ pub enum TerminalEvent {
     #[serde(rename = "newLines")]
     NewLines { lines: Vec<Vec<LineItem>> },
     #[serde(rename = "patch")]
-    Patch { line: u16, col: u16, items: Vec<LineItem> },
+    Patch {
+        line: u16,
+        col: u16,
+        items: Vec<LineItem>,
+    },
     #[serde(rename = "cursorMove")]
     CursorMove { line: u16, col: u16 },
     #[serde(rename = "scroll")]
-    Scroll { direction: ScrollDirection, amount: u16 },
+    Scroll {
+        direction: ScrollDirection,
+        amount: u16,
+    },
     #[serde(rename = "screenUpdate")]
-    ScreenUpdate { screen: Vec<Vec<LineItem>>, cursor_line: u16, cursor_col: u16 },
+    ScreenUpdate {
+        screen: Vec<Vec<LineItem>>,
+        cursor_line: u16,
+        cursor_col: u16,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -104,7 +128,7 @@ pub struct TerminalConnection {
 impl TerminalConnection {
     pub fn new(id: String, config: TerminalConfig, app_handle: AppHandle) -> Result<Self> {
         let pty_system = portable_pty::native_pty_system();
-        
+
         let pty_pair = pty_system.openpty(PtySize {
             rows: config.lines,
             cols: config.cols,
@@ -130,33 +154,38 @@ impl TerminalConnection {
 
     fn build_command(config: &TerminalConfig) -> Result<CommandBuilder> {
         let mut cmd = match &config.kind {
-            TerminalKind::Local { working_directory, shell } => {
+            TerminalKind::Local {
+                working_directory,
+                shell,
+            } => {
                 let default_shell = if cfg!(target_os = "windows") {
                     "cmd.exe".to_string()
                 } else {
                     std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())
                 };
                 let shell_path = shell.as_deref().unwrap_or(&default_shell);
-                
+
                 let mut cmd = CommandBuilder::new(shell_path);
-                
-                if let Some(working_dir) = working_directory.as_ref().or(config.working_dir.as_ref()) {
+
+                if let Some(working_dir) =
+                    working_directory.as_ref().or(config.working_dir.as_ref())
+                {
                     cmd.cwd(working_dir);
                 }
-                
+
                 // Set up proper terminal environment for TUI apps
                 cmd.env("TERM", "xterm-256color");
                 cmd.env("COLORTERM", "truecolor");
-                
+
                 // Additional environment variables for better TUI support
                 cmd.env("TERM_PROGRAM", "athas-text");
                 cmd.env("TERM_PROGRAM_VERSION", "1.0.0");
-                
+
                 // Ensure proper locale settings
                 if std::env::var("LC_ALL").is_err() && std::env::var("LANG").is_err() {
                     cmd.env("LANG", "en_US.UTF-8");
                 }
-                
+
                 // Force interactive shell
                 if !cfg!(target_os = "windows") {
                     if shell_path.contains("bash") {
@@ -165,10 +194,14 @@ impl TerminalConnection {
                         cmd.arg("-i"); // Interactive mode for zsh
                     }
                 }
-                
+
                 cmd
-            },
-            TerminalKind::Ssh { host, username, port } => {
+            }
+            TerminalKind::Ssh {
+                host,
+                username,
+                port,
+            } => {
                 let mut cmd = CommandBuilder::new("ssh");
                 cmd.arg("-p");
                 cmd.arg(port.unwrap_or(22).to_string());
@@ -176,8 +209,8 @@ impl TerminalConnection {
                 cmd.arg(format!("{}@{}", username, host));
                 cmd.env("TERM", "xterm-256color");
                 cmd
-            },
-            TerminalKind::GitBash { working_directory } => {
+            }
+            TerminalKind::GitBash { working_directory: _ } => {
                 #[cfg(target_os = "windows")]
                 {
                     let git_bash_paths = [
@@ -185,7 +218,7 @@ impl TerminalConnection {
                         "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
                         "C:\\Git\\bin\\bash.exe",
                     ];
-                    
+
                     let mut cmd_builder = None;
                     for path in &git_bash_paths {
                         if std::path::Path::new(path).exists() {
@@ -193,15 +226,17 @@ impl TerminalConnection {
                             break;
                         }
                     }
-                    
+
                     let mut cmd = cmd_builder.ok_or_else(|| anyhow!("Git Bash not found"))?;
                     cmd.arg("--login");
                     cmd.arg("-i");
-                    
-                    if let Some(working_dir) = working_directory.as_ref().or(config.working_dir.as_ref()) {
+
+                    if let Some(working_dir) =
+                        working_directory.as_ref().or(config.working_dir.as_ref())
+                    {
                         cmd.cwd(working_dir);
                     }
-                    
+
                     cmd.env("TERM", "xterm-256color");
                     cmd
                 }
@@ -209,22 +244,25 @@ impl TerminalConnection {
                 {
                     return Err(anyhow!("Git Bash is only available on Windows"));
                 }
-            },
-            TerminalKind::Wsl { distribution, working_directory } => { 
+            }
+            TerminalKind::Wsl {
+                distribution: _,
+                working_directory: _,
+            } => {
                 #[cfg(target_os = "windows")]
                 {
                     let mut cmd = CommandBuilder::new("wsl");
-                    
+
                     if let Some(dist) = distribution {
                         cmd.arg("-d");
                         cmd.arg(dist);
                     }
-                    
+
                     if let Some(wd) = working_directory.as_ref().or(config.working_dir.as_ref()) {
                         cmd.arg("--cd");
                         cmd.arg(wd);
                     }
-                    
+
                     cmd.env("TERM", "xterm-256color");
                     cmd
                 }
@@ -232,20 +270,20 @@ impl TerminalConnection {
                 {
                     return Err(anyhow!("WSL is only available on Windows"));
                 }
-            },
+            }
         };
-    
+
         if let Some(shell_command) = &config.shell_command {
             cmd.arg("-c");
             cmd.arg(shell_command);
         }
-    
+
         if let Some(env_vars) = &config.environment {
             for (key, value) in env_vars {
                 cmd.env(key, value);
             }
         }
-    
+
         Ok(cmd)
     }
 
@@ -254,13 +292,13 @@ impl TerminalConnection {
         let app_handle = self.app_handle.clone();
         let connection_id = self.id.clone();
         let terminal_state = self.terminal_state.clone();
-        
+
         // Use the shared writer
         let writer_for_responses = self.writer.clone();
-        
+
         thread::spawn(move || {
             let mut buffer = [0u8; 4096];
-            
+
             loop {
                 match reader.read(&mut buffer) {
                     Ok(0) => break,
@@ -272,7 +310,7 @@ impl TerminalConnection {
                             let responses = state.take_pending_responses();
                             (events, responses)
                         };
-                        
+
                         // CRITICAL: Send responses back to PTY immediately for TUI apps
                         if !responses.is_empty() {
                             if let Ok(mut writer_guard) = writer_for_responses.try_lock() {
@@ -290,9 +328,11 @@ impl TerminalConnection {
                                 }
                             }
                         }
-                        
+
                         for event in events {
-                            if let Err(e) = app_handle.emit(&format!("terminal-event-{}", connection_id), &event) {
+                            if let Err(e) = app_handle
+                                .emit(&format!("terminal-event-{}", connection_id), &event)
+                            {
                                 println!("Failed to emit terminal event: {}", e);
                                 break;
                             }
@@ -304,10 +344,10 @@ impl TerminalConnection {
                     }
                 }
             }
-            
+
             let _ = app_handle.emit(&format!("terminal-disconnect-{}", connection_id), ());
         });
-        
+
         Ok(())
     }
 
@@ -328,25 +368,18 @@ impl TerminalConnection {
             pixel_width: 0,
             pixel_height: 0,
         })?;
-        
+
         self.config.lines = lines;
         self.config.cols = cols;
-        
+
         {
             let mut state = self.terminal_state.lock().unwrap();
             state.resize(lines, cols);
         }
-        
+
         Ok(())
     }
 
-    pub fn is_alive(&mut self) -> bool {
-        match self.child.try_wait() {
-            Ok(Some(_)) => false,
-            Ok(None) => true,
-            Err(_) => false,
-        }
-    }
 }
 
 // Terminal state with ANSI parsing (simplified version for space)
@@ -378,17 +411,17 @@ impl TerminalState {
 
     pub fn process_input(&mut self, data: &[u8]) -> Vec<TerminalEvent> {
         let text = String::from_utf8_lossy(data);
-        
+
         let mut i = 0;
         let chars: Vec<char> = text.chars().collect();
-        
+
         while i < chars.len() {
             let ch = chars[i];
             match ch {
                 '\n' => {
                     self.cursor_line = (self.cursor_line + 1).min(self.screen_rows - 1);
                     self.cursor_col = 0;
-                },
+                }
                 '\r' => self.cursor_col = 0,
                 '\x1b' => {
                     // Handle escape sequences - critical for TUI apps
@@ -396,13 +429,13 @@ impl TerminalState {
                         // CSI sequence
                         let mut j = i + 2;
                         let mut params = String::new();
-                        
+
                         // Collect parameters
                         while j < chars.len() && !chars[j].is_ascii_alphabetic() {
                             params.push(chars[j]);
                             j += 1;
                         }
-                        
+
                         if j < chars.len() {
                             let cmd = chars[j];
                             self.handle_csi_sequence(&params, cmd);
@@ -416,7 +449,7 @@ impl TerminalState {
                         }
                         i = j;
                     }
-                },
+                }
                 c if !c.is_control() => {
                     self.write_char_at_cursor(c);
                     self.cursor_col += 1;
@@ -424,7 +457,7 @@ impl TerminalState {
                         self.cursor_col = 0;
                         self.cursor_line = (self.cursor_line + 1).min(self.screen_rows - 1);
                     }
-                },
+                }
                 _ => {}
             }
             i += 1;
@@ -436,7 +469,7 @@ impl TerminalState {
             cursor_col: self.cursor_col,
         }]
     }
-    
+
     fn handle_csi_sequence(&mut self, params: &str, cmd: char) {
         match cmd {
             'c' => {
@@ -445,7 +478,7 @@ impl TerminalState {
                     // Primary device attributes
                     self.pending_responses.push("\x1b[?1;2c".to_string());
                 }
-            },
+            }
             'n' => {
                 // Device Status Report
                 if let Ok(param) = params.parse::<u16>() {
@@ -453,43 +486,47 @@ impl TerminalState {
                         5 => {
                             // Status report - terminal OK
                             self.pending_responses.push("\x1b[0n".to_string());
-                        },
+                        }
                         6 => {
                             // Cursor position report
-                            self.pending_responses.push(format!("\x1b[{};{}R", self.cursor_line + 1, self.cursor_col + 1));
-                        },
+                            self.pending_responses.push(format!(
+                                "\x1b[{};{}R",
+                                self.cursor_line + 1,
+                                self.cursor_col + 1
+                            ));
+                        }
                         _ => {}
                     }
                 }
-            },
+            }
             'H' | 'f' => {
                 // Cursor position
                 let parts: Vec<&str> = params.split(';').collect();
-                let row = parts.get(0).and_then(|s| s.parse().ok()).unwrap_or(1);
+                let row = parts.first().and_then(|s| s.parse().ok()).unwrap_or(1);
                 let col = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
                 self.cursor_line = (row - 1).min(self.screen_rows - 1);
                 self.cursor_col = (col - 1).min(self.screen_cols - 1);
-            },
+            }
             'A' => {
                 // Cursor up
                 let amount = params.parse().unwrap_or(1);
                 self.cursor_line = self.cursor_line.saturating_sub(amount);
-            },
+            }
             'B' => {
                 // Cursor down
                 let amount = params.parse().unwrap_or(1);
                 self.cursor_line = (self.cursor_line + amount).min(self.screen_rows - 1);
-            },
+            }
             'C' => {
                 // Cursor right
                 let amount = params.parse().unwrap_or(1);
                 self.cursor_col = (self.cursor_col + amount).min(self.screen_cols - 1);
-            },
+            }
             'D' => {
                 // Cursor left
                 let amount = params.parse().unwrap_or(1);
                 self.cursor_col = self.cursor_col.saturating_sub(amount);
-            },
+            }
             'J' => {
                 // Clear screen
                 let mode = params.parse().unwrap_or(0);
@@ -499,7 +536,7 @@ impl TerminalState {
                     2 => self.clear_screen(),
                     _ => {}
                 }
-            },
+            }
             'K' => {
                 // Clear line
                 let mode = params.parse().unwrap_or(0);
@@ -509,7 +546,7 @@ impl TerminalState {
                     2 => self.clear_current_line(),
                     _ => {}
                 }
-            },
+            }
             'm' => {
                 // SGR (Select Graphic Rendition) - text formatting and colors
                 if params.is_empty() {
@@ -521,156 +558,154 @@ impl TerminalState {
                         match code.parse::<u8>() {
                             Ok(0) => {
                                 // Reset all attributes
-                            },
+                            }
                             Ok(1) => {
                                 // Bold
-                            },
+                            }
                             Ok(2) => {
                                 // Dim
-                            },
+                            }
                             Ok(3) => {
                                 // Italic
-                            },
+                            }
                             Ok(4) => {
                                 // Underline
-                            },
+                            }
                             Ok(22) => {
                                 // Bold off
-                            },
+                            }
                             Ok(23) => {
                                 // Italic off
-                            },
+                            }
                             Ok(24) => {
                                 // Underline off
-                            },
+                            }
                             Ok(30..=37) => {
                                 // Foreground colors (black to white)
-                            },
+                            }
                             Ok(38) => {
                                 // Extended foreground color (256 color or RGB)
-                            },
+                            }
                             Ok(39) => {
                                 // Default foreground color
-                            },
+                            }
                             Ok(40..=47) => {
                                 // Background colors (black to white)
-                            },
+                            }
                             Ok(48) => {
                                 // Extended background color (256 color or RGB)
-                            },
+                            }
                             Ok(49) => {
                                 // Default background color
-                            },
+                            }
                             Ok(90..=97) => {
                                 // Bright foreground colors
-                            },
+                            }
                             Ok(100..=107) => {
                                 // Bright background colors
-                            },
+                            }
                             _ => {
                                 // Ignore unknown codes
                             }
                         }
                     }
-                                 }
-             },
-             'S' => {
-                 // Scroll up
-                 let amount = params.parse().unwrap_or(1);
-                 // For now, just ignore scrolling
-             },
-             'T' => {
-                 // Scroll down
-                 let amount = params.parse().unwrap_or(1);
-                 // For now, just ignore scrolling
-             },
-             'P' => {
-                 // Delete characters
-                 let amount = params.parse().unwrap_or(1);
-                 // For now, just ignore character deletion
-             },
-             '@' => {
-                 // Insert characters
-                 let amount = params.parse().unwrap_or(1);
-                 // For now, just ignore character insertion
-             },
-             'L' => {
-                 // Insert lines
-                 let amount = params.parse().unwrap_or(1);
-                 // For now, just ignore line insertion
-             },
-             'M' => {
-                 // Delete lines
-                 let amount = params.parse().unwrap_or(1);
-                 // For now, just ignore line deletion
-             },
-             'X' => {
-                 // Erase characters
-                 let amount = params.parse().unwrap_or(1);
-                 // For now, just ignore character erasing
-             },
-             'r' => {
-                 // Set scrolling region
-                 // For now, just ignore scrolling region
-             },
-             's' => {
-                 // Save cursor position
-                 // For now, just ignore cursor saving
-             },
-             'u' => {
-                 // Restore cursor position
-                 // For now, just ignore cursor restoring
-             },
-             'h' => {
-                 // Set mode - handle common modes
-                 if params.starts_with("?") {
-                     let mode = &params[1..];
-                     match mode {
-                         "25" => {
-                             // Show cursor (DECTCEM)
-                         },
-                         "1000" => {
-                             // Enable mouse tracking
-                         },
-                         "1002" => {
-                             // Enable cell motion mouse tracking  
-                         },
-                         "1049" => {
-                             // Enable alternative screen buffer
-                         },
-                         _ => {}
-                     }
-                 }
-             },
-             'l' => {
-                 // Reset mode - handle common modes
-                 if params.starts_with("?") {
-                     let mode = &params[1..];
-                     match mode {
-                         "25" => {
-                             // Hide cursor (DECTCEM)
-                         },
-                         "1000" => {
-                             // Disable mouse tracking
-                         },
-                         "1002" => {
-                             // Disable cell motion mouse tracking
-                         },
-                         "1049" => {
-                             // Disable alternative screen buffer
-                         },
-                         _ => {}
-                     }
-                 }
-             },
-             _ => {
-                 // Unknown sequence - log for debugging only in development
-                 #[cfg(debug_assertions)]
-                 println!("Unknown CSI sequence: ESC[{}{}", params, cmd);
-             }
+                }
+            }
+            'S' => {
+                // Scroll up
+                let _amount = params.parse().unwrap_or(1);
+                // For now, just ignore scrolling
+            }
+            'T' => {
+                // Scroll down
+                let _amount = params.parse().unwrap_or(1);
+                // For now, just ignore scrolling
+            }
+            'P' => {
+                // Delete characters
+                let _amount = params.parse().unwrap_or(1);
+                // For now, just ignore character deletion
+            }
+            '@' => {
+                // Insert characters
+                let _amount = params.parse().unwrap_or(1);
+                // For now, just ignore character insertion
+            }
+            'L' => {
+                // Insert lines
+                let _amount = params.parse().unwrap_or(1);
+                // For now, just ignore line insertion
+            }
+            'M' => {
+                // Delete lines
+                let _amount = params.parse().unwrap_or(1);
+                // For now, just ignore line deletion
+            }
+            'X' => {
+                // Erase characters
+                let _amount = params.parse().unwrap_or(1);
+                // For now, just ignore character erasing
+            }
+            'r' => {
+                // Set scrolling region
+                // For now, just ignore scrolling region
+            }
+            's' => {
+                // Save cursor position
+                // For now, just ignore cursor saving
+            }
+            'u' => {
+                // Restore cursor position
+                // For now, just ignore cursor restoring
+            }
+            'h' => {
+                // Set mode - handle common modes
+                if let Some(mode) = params.strip_prefix("?") {
+                    match mode {
+                        "25" => {
+                            // Show cursor (DECTCEM)
+                        }
+                        "1000" => {
+                            // Enable mouse tracking
+                        }
+                        "1002" => {
+                            // Enable cell motion mouse tracking
+                        }
+                        "1049" => {
+                            // Enable alternative screen buffer
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            'l' => {
+                // Reset mode - handle common modes
+                if let Some(mode) = params.strip_prefix("?") {
+                    match mode {
+                        "25" => {
+                            // Hide cursor (DECTCEM)
+                        }
+                        "1000" => {
+                            // Disable mouse tracking
+                        }
+                        "1002" => {
+                            // Disable cell motion mouse tracking
+                        }
+                        "1049" => {
+                            // Disable alternative screen buffer
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {
+                // Unknown sequence - log for debugging only in development
+                #[cfg(debug_assertions)]
+                println!("Unknown CSI sequence: ESC[{}{}", params, cmd);
+            }
         }
     }
-    
+
     fn clear_screen(&mut self) {
         for line in &mut self.screen_buffer {
             line.clear();
@@ -678,18 +713,18 @@ impl TerminalState {
         self.cursor_line = 0;
         self.cursor_col = 0;
     }
-    
+
     fn clear_from_cursor_to_end(&mut self) {
         // Clear from cursor to end of screen
         if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
             line.truncate(self.cursor_col as usize);
         }
-        
+
         for i in (self.cursor_line + 1) as usize..self.screen_buffer.len() {
             self.screen_buffer[i].clear();
         }
     }
-    
+
     fn clear_from_start_to_cursor(&mut self) {
         // Clear from start to cursor
         for i in 0..self.cursor_line as usize {
@@ -697,7 +732,7 @@ impl TerminalState {
                 line.clear();
             }
         }
-        
+
         if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
             for j in 0..=self.cursor_col as usize {
                 if j < line.len() {
@@ -714,13 +749,13 @@ impl TerminalState {
             }
         }
     }
-    
+
     fn clear_line_from_cursor(&mut self) {
         if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
             line.truncate(self.cursor_col as usize);
         }
     }
-    
+
     fn clear_line_to_cursor(&mut self) {
         if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
             for j in 0..=self.cursor_col as usize {
@@ -738,7 +773,7 @@ impl TerminalState {
             }
         }
     }
-    
+
     fn clear_current_line(&mut self) {
         if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
             line.clear();
@@ -749,7 +784,7 @@ impl TerminalState {
         while self.screen_buffer.len() <= self.cursor_line as usize {
             self.screen_buffer.push(Vec::new());
         }
-        
+
         let line = &mut self.screen_buffer[self.cursor_line as usize];
         while line.len() <= self.cursor_col as usize {
             line.push(LineItem {
@@ -762,7 +797,7 @@ impl TerminalState {
                 foreground_color: None,
             });
         }
-        
+
         line[self.cursor_col as usize] = LineItem {
             lexeme: ch.to_string(),
             width: 1,
@@ -810,17 +845,21 @@ impl TerminalManager {
         }
     }
 
-    pub fn create_connection(&self, config: TerminalConfig, app_handle: AppHandle) -> Result<String> {
+    pub fn create_connection(
+        &self,
+        config: TerminalConfig,
+        app_handle: AppHandle,
+    ) -> Result<String> {
         let connection_id = Uuid::new_v4().to_string();
         let mut connection = TerminalConnection::new(connection_id.clone(), config, app_handle)?;
-        
+
         connection.start_io_loop()?;
-        
+
         {
             let mut connections = self.connections.lock().unwrap();
             connections.insert(connection_id.clone(), connection);
         }
-        
+
         Ok(connection_id)
     }
 
@@ -848,22 +887,14 @@ impl TerminalManager {
             let _ = connection.child.kill();
             let _ = connection.child.wait();
         }
-    Ok(())
+        Ok(())
     }
 }
 
 #[derive(Default)]
-pub struct AppState {
-    pub terminal_manager: Arc<TerminalManager>,
-}
+pub struct AppState {}
 
-impl AppState {
-    pub fn new() -> Self {
-        Self {
-            terminal_manager: Arc::new(TerminalManager::new()),
-        }
-    }
-}
+impl AppState {}
 
 // Tauri commands
 #[tauri::command]
@@ -932,29 +963,36 @@ pub async fn send_terminal_ctrl_d(
 
 #[tauri::command]
 pub async fn get_available_terminal_types() -> Vec<String> {
+    #[cfg(target_os = "windows")]
     let mut types = vec!["local".to_string(), "ssh".to_string()];
-    
+    #[cfg(not(target_os = "windows"))]
+    let types = vec!["local".to_string(), "ssh".to_string()];
+
     #[cfg(target_os = "windows")]
     {
         // Check for Git Bash
         let git_bash_paths = [
             "C:\\Program Files\\Git\\bin\\bash.exe",
-            "C:\\Program Files (x86)\\Git\\bin\\bash.exe", 
+            "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
             "C:\\Git\\bin\\bash.exe",
         ];
-        
+
         for path in &git_bash_paths {
             if std::path::Path::new(path).exists() {
                 types.push("git-bash".to_string());
                 break;
             }
         }
-        
+
         // Check for WSL
-        if std::process::Command::new("wsl").arg("--status").output().is_ok() {
+        if std::process::Command::new("wsl")
+            .arg("--status")
+            .output()
+            .is_ok()
+        {
             types.push("wsl".to_string());
         }
     }
-    
+
     types
 }
