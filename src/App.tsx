@@ -272,7 +272,7 @@ function App() {
 
   // State for all project files (for command palette)
   const [allProjectFiles, setAllProjectFiles] = useState<FileEntry[]>([]);
-  
+
   // State for tab dragging across panes
   const [isDraggingTab, setIsDraggingTab] = useState(false);
 
@@ -626,7 +626,7 @@ function App() {
       if (activeBuffer.path.startsWith("remote://")) {
         // For remote files, mark as dirty first, then save directly via SSH
         markBufferDirty(activeBuffer.id, true);
-        
+
         const pathParts = activeBuffer.path
           .replace("remote://", "")
           .split("/");
@@ -1037,9 +1037,9 @@ function App() {
   // Immediate buffer update for responsive typing - NO auto-saving for remote files
   const handleContentChange = useCallback((content: string) => {
     if (!activeBuffer) return;
-    
+
     const isRemoteFile = activeBuffer.path.startsWith("remote://");
-    
+
     if (isRemoteFile) {
       // For remote files, use direct synchronous update to avoid any React delays
       updateBufferContent(activeBuffer.id, content, false);
@@ -1343,10 +1343,10 @@ function App() {
                         !isRemoteViewActive
                       }
                       className={`text-xs flex items-center justify-center w-8 h-8 rounded ${!isGitViewActive &&
-                          !isSearchViewActive &&
-                          !isRemoteViewActive
-                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                          : "hover:bg-[var(--hover-color)]"
+                        !isSearchViewActive &&
+                        !isRemoteViewActive
+                        ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                        : "hover:bg-[var(--hover-color)]"
                         }`}
                       title="File Explorer"
                     >
@@ -1363,8 +1363,8 @@ function App() {
                         size="sm"
                         data-active={isSearchViewActive}
                         className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isSearchViewActive
-                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                            : "hover:bg-[var(--hover-color)]"
+                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                          : "hover:bg-[var(--hover-color)]"
                           }`}
                         title="Search"
                       >
@@ -1382,8 +1382,8 @@ function App() {
                         size="sm"
                         data-active={isGitViewActive}
                         className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isGitViewActive
-                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                            : "hover:bg-[var(--hover-color)]"
+                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                          : "hover:bg-[var(--hover-color)]"
                           }`}
                         title="Git Source Control"
                       >
@@ -1401,8 +1401,8 @@ function App() {
                         size="sm"
                         data-active={isRemoteViewActive}
                         className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isRemoteViewActive
-                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                            : "hover:bg-[var(--hover-color)]"
+                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                          : "hover:bg-[var(--hover-color)]"
                           }`}
                         title="Remote Connections"
                       >
@@ -1427,7 +1427,7 @@ function App() {
                         size={12}
                         className="text-[var(--text-lighter)] mr-2"
                       />
-                      <span 
+                      <span
                         className="text-xs font-medium text-[var(--text-color)] cursor-pointer hover:bg-[var(--hover-color)] px-2 py-1 rounded flex-1"
                         onClick={(e) => {
                           e.preventDefault();
@@ -1458,7 +1458,7 @@ function App() {
                     !isRemoteViewActive &&
                     !isRemoteWindow && (
                       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)] bg-[var(--secondary-bg)]">
-                        <h3 
+                        <h3
                           className="font-mono text-xs font-medium text-[var(--text-color)] tracking-wide cursor-pointer hover:bg-[var(--hover-color)] px-2 py-1 rounded"
                           onClick={(e) => {
                             e.preventDefault();
@@ -1706,8 +1706,8 @@ function App() {
                         );
                       }}
                       className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible && bottomPaneActiveTab === "terminal"
-                          ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
-                          : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
+                        ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
+                        : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
                         }`}
                       title="Toggle Terminal"
                     >
@@ -1726,11 +1726,11 @@ function App() {
                         );
                       }}
                       className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible &&
-                          bottomPaneActiveTab === "diagnostics"
-                          ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
-                          : diagnostics.length > 0
-                            ? "bg-[var(--primary-bg)] border-red-300 text-red-600 hover:bg-red-50"
-                            : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
+                        bottomPaneActiveTab === "diagnostics"
+                        ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
+                        : diagnostics.length > 0
+                          ? "bg-[var(--primary-bg)] border-red-300 text-red-600 hover:bg-red-50"
+                          : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
                         }`}
                       title="Toggle Problems Panel"
                     >
@@ -1892,7 +1892,7 @@ function App() {
                 <FilePlus size={12} />
                 Add Folder to Workspace
               </button>
-              
+
               <button
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -1905,7 +1905,7 @@ function App() {
                 <Folder size={12} />
                 Collapse All Folders
               </button>
-              
+
               {recentFolders.length > 0 && (
                 <>
                   <div className="border-t border-[var(--border-color)] my-1"></div>
