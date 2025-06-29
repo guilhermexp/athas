@@ -1317,6 +1317,9 @@ function App() {
           }}
         />
 
+        {/* Thin separator bar */}
+        <div className="h-px bg-[var(--border-color)] flex-shrink-0" />
+
         {/* Main App Content */}
         <div className="flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden">
           <div className="flex flex-row flex-1 overflow-hidden custom-scrollbar-auto">
