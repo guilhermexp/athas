@@ -311,14 +311,30 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       setLanguage(detectedLanguage);
     }, [filename]);
 
-    // Open/close document with LSP
+    // Open/close document with LSP - make async to avoid blocking file loading
     useEffect(() => {
       if (filePath && openDocument && isLanguageSupported?.(filePath)) {
-        openDocument(filePath, value);
+        // Run LSP opening asynchronously to not block file loading
+        const openLspDocument = async () => {
+          try {
+            await openDocument(filePath, value);
+          } catch (error) {
+            console.error("LSP open document error:", error);
+          }
+        };
+        
+        // Use requestIdleCallback to run when browser is idle
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => openLspDocument(), { timeout: 1000 });
+        } else {
+          setTimeout(openLspDocument, 0);
+        }
 
         return () => {
           if (closeDocument) {
-            closeDocument(filePath);
+            closeDocument(filePath).catch(error => {
+              console.error("LSP close document error:", error);
+            });
           }
         };
       }
@@ -389,12 +405,12 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
       // Position cursor after insertion
       const newCursorPos = wordStart + (completion.insertText?.length || 0);
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         if (textareaRef.current) {
           textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
           textareaRef.current.focus();
         }
-      }, 0);
+      });
 
       setIsLspCompletionVisible(false);
     };
@@ -549,7 +565,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       const isRemoteFile = filePath?.startsWith("remote://");
       
       // For remote files, use much longer debounce and run in requestIdleCallback
-      const debounceTime = isRemoteFile ? 1000 : 150;
+      // For local files, use minimal debounce for faster loading
+      const debounceTime = isRemoteFile ? 1000 : 50;
       
       const timeoutId = setTimeout(() => {
         const performHighlighting = () => {
@@ -578,7 +595,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             requestIdleCallback(performHighlighting, { timeout: 2000 });
           } else {
             // Fallback for browsers without requestIdleCallback
-            setTimeout(performHighlighting, 0);
+            requestAnimationFrame(performHighlighting);
           }
         } else {
           performHighlighting();
@@ -635,14 +652,14 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       setCurrentCompletion(null);
 
       // Move cursor to end of inserted completion
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         if (textareaRef.current) {
           const newCursorPos =
             currentCursorPos + currentCompletion.completion.length;
           textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
           textareaRef.current.focus();
         }
-      }, 0);
+      });
     };
 
     // Handle completion dismissal

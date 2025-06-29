@@ -179,9 +179,16 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
             await scanDirectory(fileEntry.path, depth + 1);
           }
 
-          // Yield control occasionally to prevent blocking UI
-          if (allFiles.length % 100 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 0));
+          // Yield control much less frequently to improve performance
+          if (allFiles.length % 500 === 0) {
+            // Use requestIdleCallback for better performance when available
+            await new Promise(resolve => {
+              if ('requestIdleCallback' in window) {
+                requestIdleCallback(resolve, { timeout: 16 });
+              } else {
+                requestAnimationFrame(resolve);
+              }
+            });
           }
         }
 
