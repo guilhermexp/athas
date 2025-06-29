@@ -4,8 +4,7 @@
 /* Global smooth scrolling and box model */
 * {
     box-sizing: border-box;
-    overscroll-behavior: none;
-    /* Prevent elastic bounce on all elements */
+    overscroll-behavior: none; /* Prevent elastic bounce on all elements */
 }
 
 #root {
@@ -15,12 +14,9 @@
 
 html {
     scroll-behavior: smooth;
-    overflow: hidden;
-    /* Prevent default browser scrolling */
-    overscroll-behavior: none !important;
-    /* Prevent elastic bounce globally */
-    background: transparent;
-    /* Allow transparency for rounded corners */
+    overflow: hidden; /* Prevent default browser scrolling */
+    overscroll-behavior: none !important; /* Prevent elastic bounce globally */
+    background: transparent; /* Allow transparency for rounded corners */
 }
 
 body {
@@ -30,10 +26,8 @@ body {
     font-family:
         ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono",
         Menlo, monospace;
-    overscroll-behavior: none !important;
-    /* Prevent elastic bounce globally */
-    background: transparent;
-    /* Allow transparency for rounded corners */
+    overscroll-behavior: none !important; /* Prevent elastic bounce globally */
+    background: transparent; /* Allow transparency for rounded corners */
 }
 
 /* Custom CSS variables for theming */
@@ -492,12 +486,10 @@ body {
 
 /* Vim cursor animation */
 @keyframes vim-cursor-blink {
-
     0%,
     50% {
         opacity: 0.8;
     }
-
     51%,
     100% {
         opacity: 0.3;
@@ -522,15 +514,12 @@ body {
 
 /* Tab bar scrollbar hiding */
 .scrollbar-none {
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
 }
 
 .scrollbar-none::-webkit-scrollbar {
-    display: none;
-    /* WebKit */
+    display: none; /* WebKit */
 }
 
 /* Custom scrollbar styles */
@@ -647,8 +636,7 @@ body {
     overflow-y: hidden;
     scrollbar-width: thin;
     scrollbar-color: var(--border-color) transparent;
-    overscroll-behavior-x: contain;
-    /* Prevent elastic scroll on tabs only */
+    overscroll-behavior-x: contain; /* Prevent elastic scroll on tabs only */
 }
 
 .tab-scroll-container::-webkit-scrollbar {
@@ -754,18 +742,22 @@ textarea::-webkit-scrollbar-thumb:hover {
     right: 0;
     bottom: 0;
     background:
-        linear-gradient(90deg,
+        linear-gradient(
+            90deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 45%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 55%,
-            transparent 100%),
-        linear-gradient(0deg,
+            transparent 100%
+        ),
+        linear-gradient(
+            0deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 48%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 52%,
-            transparent 100%);
+            transparent 100%
+        );
     background-size:
         300px 1px,
         1px 300px;
@@ -802,18 +794,22 @@ textarea::-webkit-scrollbar-thumb:hover {
     right: 0;
     bottom: 0;
     background:
-        linear-gradient(90deg,
+        linear-gradient(
+            90deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 45%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 55%,
-            transparent 100%),
-        linear-gradient(0deg,
+            transparent 100%
+        ),
+        linear-gradient(
+            0deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 48%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 52%,
-            transparent 100%);
+            transparent 100%
+        );
     background-size:
         200px 1px,
         1px 200px;
@@ -844,18 +840,22 @@ textarea::-webkit-scrollbar-thumb:hover {
     right: 0;
     bottom: 0;
     background:
-        linear-gradient(90deg,
+        linear-gradient(
+            90deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 45%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 55%,
-            transparent 100%),
-        linear-gradient(0deg,
+            transparent 100%
+        ),
+        linear-gradient(
+            0deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 48%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 52%,
-            transparent 100%);
+            transparent 100%
+        );
     background-size:
         200px 1px,
         1px 200px;
@@ -972,18 +972,22 @@ textarea::-webkit-scrollbar-thumb:hover {
     right: 0;
     bottom: 0;
     background:
-        linear-gradient(90deg,
+        linear-gradient(
+            90deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 45%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 55%,
-            transparent 100%),
-        linear-gradient(0deg,
+            transparent 100%
+        ),
+        linear-gradient(
+            0deg,
             transparent 0%,
             rgba(200, 200, 200, 0.01) 48%,
             rgba(200, 200, 200, 0.02) 50%,
             rgba(200, 200, 200, 0.01) 52%,
-            transparent 100%);
+            transparent 100%
+        );
     background-size:
         300px 1px,
         1px 300px;
@@ -2029,102 +2033,73 @@ textarea::-webkit-scrollbar-thumb:hover {
 
 /* Terminal ANSI color support */
 .terminal-output span {
-    /* Ensure ANSI colors from ansi-to-html take precedence over our default colors */
-    color: inherit !important;
+  /* Ensure ANSI colors from ansi-to-html take precedence over our default colors */
+  color: inherit !important;
 }
 
 .terminal-output span[style*="color"] {
-    /* Make ANSI colors more specific */
-    color: inherit !important;
+  /* Make ANSI colors more specific */
+  color: inherit !important;
 }
 
 /* Terminal unified experience */
 .terminal-output {
-    /* Consistent line height for unified appearance */
-    line-height: 1.4;
-    margin-bottom: 0;
+  /* Consistent line height for unified appearance */
+  line-height: 1.4;
+  margin-bottom: 0;
 }
 
 .terminal-output:not(:last-child) {
-    margin-bottom: 0.1em;
+  margin-bottom: 0.1em;
 }
 
 /* Vercel Dark - Based on official Geist Design System */
 .force-vercel-dark {
     /* Core backgrounds following Geist color scale */
-    --primary-bg: #000000;
-    /* Background 1 - Pure black like vercel.com */
-    --secondary-bg: #0a0a0a;
-    /* Background 2 - Subtle elevation */
-    --hover-color: #1a1a1a;
-    /* Color 1 - Hover background */
-    --selected-color: #2a2a2a;
-    /* Color 2 - Active background */
-
+    --primary-bg: #000000;           /* Background 1 - Pure black like vercel.com */
+    --secondary-bg: #0a0a0a;         /* Background 2 - Subtle elevation */
+    --hover-color: #1a1a1a;          /* Color 1 - Hover background */
+    --selected-color: #2a2a2a;       /* Color 2 - Active background */
+    
     /* Border colors following Geist scale */
-    --border-color: #333333;
-    /* Color 4 - Default border */
-
+    --border-color: #333333;         /* Color 4 - Default border */
+    
     /* Text colors following Geist scale */
-    --text-color: #fafafa;
-    /* Color 10 - Primary text (high contrast) */
-    --text-light: #a1a1a1;
-    /* Color 9 - Secondary text */
-    --text-lighter: #666666;
-    /* Dimmed text for less important content */
-
+    --text-color: #fafafa;           /* Color 10 - Primary text (high contrast) */
+    --text-light: #a1a1a1;          /* Color 9 - Secondary text */
+    --text-lighter: #666666;        /* Dimmed text for less important content */
+    
     /* Vercel brand accent */
-    --accent-color: #0070f3;
-    /* Official Vercel blue */
-
+    --accent-color: #0070f3;         /* Official Vercel blue */
+    
     /* Enhanced syntax highlighting inspired by Vercel's code blocks */
-    --comment: #666666;
-    /* Subtle gray for comments */
-    --keyword: #0070f3;
-    /* Vercel blue for keywords */
-    --string: #50e3c2;
-    /* Cyan for strings */
-    --number: #f81ce5;
-    /* Magenta for numbers */
-    --function: #79ffe1;
-    /* Bright cyan for functions */
-    --variable: #fafafa;
-    /* Primary text color for variables */
-    --tag: #ff0080;
-    /* Hot pink for tags */
-    --attribute: #f81ce5;
-    /* Magenta for attributes */
-    --punctuation: #a1a1a1;
-    /* Secondary text for punctuation */
-
+    --comment: #666666;              /* Subtle gray for comments */
+    --keyword: #0070f3;              /* Vercel blue for keywords */
+    --string: #50e3c2;               /* Cyan for strings */
+    --number: #f81ce5;               /* Magenta for numbers */
+    --function: #79ffe1;             /* Bright cyan for functions */
+    --variable: #fafafa;             /* Primary text color for variables */
+    --tag: #ff0080;                  /* Hot pink for tags */
+    --attribute: #f81ce5;            /* Magenta for attributes */
+    --punctuation: #a1a1a1;          /* Secondary text for punctuation */
+    
     /* Additional Vercel-specific colors */
-    --success-color: #00d9ff;
-    /* Vercel success cyan */
-    --warning-color: #f5a623;
-    /* Vercel warning orange */
-    --error-color: #ff0080;
-    /* Vercel error pink */
-    --info-color: #0070f3;
-    /* Vercel info blue */
-
+    --success-color: #00d9ff;        /* Vercel success cyan */
+    --warning-color: #f5a623;        /* Vercel warning orange */
+    --error-color: #ff0080;          /* Vercel error pink */
+    --info-color: #0070f3;           /* Vercel info blue */
+    
     /* Component-specific overrides for better Vercel feel */
-    --tab-active-bg: #000000;
-    /* Active tabs pure black */
-    --tab-inactive-bg: #0a0a0a;
-    /* Inactive tabs slightly elevated */
-    --sidebar-bg: #0a0a0a;
-    /* Sidebar with subtle elevation */
-    --editor-bg: #000000;
-    /* Editor pure black */
-    --terminal-bg: #000000;
-    /* Terminal pure black */
-
+    --tab-active-bg: #000000;        /* Active tabs pure black */
+    --tab-inactive-bg: #0a0a0a;      /* Inactive tabs slightly elevated */
+    --sidebar-bg: #0a0a0a;           /* Sidebar with subtle elevation */
+    --editor-bg: #000000;            /* Editor pure black */
+    --terminal-bg: #000000;          /* Terminal pure black */
+    
     /* Enhanced contrast ratios */
-    --high-contrast-bg: #ffffff;
-    /* Pure white for high contrast elements */
-    --high-contrast-text: #000000;
-    /* Pure black text on white */
-
+    --high-contrast-bg: #ffffff;     /* Pure white for high contrast elements */
+    --high-contrast-text: #000000;   /* Pure black text on white */
+    
     /* Scrollbar colors */
     --scrollbar-track: transparent;
     --scrollbar-thumb: #333333;
