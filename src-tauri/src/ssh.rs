@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
-use ssh2::{Channel, Session, Sftp};
+use ssh2::{Session, Sftp};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::io::prelude::*;
 use std::net::TcpStream;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tauri::command;
 
@@ -52,7 +52,7 @@ fn get_ssh_config(host: &str) -> SshConfig {
     };
 
     // Try to read SSH config file
-    if let Some(home_dir) = env::var("HOME").ok() {
+    if let Ok(home_dir) = env::var("HOME") {
         let ssh_config_path = format!("{}/.ssh/config", home_dir);
         if let Ok(content) = fs::read_to_string(&ssh_config_path) {
             let mut in_host_section = false;
@@ -79,8 +79,8 @@ fn get_ssh_config(host: &str) -> SshConfig {
                             "hostname" => config.hostname = Some(value.to_string()),
                             "user" => config.user = Some(value.to_string()),
                             "identityfile" => {
-                                let expanded_path = if value.starts_with("~/") {
-                                    format!("{}/{}", home_dir, &value[2..])
+                                let expanded_path = if let Some(stripped) = value.strip_prefix("~/") {
+                                    format!("{}/{}", home_dir, stripped)
                                 } else {
                                     value.to_string()
                                 };
@@ -130,7 +130,7 @@ pub fn create_ssh_session(
         .map_err(|e| format!("Failed to handshake: {}", e))?;
 
     // Determine key file to use (prefer SSH config, then provided, then default)
-    let default_key_path = if let Some(home_dir) = env::var("HOME").ok() {
+    let default_key_path = if let Ok(home_dir) = env::var("HOME") {
         format!("{}/.ssh/id_rsa", home_dir)
     } else {
         String::new()
@@ -245,7 +245,7 @@ pub async fn ssh_connect(
 #[command]
 pub async fn ssh_disconnect(connection_id: String) -> Result<(), String> {
     let mut connections = CONNECTIONS.lock().unwrap();
-    if let Some((mut session, _)) = connections.remove(&connection_id) {
+    if let Some((session, _)) = connections.remove(&connection_id) {
         let _ = session.disconnect(None, "Disconnecting", None);
     }
     Ok(())

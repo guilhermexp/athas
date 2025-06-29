@@ -8,13 +8,6 @@ use std::process::Command;
 use std::sync::Arc;
 use tauri::command;
 use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
-use tauri_plugin_dialog;
-use tauri_plugin_fs;
-use tauri_plugin_http;
-use tauri_plugin_opener;
-use tauri_plugin_os;
-use tauri_plugin_shell;
-use tauri_plugin_store;
 
 mod lsp;
 mod menu;
@@ -29,9 +22,9 @@ use ssh::{
     ssh_write_file,
 };
 use terminal::{
+    close_terminal_connection, create_terminal_connection, get_available_terminal_types,
+    resize_terminal, send_terminal_ctrl_c, send_terminal_ctrl_d, send_terminal_data,
     TerminalManager,
-    create_terminal_connection, send_terminal_data, resize_terminal, close_terminal_connection,
-    send_terminal_ctrl_c, send_terminal_ctrl_d, get_available_terminal_types,
 };
 
 #[derive(serde::Serialize)]
@@ -257,8 +250,8 @@ fn git_status(repo_path: String) -> Result<GitStatus, String> {
 
     // Get current branch
     let branch_output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .current_dir(repo_dir)
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
         .output()
         .map_err(|e| format!("Failed to get branch: {}", e))?;
 
@@ -271,12 +264,12 @@ fn git_status(repo_path: String) -> Result<GitStatus, String> {
     };
 
     // Get ahead/behind counts
-    let (ahead, behind) = get_ahead_behind_counts(&repo_dir, &branch);
+    let (ahead, behind) = get_ahead_behind_counts(repo_dir, &branch);
 
     // Get file status
     let status_output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["status", "--porcelain"])
+        .current_dir(repo_dir)
+        .args(["status", "--porcelain"])
         .output()
         .map_err(|e| format!("Failed to get status: {}", e))?;
 
@@ -285,7 +278,7 @@ fn git_status(repo_path: String) -> Result<GitStatus, String> {
         let status_text = String::from_utf8_lossy(&status_output.stdout);
         for line in status_text.lines() {
             if line.len() >= 3 {
-                let staged_char = line.chars().nth(0).unwrap_or(' ');
+                let staged_char = line.chars().next().unwrap_or(' ');
                 let unstaged_char = line.chars().nth(1).unwrap_or(' ');
                 let file_path = line[3..].to_string();
 
@@ -323,7 +316,7 @@ fn git_status(repo_path: String) -> Result<GitStatus, String> {
 fn get_ahead_behind_counts(repo_dir: &Path, branch: &str) -> (i32, i32) {
     let output = Command::new("git")
         .current_dir(repo_dir)
-        .args(&[
+        .args([
             "rev-list",
             "--left-right",
             "--count",
@@ -352,8 +345,8 @@ fn git_add(repo_path: String, file_path: String) -> Result<(), String> {
     let repo_dir = Path::new(&repo_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["add", &file_path])
+        .current_dir(repo_dir)
+        .args(["add", &file_path])
         .output()
         .map_err(|e| format!("Failed to add file: {}", e))?;
 
@@ -369,8 +362,8 @@ fn git_reset(repo_path: String, file_path: String) -> Result<(), String> {
     let repo_dir = Path::new(&repo_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["reset", "HEAD", &file_path])
+        .current_dir(repo_dir)
+        .args(["reset", "HEAD", &file_path])
         .output()
         .map_err(|e| format!("Failed to unstage file: {}", e))?;
 
@@ -386,8 +379,8 @@ fn git_commit(repo_path: String, message: String) -> Result<(), String> {
     let repo_dir = Path::new(&repo_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["commit", "-m", &message])
+        .current_dir(repo_dir)
+        .args(["commit", "-m", &message])
         .output()
         .map_err(|e| format!("Failed to commit: {}", e))?;
 
@@ -403,8 +396,8 @@ fn git_add_all(repo_path: String) -> Result<(), String> {
     let repo_dir = Path::new(&repo_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["add", "."])
+        .current_dir(repo_dir)
+        .args(["add", "."])
         .output()
         .map_err(|e| format!("Failed to add all files: {}", e))?;
 
@@ -420,8 +413,8 @@ fn git_reset_all(repo_path: String) -> Result<(), String> {
     let repo_dir = Path::new(&repo_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["reset", "HEAD", "."])
+        .current_dir(repo_dir)
+        .args(["reset", "HEAD", "."])
         .output()
         .map_err(|e| format!("Failed to unstage all files: {}", e))?;
 
@@ -444,8 +437,8 @@ fn git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>, Stri
     let limit_str = limit.unwrap_or(10).to_string();
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&[
+        .current_dir(repo_dir)
+        .args([
             "log",
             &format!("-{}", limit_str),
             "--pretty=format:%H|%s|%an|%ad",
@@ -491,7 +484,7 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
     args.push(&file_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
+        .current_dir(repo_dir)
         .args(&args)
         .output()
         .map_err(|e| format!("Failed to get file diff: {}", e))?;
@@ -531,28 +524,32 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
                 }
             }
         } else if line.starts_with('+') && !line.starts_with("+++") {
-            // Added line
-            lines.push(GitDiffLine {
-                line_type: "added".to_string(),
-                content: line[1..].to_string(),
+            if let Some(stripped) = line.strip_prefix('+') {
+                // Added line
+                lines.push(GitDiffLine {
+                    line_type: "added".to_string(),
+                    content: stripped.to_string(),
                 old_line_number: None,
                 new_line_number: Some(new_line_num),
             });
-            new_line_num += 1;
+                new_line_num += 1;
+            }
         } else if line.starts_with('-') && !line.starts_with("---") {
-            // Removed line
-            lines.push(GitDiffLine {
-                line_type: "removed".to_string(),
-                content: line[1..].to_string(),
+            if let Some(stripped) = line.strip_prefix('-') {
+                // Removed line
+                lines.push(GitDiffLine {
+                    line_type: "removed".to_string(),
+                    content: stripped.to_string(),
                 old_line_number: Some(old_line_num),
                 new_line_number: None,
             });
-            old_line_num += 1;
-        } else if line.starts_with(' ') {
+                old_line_num += 1;
+            }
+        } else if let Some(stripped) = line.strip_prefix(' ') {
             // Context line
             lines.push(GitDiffLine {
                 line_type: "context".to_string(),
-                content: line[1..].to_string(),
+                content: stripped.to_string(),
                 old_line_number: Some(old_line_num),
                 new_line_number: Some(new_line_num),
             });
@@ -563,8 +560,8 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
 
     // Check if file is new, deleted, or renamed
     let status_output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["status", "--porcelain", &file_path])
+        .current_dir(repo_dir)
+        .args(["status", "--porcelain", &file_path])
         .output()
         .map_err(|e| format!("Failed to get file status: {}", e))?;
 
@@ -604,7 +601,7 @@ fn git_commit_diff(
     }
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
+        .current_dir(repo_dir)
         .args(&args)
         .output()
         .map_err(|e| format!("Failed to get commit diff: {}", e))?;
@@ -666,28 +663,32 @@ fn git_commit_diff(
                 }
             }
         } else if line.starts_with('+') && !line.starts_with("+++") {
-            // Added line
-            current_lines.push(GitDiffLine {
-                line_type: "added".to_string(),
-                content: line[1..].to_string(),
+            if let Some(stripped) = line.strip_prefix('+') {
+                // Added line
+                current_lines.push(GitDiffLine {
+                    line_type: "added".to_string(),
+                    content: stripped.to_string(),
                 old_line_number: None,
                 new_line_number: Some(new_line_num),
             });
-            new_line_num += 1;
+                new_line_num += 1;
+            }
         } else if line.starts_with('-') && !line.starts_with("---") {
-            // Removed line
-            current_lines.push(GitDiffLine {
-                line_type: "removed".to_string(),
-                content: line[1..].to_string(),
+            if let Some(stripped) = line.strip_prefix('-') {
+                // Removed line
+                current_lines.push(GitDiffLine {
+                    line_type: "removed".to_string(),
+                    content: stripped.to_string(),
                 old_line_number: Some(old_line_num),
                 new_line_number: None,
             });
-            old_line_num += 1;
-        } else if line.starts_with(' ') {
+                old_line_num += 1;
+            }
+        } else if let Some(stripped) = line.strip_prefix(' ') {
             // Context line
             current_lines.push(GitDiffLine {
                 line_type: "context".to_string(),
-                content: line[1..].to_string(),
+                content: stripped.to_string(),
                 old_line_number: Some(old_line_num),
                 new_line_number: Some(new_line_num),
             });
@@ -722,8 +723,8 @@ fn git_branches(repo_path: String) -> Result<Vec<String>, String> {
     }
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["branch", "--format=%(refname:short)"])
+        .current_dir(repo_dir)
+        .args(["branch", "--format=%(refname:short)"])
         .output()
         .map_err(|e| format!("Failed to get branches: {}", e))?;
 
@@ -745,8 +746,8 @@ fn git_checkout(repo_path: String, branch_name: String) -> Result<(), String> {
     let repo_dir = Path::new(&repo_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["checkout", &branch_name])
+        .current_dir(repo_dir)
+        .args(["checkout", &branch_name])
         .output()
         .map_err(|e| format!("Failed to checkout branch: {}", e))?;
 
@@ -771,7 +772,7 @@ fn git_create_branch(
     }
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
+        .current_dir(repo_dir)
         .args(&args)
         .output()
         .map_err(|e| format!("Failed to create branch: {}", e))?;
@@ -788,8 +789,8 @@ fn git_delete_branch(repo_path: String, branch_name: String) -> Result<(), Strin
     let repo_dir = Path::new(&repo_path);
 
     let output = Command::new("git")
-        .current_dir(&repo_dir)
-        .args(&["branch", "-d", &branch_name])
+        .current_dir(repo_dir)
+        .args(["branch", "-d", &branch_name])
         .output()
         .map_err(|e| format!("Failed to delete branch: {}", e))?;
 
@@ -864,17 +865,16 @@ async fn create_remote_window(
     let window_label = format!("remote-{}", connection_id);
 
     let url = format!("index.html?remote={}", connection_id);
-    let window =
-        WebviewWindowBuilder::new(&app, &window_label, WebviewUrl::App(url.into()))
-            .title(&format!("Remote: {}", connection_name))
-            .inner_size(1200.0, 800.0)
-            .min_inner_size(800.0, 600.0)
-            .center()
-            .decorations(false)
-            .transparent(true)
-            .shadow(false)
-            .build()
-            .map_err(|e| format!("Failed to create window: {}", e))?;
+    let window = WebviewWindowBuilder::new(&app, &window_label, WebviewUrl::App(url.into()))
+        .title(format!("Remote: {}", connection_name))
+        .inner_size(1200.0, 800.0)
+        .min_inner_size(800.0, 600.0)
+        .center()
+        .decorations(false)
+        .transparent(true)
+        .shadow(false)
+        .build()
+        .map_err(|e| format!("Failed to create window: {}", e))?;
 
     #[cfg(target_os = "macos")]
     {

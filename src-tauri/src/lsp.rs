@@ -6,7 +6,6 @@ use tauri::State;
 
 #[derive(Debug)]
 pub struct LSPProcess {
-    language: String,
     process: Option<Child>,
 }
 
@@ -65,7 +64,6 @@ pub async fn start_lsp_server(
     let pid = child.id();
 
     let lsp_process = LSPProcess {
-        language: request.language.clone(),
         process: Some(child),
     };
 
@@ -93,7 +91,7 @@ pub async fn stop_lsp_server(language: String, state: State<'_, LSPState>) -> Re
 pub async fn lsp_did_open(
     language: String,
     uri: String,
-    content: String,
+    _content: String,
     version: u32,
 ) -> Result<(), String> {
     // For now, just log the request
@@ -106,7 +104,7 @@ pub async fn lsp_did_open(
 pub async fn lsp_did_change(
     language: String,
     uri: String,
-    content: String,
+    _content: String,
     version: u32,
 ) -> Result<(), String> {
     println!("LSP {} didChange: {} (version {})", language, uri, version);
@@ -198,7 +196,7 @@ pub async fn lsp_completion(request: CompletionRequest) -> Result<serde_json::Va
 #[tauri::command]
 pub async fn lsp_hover(
     language: String,
-    uri: String,
+    _uri: String,
     line: u32,
     character: u32,
 ) -> Result<Option<serde_json::Value>, String> {
