@@ -126,41 +126,8 @@ const escapeHtml = (text: string): string => {
 
 // Helper function to safely highlight code with proper HTML escaping
 const safeHighlight = (code: string, language: string): string => {
-  // For HTML, XML, and markup languages, we need to be extra careful
-  // to escape the content first so it displays as code, not renders as HTML
-  if (language === "markup" || language === "html" || language === "xml") {
-    // First escape all HTML entities in the source code
-    const escapedCode = escapeHtml(code);
-    
-    try {
-      // Then apply syntax highlighting to the escaped content
-      return Prism.highlight(
-        escapedCode,
-        Prism.languages[language] || Prism.languages.text,
-        language,
-      );
-    } catch (error) {
-      // If highlighting fails, return the escaped content
-      return escapedCode;
-    }
-  }
-  
-  // For markdown, also escape to prevent rendering of embedded HTML
-  if (language === "markdown") {
-    const escapedCode = escapeHtml(code);
-    
-    try {
-      return Prism.highlight(
-        escapedCode,
-        Prism.languages.markdown || Prism.languages.text,
-        language,
-      );
-    } catch (error) {
-      return escapedCode;
-    }
-  }
-  
-  // For other languages, use normal highlighting
+  // For all languages, let Prism.js handle the syntax highlighting
+  // Prism.js properly escapes content internally when generating highlighted HTML
   try {
     return Prism.highlight(
       code,
