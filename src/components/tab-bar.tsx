@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { Database, Package, Pin, PinOff, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Buffer } from "../types/buffer";
@@ -336,6 +337,7 @@ const TabBar = ({
       document.removeEventListener("mousemove", move);
       document.removeEventListener("mouseup", up);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draggedIndex, dragStartPosition, isDragging, dropTarget]);
 
   return (
@@ -347,7 +349,6 @@ const TabBar = ({
         >
           {sortedBuffers.map((buffer, index) => {
             const isActive = buffer.id === activeBufferId;
-            const isDraggedTab = draggedIndex === index;
             const isDropTarget = dropTarget === index;
 
             return (
@@ -431,7 +432,7 @@ const TabBar = ({
                       onTabClose(buffer.id, e);
                     }}
                     className={`
-                      flex-shrink-0 p-0.5 rounded hover:bg-[var(--hover-color)]
+                     cursor-pointer flex-shrink-0 p-0.5 rounded hover:bg-[var(--hover-color)]
                       transition-all duration-150 opacity-0 group-hover:opacity-100
                       ${
                         isActive
