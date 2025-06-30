@@ -61,9 +61,9 @@ const ConnectionList = ({
   }, [connectionMenu]);
 
   return (
-    <div className="flex flex-col h-full bg-[var(--primary-bg)]">
+    <div className="flex flex-col h-full bg-[var(--secondary-bg)]">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--border-color)]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
         <div className="flex items-center gap-2">
           <Server size={14} className="text-[var(--text-lighter)]" />
           <span className="text-sm font-medium text-[var(--text-color)]">

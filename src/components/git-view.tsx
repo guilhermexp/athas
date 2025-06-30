@@ -626,7 +626,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         setShowGitActionsMenu(!showGitActionsMenu);
         setShowBranchDropdown(false);
       }}
-      className="flex items-center gap-1 text-xs text-[var(--text-color)] font-medium hover:bg-[var(--hover-color)] px-2 py-1 rounded cursor-pointer"
+      className="flex items-center gap-1 text-xs text-[var(--text-color)] font-medium hover:bg-[var(--hover-color)] px-2 py-1.5 rounded cursor-pointer"
       title="Git Actions"
     >
       <GitBranch size={12} className="text-[var(--text-lighter)]" />
