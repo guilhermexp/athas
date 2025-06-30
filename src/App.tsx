@@ -296,6 +296,7 @@ function App() {
     rootFolderPath,
     getAllProjectFiles,
     handleOpenFolder,
+    handleOpenFolderByPath,
     handleFolderToggle: localHandleFolderToggle,
     handleCreateNewFile,
     handleCreateNewFileInDirectory,
@@ -551,13 +552,18 @@ function App() {
     }
   }, [activeBuffer]);
 
-  // Handle opening a recent folder
+
   const handleOpenRecentFolder = async (path: string) => {
-    // In a real implementation, you would open the specific folder path
-    // For now, we'll just trigger the open folder dialog and update recents
-    console.log("Opening recent folder:", path);
-    addToRecents(path);
-    await handleOpenFolder();
+    const success = await handleOpenFolderByPath(path);
+
+    if (success) {
+      // Add to recents only if successfully opened
+      addToRecents(path);
+    } else {
+      // Fall back to opening folder dialog if direct opening fails
+      console.log("Failed to open recent folder, falling back to dialog");
+      await handleOpenFolder();
+    }
   };
 
   // Search functionality
