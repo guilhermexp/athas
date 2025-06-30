@@ -306,6 +306,32 @@ body {
     --syntax-punctuation: #e6e1cf;
 }
 
+/* Force Vesper theme */
+.force-vesper {
+    --primary-bg: #18181b;
+    --secondary-bg: #0D0D0E;
+    --text-color: #e6e6e6;
+    --text-light: #6e6e8a;
+    --text-lighter: #44444a;
+    --border-color: #44444a;
+    --hover-color: #16213e;
+    --selected-color: rgba(127,255,212,0.08);
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: #44444a;
+    --scrollbar-thumb-hover: #7fffd4;
+
+    /* Syntax highlighting colors - Vesper theme */
+    --syntax-comment: #6e6e8a;
+    --syntax-keyword: #ffb86b;
+    --syntax-string: #aafac8;
+    --syntax-number: #ffb6b6;
+    --syntax-function: #8be9fd;
+    --syntax-variable: #b5e8e0;
+    --syntax-tag: #ffd6a5;
+    --syntax-attribute: #f1fa8c;
+    --syntax-punctuation: #b0b0c3;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         --primary-bg: #1a1a1a;
@@ -1829,6 +1855,32 @@ textarea::-webkit-scrollbar-thumb:hover {
     --tag: #55b4d4;
     --attribute: #f2ae49;
     --punctuation: #5c6773;
+}
+
+/* Vesper */
+.force-vesper {
+    --primary-bg: #18181a;
+    --secondary-bg: #0D0D0E;
+    --text-color: #e6e6e6;
+    --text-light: #6e6e8a;
+    --text-lighter: #44444a;
+    --border-color: #44444a;
+    --hover-color: #16213e;
+    --selected-color: rgba(127,255,212,0.08);
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: #44444a;
+    --scrollbar-thumb-hover: #7fffd4;
+
+    /* Syntax highlighting colors - Vesper theme */
+    --syntax-comment: #6e6e8a;
+    --syntax-keyword: #ffb86b;
+    --syntax-string: #aafac8;
+    --syntax-number: #ffb6b6;
+    --syntax-function: #8be9fd;
+    --syntax-variable: #b5e8e0;
+    --syntax-tag: #ffd6a5;
+    --syntax-attribute: #f1fa8c;
+    --syntax-punctuation: #b0b0c3;
 }
 
 /* Vercel Dark Theme Component Enhancements */
