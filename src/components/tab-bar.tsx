@@ -225,13 +225,27 @@ const TabBar = ({
           const tabX = tabRect.left - rect.left;
           const tabWidth = tabRect.width;
 
+          // Determine if cursor is in left or right half of the tab
           if (x >= tabX && x <= tabX + tabWidth) {
-            newDropTarget = i;
+            const relativeX = x - tabX;
+            if (relativeX < tabWidth / 2) {
+              newDropTarget = i;
+            } else {
+              newDropTarget = i + 1;
+            }
             break;
           }
         }
 
-        if (newDropTarget !== draggedIndex) {
+        // Clamp drop target to valid range
+        if (newDropTarget !== null) {
+          newDropTarget = Math.max(
+            0,
+            Math.min(tabElements.length, newDropTarget)
+          );
+        }
+
+        if (newDropTarget !== dropTarget) {
           setDropTarget(newDropTarget);
         }
       } else {
@@ -248,8 +262,18 @@ const TabBar = ({
         dropTarget !== draggedIndex &&
         onTabReorder
       ) {
-        // Internal reordering
-        onTabReorder(draggedIndex, dropTarget);
+        // Adjust dropTarget if moving right (forward)
+        let adjustedDropTarget = dropTarget;
+        if (draggedIndex < dropTarget) {
+          adjustedDropTarget = dropTarget - 1;
+        }
+        if (adjustedDropTarget !== draggedIndex) {
+          onTabReorder(draggedIndex, adjustedDropTarget);
+          const movedBuffer = sortedBuffers[draggedIndex];
+          if (movedBuffer) {
+            onTabClick(movedBuffer.id);
+          }
+        }
       }
       // Notify parent about drag end
       if (onTabDragEnd) {
@@ -351,106 +375,126 @@ const TabBar = ({
         >
           {sortedBuffers.map((buffer, index) => {
             const isActive = buffer.id === activeBufferId;
-            const isDropTarget = dropTarget === index;
+            // Drop indicator should be shown before the tab at dropTarget
+            const showDropIndicator =
+              dropTarget === index &&
+              draggedIndex !== null &&
+              !isDraggedOutside;
 
             return (
-              <div
-                key={buffer.id}
-                draggable={true}
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragEnd={handleDragEnd}
-                className={`
-                   group flex items-center gap-1.5 px-2 py-1.5 border-r border-[var(--border-color)]
-                   cursor-pointer select-none min-w-0 relative
-                   hover:bg-[var(--hover-color)] transition-colors duration-150
-                   ${
-                     isActive
-                       ? "bg-[var(--primary-bg)] border-b-2 border-b-[var(--accent-color)]"
-                       : "bg-[var(--secondary-bg)]"
-                   }
-                   ${isDropTarget ? "bg-[var(--hover-color)]" : ""}
-                   ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}
-                 `}
-                onMouseDown={(e) => handleMouseDown(e, index)}
-                onClick={() => {
-                  if (!isDragging) {
-                    onTabClick(buffer.id);
-                  }
-                }}
-                onContextMenu={(e) => handleContextMenu(e, buffer)}
-              >
-                {/* Drop indicator */}
-                {isDropTarget && draggedIndex !== null && !isDraggedOutside && (
-                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent-color)]" />
-                )}
-
-                {/* File Icon */}
-                <div className="flex-shrink-0">
-                  {buffer.path === "extensions://language-servers" ? (
-                    <Package size={12} className="text-blue-500" />
-                  ) : buffer.isSQLite ? (
-                    <Database
-                      size={12}
-                      className="text-[var(--text-lighter)]"
+              <React.Fragment key={buffer.id}>
+                {/* Drop indicator before tab */}
+                {showDropIndicator && (
+                  <div className="relative flex items-center">
+                    <div
+                      className="absolute   top-0 bottom-0 w-0.5 h-full bg-[var(--accent-color)] z-10"
+                      style={{ height: "100%" }}
                     />
-                  ) : (
-                    <FileIcon
-                      fileName={buffer.name}
-                      isDir={false}
-                      className="text-[var(--text-lighter)]"
-                      size={12}
-                    />
-                  )}
-                </div>
-
-                {/* Pin indicator */}
-                {buffer.isPinned && (
-                  <Pin size={8} className="text-blue-500 flex-shrink-0" />
+                  </div>
                 )}
-
-                {/* File Name */}
-                <span
+                <div
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
                   className={`
-                     font-mono text-xs whitespace-nowrap
+                     group flex items-center gap-1.5 px-2 py-1.5 border-r border-[var(--border-color)]
+                     cursor-pointer select-none min-w-0 relative
+                     hover:bg-[var(--hover-color)] transition-colors duration-150
                      ${
                        isActive
-                         ? "text-[var(--text-color)]"
-                         : "text-[var(--text-light)]"
+                         ? "bg-[var(--primary-bg)] border-b-2 border-b-[var(--accent-color)]"
+                         : "bg-[var(--secondary-bg)]"
                      }
+                     ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}
+                    
                    `}
-                  title={buffer.path}
+                  onMouseDown={(e) => handleMouseDown(e, index)}
+                  onClick={() => {
+                    if (!isDragging) {
+                      onTabClick(buffer.id);
+                    }
+                  }}
+                  onContextMenu={(e) => handleContextMenu(e, buffer)}
                 >
-                  {buffer.name}
-                  {buffer.isDirty && (
-                    <span className="text-[var(--text-lighter)] ml-1">•</span>
-                  )}
-                </span>
+                  {/* File Icon */}
+                  <div className="flex-shrink-0">
+                    {buffer.path === "extensions://language-servers" ? (
+                      <Package size={12} className="text-blue-500" />
+                    ) : buffer.isSQLite ? (
+                      <Database
+                        size={12}
+                        className="text-[var(--text-lighter)]"
+                      />
+                    ) : (
+                      <FileIcon
+                        fileName={buffer.name}
+                        isDir={false}
+                        className="text-[var(--text-lighter)]"
+                        size={12}
+                      />
+                    )}
+                  </div>
 
-                {/* Close Button */}
-                {!buffer.isPinned && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onTabClose(buffer.id, e);
-                    }}
+                  {/* Pin indicator */}
+                  {buffer.isPinned && (
+                    <Pin size={8} className="text-blue-500 flex-shrink-0" />
+                  )}
+
+                  {/* File Name */}
+                  <span
                     className={`
-                     cursor-pointer flex-shrink-0 p-0.5 rounded hover:bg-[var(--hover-color)]
-                      transition-all duration-150 opacity-0 group-hover:opacity-100
-                      ${
-                        isActive
-                          ? "text-[var(--text-color)] opacity-70"
-                          : "text-[var(--text-lighter)]"
-                      }
-                      hover:text-[var(--text-color)] hover:opacity-100
-                    `}
-                    title={`Close ${buffer.name}`}
+                       font-mono text-xs whitespace-nowrap
+                       ${
+                         isActive
+                           ? "text-[var(--text-color)]"
+                           : "text-[var(--text-light)]"
+                       }
+                     `}
+                    title={buffer.path}
                   >
-                    <X size={12} />
-                  </button>
-                )}
-              </div>
+                    {buffer.name}
+                    {buffer.isDirty && (
+                      <span className="text-[var(--text-lighter)] ml-1">•</span>
+                    )}
+                  </span>
+
+                  {/* Close Button */}
+                  {!buffer.isPinned && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTabClose(buffer.id, e);
+                      }}
+                      className={`
+                       cursor-pointer flex-shrink-0 p-0.5 rounded hover:bg-[var(--hover-color)]
+                        transition-all duration-150 opacity-0 group-hover:opacity-100
+                        ${
+                          isActive
+                            ? "text-[var(--text-color)] opacity-70"
+                            : "text-[var(--text-lighter)]"
+                        }
+                        hover:text-[var(--text-color)] hover:opacity-100
+                      `}
+                      title={`Close ${buffer.name}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </React.Fragment>
             );
           })}
+          {/* Drop indicator after the last tab */}
+          {dropTarget === sortedBuffers.length &&
+            draggedIndex !== null &&
+            !isDraggedOutside && (
+              <div className="relative flex items-center">
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-[var(--accent-color)] z-10"
+                  style={{ height: "100%" }}
+                />
+              </div>
+            )}
         </div>
         {/* Floating tab name while dragging */}
         {isDragging && draggedIndex !== null && dragCurrentPosition && (
