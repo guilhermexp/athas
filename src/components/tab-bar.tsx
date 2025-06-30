@@ -170,7 +170,10 @@ const TabBar = ({
 
   const tabBarRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (e: React.MouseEvent, index: number) => {
+  const handleMouseDown = (e: React.MouseEvent, buffer: Buffer, index: number) => {
+    if (e.button == 1) {
+      onTabClose(buffer.id, e);
+    }
     if (e.button !== 0 || (e.target as HTMLElement).closest("button")) {
       return;
     }
@@ -356,7 +359,7 @@ const TabBar = ({
                    ${isDropTarget ? "bg-[var(--hover-color)]" : ""}
                    ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}
                  `}
-                onMouseDown={(e) => handleMouseDown(e, index)}
+                onMouseDown={(e) => handleMouseDown(e, buffer, index)}
                 onClick={() => {
                   if (!isDragging) {
                     onTabClick(buffer.id);
