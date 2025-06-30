@@ -118,7 +118,7 @@ function App() {
     end: 0,
     cursorPosition: { x: 0, y: 0 }
   });
-
+  const [maxOpenTabs, setMaxOpenTabs] = useState<number>(10);
   // State for folder header context menu
   const [folderHeaderContextMenu, setFolderHeaderContextMenu] = useState<{
     x: number;
@@ -629,6 +629,9 @@ function App() {
           }
           if (settings.aiCompletion !== undefined) {
             setAiCompletion(settings.aiCompletion);
+          }
+          if (settings.maxOpenTabs !== undefined) {
+            setMaxOpenTabs(settings.maxOpenTabs);
           }
 
           markBufferDirty(activeBuffer.id, false);
@@ -1322,6 +1325,7 @@ function App() {
                 autoSave: autoSave,
                 vimMode: vimModeEnabled,
                 aiCompletion: aiCompletion,
+                maxOpenTabs: maxOpenTabs,
               },
               null,
               2,
@@ -1587,6 +1591,7 @@ function App() {
                 onCloseTabsToRight={handleCloseTabsToRight}
                 onTabDragStart={handleTabDragStart}
                 onTabDragEnd={handleTabDragEnd}
+                maxOpenTabs={maxOpenTabs}
               />
 
               {/* {!isSplitViewEnabled && activeBuffer && (
@@ -1849,6 +1854,7 @@ function App() {
                   autoSave: autoSave,
                   vimMode: vimModeEnabled,
                   aiCompletion: aiCompletion,
+                  maxOpenTabs: maxOpenTabs,
                 },
                 null,
                 2,
