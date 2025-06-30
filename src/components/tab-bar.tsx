@@ -469,10 +469,16 @@ const TabBar = ({
         {/* Floating tab name while dragging */}
         {isDragging && draggedIndex !== null && dragCurrentPosition && (
           <div
-            className="pointer-events-none fixed z-50 px-2 py-1.5 rounded bg-[var(--primary-bg)] border border-[var(--border-color)] shadow-lg font-mono text-xs flex items-center gap-1.5 select-none"
+            ref={(el) => {
+              if (el && window) {
+                // Center the floating tab on the cursor
+                const rect = el.getBoundingClientRect();
+                el.style.left = `${dragCurrentPosition.x - rect.width / 2}px`;
+                el.style.top = `${dragCurrentPosition.y - rect.height / 2}px`;
+              }
+            }}
+            className="cursor-pointer fixed z-50 px-2 py-1.5 rounded bg-[var(--primary-bg)] border border-[var(--border-color)] shadow-lg font-mono text-xs flex items-center gap-1.5"
             style={{
-              left: dragCurrentPosition.x + 8,
-              top: dragCurrentPosition.y + 8,
               opacity: 0.95,
               minWidth: 60,
               maxWidth: 220,
