@@ -118,7 +118,7 @@ function App() {
     end: 0,
     cursorPosition: { x: 0, y: 0 }
   });
-  const [maxOpenTabs, setMaxOpenTabs] = useState<number>(7);
+  const [maxOpenTabs, setMaxOpenTabs] = useState<number>(10);
   // State for folder header context menu
   const [folderHeaderContextMenu, setFolderHeaderContextMenu] = useState<{
     x: number;
@@ -1319,6 +1319,7 @@ function App() {
                 autoSave: autoSave,
                 vimMode: vimModeEnabled,
                 aiCompletion: aiCompletion,
+                maxOpenTabs: maxOpenTabs,
               },
               null,
               2,
