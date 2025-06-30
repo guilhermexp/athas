@@ -40,4 +40,3 @@ assignees: ''
 * [ ] I have searched the existing issues
 * [ ] I have reproduced this issue with the latest version
 * [ ] I am using a supported version
-
