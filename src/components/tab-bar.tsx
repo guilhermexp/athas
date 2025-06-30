@@ -365,13 +365,6 @@ const TabBar = ({
                        ? "bg-[var(--primary-bg)] border-b-2 border-b-[var(--accent-color)]"
                        : "bg-[var(--secondary-bg)]"
                    }
-                   ${
-                     isDraggedTab
-                       ? isDraggedOutside
-                         ? "opacity-20"
-                         : "opacity-50"
-                       : ""
-                   }
                    ${isDropTarget ? "bg-[var(--hover-color)]" : ""}
                    ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}
                  `}
@@ -382,20 +375,10 @@ const TabBar = ({
                   }
                 }}
                 onContextMenu={(e) => handleContextMenu(e, buffer)}
-                style={
-                  isDraggedTab && isDragging && dragCurrentPosition
-                    ? { opacity: 0 }
-                    : {}
-                }
               >
                 {/* Drop indicator */}
                 {isDropTarget && draggedIndex !== null && !isDraggedOutside && (
                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent-color)]" />
-                )}
-
-                {/* Visual feedback when dragging outside */}
-                {isDraggedTab && isDraggedOutside && (
-                  <div className="absolute inset-0 border-2 border-dashed border-blue-500 bg-blue-500 bg-opacity-10 rounded" />
                 )}
 
                 {/* File Icon */}
