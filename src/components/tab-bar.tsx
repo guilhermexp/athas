@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { X, Database, Package, Pin, PinOff } from "lucide-react";
+import { Database, Package, Pin, PinOff, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import { Buffer } from "../types/buffer";
-import FileIcon from "./file-icon";
 import { getShortcutText } from "../utils/platform";
+import FileIcon from "./file-icon";
 
 interface TabBarProps {
   buffers: Buffer[];
@@ -29,7 +29,6 @@ interface ContextMenuProps {
   onCloseOthers: (bufferId: string) => void;
   onCloseAll: () => void;
   onCloseToRight: (bufferId: string) => void;
-
 }
 
 const ContextMenu = ({
@@ -42,7 +41,6 @@ const ContextMenu = ({
   onCloseOthers,
   onCloseAll,
   onCloseToRight,
-
 }: ContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -88,9 +86,7 @@ const ContextMenu = ({
         {buffer.isPinned ? <PinOff size={12} /> : <Pin size={12} />}
         {buffer.isPinned ? "Unpin Tab" : "Pin Tab"}
       </button>
-      
 
-      
       <div className="border-t border-[var(--border-color)] my-1 dark:border-gray-600" />
       <button
         className="w-full text-left px-3 py-1.5 text-xs hover:bg-[var(--hover-color)] flex items-center justify-between gap-2 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -101,7 +97,7 @@ const ContextMenu = ({
       >
         <span>Close</span>
         <span className="text-[var(--text-lighter)] text-[10px] font-mono opacity-60">
-          {getShortcutText('w', ['cmd'])}
+          {getShortcutText("w", ["cmd"])}
         </span>
       </button>
       <button
@@ -161,6 +157,10 @@ const TabBar = ({
     x: number;
     y: number;
   } | null>(null);
+  const [dragCurrentPosition, setDragCurrentPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [isDraggedOutside, setIsDraggedOutside] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
@@ -184,14 +184,15 @@ const TabBar = ({
     if (draggedIndex === null || !dragStartPosition || !tabBarRef.current)
       return;
 
+    setDragCurrentPosition({ x: e.clientX, y: e.clientY });
+
     const distance = Math.sqrt(
       Math.pow(e.clientX - dragStartPosition.x, 2) +
-        Math.pow(e.clientY - dragStartPosition.y, 2),
+        Math.pow(e.clientY - dragStartPosition.y, 2)
     );
 
     if (distance > 5 && !isDragging) {
       setIsDragging(true);
-      
       // Notify parent about drag start
       const draggedBuffer = sortedBuffers[draggedIndex];
       if (onTabDragStart && draggedBuffer) {
@@ -205,13 +206,14 @@ const TabBar = ({
       const y = e.clientY - rect.top;
 
       // Check if dragged outside the tab bar
-      const isOutside = x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
+      const isOutside =
+        x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
       setIsDraggedOutside(isOutside);
 
       if (!isOutside) {
         // Handle internal reordering
         const tabElements = Array.from(
-          tabBarRef.current.children,
+          tabBarRef.current.children
         ) as HTMLElement[];
 
         let newDropTarget: number | null = null;
@@ -237,11 +239,15 @@ const TabBar = ({
 
   const handleMouseUp = () => {
     if (draggedIndex !== null) {
-      if (!isDraggedOutside && dropTarget !== null && dropTarget !== draggedIndex && onTabReorder) {
+      if (
+        !isDraggedOutside &&
+        dropTarget !== null &&
+        dropTarget !== draggedIndex &&
+        onTabReorder
+      ) {
         // Internal reordering
         onTabReorder(draggedIndex, dropTarget);
       }
-      
       // Notify parent about drag end
       if (onTabDragEnd) {
         onTabDragEnd();
@@ -252,6 +258,7 @@ const TabBar = ({
     setDraggedIndex(null);
     setDropTarget(null);
     setDragStartPosition(null);
+    setDragCurrentPosition(null);
     setIsDraggedOutside(false);
   };
 
@@ -260,22 +267,26 @@ const TabBar = ({
     const buffer = sortedBuffers[index];
     if (!buffer) return;
 
-    e.dataTransfer.setData('application/tab-data', JSON.stringify({
-      bufferId: buffer.id,
-      paneId: paneId,
-      bufferData: buffer
-    }));
-    e.dataTransfer.effectAllowed = 'move';
-    
+    e.dataTransfer.setData(
+      "application/tab-data",
+      JSON.stringify({
+        bufferId: buffer.id,
+        paneId: paneId,
+        bufferData: buffer,
+      })
+    );
+    e.dataTransfer.effectAllowed = "move";
+
     // Create drag image
-    const dragImage = document.createElement('div');
-    dragImage.className = 'bg-[var(--primary-bg)] border border-[var(--border-color)] rounded px-2 py-1 text-xs font-mono shadow-lg';
+    const dragImage = document.createElement("div");
+    dragImage.className =
+      "bg-[var(--primary-bg)] border border-[var(--border-color)] rounded px-2 py-1 text-xs font-mono shadow-lg";
     dragImage.textContent = buffer.name;
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
+    dragImage.style.position = "absolute";
+    dragImage.style.top = "-1000px";
     document.body.appendChild(dragImage);
     e.dataTransfer.setDragImage(dragImage, 0, 0);
-    
+
     setTimeout(() => {
       document.body.removeChild(dragImage);
     }, 0);
@@ -286,8 +297,8 @@ const TabBar = ({
     setDraggedIndex(null);
     setDropTarget(null);
     setDragStartPosition(null);
+    setDragCurrentPosition(null);
     setIsDraggedOutside(false);
-    
     if (onTabDragEnd) {
       onTabDragEnd();
     }
@@ -316,12 +327,14 @@ const TabBar = ({
   useEffect(() => {
     if (draggedIndex === null) return;
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    const move = (e: MouseEvent) => handleMouseMove(e);
+    const up = () => handleMouseUp();
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
     };
   }, [draggedIndex, dragStartPosition, isDragging, dropTarget]);
 
@@ -352,7 +365,13 @@ const TabBar = ({
                        ? "bg-[var(--primary-bg)] border-b-2 border-b-[var(--accent-color)]"
                        : "bg-[var(--secondary-bg)]"
                    }
-                   ${isDraggedTab ? (isDraggedOutside ? "opacity-20" : "opacity-50") : ""}
+                   ${
+                     isDraggedTab
+                       ? isDraggedOutside
+                         ? "opacity-20"
+                         : "opacity-50"
+                       : ""
+                   }
                    ${isDropTarget ? "bg-[var(--hover-color)]" : ""}
                    ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}
                  `}
@@ -363,6 +382,11 @@ const TabBar = ({
                   }
                 }}
                 onContextMenu={(e) => handleContextMenu(e, buffer)}
+                style={
+                  isDraggedTab && isDragging && dragCurrentPosition
+                    ? { opacity: 0 }
+                    : {}
+                }
               >
                 {/* Drop indicator */}
                 {isDropTarget && draggedIndex !== null && !isDraggedOutside && (
@@ -402,7 +426,11 @@ const TabBar = ({
                 <span
                   className={`
                      font-mono text-xs whitespace-nowrap
-                     ${isActive ? "text-[var(--text-color)]" : "text-[var(--text-light)]"}
+                     ${
+                       isActive
+                         ? "text-[var(--text-color)]"
+                         : "text-[var(--text-light)]"
+                     }
                    `}
                   title={buffer.path}
                 >
@@ -422,7 +450,11 @@ const TabBar = ({
                     className={`
                       flex-shrink-0 p-0.5 rounded hover:bg-[var(--hover-color)]
                       transition-all duration-150 opacity-0 group-hover:opacity-100
-                      ${isActive ? "text-[var(--text-color)] opacity-70" : "text-[var(--text-lighter)]"}
+                      ${
+                        isActive
+                          ? "text-[var(--text-color)] opacity-70"
+                          : "text-[var(--text-lighter)]"
+                      }
                       hover:text-[var(--text-color)] hover:opacity-100
                     `}
                     title={`Close ${buffer.name}`}
@@ -434,6 +466,48 @@ const TabBar = ({
             );
           })}
         </div>
+        {/* Floating tab name while dragging */}
+        {isDragging && draggedIndex !== null && dragCurrentPosition && (
+          <div
+            className="pointer-events-none fixed z-50 px-2 py-1.5 rounded bg-[var(--primary-bg)] border border-[var(--border-color)] shadow-lg font-mono text-xs flex items-center gap-1.5 select-none"
+            style={{
+              left: dragCurrentPosition.x + 8,
+              top: dragCurrentPosition.y + 8,
+              opacity: 0.95,
+              minWidth: 60,
+              maxWidth: 220,
+              whiteSpace: "nowrap",
+              color: "var(--text-color)",
+            }}
+          >
+            {/* File Icon */}
+            <span className="flex-shrink-0">
+              {sortedBuffers[draggedIndex].path ===
+              "extensions://language-servers" ? (
+                <Package size={12} className="text-blue-500" />
+              ) : sortedBuffers[draggedIndex].isSQLite ? (
+                <Database size={12} className="text-[var(--text-lighter)]" />
+              ) : (
+                <FileIcon
+                  fileName={sortedBuffers[draggedIndex].name}
+                  isDir={false}
+                  className="text-[var(--text-lighter)]"
+                  size={12}
+                />
+              )}
+            </span>
+            {/* Pin indicator */}
+            {sortedBuffers[draggedIndex].isPinned && (
+              <Pin size={8} className="text-blue-500 flex-shrink-0" />
+            )}
+            <span className="truncate">
+              {sortedBuffers[draggedIndex].name}
+              {sortedBuffers[draggedIndex].isDirty && (
+                <span className="text-[var(--text-lighter)] ml-1">•</span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
       <ContextMenu
@@ -451,7 +525,6 @@ const TabBar = ({
         onCloseOthers={onCloseOtherTabs || (() => {})}
         onCloseAll={onCloseAllTabs || (() => {})}
         onCloseToRight={onCloseTabsToRight || (() => {})}
-
       />
     </>
   );
