@@ -18,6 +18,7 @@ interface TabBarProps {
   onTabDragStart?: (bufferId: string, paneId?: string) => void;
   onTabDragEnd?: () => void;
   paneId?: string; // For split view panes
+  maxOpenTabs: number; // Optional prop to limit open tabs
 }
 
 interface ContextMenuProps {
@@ -145,6 +146,7 @@ const TabBar = ({
   onTabDragStart,
   onTabDragEnd,
   paneId,
+  maxOpenTabs,
 }: TabBarProps) => {
   // Early return BEFORE any hooks to avoid hooks order violation
   if (buffers.length === 0) {
