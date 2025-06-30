@@ -10,6 +10,7 @@
     "build:tauri": "tauri build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "format": "bun prettier . --write",
     "typecheck": "bun tsc --noEmit",
     "lint": "bun eslint . --ext .ts,.tsx",
     "lint:fix": "bun eslint . --ext .ts,.tsx --fix"
@@ -44,6 +45,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.2.0",
+    "prettier": "3.6.2",
     "tailwindcss": "^4.1.8",
     "typescript": "~5.6.2",
     "vite": "^6.3.5"
