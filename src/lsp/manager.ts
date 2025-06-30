@@ -1,18 +1,25 @@
-import { Diagnostic } from 'vscode-languageserver-protocol';
-import { LSPClient } from './lsp-client';
-import { LSP_CONFIGS, getLanguageFromPath } from './configs';
-import { LSPClientEvents } from './types';
+import { Diagnostic } from "vscode-languageserver-protocol";
+import { LSPClient } from "./lsp-client";
+import { LSP_CONFIGS, getLanguageFromPath } from "./configs";
+import { LSPClientEvents } from "./types";
 
 export class LSPManager {
   private clients = new Map<string, LSPClient>();
   private workspaceRoot: string | null = null;
   private documentLanguages = new Map<string, string>();
 
-  constructor(private onDiagnostics?: (uri: string, diagnostics: Diagnostic[]) => void) {}
+  constructor(
+    private onDiagnostics?: (uri: string, diagnostics: Diagnostic[]) => void
+  ) {}
 
   async setWorkspaceRoot(path: string): Promise<void> {
+    if (this.workspaceRoot == path) {
+      console.log(`LSPManager: workspace root is already set to ${path}`);
+      return;
+    }
+
     this.workspaceRoot = path;
-    
+
     await this.disposeAll();
   }
 
@@ -27,7 +34,7 @@ export class LSPManager {
       const config = LSP_CONFIGS[language];
       const events: LSPClientEvents = {
         onDiagnostics: this.onDiagnostics,
-        onError: (error) => console.error(`LSP Error (${language}):`, error)
+        onError: (error) => console.error(`LSP Error (${language}):`, error),
       };
 
       client = new LSPClient(language, config, events);
@@ -83,10 +90,10 @@ export class LSPManager {
   }
 
   async disposeAll(): Promise<void> {
-    for (const [language, client] of this.clients) {
+    for (const client of this.clients.values()) {
       await client.dispose();
     }
-    
+
     this.clients.clear();
     this.documentLanguages.clear();
   }
@@ -98,4 +105,5 @@ export class LSPManager {
   isLanguageSupported(filePath: string): boolean {
     return getLanguageFromPath(filePath) !== null;
   }
-} 
+}
+
