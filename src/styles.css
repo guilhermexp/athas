@@ -679,6 +679,10 @@ body {
 /* Window container styling - rounded but no borders */
 .window-container {
     overflow: hidden;
+}
+
+/* Only apply border radius on macOS */
+.platform-macos .window-container {
     border-radius: 12px;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '../utils/cn';
 
 interface ResizableSidebarProps {
@@ -20,6 +20,17 @@ const ResizableSidebar = ({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>();
+
+  // Throttle resize updates for better performance
+  const throttledSetWidth = useCallback((newWidth: number) => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    rafRef.current = requestAnimationFrame(() => {
+      setWidth(newWidth);
+    });
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -31,7 +42,7 @@ const ResizableSidebar = ({
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - startX;
       const newWidth = Math.min(Math.max(startWidth + deltaX, minWidth), maxWidth);
-      setWidth(newWidth);
+      throttledSetWidth(newWidth);
     };
 
     const handleMouseUp = () => {
@@ -46,7 +57,16 @@ const ResizableSidebar = ({
     document.addEventListener('mouseup', handleMouseUp);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-  }, [width, minWidth, maxWidth]);
+  }, [width, minWidth, maxWidth, throttledSetWidth]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="flex h-full">

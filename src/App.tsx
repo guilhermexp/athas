@@ -1,66 +1,65 @@
-import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Folder,
-  GitBranch,
-  Terminal as TerminalIcon,
   AlertCircle,
+  Bug,
+  FilePlus,
+  Folder,
+  FolderOpen,
+  GitBranch,
+  MessageSquare,
+  Package,
   Search,
   Server,
-  Package,
-  FolderOpen,
-  FilePlus,
-  MessageSquare,
-  Bug,
+  Terminal as TerminalIcon,
 } from "lucide-react";
-import { readFile, writeFile } from "./utils/platform";
+
+import { readFile, writeFile, isMac } from "./utils/platform";
+import { BottomPaneTab, QuickEditSelection } from "./types/ui-state";
+import CodeEditor, { CodeEditorRef } from "./components/code-editor";
+import CommandPalette, { CommandPaletteRef } from "./components/command-palette";
+import { CoreFeature, CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
+import SearchView, { SearchViewRef } from "./components/search-view";
 import {
-  isSQLiteFile,
-  isImageFile,
-  getLanguageFromFilename,
   getFilenameFromPath,
+  getLanguageFromFilename,
+  isImageFile,
+  isSQLiteFile,
 } from "./utils/file-utils";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import AIChat from "./components/ai-chat/ai-chat";
+import BottomPane from "./components/bottom-pane";
+import Button from "./components/button";
+import CommandBar from "./components/command-bar";
+import CustomTitleBar from "./components/window/custom-title-bar";
+import { Diagnostic } from "./components/diagnostics-pane";
+import DiffViewer from "./components/diff-viewer";
+import ExtensionsView from "./components/extensions-view";
 import { FileEntry } from "./types/app";
+import FileTree from "./components/file-tree";
+import FindBar from "./components/find-bar";
+import { GitDiff } from "./utils/git";
+import GitHubCopilotSettings from "./components/github-copilot-settings";
+import GitView from "./components/git-view";
+import ImageGenerationModal from "./components/image-generation-modal";
+import ImageViewer from "./components/image-viewer";
+import QuickEditInline from "./components/quick-edit-modal";
+import { RecentFolder } from "./types/recent-folders";
+import RemoteConnectionView from "./components/remote/remote-connection-view";
+import ResizableRightPane from "./components/resizable-right-pane";
+import ResizableSidebar from "./components/resizable-sidebar";
+import SQLiteViewer from "./components/sqlite-viewer";
+import TabBar from "./components/tab-bar";
+import { ThemeType } from "./types/theme";
+import WelcomeScreen from "./components/welcome-screen";
+import { useBreadcrumbToggles } from "./hooks/use-breadcrumb-toggles";
 import { useBuffers } from "./hooks/use-buffers";
-import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
 import { useFileOperations } from "./hooks/use-file-operations";
+import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
+import { useLSP } from "./hooks/use-lsp";
+import { useMenuEvents } from "./hooks/use-menu-events";
+import { useRemoteConnection } from "./hooks/use-remote-connection";
 import { useSearch } from "./hooks/use-search";
 import { useVim } from "./hooks/use-vim";
-import { useLSP } from "./hooks/use-lsp";
-
-import CodeEditor, { CodeEditorRef } from "./components/code-editor";
-import SQLiteViewer from "./components/sqlite-viewer";
-import ImageViewer from "./components/image-viewer";
-import DiffViewer from "./components/diff-viewer";
-import { GitDiff } from "./utils/git";
-import TabBar from "./components/tab-bar";
-import ResizableSidebar from "./components/resizable-sidebar";
-import ResizableRightPane from "./components/resizable-right-pane";
-import FindBar from "./components/find-bar";
-import CommandBar from "./components/command-bar";
-import AIChat from "./components/ai-chat/ai-chat";
-
-import WelcomeScreen from "./components/welcome-screen";
-import FileTree from "./components/file-tree";
-import GitView from "./components/git-view";
-import SearchView, { SearchViewRef } from "./components/search-view";
-import GitHubCopilotSettings from "./components/github-copilot-settings";
-import RemoteConnectionView from "./components/remote-connection-view";
-import ExtensionsView from "./components/extensions-view";
-
-import { Diagnostic } from "./components/diagnostics-pane";
-import BottomPane from "./components/bottom-pane";
-import CommandPalette, { CommandPaletteRef } from "./components/command-palette";
-import QuickEditInline from "./components/quick-edit-modal";
-import { useMenuEvents } from "./hooks/use-menu-events";
-import CustomTitleBar from "./components/window/custom-title-bar";
-import ImageGenerationModal from "./components/image-generation-modal";
-import { useBreadcrumbToggles } from "./hooks/use-breadcrumb-toggles";
-import { useRemoteConnection } from "./hooks/use-remote-connection";
-import { ThemeType } from "./types/theme";
-import { RecentFolder } from "./types/recent-folders";
-import { BottomPaneTab, QuickEditSelection } from "./types/ui-state";
-import { CoreFeature, CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
-import Button from "./components/button";
 
 function App() {
   const {
@@ -135,6 +134,20 @@ function App() {
   const codeEditorRef = useRef<CodeEditorRef>(null);
   const searchViewRef = useRef<SearchViewRef>(null);
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
+
+  // Apply platform-specific CSS class on mount
+  useEffect(() => {
+    if (isMac()) {
+      document.documentElement.classList.add('platform-macos');
+    } else {
+      document.documentElement.classList.add('platform-other');
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.documentElement.classList.remove('platform-macos', 'platform-other');
+    };
+  }, []);
 
   // Load recent folders from localStorage on mount
   useEffect(() => {
@@ -272,7 +285,7 @@ function App() {
 
   // State for all project files (for command palette)
   const [allProjectFiles, setAllProjectFiles] = useState<FileEntry[]>([]);
-  
+
   // State for tab dragging across panes
   const [isDraggingTab, setIsDraggingTab] = useState(false);
 
@@ -381,8 +394,9 @@ function App() {
 
     if (rootFolderPath) {
       // Extract the folder name from the full path
-      const folderName =
-        rootFolderPath.split("/").pop() || rootFolderPath.split("\\").pop();
+
+      const normalizedPath = rootFolderPath.replace(/\\/g, "/");
+      const folderName = normalizedPath.split("/").pop();
       return folderName || "Folder";
     }
 
@@ -626,7 +640,7 @@ function App() {
       if (activeBuffer.path.startsWith("remote://")) {
         // For remote files, mark as dirty first, then save directly via SSH
         markBufferDirty(activeBuffer.id, true);
-        
+
         const pathParts = activeBuffer.path
           .replace("remote://", "")
           .split("/");
@@ -1039,9 +1053,9 @@ function App() {
   // Immediate buffer update for responsive typing - NO auto-saving for remote files
   const handleContentChange = useCallback((content: string) => {
     if (!activeBuffer) return;
-    
+
     const isRemoteFile = activeBuffer.path.startsWith("remote://");
-    
+
     if (isRemoteFile) {
       // For remote files, use direct synchronous update to avoid any React delays
       updateBufferContent(activeBuffer.id, content, false);
@@ -1270,7 +1284,7 @@ function App() {
   if (shouldShowWelcome) {
     return (
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
-        <div className="window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden rounded-xl">
+        <div className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && 'rounded-xl'}`}>
           <CustomTitleBar showMinimal={true} />
           <WelcomeScreen
             onOpenFolder={handleOpenFolder}
@@ -1284,7 +1298,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
-      <div className="window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden rounded-xl">
+      <div className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && 'rounded-xl'}`}>
         {/* Custom Titlebar */}
         <CustomTitleBar
           projectName={
@@ -1318,6 +1332,9 @@ function App() {
           }}
         />
 
+        {/* Thin separator bar */}
+        <div className="h-px bg-[var(--border-color)] flex-shrink-0" />
+
         {/* Main App Content */}
         <div className="flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden">
           <div className="flex flex-row flex-1 overflow-hidden custom-scrollbar-auto">
@@ -1345,10 +1362,10 @@ function App() {
                         !isRemoteViewActive
                       }
                       className={`text-xs flex items-center justify-center w-8 h-8 rounded ${!isGitViewActive &&
-                          !isSearchViewActive &&
-                          !isRemoteViewActive
-                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                          : "hover:bg-[var(--hover-color)]"
+                        !isSearchViewActive &&
+                        !isRemoteViewActive
+                        ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                        : "hover:bg-[var(--hover-color)]"
                         }`}
                       title="File Explorer"
                     >
@@ -1365,8 +1382,8 @@ function App() {
                         size="sm"
                         data-active={isSearchViewActive}
                         className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isSearchViewActive
-                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                            : "hover:bg-[var(--hover-color)]"
+                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                          : "hover:bg-[var(--hover-color)]"
                           }`}
                         title="Search"
                       >
@@ -1384,8 +1401,8 @@ function App() {
                         size="sm"
                         data-active={isGitViewActive}
                         className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isGitViewActive
-                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                            : "hover:bg-[var(--hover-color)]"
+                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                          : "hover:bg-[var(--hover-color)]"
                           }`}
                         title="Git Source Control"
                       >
@@ -1403,8 +1420,8 @@ function App() {
                         size="sm"
                         data-active={isRemoteViewActive}
                         className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isRemoteViewActive
-                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                            : "hover:bg-[var(--hover-color)]"
+                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                          : "hover:bg-[var(--hover-color)]"
                           }`}
                         title="Remote Connections"
                       >
@@ -1429,7 +1446,7 @@ function App() {
                         size={12}
                         className="text-[var(--text-lighter)] mr-2"
                       />
-                      <span 
+                      <span
                         className="text-xs font-medium text-[var(--text-color)] cursor-pointer hover:bg-[var(--hover-color)] px-2 py-1 rounded flex-1"
                         onClick={(e) => {
                           e.preventDefault();
@@ -1460,7 +1477,7 @@ function App() {
                     !isRemoteViewActive &&
                     !isRemoteWindow && (
                       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)] bg-[var(--secondary-bg)]">
-                        <h3 
+                        <h3
                           className="font-mono text-xs font-medium text-[var(--text-color)] tracking-wide cursor-pointer hover:bg-[var(--hover-color)] px-2 py-1 rounded"
                           onClick={(e) => {
                             e.preventDefault();
@@ -1708,8 +1725,8 @@ function App() {
                         );
                       }}
                       className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible && bottomPaneActiveTab === "terminal"
-                          ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
-                          : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
+                        ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
+                        : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
                         }`}
                       title="Toggle Terminal"
                     >
@@ -1728,11 +1745,11 @@ function App() {
                         );
                       }}
                       className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible &&
-                          bottomPaneActiveTab === "diagnostics"
-                          ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
-                          : diagnostics.length > 0
-                            ? "bg-[var(--primary-bg)] border-red-300 text-red-600 hover:bg-red-50"
-                            : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
+                        bottomPaneActiveTab === "diagnostics"
+                        ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
+                        : diagnostics.length > 0
+                          ? "bg-[var(--primary-bg)] border-red-300 text-red-600 hover:bg-red-50"
+                          : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
                         }`}
                       title="Toggle Problems Panel"
                     >
@@ -1894,7 +1911,7 @@ function App() {
                 <FilePlus size={12} />
                 Add Folder to Workspace
               </button>
-              
+
               <button
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -1907,7 +1924,7 @@ function App() {
                 <Folder size={12} />
                 Collapse All Folders
               </button>
-              
+
               {recentFolders.length > 0 && (
                 <>
                   <div className="border-t border-[var(--border-color)] my-1"></div>
