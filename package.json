@@ -10,7 +10,7 @@
     "build:tauri": "tauri build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "format": "bun prettier . --write",
+    "format": "bun prettier . --write --ignore-path .gitignore",
     "typecheck": "bun tsc --noEmit",
     "lint": "bun eslint . --ext .ts,.tsx",
     "lint:fix": "bun eslint . --ext .ts,.tsx --fix"
