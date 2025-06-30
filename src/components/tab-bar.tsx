@@ -172,6 +172,21 @@ const TabBar = ({
   }>({ isOpen: false, position: { x: 0, y: 0 }, buffer: null });
 
   const tabBarRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (maxOpenTabs > 0 && buffers.length > maxOpenTabs && onTabClose) {
+      // Filter out pinned and active tabs
+      const closableBuffers = buffers.filter(
+        (b) => !b.isPinned && b.id !== activeBufferId
+      );
+
+      // Close oldest tabs until under limit (oldest = lowest index)
+      let tabsToClose = buffers.length - maxOpenTabs;
+      for (let i = 0; i < closableBuffers.length && tabsToClose > 0; i++) {
+        onTabClose(closableBuffers[i].id, new MouseEvent("click") as any);
+        tabsToClose--;
+      }
+    }
+  }, [buffers, maxOpenTabs, activeBufferId, onTabClose]);
 
   const handleMouseDown = (e: React.MouseEvent, index: number) => {
     if (e.button !== 0 || (e.target as HTMLElement).closest("button")) {
