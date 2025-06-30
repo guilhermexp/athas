@@ -18,7 +18,7 @@ This guide covers everything you need to know to contribute to Athas, build it f
 
 ### Required Software
 
-- **Node.js** 18+ or **Bun** (recommended)
+- **Bun** (JavaScript runtime and package manager)
 - **Rust** 1.70+ with cargo
 - **Git**
 - Platform-specific requirements:
@@ -43,14 +43,8 @@ cd athas
 
 ### 2. Install Dependencies
 
-Using Bun (faster):
 ```bash
 bun install
-```
-
-Using npm:
-```bash
-npm install
 ```
 
 ### 3. Build and Run
@@ -58,15 +52,11 @@ npm install
 Development mode with hot reload:
 ```bash
 bun run tauri dev
-# or
-npm run tauri dev
 ```
 
 Build for production:
 ```bash
 bun run tauri build
-# or
-npm run tauri build
 ```
 
 ## Project Structure
@@ -91,7 +81,7 @@ athas/
 │   └── tauri.conf.json   # Tauri configuration
 ├── public/               # Static assets
 ├── docs/                 # Documentation
-└── package.json          # Node dependencies
+└── package.json          # JavaScript dependencies
 ```
 
 ## Development Workflow
@@ -306,8 +296,6 @@ const providers = {
 ```bash
 # Frontend tests
 bun test
-# or
-npm test
 
 # Rust tests
 cd src-tauri
