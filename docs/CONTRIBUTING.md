@@ -2,6 +2,8 @@
 
 Welcome! We're happy to have you here. Thank you in advance for your contribution in Athas.
 
+Note: Please check existing issues and pull requests before creating a new one.
+
 # The Basics
 
 Athas welcomes contributions in the form of pull requests.
@@ -33,3 +35,4 @@ bun run tauri dev
 Prior to opening a pull request, ensure that your code has been auto-formatted, and that it passes both the lint and test validation checks
 These checks will run on GitHub Actions when you open your pull request, but running them locally will save you time and expedite the merge process.
 Note: Make sure the app don't crash when you run `bun run tauri dev`
+Please follow the PR templete when you are opening a pull request.
