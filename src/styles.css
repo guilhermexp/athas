@@ -2057,6 +2057,30 @@ textarea::-webkit-scrollbar-thumb:hover {
   margin-bottom: 0.1em;
 }
 
+/* Terminal cursor animation */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Terminal content styling that respects shell configuration */
+.terminal-content {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.2;
+  background: var(--primary-bg);
+  color: var(--text-color);
+}
+
+/* Ensure default ANSI colors use theme colors */
+.terminal-content .ansi-color-fg-default {
+  color: var(--text-color) !important;
+}
+
+.terminal-content .ansi-color-bg-default {
+  background-color: transparent !important;
+}
+
 /* Vercel Dark - Based on official Geist Design System */
 .force-vercel-dark {
     /* Core backgrounds following Geist color scale */
