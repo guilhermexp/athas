@@ -161,7 +161,20 @@ impl TerminalConnection {
                 let default_shell = if cfg!(target_os = "windows") {
                     "cmd.exe".to_string()
                 } else {
-                    std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())
+                    // Try to detect user's preferred shell
+                    std::env::var("SHELL")
+                        .or_else(|_| std::env::var("BASH"))
+                        .or_else(|_| std::env::var("ZSH"))
+                        .unwrap_or_else(|_| {
+                            // Fallback: try common shell locations
+                            for shell in ["/bin/zsh", "/usr/bin/zsh", "/bin/bash", "/usr/bin/bash", "/bin/sh"] {
+                                if std::path::Path::new(shell).exists() {
+                                    return shell.to_string();
+                                }
+                            }
+                            
+                            "/bin/bash".to_string()
+                        })
                 };
                 let shell_path = shell.as_deref().unwrap_or(&default_shell);
 
@@ -181,17 +194,43 @@ impl TerminalConnection {
                 cmd.env("TERM_PROGRAM", "athas-text");
                 cmd.env("TERM_PROGRAM_VERSION", "1.0.0");
 
+                // Better shell integration
+                cmd.env("SHELL", shell_path);
+                
+                // Force color output for common tools
+                cmd.env("FORCE_COLOR", "1");
+                cmd.env("CLICOLOR", "1");
+                cmd.env("CLICOLOR_FORCE", "1");
+                
+                // Git color configuration
+                cmd.env("GIT_TERMINAL_PROMPT", "1");
+                
                 // Ensure proper locale settings
                 if std::env::var("LC_ALL").is_err() && std::env::var("LANG").is_err() {
                     cmd.env("LANG", "en_US.UTF-8");
                 }
+                cmd.env("LC_CTYPE", "en_US.UTF-8");
+                
+                // Better readline support
+                cmd.env("INPUTRC", "/etc/inputrc");
 
                 // Force interactive shell
                 if !cfg!(target_os = "windows") {
                     if shell_path.contains("bash") {
                         cmd.arg("-i"); // Interactive mode for bash
+                        cmd.arg("-l"); // Login shell for proper profile loading
                     } else if shell_path.contains("zsh") {
                         cmd.arg("-i"); // Interactive mode for zsh
+                        cmd.arg("-l"); // Login shell for proper profile loading
+                    } else if shell_path.contains("fish") {
+                        cmd.arg("-i"); // Interactive mode for fish
+                        cmd.arg("-l"); // Login shell for proper profile loading
+                    } else if shell_path.contains("dash") {
+                        cmd.arg("-i"); // Interactive mode for dash
+                    } else if shell_path.contains("ksh") {
+                        cmd.arg("-i"); // Interactive mode for ksh
+                    } else if shell_path.contains("tcsh") || shell_path.contains("csh") {
+                        cmd.arg("-i"); // Interactive mode for csh/tcsh
                     }
                 }
 
@@ -611,50 +650,53 @@ impl TerminalState {
             }
             'S' => {
                 // Scroll up
-                let _amount = params.parse().unwrap_or(1);
-                // For now, just ignore scrolling
+                let amount = params.parse().unwrap_or(1);
+                self.scroll_up(amount);
             }
             'T' => {
                 // Scroll down
-                let _amount = params.parse().unwrap_or(1);
-                // For now, just ignore scrolling
+                let amount = params.parse().unwrap_or(1);
+                self.scroll_down(amount);
             }
             'P' => {
                 // Delete characters
-                let _amount = params.parse().unwrap_or(1);
-                // For now, just ignore character deletion
+                let amount = params.parse().unwrap_or(1);
+                self.delete_characters(amount);
             }
             '@' => {
                 // Insert characters
-                let _amount = params.parse().unwrap_or(1);
-                // For now, just ignore character insertion
+                let amount = params.parse().unwrap_or(1);
+                self.insert_characters(amount);
             }
             'L' => {
                 // Insert lines
-                let _amount = params.parse().unwrap_or(1);
-                // For now, just ignore line insertion
+                let amount = params.parse().unwrap_or(1);
+                self.insert_lines(amount);
             }
             'M' => {
                 // Delete lines
-                let _amount = params.parse().unwrap_or(1);
-                // For now, just ignore line deletion
+                let amount = params.parse().unwrap_or(1);
+                self.delete_lines(amount);
             }
             'X' => {
                 // Erase characters
-                let _amount = params.parse().unwrap_or(1);
-                // For now, just ignore character erasing
+                let amount = params.parse().unwrap_or(1);
+                self.erase_characters(amount);
             }
             'r' => {
                 // Set scrolling region
-                // For now, just ignore scrolling region
+                let parts: Vec<&str> = params.split(';').collect();
+                let top = parts.first().and_then(|s| s.parse().ok()).unwrap_or(1) - 1;
+                let bottom = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(self.screen_rows) - 1;
+                self.set_scrolling_region(top, bottom);
             }
             's' => {
                 // Save cursor position
-                // For now, just ignore cursor saving
+                self.save_cursor();
             }
             'u' => {
                 // Restore cursor position
-                // For now, just ignore cursor restoring
+                self.restore_cursor();
             }
             'h' => {
                 // Set mode - handle common modes
@@ -828,6 +870,106 @@ impl TerminalState {
 
     pub fn take_pending_responses(&mut self) -> Vec<String> {
         std::mem::take(&mut self.pending_responses)
+    }
+    
+    // Additional ANSI sequence implementations
+    fn scroll_up(&mut self, amount: u16) {
+        let amount = amount.min(self.screen_rows) as usize;
+        for _ in 0..amount {
+            self.screen_buffer.remove(0);
+            self.screen_buffer.push(Vec::new());
+        }
+    }
+    
+    fn scroll_down(&mut self, amount: u16) {
+        let amount = amount.min(self.screen_rows) as usize;
+        for _ in 0..amount {
+            self.screen_buffer.pop();
+            self.screen_buffer.insert(0, Vec::new());
+        }
+    }
+    
+    fn delete_characters(&mut self, amount: u16) {
+        if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
+            let start = self.cursor_col as usize;
+            let end = (start + amount as usize).min(line.len());
+            line.drain(start..end);
+        }
+    }
+    
+    fn insert_characters(&mut self, amount: u16) {
+        if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
+            let pos = self.cursor_col as usize;
+            for _ in 0..amount {
+                line.insert(pos, LineItem {
+                    lexeme: " ".to_string(),
+                    width: 1,
+                    is_underline: false,
+                    is_bold: false,
+                    is_italic: false,
+                    background_color: None,
+                    foreground_color: None,
+                });
+            }
+        }
+    }
+    
+    fn insert_lines(&mut self, amount: u16) {
+        let line_idx = self.cursor_line as usize;
+        for _ in 0..amount {
+            if line_idx < self.screen_buffer.len() {
+                self.screen_buffer.insert(line_idx, Vec::new());
+            }
+        }
+        // Remove lines from bottom to maintain screen size
+        while self.screen_buffer.len() > self.screen_rows as usize {
+            self.screen_buffer.pop();
+        }
+    }
+    
+    fn delete_lines(&mut self, amount: u16) {
+        let line_idx = self.cursor_line as usize;
+        for _ in 0..amount {
+            if line_idx < self.screen_buffer.len() {
+                self.screen_buffer.remove(line_idx);
+                self.screen_buffer.push(Vec::new());
+            }
+        }
+    }
+    
+    fn erase_characters(&mut self, amount: u16) {
+        if let Some(line) = self.screen_buffer.get_mut(self.cursor_line as usize) {
+            let start = self.cursor_col as usize;
+            let end = (start + amount as usize).min(line.len());
+            for i in start..end {
+                if i < line.len() {
+                    line[i] = LineItem {
+                        lexeme: " ".to_string(),
+                        width: 1,
+                        is_underline: false,
+                        is_bold: false,
+                        is_italic: false,
+                        background_color: None,
+                        foreground_color: None,
+                    };
+                }
+            }
+        }
+    }
+    
+    fn set_scrolling_region(&mut self, _top: u16, _bottom: u16) {
+        // For now, just acknowledge the scrolling region
+        // Full implementation would require tracking the scrolling region
+    }
+    
+    fn save_cursor(&mut self) {
+        // Store cursor position - for now we'll just acknowledge it
+        // Full implementation would require storing cursor state
+    }
+    
+    fn restore_cursor(&mut self) {
+        // Restore cursor position - for now we'll just acknowledge it
+        // Full implementation would require restoring cursor state
     }
 }
 
