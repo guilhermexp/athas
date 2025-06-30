@@ -185,7 +185,7 @@ const ApiKeyModal = ({
             <input
               type="password"
               value={apiKey}
-              onChange={(e) => handleKeyChange(e.target.value)}
+              onChange={e => handleKeyChange(e.target.value)}
               placeholder={getApiKeyPlaceholder()}
               className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-blue-500"
               disabled={isValidating}
@@ -238,15 +238,15 @@ const ApiKeyModal = ({
               Available Models:
             </div>
             <div className="space-y-1">
-              {provider.models.slice(0, 3).map((model) => (
+              {provider.models.slice(0, 3).map(model => (
                 <div
                   key={model.id}
                   className="flex items-center justify-between text-xs"
                 >
                   <span className="text-[var(--text-color)]">{model.name}</span>
                   <span className="text-[var(--text-lighter)]">
-                    {model.costPer1kTokens &&
-                      `$${model.costPer1kTokens}/1k tokens`}
+                    {model.costPer1kTokens
+                      && `$${model.costPer1kTokens}/1k tokens`}
                   </span>
                 </div>
               ))}

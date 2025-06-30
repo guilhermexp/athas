@@ -24,4 +24,4 @@ export const DEFAULT_CORE_FEATURES: CoreFeaturesState = {
   search: true,
   diagnostics: true,
   aiChat: true,
-}; 
+};

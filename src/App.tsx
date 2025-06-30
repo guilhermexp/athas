@@ -15,8 +15,14 @@ import {
 import { readFile, writeFile, isMac } from "./utils/platform";
 import { BottomPaneTab, QuickEditSelection } from "./types/ui-state";
 import CodeEditor, { CodeEditorRef } from "./components/code-editor";
-import CommandPalette, { CommandPaletteRef } from "./components/command-palette";
-import { CoreFeature, CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
+import CommandPalette, {
+  CommandPaletteRef,
+} from "./components/command-palette";
+import {
+  CoreFeature,
+  CoreFeaturesState,
+  DEFAULT_CORE_FEATURES,
+} from "./types/core-features";
 import SearchView, { SearchViewRef } from "./components/search-view";
 import {
   getFilenameFromPath,
@@ -67,8 +73,8 @@ function App() {
     isMinimapVisible,
     toggleOutline,
     toggleMinimap,
-    setIsOutlineVisible
-  } = useBreadcrumbToggles()
+    setIsOutlineVisible,
+  } = useBreadcrumbToggles();
 
   // UI State
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
@@ -87,7 +93,8 @@ function App() {
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   const [isBottomPaneVisible, setIsBottomPaneVisible] =
     useState<boolean>(false);
-  const [bottomPaneActiveTab, setBottomPaneActiveTab] = useState<BottomPaneTab>("terminal");
+  const [bottomPaneActiveTab, setBottomPaneActiveTab] =
+    useState<BottomPaneTab>("terminal");
   const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
     const savedTheme = localStorage.getItem("athas-code-theme");
     return (savedTheme as ThemeType) || "auto";
@@ -112,12 +119,13 @@ function App() {
   });
 
   const [isQuickEditVisible, setIsQuickEditVisible] = useState<boolean>(false);
-  const [quickEditSelection, setQuickEditSelection] = useState<QuickEditSelection>({
-    text: "",
-    start: 0,
-    end: 0,
-    cursorPosition: { x: 0, y: 0 }
-  });
+  const [quickEditSelection, setQuickEditSelection] =
+    useState<QuickEditSelection>({
+      text: "",
+      start: 0,
+      end: 0,
+      cursorPosition: { x: 0, y: 0 },
+    });
 
   // State for folder header context menu
   const [folderHeaderContextMenu, setFolderHeaderContextMenu] = useState<{
@@ -138,14 +146,17 @@ function App() {
   // Apply platform-specific CSS class on mount
   useEffect(() => {
     if (isMac()) {
-      document.documentElement.classList.add('platform-macos');
+      document.documentElement.classList.add("platform-macos");
     } else {
-      document.documentElement.classList.add('platform-other');
+      document.documentElement.classList.add("platform-other");
     }
 
     // Cleanup on unmount
     return () => {
-      document.documentElement.classList.remove('platform-macos', 'platform-other');
+      document.documentElement.classList.remove(
+        "platform-macos",
+        "platform-other",
+      );
     };
   }, []);
 
@@ -160,8 +171,6 @@ function App() {
       }
     }
   }, []);
-
-
 
   // Save recent folders to localStorage
   const saveRecentFolders = (folders: RecentFolder[]) => {
@@ -181,7 +190,10 @@ function App() {
     const newFeatures = { ...coreFeatures, [featureId]: enabled };
     setCoreFeatures(newFeatures);
     try {
-      localStorage.setItem("athas-code-core-features", JSON.stringify(newFeatures));
+      localStorage.setItem(
+        "athas-code-core-features",
+        JSON.stringify(newFeatures),
+      );
     } catch (error) {
       console.error("Error saving core features:", error);
     }
@@ -247,7 +259,7 @@ function App() {
 
     const updatedRecents = [
       newFolder,
-      ...recentFolders.filter((f) => f.path !== folderPath),
+      ...recentFolders.filter(f => f.path !== folderPath),
     ].slice(0, 5); // Keep only 5 most recent
 
     saveRecentFolders(updatedRecents);
@@ -331,8 +343,6 @@ function App() {
     handleRemoteFileSelect: remoteFileSelect,
   } = useRemoteConnection(files, setFiles);
 
-
-
   // LSP integration (after rootFolderPath is available)
   const {
     openDocument,
@@ -344,7 +354,7 @@ function App() {
     isReady,
   } = useLSP({
     workspaceRoot: rootFolderPath || undefined,
-    onDiagnostics: (diagnostics) => {
+    onDiagnostics: diagnostics => {
       setDiagnostics(diagnostics);
     },
   });
@@ -363,11 +373,7 @@ function App() {
       // For remote connections, no project-wide file indexing
       setAllProjectFiles([]);
     }
-  }, [
-    rootFolderPath,
-    isRemoteWindow,
-    refreshAllProjectFiles,
-  ]);
+  }, [rootFolderPath, isRemoteWindow, refreshAllProjectFiles]);
 
   // Load all project files when root folder changes or remote connection changes
   useEffect(() => {
@@ -426,7 +432,7 @@ function App() {
           items: FileEntry[],
         ): Promise<FileEntry[]> => {
           return Promise.all(
-            items.map(async (item) => {
+            items.map(async item => {
               if (item.path === folderPath && item.isDir) {
                 if (!item.expanded) {
                   // Expand folder - load children from remote
@@ -440,7 +446,7 @@ function App() {
                       },
                     );
 
-                    const children: FileEntry[] = remoteFiles.map((file) => ({
+                    const children: FileEntry[] = remoteFiles.map(file => ({
                       name: file.name,
                       path: file.path,
                       isDir: file.is_dir,
@@ -488,12 +494,14 @@ function App() {
     if (isRemoteWindow && remoteConnectionId) {
       // Handle remote collapse all
       const collapseFiles = (items: FileEntry[]): FileEntry[] => {
-        return items.map((item) => {
+        return items.map(item => {
           if (item.isDir) {
             return {
               ...item,
               expanded: false,
-              children: item.children ? collapseFiles(item.children) : undefined,
+              children: item.children
+                ? collapseFiles(item.children)
+                : undefined,
             };
           }
           return item;
@@ -506,9 +514,13 @@ function App() {
       // Use local collapse all
       handleCollapseAllFolders();
     }
-  }, [isRemoteWindow, remoteConnectionId, files, setFiles, handleCollapseAllFolders]);
-
-
+  }, [
+    isRemoteWindow,
+    remoteConnectionId,
+    files,
+    setFiles,
+    handleCollapseAllFolders,
+  ]);
 
   // Track when a new folder is opened and add to recents
   useEffect(() => {
@@ -569,10 +581,6 @@ function App() {
     handleSearchQueryChange,
     handleFindClose,
   } = useSearch({ activeBuffer, codeEditorRef });
-
-
-
-
 
   // Function to focus search input
   const focusSearchInput = () => {
@@ -641,9 +649,7 @@ function App() {
         // For remote files, mark as dirty first, then save directly via SSH
         markBufferDirty(activeBuffer.id, true);
 
-        const pathParts = activeBuffer.path
-          .replace("remote://", "")
-          .split("/");
+        const pathParts = activeBuffer.path.replace("remote://", "").split("/");
         const connectionId = pathParts.shift();
         const remotePath = "/" + pathParts.join("/");
 
@@ -749,9 +755,9 @@ function App() {
 
     // Replace the selected text with the edited text
     const newContent =
-      activeBuffer.content.substring(0, start) +
-      editedText +
-      activeBuffer.content.substring(end);
+      activeBuffer.content.substring(0, start)
+      + editedText
+      + activeBuffer.content.substring(end);
 
     // Update the buffer content
     updateBufferContent(activeBuffer.id, newContent);
@@ -778,9 +784,9 @@ function App() {
 
     // If text is selected, replace it. Otherwise, insert at cursor position
     const newContent =
-      activeBuffer.content.substring(0, start) +
-      code +
-      activeBuffer.content.substring(end);
+      activeBuffer.content.substring(0, start)
+      + code
+      + activeBuffer.content.substring(end);
 
     // Update the buffer content
     updateBufferContent(activeBuffer.id, newContent);
@@ -792,8 +798,6 @@ function App() {
       textarea.setSelectionRange(newCursorPosition, newCursorPosition);
     });
   };
-
-
 
   // Menu events hook - placed after all dependencies are defined
   useMenuEvents({
@@ -905,8 +909,6 @@ function App() {
     coreFeatures,
   });
 
-
-
   // Handle clicking outside context menu to close it
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -924,29 +926,38 @@ function App() {
 
   useEffect(() => {
     const handleNavigateToLine = (event: CustomEvent) => {
-      const { line } = event.detail
+      const { line } = event.detail;
       if (codeEditorRef.current?.textarea) {
-        const textarea = codeEditorRef.current.textarea
-        const lines = textarea.value.split('\n')
-        let targetPosition = 0
+        const textarea = codeEditorRef.current.textarea;
+        const lines = textarea.value.split("\n");
+        let targetPosition = 0;
 
         for (let i = 0; i < line - 1 && i < lines.length; i++) {
-          targetPosition += lines[i].length + 1
+          targetPosition += lines[i].length + 1;
         }
 
-        textarea.focus()
-        textarea.setSelectionRange(targetPosition, targetPosition)
-        const lineHeight = 20
-        const scrollTop = Math.max(0, (line - 1) * lineHeight - textarea.clientHeight / 2)
-        textarea.scrollTop = scrollTop
+        textarea.focus();
+        textarea.setSelectionRange(targetPosition, targetPosition);
+        const lineHeight = 20;
+        const scrollTop = Math.max(
+          0,
+          (line - 1) * lineHeight - textarea.clientHeight / 2,
+        );
+        textarea.scrollTop = scrollTop;
       }
-    }
+    };
 
-    window.addEventListener('navigate-to-line', handleNavigateToLine as EventListener)
+    window.addEventListener(
+      "navigate-to-line",
+      handleNavigateToLine as EventListener,
+    );
     return () => {
-      window.removeEventListener('navigate-to-line', handleNavigateToLine as EventListener)
-    }
-  }, [])
+      window.removeEventListener(
+        "navigate-to-line",
+        handleNavigateToLine as EventListener,
+      );
+    };
+  }, []);
 
   const handleFileSelect = async (
     path: string,
@@ -1051,31 +1062,34 @@ function App() {
   };
 
   // Immediate buffer update for responsive typing - NO auto-saving for remote files
-  const handleContentChange = useCallback((content: string) => {
-    if (!activeBuffer) return;
+  const handleContentChange = useCallback(
+    (content: string) => {
+      if (!activeBuffer) return;
 
-    const isRemoteFile = activeBuffer.path.startsWith("remote://");
+      const isRemoteFile = activeBuffer.path.startsWith("remote://");
 
-    if (isRemoteFile) {
-      // For remote files, use direct synchronous update to avoid any React delays
-      updateBufferContent(activeBuffer.id, content, false);
-    } else {
-      // For local files, update content and auto-save
-      updateBufferContent(activeBuffer.id, content, true);
-      if (!activeBuffer.isVirtual) {
-        // Auto-save local files with small debounce
-        setTimeout(async () => {
-          try {
-            await writeFile(activeBuffer.path, content);
-            markBufferDirty(activeBuffer.id, false);
-          } catch (error) {
-            console.error("Error saving local file:", error);
-            markBufferDirty(activeBuffer.id, true);
-          }
-        }, 100);
+      if (isRemoteFile) {
+        // For remote files, use direct synchronous update to avoid any React delays
+        updateBufferContent(activeBuffer.id, content, false);
+      } else {
+        // For local files, update content and auto-save
+        updateBufferContent(activeBuffer.id, content, true);
+        if (!activeBuffer.isVirtual) {
+          // Auto-save local files with small debounce
+          setTimeout(async () => {
+            try {
+              await writeFile(activeBuffer.path, content);
+              markBufferDirty(activeBuffer.id, false);
+            } catch (error) {
+              console.error("Error saving local file:", error);
+              markBufferDirty(activeBuffer.id, true);
+            }
+          }, 100);
+        }
       }
-    }
-  }, [activeBuffer, updateBufferContent, markBufferDirty]);
+    },
+    [activeBuffer, updateBufferContent, markBufferDirty],
+  );
 
   const handleTabClick = (bufferId: string) => {
     setActiveBuffer(bufferId);
@@ -1087,7 +1101,7 @@ function App() {
   };
 
   const handleTabPin = (bufferId: string) => {
-    const buffer = buffers.find((b) => b.id === bufferId);
+    const buffer = buffers.find(b => b.id === bufferId);
     if (buffer) {
       updateBuffer({
         ...buffer,
@@ -1098,24 +1112,24 @@ function App() {
 
   const handleCloseOtherTabs = (keepBufferId: string) => {
     const buffersToClose = buffers.filter(
-      (b) => b.id !== keepBufferId && !b.isPinned,
+      b => b.id !== keepBufferId && !b.isPinned,
     );
-    buffersToClose.forEach((buffer) => closeBuffer(buffer.id));
+    buffersToClose.forEach(buffer => closeBuffer(buffer.id));
   };
 
   const handleCloseAllTabs = () => {
-    const buffersToClose = buffers.filter((b) => !b.isPinned);
-    buffersToClose.forEach((buffer) => closeBuffer(buffer.id));
+    const buffersToClose = buffers.filter(b => !b.isPinned);
+    buffersToClose.forEach(buffer => closeBuffer(buffer.id));
   };
 
   const handleCloseTabsToRight = (bufferId: string) => {
-    const bufferIndex = buffers.findIndex((b) => b.id === bufferId);
+    const bufferIndex = buffers.findIndex(b => b.id === bufferId);
     if (bufferIndex === -1) return;
 
     const buffersToClose = buffers
       .slice(bufferIndex + 1)
-      .filter((b) => !b.isPinned);
-    buffersToClose.forEach((buffer) => closeBuffer(buffer.id));
+      .filter(b => !b.isPinned);
+    buffersToClose.forEach(buffer => closeBuffer(buffer.id));
   };
 
   // Split view handlers (simplified for performance)
@@ -1213,8 +1227,6 @@ function App() {
     }
   };
 
-
-
   // Determine what to show: remote window, welcome screen, or main app
   const urlParams = new URLSearchParams(window.location.search);
   const remoteParam = urlParams.get("remote");
@@ -1222,11 +1234,11 @@ function App() {
 
   // Check if we should show welcome screen (no folder open and not a remote window)
   const shouldShowWelcome =
-    files.length === 0 &&
-    !isRemoteWindow &&
-    !remoteConnectionId &&
-    !isRemoteFromUrl &&
-    !remoteParam;
+    files.length === 0
+    && !isRemoteWindow
+    && !remoteConnectionId
+    && !isRemoteFromUrl
+    && !remoteParam;
 
   // Debug logging
   console.log("Debug: shouldShowWelcome =", shouldShowWelcome);
@@ -1277,14 +1289,18 @@ function App() {
       await refreshDirectory(rootFolderPath || ".");
     } catch (error) {
       console.error("Error creating new folder:", error);
-      alert("Failed to create folder. This feature may not be fully implemented yet.");
+      alert(
+        "Failed to create folder. This feature may not be fully implemented yet.",
+      );
     }
   };
 
   if (shouldShowWelcome) {
     return (
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
-        <div className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && 'rounded-xl'}`}>
+        <div
+          className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && "rounded-xl"}`}
+        >
           <CustomTitleBar showMinimal={true} />
           <WelcomeScreen
             onOpenFolder={handleOpenFolder}
@@ -1298,7 +1314,9 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
-      <div className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && 'rounded-xl'}`}>
+      <div
+        className={`window-container flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden ${isMac() && "rounded-xl"}`}
+      >
         {/* Custom Titlebar */}
         <CustomTitleBar
           projectName={
@@ -1357,16 +1375,17 @@ function App() {
                       variant="ghost"
                       size="sm"
                       data-active={
-                        !isGitViewActive &&
-                        !isSearchViewActive &&
-                        !isRemoteViewActive
+                        !isGitViewActive
+                        && !isSearchViewActive
+                        && !isRemoteViewActive
                       }
-                      className={`text-xs flex items-center justify-center w-8 h-8 rounded ${!isGitViewActive &&
-                        !isSearchViewActive &&
-                        !isRemoteViewActive
-                        ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                        : "hover:bg-[var(--hover-color)]"
-                        }`}
+                      className={`text-xs flex items-center justify-center w-8 h-8 rounded ${
+                        !isGitViewActive
+                        && !isSearchViewActive
+                        && !isRemoteViewActive
+                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                          : "hover:bg-[var(--hover-color)]"
+                      }`}
                       title="File Explorer"
                     >
                       <Folder size={14} />
@@ -1381,10 +1400,11 @@ function App() {
                         variant="ghost"
                         size="sm"
                         data-active={isSearchViewActive}
-                        className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isSearchViewActive
-                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                          : "hover:bg-[var(--hover-color)]"
-                          }`}
+                        className={`text-xs flex items-center justify-center w-8 h-8 rounded ${
+                          isSearchViewActive
+                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                            : "hover:bg-[var(--hover-color)]"
+                        }`}
                         title="Search"
                       >
                         <Search size={14} />
@@ -1400,10 +1420,11 @@ function App() {
                         variant="ghost"
                         size="sm"
                         data-active={isGitViewActive}
-                        className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isGitViewActive
-                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                          : "hover:bg-[var(--hover-color)]"
-                          }`}
+                        className={`text-xs flex items-center justify-center w-8 h-8 rounded ${
+                          isGitViewActive
+                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                            : "hover:bg-[var(--hover-color)]"
+                        }`}
                         title="Git Source Control"
                       >
                         <GitBranch size={14} />
@@ -1419,10 +1440,11 @@ function App() {
                         variant="ghost"
                         size="sm"
                         data-active={isRemoteViewActive}
-                        className={`text-xs flex items-center justify-center w-8 h-8 rounded ${isRemoteViewActive
-                          ? "bg-[var(--hover-color)] text-[var(--text-color)]"
-                          : "hover:bg-[var(--hover-color)]"
-                          }`}
+                        className={`text-xs flex items-center justify-center w-8 h-8 rounded ${
+                          isRemoteViewActive
+                            ? "bg-[var(--hover-color)] text-[var(--text-color)]"
+                            : "hover:bg-[var(--hover-color)]"
+                        }`}
                         title="Remote Connections"
                       >
                         <Server size={14} />
@@ -1448,20 +1470,24 @@ function App() {
                       />
                       <span
                         className="text-xs font-medium text-[var(--text-color)] cursor-pointer hover:bg-[var(--hover-color)] px-2 py-1 rounded flex-1"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.preventDefault();
                           e.stopPropagation();
                           setProjectNameMenu({
                             x: e.currentTarget.getBoundingClientRect().left,
-                            y: e.currentTarget.getBoundingClientRect().bottom + 5,
+                            y:
+                              e.currentTarget.getBoundingClientRect().bottom
+                              + 5,
                           });
                         }}
-                        onContextMenu={(e) => {
+                        onContextMenu={e => {
                           e.preventDefault();
                           e.stopPropagation();
                           setProjectNameMenu({
                             x: e.currentTarget.getBoundingClientRect().left,
-                            y: e.currentTarget.getBoundingClientRect().bottom + 5,
+                            y:
+                              e.currentTarget.getBoundingClientRect().bottom
+                              + 5,
                           });
                         }}
                         title="Click for workspace options"
@@ -1472,27 +1498,31 @@ function App() {
                   )}
 
                   {/* Pane Title and Action Buttons Row - Only show for file tree view */}
-                  {!isGitViewActive &&
-                    !isSearchViewActive &&
-                    !isRemoteViewActive &&
-                    !isRemoteWindow && (
+                  {!isGitViewActive
+                    && !isSearchViewActive
+                    && !isRemoteViewActive
+                    && !isRemoteWindow && (
                       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)] bg-[var(--secondary-bg)]">
                         <h3
                           className="font-mono text-xs font-medium text-[var(--text-color)] tracking-wide cursor-pointer hover:bg-[var(--hover-color)] px-2 py-1 rounded"
-                          onClick={(e) => {
+                          onClick={e => {
                             e.preventDefault();
                             e.stopPropagation();
                             setProjectNameMenu({
                               x: e.currentTarget.getBoundingClientRect().left,
-                              y: e.currentTarget.getBoundingClientRect().bottom + 5,
+                              y:
+                                e.currentTarget.getBoundingClientRect().bottom
+                                + 5,
                             });
                           }}
-                          onContextMenu={(e) => {
+                          onContextMenu={e => {
                             e.preventDefault();
                             e.stopPropagation();
                             setProjectNameMenu({
                               x: e.currentTarget.getBoundingClientRect().left,
-                              y: e.currentTarget.getBoundingClientRect().bottom + 5,
+                              y:
+                                e.currentTarget.getBoundingClientRect().bottom
+                                + 5,
                             });
                           }}
                           title="Click for workspace options"
@@ -1547,12 +1577,16 @@ function App() {
                         onFileSelect={
                           isRemoteWindow
                             ? async (path: string, isDir: boolean) => {
-                              if (isDir) {
-                                await handleFolderToggle(path);
-                              } else {
-                                await remoteFileSelect(path, isDir, openBuffer);
+                                if (isDir) {
+                                  await handleFolderToggle(path);
+                                } else {
+                                  await remoteFileSelect(
+                                    path,
+                                    isDir,
+                                    openBuffer,
+                                  );
+                                }
                               }
-                            }
                             : handleFileSelect
                         }
                         onCreateNewFileInDirectory={
@@ -1634,11 +1668,11 @@ function App() {
                   />
                 ) : activeBuffer.path === "extensions://language-servers" ? (
                   <ExtensionsView
-                    onServerInstall={(server) => {
+                    onServerInstall={server => {
                       console.log("Installing server:", server.name);
                       // Here you would integrate with the LSP system
                     }}
-                    onServerUninstall={(serverId) => {
+                    onServerUninstall={serverId => {
                       console.log("Uninstalling server:", serverId);
                       // Here you would clean up the LSP system
                     }}
@@ -1650,13 +1684,13 @@ function App() {
                 ) : (
                   <CodeEditor
                     value={activeBuffer.content}
-                    onChange={(content) =>
+                    onChange={content =>
                       vimMode === "insert" || !vimEnabled
                         ? handleContentChange(content)
                         : undefined
                     }
                     onKeyDown={handleVimKeyDown}
-                    onCursorPositionChange={(position) => {
+                    onCursorPositionChange={position => {
                       if (vimEnabled) {
                         setCursorPosition(position);
                       }
@@ -1720,14 +1754,16 @@ function App() {
                       onClick={() => {
                         setBottomPaneActiveTab("terminal");
                         setIsBottomPaneVisible(
-                          !isBottomPaneVisible ||
-                          bottomPaneActiveTab !== "terminal",
+                          !isBottomPaneVisible
+                            || bottomPaneActiveTab !== "terminal",
                         );
                       }}
-                      className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible && bottomPaneActiveTab === "terminal"
-                        ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
-                        : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
-                        }`}
+                      className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${
+                        isBottomPaneVisible
+                        && bottomPaneActiveTab === "terminal"
+                          ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
+                          : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
+                      }`}
                       title="Toggle Terminal"
                     >
                       <TerminalIcon size={12} />
@@ -1740,17 +1776,18 @@ function App() {
                       onClick={() => {
                         setBottomPaneActiveTab("diagnostics");
                         setIsBottomPaneVisible(
-                          !isBottomPaneVisible ||
-                          bottomPaneActiveTab !== "diagnostics",
+                          !isBottomPaneVisible
+                            || bottomPaneActiveTab !== "diagnostics",
                         );
                       }}
-                      className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible &&
-                        bottomPaneActiveTab === "diagnostics"
-                        ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
-                        : diagnostics.length > 0
-                          ? "bg-[var(--primary-bg)] border-red-300 text-red-600 hover:bg-red-50"
-                          : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
-                        }`}
+                      className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${
+                        isBottomPaneVisible
+                        && bottomPaneActiveTab === "diagnostics"
+                          ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
+                          : diagnostics.length > 0
+                            ? "bg-[var(--primary-bg)] border-red-300 text-red-600 hover:bg-red-50"
+                            : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
+                      }`}
                       title="Toggle Problems Panel"
                     >
                       <AlertCircle size={12} />
@@ -1773,7 +1810,6 @@ function App() {
                       <span>AI Assist</span>
                     </button>
                   )}
-
                 </div>
               </div>
             </div>
@@ -1803,7 +1839,7 @@ function App() {
             isVisible={isBottomPaneVisible}
             onClose={() => setIsBottomPaneVisible(false)}
             activeTab={bottomPaneActiveTab}
-            onTabChange={(tab) => setBottomPaneActiveTab(tab)}
+            onTabChange={tab => setBottomPaneActiveTab(tab)}
             diagnostics={diagnostics}
             onDiagnosticClick={handleDiagnosticClick}
             currentDirectory={
@@ -1879,13 +1915,11 @@ function App() {
             language={
               activeBuffer
                 ? getLanguageFromFilename(
-                  getFilenameFromPath(activeBuffer.path),
-                )
+                    getFilenameFromPath(activeBuffer.path),
+                  )
                 : undefined
             }
           />
-
-
 
           {/* Project Name Menu (Unified) */}
           {projectNameMenu && (
@@ -1895,12 +1929,12 @@ function App() {
                 left: projectNameMenu.x,
                 top: projectNameMenu.y,
               }}
-              onMouseDown={(e) => {
+              onMouseDown={e => {
                 e.stopPropagation();
               }}
             >
               <button
-                onMouseDown={(e) => {
+                onMouseDown={e => {
                   e.preventDefault();
                   e.stopPropagation();
                   handleOpenFolder();
@@ -1913,7 +1947,7 @@ function App() {
               </button>
 
               <button
-                onMouseDown={(e) => {
+                onMouseDown={e => {
                   e.preventDefault();
                   e.stopPropagation();
                   handleCollapseAllFoldersComplete();
@@ -1934,7 +1968,7 @@ function App() {
                   {recentFolders.slice(0, 5).map((folder, index) => (
                     <button
                       key={folder.path}
-                      onMouseDown={(e) => {
+                      onMouseDown={e => {
                         e.preventDefault();
                         e.stopPropagation();
                         handleOpenRecentFolder(folder.path);
@@ -1944,7 +1978,9 @@ function App() {
                     >
                       <Folder size={12} />
                       <div className="flex flex-col items-start min-w-0 flex-1">
-                        <span className="truncate font-medium">{folder.name}</span>
+                        <span className="truncate font-medium">
+                          {folder.name}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -1960,8 +1996,6 @@ function App() {
             targetFolder={imageGenerationFolder}
             onImageGenerated={handleImageGenerated}
           />
-
-
         </div>
       </div>
     </div>

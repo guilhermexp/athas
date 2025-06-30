@@ -119,7 +119,7 @@ const getLanguageFromFilename = (filename: string): string => {
 
 // Helper function to escape HTML entities
 const escapeHtml = (text: string): string => {
-  const div = document.createElement('div');
+  const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
 };
@@ -251,12 +251,10 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     const highlightRef = useRef<HTMLPreElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
     const [language, setLanguage] = useState<string>("text");
-      const [currentCompletion, setCurrentCompletion] =
-    useState<CompletionResponse | null>(null);
-  const [showCompletion, setShowCompletion] = useState(false);
-  const [lastCursorPosition, setLastCursorPosition] = useState(0);
-
-
+    const [currentCompletion, setCurrentCompletion] =
+      useState<CompletionResponse | null>(null);
+    const [showCompletion, setShowCompletion] = useState(false);
+    const [lastCursorPosition, setLastCursorPosition] = useState(0);
 
     // LSP completion state
     const [lspCompletions, setLspCompletions] = useState<CompletionItem[]>([]);
@@ -289,9 +287,9 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             console.error("LSP open document error:", error);
           }
         };
-        
+
         // Use requestIdleCallback to run when browser is idle
-        if ('requestIdleCallback' in window) {
+        if ("requestIdleCallback" in window) {
           requestIdleCallback(() => openLspDocument(), { timeout: 1000 });
         } else {
           setTimeout(openLspDocument, 0);
@@ -408,7 +406,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             filename,
             cursorPosition: cursorPos,
           },
-          (completion) => {
+          completion => {
             if (completion && completion.completion.trim()) {
               setCurrentCompletion(completion);
               setShowCompletion(true);
@@ -426,8 +424,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
       // Only trigger on forward cursor movement (typing)
       if (
-        currentCursorPos > lastCursorPosition &&
-        currentCursorPos - lastCursorPosition <= 5
+        currentCursorPos > lastCursorPosition
+        && currentCursorPos - lastCursorPosition <= 5
       ) {
         const timeoutId = setTimeout(() => {
           handleCompletionTrigger(currentCursorPos);
@@ -448,8 +446,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       };
     }, []);
 
-
-
     // Function to add search highlighting to syntax highlighted content (memoized)
     const addSearchHighlighting = useMemo(() => {
       return (content: string): string => {
@@ -461,67 +457,67 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = content;
 
-      // Get the text content to find positions in the highlighted HTML
-      const textContent = tempDiv.textContent || "";
+        // Get the text content to find positions in the highlighted HTML
+        const textContent = tempDiv.textContent || "";
 
-      // Sort matches by start position (descending) to process from end to beginning
-      const sortedMatches = [...searchMatches].sort(
-        (a, b) => b.start - a.start,
-      );
-
-      // Process each match from end to beginning to avoid position shifts
-      sortedMatches.forEach((match, index) => {
-        const originalIndex = searchMatches.indexOf(match);
-        const isCurrentMatch = originalIndex === currentMatchIndex;
-        const matchClass = isCurrentMatch
-          ? "bg-orange-400 text-black font-semibold"
-          : "bg-yellow-300 text-black";
-
-        // Find the position in the HTML where this text match occurs
-        const walker = document.createTreeWalker(
-          tempDiv,
-          NodeFilter.SHOW_TEXT,
-          null,
+        // Sort matches by start position (descending) to process from end to beginning
+        const sortedMatches = [...searchMatches].sort(
+          (a, b) => b.start - a.start,
         );
 
-        let currentPos = 0;
-        let node;
+        // Process each match from end to beginning to avoid position shifts
+        sortedMatches.forEach((match, index) => {
+          const originalIndex = searchMatches.indexOf(match);
+          const isCurrentMatch = originalIndex === currentMatchIndex;
+          const matchClass = isCurrentMatch
+            ? "bg-orange-400 text-black font-semibold"
+            : "bg-yellow-300 text-black";
 
-        while ((node = walker.nextNode())) {
-          const nodeText = node.textContent || "";
-          const nodeStart = currentPos;
-          const nodeEnd = currentPos + nodeText.length;
+          // Find the position in the HTML where this text match occurs
+          const walker = document.createTreeWalker(
+            tempDiv,
+            NodeFilter.SHOW_TEXT,
+            null,
+          );
 
-          if (match.start >= nodeStart && match.end <= nodeEnd) {
-            // Match is within this text node
-            const relativeStart = match.start - nodeStart;
-            const relativeEnd = match.end - nodeStart;
+          let currentPos = 0;
+          let node;
 
-            const beforeText = nodeText.substring(0, relativeStart);
-            const matchText = nodeText.substring(relativeStart, relativeEnd);
-            const afterText = nodeText.substring(relativeEnd);
+          while ((node = walker.nextNode())) {
+            const nodeText = node.textContent || "";
+            const nodeStart = currentPos;
+            const nodeEnd = currentPos + nodeText.length;
 
-            // Create the replacement HTML
-            const replacement = document.createElement("span");
-            replacement.innerHTML =
-              beforeText +
-              `<span class="${matchClass}">${matchText}</span>` +
-              afterText;
+            if (match.start >= nodeStart && match.end <= nodeEnd) {
+              // Match is within this text node
+              const relativeStart = match.start - nodeStart;
+              const relativeEnd = match.end - nodeStart;
 
-            // Replace the text node with our highlighted version
-            const parent = node.parentNode;
-            if (parent) {
-              while (replacement.firstChild) {
-                parent.insertBefore(replacement.firstChild, node);
+              const beforeText = nodeText.substring(0, relativeStart);
+              const matchText = nodeText.substring(relativeStart, relativeEnd);
+              const afterText = nodeText.substring(relativeEnd);
+
+              // Create the replacement HTML
+              const replacement = document.createElement("span");
+              replacement.innerHTML =
+                beforeText
+                + `<span class="${matchClass}">${matchText}</span>`
+                + afterText;
+
+              // Replace the text node with our highlighted version
+              const parent = node.parentNode;
+              if (parent) {
+                while (replacement.firstChild) {
+                  parent.insertBefore(replacement.firstChild, node);
+                }
+                parent.removeChild(node);
               }
-              parent.removeChild(node);
+              break;
             }
-            break;
-          }
 
-          currentPos = nodeEnd;
-        }
-      });
+            currentPos = nodeEnd;
+          }
+        });
 
         return tempDiv.innerHTML;
       };
@@ -530,11 +526,11 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     // Highlight code when value, language, or search changes (debounced for performance)
     useEffect(() => {
       const isRemoteFile = filePath?.startsWith("remote://");
-      
+
       // For remote files, use much longer debounce and run in requestIdleCallback
       // For local files, use minimal debounce for faster loading
       const debounceTime = isRemoteFile ? 1000 : 50;
-      
+
       const timeoutId = setTimeout(() => {
         const performHighlighting = () => {
           if (highlightRef.current && language !== "text") {
@@ -545,7 +541,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             } catch (error) {
               // Fallback to escaped plain text if highlighting fails
               const escapedValue = escapeHtml(value);
-              const withSearchHighlighting = addSearchHighlighting(escapedValue);
+              const withSearchHighlighting =
+                addSearchHighlighting(escapedValue);
               highlightRef.current.innerHTML = withSearchHighlighting;
             }
           } else if (highlightRef.current) {
@@ -555,10 +552,10 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             highlightRef.current.innerHTML = withSearchHighlighting;
           }
         };
-        
+
         if (isRemoteFile) {
           // For remote files, use requestIdleCallback to run when browser is idle
-          if ('requestIdleCallback' in window) {
+          if ("requestIdleCallback" in window) {
             requestIdleCallback(performHighlighting, { timeout: 2000 });
           } else {
             // Fallback for browsers without requestIdleCallback
@@ -570,14 +567,21 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       }, debounceTime);
 
       return () => clearTimeout(timeoutId);
-    }, [value, language, searchQuery, searchMatches, currentMatchIndex, filePath]);
+    }, [
+      value,
+      language,
+      searchQuery,
+      searchMatches,
+      currentMatchIndex,
+      filePath,
+    ]);
 
     // Sync scroll between textarea, highlight layer, and line numbers
     const handleScroll = () => {
       if (
-        textareaRef.current &&
-        highlightRef.current &&
-        lineNumbersRef.current
+        textareaRef.current
+        && highlightRef.current
+        && lineNumbersRef.current
       ) {
         const scrollTop = textareaRef.current.scrollTop;
         const scrollLeft = textareaRef.current.scrollLeft;
@@ -596,9 +600,13 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
         // Skip LSP for remote files to avoid delays
         const isRemoteFile = filePath?.startsWith("remote://");
-        
+
         // Trigger LSP completion if supported and in insert mode (or vim disabled) - but not for remote files
-        if (!isRemoteFile && isLanguageSupported?.(filePath || "") && (!vimEnabled || vimMode === "insert")) {
+        if (
+          !isRemoteFile
+          && isLanguageSupported?.(filePath || "")
+          && (!vimEnabled || vimMode === "insert")
+        ) {
           handleLspCompletion(position);
         }
       }
@@ -610,9 +618,9 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
       const currentCursorPos = textareaRef.current.selectionStart;
       const newValue =
-        value.substring(0, currentCursorPos) +
-        currentCompletion.completion +
-        value.substring(currentCursorPos);
+        value.substring(0, currentCursorPos)
+        + currentCompletion.completion
+        + value.substring(currentCursorPos);
 
       onChange(newValue);
       setShowCompletion(false);
@@ -688,8 +696,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       return Array.from({ length: maxLines }, (_, i) => i + 1);
     }, [value]);
 
-
-
     return (
       <div className="flex-1 relative flex flex-col h-full">
         <div className="flex-1 relative overflow-hidden flex h-full">
@@ -705,7 +711,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   color: "var(--text-lighter)",
                 }}
               >
-                {lineNumbersArray.map((num) => (
+                {lineNumbersArray.map(num => (
                   <div key={num} style={{ height: `${fontSize * 1.4}px` }}>
                     {num}
                   </div>
@@ -731,19 +737,19 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             <textarea
               ref={textareaRef}
               value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => onChange(e.target.value)}
+              onKeyDown={e => {
                 // Handle LSP completion navigation
                 if (isLspCompletionVisible) {
                   if (e.key === "ArrowDown") {
                     e.preventDefault();
-                    setSelectedLspIndex((prev) =>
+                    setSelectedLspIndex(prev =>
                       prev < lspCompletions.length - 1 ? prev + 1 : 0,
                     );
                     return;
                   } else if (e.key === "ArrowUp") {
                     e.preventDefault();
-                    setSelectedLspIndex((prev) =>
+                    setSelectedLspIndex(prev =>
                       prev > 0 ? prev - 1 : lspCompletions.length - 1,
                     );
                     return;
@@ -765,22 +771,23 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                 if (textarea && !disabled) {
                   const { selectionStart, selectionEnd } = textarea;
                   const currentValue = textarea.value;
-                  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                  const isMac =
+                    navigator.platform.toUpperCase().indexOf("MAC") >= 0;
                   const cmdKey = isMac ? e.metaKey : e.ctrlKey;
 
                   // Tab for indentation
                   if (e.key === "Tab" && !e.shiftKey) {
                     e.preventDefault();
                     const spaces = " ".repeat(tabSize);
-                    
+
                     if (selectionStart === selectionEnd) {
                       // No selection - insert tab at cursor
-                      const newValue = 
-                        currentValue.substring(0, selectionStart) + 
-                        spaces + 
-                        currentValue.substring(selectionStart);
+                      const newValue =
+                        currentValue.substring(0, selectionStart)
+                        + spaces
+                        + currentValue.substring(selectionStart);
                       onChange(newValue);
-                      
+
                       requestAnimationFrame(() => {
                         if (textarea) {
                           const newPos = selectionStart + spaces.length;
@@ -789,21 +796,27 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                       });
                     } else {
                       // Has selection - indent selected lines
-                      const lines = currentValue.split('\n');
-                      const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                      const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
-                      
+                      const lines = currentValue.split("\n");
+                      const startLine =
+                        currentValue.substring(0, selectionStart).split("\n")
+                          .length - 1;
+                      const endLine =
+                        currentValue.substring(0, selectionEnd).split("\n")
+                          .length - 1;
+
                       for (let i = startLine; i <= endLine; i++) {
                         lines[i] = spaces + lines[i];
                       }
-                      
-                      const newValue = lines.join('\n');
+
+                      const newValue = lines.join("\n");
                       onChange(newValue);
-                      
+
                       requestAnimationFrame(() => {
                         if (textarea) {
                           const newStart = selectionStart + spaces.length;
-                          const newEnd = selectionEnd + (spaces.length * (endLine - startLine + 1));
+                          const newEnd =
+                            selectionEnd
+                            + spaces.length * (endLine - startLine + 1);
                           textarea.setSelectionRange(newStart, newEnd);
                         }
                       });
@@ -814,10 +827,14 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   // Shift+Tab for unindentation
                   if (e.key === "Tab" && e.shiftKey) {
                     e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
-                    
+                    const lines = currentValue.split("\n");
+                    const startLine =
+                      currentValue.substring(0, selectionStart).split("\n")
+                        .length - 1;
+                    const endLine =
+                      currentValue.substring(0, selectionEnd).split("\n").length
+                      - 1;
+
                     let removedChars = 0;
                     for (let i = startLine; i <= endLine; i++) {
                       const line = lines[i];
@@ -826,15 +843,22 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                       lines[i] = line.substring(spacesToRemove);
                       if (i === startLine) removedChars = spacesToRemove;
                     }
-                    
-                    const newValue = lines.join('\n');
+
+                    const newValue = lines.join("\n");
                     onChange(newValue);
-                    
+
                     requestAnimationFrame(() => {
                       if (textarea) {
-                        const newStart = Math.max(0, selectionStart - removedChars);
-                        const totalRemoved = (endLine - startLine + 1) * Math.min(tabSize, 2); // Estimate
-                        const newEnd = Math.max(newStart, selectionEnd - totalRemoved);
+                        const newStart = Math.max(
+                          0,
+                          selectionStart - removedChars,
+                        );
+                        const totalRemoved =
+                          (endLine - startLine + 1) * Math.min(tabSize, 2); // Estimate
+                        const newEnd = Math.max(
+                          newStart,
+                          selectionEnd - totalRemoved,
+                        );
                         textarea.setSelectionRange(newStart, newEnd);
                       }
                     });
@@ -842,25 +866,46 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   }
 
                   // Alt/Option + Arrow Up/Down for moving lines
-                  if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+                  if (
+                    e.altKey
+                    && (e.key === "ArrowUp" || e.key === "ArrowDown")
+                  ) {
                     e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const targetLine = e.key === "ArrowUp" ? currentLine - 1 : currentLine + 1;
-                    
+                    const lines = currentValue.split("\n");
+                    const currentLine =
+                      currentValue.substring(0, selectionStart).split("\n")
+                        .length - 1;
+                    const targetLine =
+                      e.key === "ArrowUp" ? currentLine - 1 : currentLine + 1;
+
                     if (targetLine >= 0 && targetLine < lines.length) {
                       // Swap lines
-                      [lines[currentLine], lines[targetLine]] = [lines[targetLine], lines[currentLine]];
-                      const newValue = lines.join('\n');
+                      [lines[currentLine], lines[targetLine]] = [
+                        lines[targetLine],
+                        lines[currentLine],
+                      ];
+                      const newValue = lines.join("\n");
                       onChange(newValue);
-                      
+
                       requestAnimationFrame(() => {
                         if (textarea) {
                           // Calculate new cursor position
-                          const targetLineStart = lines.slice(0, targetLine).join('\n').length + (targetLine > 0 ? 1 : 0);
+                          const targetLineStart =
+                            lines.slice(0, targetLine).join("\n").length
+                            + (targetLine > 0 ? 1 : 0);
                           const currentLineText = lines[targetLine];
-                          const cursorOffsetInLine = selectionStart - (currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1);
-                          const newPos = targetLineStart + Math.min(cursorOffsetInLine, currentLineText.length);
+                          const cursorOffsetInLine =
+                            selectionStart
+                            - (currentValue
+                              .substring(0, selectionStart)
+                              .lastIndexOf("\n")
+                              + 1);
+                          const newPos =
+                            targetLineStart
+                            + Math.min(
+                              cursorOffsetInLine,
+                              currentLineText.length,
+                            );
                           textarea.setSelectionRange(newPos, newPos);
                         }
                       });
@@ -871,14 +916,16 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   // Cmd/Ctrl + D for duplicate line
                   if (cmdKey && e.key === "d") {
                     e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+                    const lines = currentValue.split("\n");
+                    const currentLine =
+                      currentValue.substring(0, selectionStart).split("\n")
+                        .length - 1;
                     const lineToClone = lines[currentLine];
-                    
+
                     lines.splice(currentLine + 1, 0, lineToClone);
-                    const newValue = lines.join('\n');
+                    const newValue = lines.join("\n");
                     onChange(newValue);
-                    
+
                     requestAnimationFrame(() => {
                       if (textarea) {
                         const newPos = selectionStart + lineToClone.length + 1;
@@ -891,10 +938,14 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   // Cmd/Ctrl + / for toggle comment
                   if (cmdKey && e.key === "/") {
                     e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
-                    
+                    const lines = currentValue.split("\n");
+                    const startLine =
+                      currentValue.substring(0, selectionStart).split("\n")
+                        .length - 1;
+                    const endLine =
+                      currentValue.substring(0, selectionEnd).split("\n").length
+                      - 1;
+
                     // Determine comment syntax based on language
                     const getCommentSyntax = (lang: string) => {
                       const singleLineComments: { [key: string]: string } = {
@@ -910,29 +961,38 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                       };
                       return singleLineComments[lang] || "//";
                     };
-                    
+
                     const commentPrefix = getCommentSyntax(language);
-                    const commentPattern = new RegExp(`^(\\s*)${commentPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s?`);
-                    
-                    // Check if all selected lines are commented
-                    const allCommented = lines.slice(startLine, endLine + 1).every(line => 
-                      line.trim() === '' || commentPattern.test(line)
+                    const commentPattern = new RegExp(
+                      `^(\\s*)${commentPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s?`,
                     );
-                    
+
+                    // Check if all selected lines are commented
+                    const allCommented = lines
+                      .slice(startLine, endLine + 1)
+                      .every(
+                        line => line.trim() === "" || commentPattern.test(line),
+                      );
+
                     for (let i = startLine; i <= endLine; i++) {
-                      if (lines[i].trim() === '') continue; // Skip empty lines
-                      
+                      if (lines[i].trim() === "") continue; // Skip empty lines
+
                       if (allCommented) {
                         // Uncomment
-                        lines[i] = lines[i].replace(commentPattern, '$1');
+                        lines[i] = lines[i].replace(commentPattern, "$1");
                       } else {
                         // Comment
-                        const leadingWhitespace = lines[i].match(/^\s*/)?.[0] || '';
-                        lines[i] = leadingWhitespace + commentPrefix + ' ' + lines[i].substring(leadingWhitespace.length);
+                        const leadingWhitespace =
+                          lines[i].match(/^\s*/)?.[0] || "";
+                        lines[i] =
+                          leadingWhitespace
+                          + commentPrefix
+                          + " "
+                          + lines[i].substring(leadingWhitespace.length);
                       }
                     }
-                    
-                    const newValue = lines.join('\n');
+
+                    const newValue = lines.join("\n");
                     onChange(newValue);
                     return;
                   }
@@ -940,16 +1000,23 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   // Cmd/Ctrl + Enter for new line below (like VS Code)
                   if (cmdKey && e.key === "Enter") {
                     e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const currentLineEnd = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1 + lines[currentLine].length;
-                    
-                    const newValue = 
-                      currentValue.substring(0, currentLineEnd) + 
-                      '\n' + 
-                      currentValue.substring(currentLineEnd);
+                    const lines = currentValue.split("\n");
+                    const currentLine =
+                      currentValue.substring(0, selectionStart).split("\n")
+                        .length - 1;
+                    const currentLineEnd =
+                      currentValue
+                        .substring(0, selectionStart)
+                        .lastIndexOf("\n")
+                      + 1
+                      + lines[currentLine].length;
+
+                    const newValue =
+                      currentValue.substring(0, currentLineEnd)
+                      + "\n"
+                      + currentValue.substring(currentLineEnd);
                     onChange(newValue);
-                    
+
                     requestAnimationFrame(() => {
                       if (textarea) {
                         const newPos = currentLineEnd + 1;
@@ -962,17 +1029,23 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   // Cmd/Ctrl + Shift + Enter for new line above
                   if (cmdKey && e.shiftKey && e.key === "Enter") {
                     e.preventDefault();
-                    const currentLineStart = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1;
-                    
-                    const newValue = 
-                      currentValue.substring(0, currentLineStart) + 
-                      '\n' + 
-                      currentValue.substring(currentLineStart);
+                    const currentLineStart =
+                      currentValue
+                        .substring(0, selectionStart)
+                        .lastIndexOf("\n") + 1;
+
+                    const newValue =
+                      currentValue.substring(0, currentLineStart)
+                      + "\n"
+                      + currentValue.substring(currentLineStart);
                     onChange(newValue);
-                    
+
                     requestAnimationFrame(() => {
                       if (textarea) {
-                        textarea.setSelectionRange(currentLineStart, currentLineStart);
+                        textarea.setSelectionRange(
+                          currentLineStart,
+                          currentLineStart,
+                        );
                       }
                     });
                     return;
@@ -985,7 +1058,10 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   }
 
                   // Cmd/Ctrl + Y or Cmd/Ctrl + Shift + Z for redo - let browser handle it
-                  if ((cmdKey && e.key === "y") || (cmdKey && e.shiftKey && e.key === "z")) {
+                  if (
+                    (cmdKey && e.key === "y")
+                    || (cmdKey && e.shiftKey && e.key === "z")
+                  ) {
                     // Don't prevent default - let the browser handle redo
                     return;
                   }
@@ -1037,7 +1113,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
           </div>
 
           {minimap && (
-            <MinimapPane 
+            <MinimapPane
               content={value}
               textareaRef={textareaRef}
               fontSize={fontSize}

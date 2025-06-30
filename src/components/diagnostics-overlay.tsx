@@ -1,5 +1,5 @@
-import { Diagnostic } from 'vscode-languageserver-protocol';
-import { AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { Diagnostic } from "vscode-languageserver-protocol";
+import { AlertTriangle, AlertCircle, Info } from "lucide-react";
 
 interface DiagnosticOverlayProps {
   diagnostics: Diagnostic[];
@@ -10,9 +10,9 @@ interface DiagnosticOverlayProps {
 const DiagnosticOverlay = ({
   diagnostics,
   content,
-  className = ''
+  className = "",
 }: DiagnosticOverlayProps) => {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
 
   const getSeverityIcon = (severity: number) => {
     switch (severity) {
@@ -32,15 +32,15 @@ const DiagnosticOverlay = ({
   const getSeverityClass = (severity: number) => {
     switch (severity) {
       case 1: // Error
-        return 'border-b-2 border-red-500 bg-red-50 dark:bg-red-900/20';
+        return "border-b-2 border-red-500 bg-red-50 dark:bg-red-900/20";
       case 2: // Warning
-        return 'border-b-2 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+        return "border-b-2 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20";
       case 3: // Information
-        return 'border-b-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20';
+        return "border-b-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20";
       case 4: // Hint
-        return 'border-b-2 border-gray-500 bg-gray-50 dark:bg-gray-900/20';
+        return "border-b-2 border-gray-500 bg-gray-50 dark:bg-gray-900/20";
       default:
-        return 'border-b-2 border-red-500 bg-red-50 dark:bg-red-900/20';
+        return "border-b-2 border-red-500 bg-red-50 dark:bg-red-900/20";
     }
   };
 
@@ -57,10 +57,10 @@ const DiagnosticOverlay = ({
           const lineText = lines[startLine];
           const beforeText = lineText.substring(0, startChar);
           const errorText = lineText.substring(startChar, endChar);
-          
+
           const lineHeight = 24; // 1.5rem * 16px
           const charWidth = 7.8; // Approximate monospace character width
-          
+
           const top = startLine * lineHeight + 16; // 16px for padding
           const left = 16 + 2 + beforeText.length * charWidth; // 16px padding + 2px for line numbers padding
           const width = errorText.length * charWidth;
@@ -74,9 +74,9 @@ const DiagnosticOverlay = ({
                 left: `${left}px`,
                 width: `${width}px`,
                 height: `${lineHeight}px`,
-                display: 'flex',
-                alignItems: 'center',
-                paddingLeft: '2px'
+                display: "flex",
+                alignItems: "center",
+                paddingLeft: "2px",
               }}
               title={diagnostic.message}
             >
@@ -84,7 +84,7 @@ const DiagnosticOverlay = ({
                 {getSeverityIcon(diagnostic.severity || 1)}
                 <span className="text-xs font-medium">
                   {diagnostic.message.substring(0, 50)}
-                  {diagnostic.message.length > 50 ? '...' : ''}
+                  {diagnostic.message.length > 50 ? "..." : ""}
                 </span>
               </div>
             </div>

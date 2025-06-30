@@ -1,8 +1,8 @@
-import React from 'react';
-import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
+import React from "react";
+import { AlertCircle, AlertTriangle, Info, X } from "lucide-react";
 
 export interface Diagnostic {
-  severity: 'error' | 'warning' | 'info';
+  severity: "error" | "warning" | "info";
   line: number;
   column: number;
   message: string;
@@ -23,39 +23,39 @@ const DiagnosticsPane = ({
   isVisible,
   onClose,
   onDiagnosticClick,
-  isEmbedded = false
+  isEmbedded = false,
 }: DiagnosticsPaneProps) => {
   if (!isVisible) return null;
 
-  const getSeverityIcon = (severity: Diagnostic['severity']) => {
+  const getSeverityIcon = (severity: Diagnostic["severity"]) => {
     switch (severity) {
-      case 'error':
+      case "error":
         return <AlertCircle size={14} className="text-red-500" />;
-      case 'warning':
+      case "warning":
         return <AlertTriangle size={14} className="text-yellow-500" />;
-      case 'info':
+      case "info":
         return <Info size={14} className="text-blue-500" />;
       default:
         return <Info size={14} className="text-gray-500" />;
     }
   };
 
-  const getSeverityColor = (severity: Diagnostic['severity']) => {
+  const getSeverityColor = (severity: Diagnostic["severity"]) => {
     switch (severity) {
-      case 'error':
-        return 'text-red-600';
-      case 'warning':
-        return 'text-yellow-600';
-      case 'info':
-        return 'text-blue-600';
+      case "error":
+        return "text-red-600";
+      case "warning":
+        return "text-yellow-600";
+      case "info":
+        return "text-blue-600";
       default:
-        return 'text-gray-600';
+        return "text-gray-600";
     }
   };
 
-  const errorCount = diagnostics.filter(d => d.severity === 'error').length;
-  const warningCount = diagnostics.filter(d => d.severity === 'warning').length;
-  const infoCount = diagnostics.filter(d => d.severity === 'info').length;
+  const errorCount = diagnostics.filter(d => d.severity === "error").length;
+  const warningCount = diagnostics.filter(d => d.severity === "warning").length;
+  const infoCount = diagnostics.filter(d => d.severity === "info").length;
 
   // Content component that can be used both embedded and standalone
   const DiagnosticsContent = () => (
@@ -88,7 +88,9 @@ const DiagnosticsPane = ({
                     </span>
                   )}
                 </div>
-                <div className={`text-xs mt-1 leading-relaxed ${getSeverityColor(diagnostic.severity)}`}>
+                <div
+                  className={`text-xs mt-1 leading-relaxed ${getSeverityColor(diagnostic.severity)}`}
+                >
                   {diagnostic.message}
                 </div>
               </div>
@@ -114,7 +116,9 @@ const DiagnosticsPane = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)]">
         <div className="flex items-center gap-4">
-          <h3 className="font-mono text-sm text-[var(--text-color)]">Problems</h3>
+          <h3 className="font-mono text-sm text-[var(--text-color)]">
+            Problems
+          </h3>
           <div className="flex items-center gap-4 text-xs">
             {errorCount > 0 && (
               <div className="flex items-center gap-1 text-red-600">
@@ -154,4 +158,4 @@ const DiagnosticsPane = ({
   );
 };
 
-export default DiagnosticsPane; 
+export default DiagnosticsPane;

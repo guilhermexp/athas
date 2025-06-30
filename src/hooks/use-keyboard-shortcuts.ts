@@ -1,16 +1,24 @@
-import { useEffect } from 'react';
-import { isTauri } from '../utils/platform';
-import { Buffer } from '../types/buffer';
-import { CoreFeaturesState } from '../types/core-features';
+import { useEffect } from "react";
+import { isTauri } from "../utils/platform";
+import { Buffer } from "../types/buffer";
+import { CoreFeaturesState } from "../types/core-features";
 
 interface UseKeyboardShortcutsProps {
-  setIsBottomPaneVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
-  setBottomPaneActiveTab: (tab: 'terminal' | 'diagnostics') => void;
+  setIsBottomPaneVisible: (
+    value: boolean | ((prev: boolean) => boolean),
+  ) => void;
+  setBottomPaneActiveTab: (tab: "terminal" | "diagnostics") => void;
   setIsFindVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
   setIsSidebarVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
-  setIsRightPaneVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
-  setIsCommandBarVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
-  setIsCommandPaletteVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setIsRightPaneVisible: (
+    value: boolean | ((prev: boolean) => boolean),
+  ) => void;
+  setIsCommandBarVisible: (
+    value: boolean | ((prev: boolean) => boolean),
+  ) => void;
+  setIsCommandPaletteVisible: (
+    value: boolean | ((prev: boolean) => boolean),
+  ) => void;
   setIsSearchViewActive: (value: boolean) => void;
   focusSearchInput: () => void;
   focusCommandPalette: () => void;
@@ -21,7 +29,7 @@ interface UseKeyboardShortcutsProps {
   buffers: Buffer[];
   setActiveBuffer: (bufferId: string) => void;
   isBottomPaneVisible: boolean;
-  bottomPaneActiveTab: 'terminal' | 'diagnostics';
+  bottomPaneActiveTab: "terminal" | "diagnostics";
   onSave?: () => void;
   onQuickEdit?: () => void;
   coreFeatures: CoreFeaturesState;
@@ -52,33 +60,43 @@ export const useKeyboardShortcuts = ({
 }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-
       // Cmd+J (Mac) or Ctrl+J (Windows/Linux) to toggle terminal (desktop only)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'j' && isTauri() && coreFeatures.terminal) {
+      if (
+        (e.metaKey || e.ctrlKey)
+        && e.key === "j"
+        && isTauri()
+        && coreFeatures.terminal
+      ) {
         e.preventDefault();
-        if (isBottomPaneVisible && bottomPaneActiveTab === 'terminal') {
+        if (isBottomPaneVisible && bottomPaneActiveTab === "terminal") {
           setIsBottomPaneVisible(false);
         } else {
-          setBottomPaneActiveTab('terminal');
+          setBottomPaneActiveTab("terminal");
           setIsBottomPaneVisible(true);
         }
         return;
       }
 
       // Cmd+Shift+J (Mac) or Ctrl+Shift+J (Windows/Linux) to toggle diagnostics
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'J' && isTauri() && coreFeatures.diagnostics) {
+      if (
+        (e.metaKey || e.ctrlKey)
+        && e.shiftKey
+        && e.key === "J"
+        && isTauri()
+        && coreFeatures.diagnostics
+      ) {
         e.preventDefault();
-        if (isBottomPaneVisible && bottomPaneActiveTab === 'diagnostics') {
+        if (isBottomPaneVisible && bottomPaneActiveTab === "diagnostics") {
           setIsBottomPaneVisible(false);
         } else {
-          setBottomPaneActiveTab('diagnostics');
+          setBottomPaneActiveTab("diagnostics");
           setIsBottomPaneVisible(true);
         }
         return;
       }
 
       // Cmd+S (Mac) or Ctrl+S (Windows/Linux) to save
-      if ((e.metaKey || e.ctrlKey) && e.key === 's' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s" && !e.shiftKey) {
         e.preventDefault();
         if (onSave) {
           onSave();
@@ -87,7 +105,12 @@ export const useKeyboardShortcuts = ({
       }
 
       // Cmd+K (Mac) or Ctrl+K (Windows/Linux) to open AI quick edit
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K') && !e.shiftKey && coreFeatures.aiChat) {
+      if (
+        (e.metaKey || e.ctrlKey)
+        && (e.key === "k" || e.key === "K")
+        && !e.shiftKey
+        && coreFeatures.aiChat
+      ) {
         e.preventDefault();
         e.stopPropagation();
         if (onQuickEdit) {
@@ -97,7 +120,7 @@ export const useKeyboardShortcuts = ({
       }
 
       // Cmd+F (Mac) or Ctrl+F (Windows/Linux) to toggle find
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f" && !e.shiftKey) {
         e.preventDefault();
         setIsFindVisible(prev => !prev);
         return;
@@ -105,13 +128,19 @@ export const useKeyboardShortcuts = ({
 
       // Cmd+Shift+F (Mac) or Ctrl+Shift+F (Windows/Linux) to open project search
       // Check for Mac using multiple methods
-      const isMac = /Mac|iPhone|iPod|iPad/.test(navigator.platform) || 
-                   /Mac/.test(navigator.userAgent) ||
-                   navigator.platform === 'MacIntel';
-      
+      const isMac =
+        /Mac|iPhone|iPod|iPad/.test(navigator.platform)
+        || /Mac/.test(navigator.userAgent)
+        || navigator.platform === "MacIntel";
+
       const correctModifier = isMac ? e.metaKey : e.ctrlKey;
-      
-      if (correctModifier && e.shiftKey && e.key === 'F' && coreFeatures.search) {
+
+      if (
+        correctModifier
+        && e.shiftKey
+        && e.key === "F"
+        && coreFeatures.search
+      ) {
         e.preventDefault();
         e.stopPropagation();
         setIsSidebarVisible(true);
@@ -122,12 +151,18 @@ export const useKeyboardShortcuts = ({
         }, 100);
         return;
       }
-      
+
       // Also handle if Mac users are somehow sending ctrlKey instead of metaKey
-      if (isMac && e.ctrlKey && e.shiftKey && e.key === 'F' && coreFeatures.search) {
+      if (
+        isMac
+        && e.ctrlKey
+        && e.shiftKey
+        && e.key === "F"
+        && coreFeatures.search
+      ) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Mac detected but using ctrlKey - this is unusual');
+        console.log("Mac detected but using ctrlKey - this is unusual");
         setIsSidebarVisible(true);
         setIsSearchViewActive(true);
         setTimeout(() => {
@@ -138,7 +173,12 @@ export const useKeyboardShortcuts = ({
 
       // Alternative shortcut: Cmd+Shift+H (Mac) or Ctrl+Shift+H (Windows/Linux) to open project search
       // This is a backup in case Cmd+Shift+F is captured by the browser/system
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'H' && coreFeatures.search) {
+      if (
+        (e.metaKey || e.ctrlKey)
+        && e.shiftKey
+        && e.key === "H"
+        && coreFeatures.search
+      ) {
         e.preventDefault();
         e.stopPropagation();
         setIsSidebarVisible(true);
@@ -150,28 +190,28 @@ export const useKeyboardShortcuts = ({
       }
 
       // Cmd+B (Mac) or Ctrl+B (Windows/Linux) to toggle sidebar
-      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
         e.preventDefault();
         setIsSidebarVisible(prev => !prev);
         return;
       }
 
       // Cmd+R (Mac) or Ctrl+R (Windows/Linux) to toggle right pane
-      if ((e.metaKey || e.ctrlKey) && e.key === 'r' && coreFeatures.aiChat) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "r" && coreFeatures.aiChat) {
         e.preventDefault();
         setIsRightPaneVisible(prev => !prev);
         return;
       }
 
       // Cmd+P (Mac) or Ctrl+P (Windows/Linux) to toggle command bar
-      if ((e.metaKey || e.ctrlKey) && e.key === 'p' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "p" && !e.shiftKey) {
         e.preventDefault();
         setIsCommandBarVisible(prev => !prev);
         return;
       }
 
       // Cmd+Shift+P (Mac) or Ctrl+Shift+P (Windows/Linux) to toggle command palette
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'P') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P") {
         e.preventDefault();
         setIsCommandPaletteVisible(prev => !prev);
         // Focus the command palette after a short delay to ensure it's rendered
@@ -182,7 +222,7 @@ export const useKeyboardShortcuts = ({
       }
 
       // Cmd+W (Mac) or Ctrl+W (Windows/Linux) to close current buffer
-      if ((e.metaKey || e.ctrlKey) && e.key === 'w' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "w" && !e.shiftKey) {
         e.preventDefault();
         if (activeBuffer) {
           closeBuffer(activeBuffer.id);
@@ -191,14 +231,14 @@ export const useKeyboardShortcuts = ({
       }
 
       // Cmd+Tab (Mac) or Ctrl+Tab (Windows/Linux) to switch to next buffer
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Tab' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Tab" && !e.shiftKey) {
         e.preventDefault();
         switchToNextBuffer();
         return;
       }
 
       // Cmd+Shift+Tab (Mac) or Ctrl+Shift+Tab (Windows/Linux) to switch to previous buffer
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'Tab') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "Tab") {
         e.preventDefault();
         switchToPreviousBuffer();
         return;
@@ -215,10 +255,10 @@ export const useKeyboardShortcuts = ({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [
     setIsBottomPaneVisible,
@@ -242,4 +282,4 @@ export const useKeyboardShortcuts = ({
     onSave,
     onQuickEdit,
   ]);
-}; 
+};

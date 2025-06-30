@@ -206,7 +206,7 @@ export const AI_PROVIDERS: ModelProvider[] = [
 ];
 
 export const getProviderById = (id: string): ModelProvider | undefined => {
-  return AI_PROVIDERS.find((provider) => provider.id === id);
+  return AI_PROVIDERS.find(provider => provider.id === id);
 };
 
 export const getModelById = (
@@ -214,5 +214,5 @@ export const getModelById = (
   modelId: string,
 ): Model | undefined => {
   const provider = getProviderById(providerId);
-  return provider?.models.find((model) => model.id === modelId);
+  return provider?.models.find(model => model.id === modelId);
 };

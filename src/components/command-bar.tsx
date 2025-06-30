@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, File, Folder, Command } from 'lucide-react';
-import { cn } from '../utils/cn';
+import React, { useState, useRef, useEffect } from "react";
+import { Search, X, File, Folder, Command } from "lucide-react";
+import { cn } from "../utils/cn";
 
 interface CommandBarProps {
   isVisible: boolean;
@@ -23,9 +23,9 @@ const CommandBar = ({
   onClose,
   files,
   onFileSelect,
-  rootFolderPath
+  rootFolderPath,
 }: CommandBarProps) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ const CommandBar = ({
   useEffect(() => {
     if (isVisible && inputRef.current) {
       inputRef.current.focus();
-      setQuery('');
+      setQuery("");
       setSelectedIndex(0);
     }
   }, [isVisible]);
@@ -42,22 +42,33 @@ const CommandBar = ({
   // Helper function to get relative path
   const getRelativePath = (fullPath: string): string => {
     if (!rootFolderPath) return fullPath;
-    
+
     // Normalize paths to handle different path separators
-    const normalizedFullPath = fullPath.replace(/\\/g, '/');
-    const normalizedRootPath = rootFolderPath.replace(/\\/g, '/');
-    
+    const normalizedFullPath = fullPath.replace(/\\/g, "/");
+    const normalizedRootPath = rootFolderPath.replace(/\\/g, "/");
+
     if (normalizedFullPath.startsWith(normalizedRootPath)) {
-      const relativePath = normalizedFullPath.substring(normalizedRootPath.length);
+      const relativePath = normalizedFullPath.substring(
+        normalizedRootPath.length,
+      );
       // Remove leading slash if present
-      return relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+      return relativePath.startsWith("/")
+        ? relativePath.substring(1)
+        : relativePath;
     }
-    
+
     return fullPath;
   };
 
   // Get all files (already flattened from the new getAllProjectFiles function)
-  const getAllFiles = (entries: Array<{ name: string; path: string; isDir: boolean; children?: any[] }>): Array<{ name: string; path: string; isDir: boolean }> => {
+  const getAllFiles = (
+    entries: Array<{
+      name: string;
+      path: string;
+      isDir: boolean;
+      children?: any[];
+    }>,
+  ): Array<{ name: string; path: string; isDir: boolean }> => {
     // Since we're now getting a flat array of files from getAllProjectFiles,
     // we can just filter out directories and return the files
     return entries.filter(entry => !entry.isDir);
@@ -66,12 +77,13 @@ const CommandBar = ({
   // Create command items
   const createCommands = (): CommandItem[] => {
     const commands: CommandItem[] = [];
-    
+
     // File commands
     const allFiles = getAllFiles(files);
-    const filteredFiles = allFiles.filter(file => 
-      file.name.toLowerCase().includes(query.toLowerCase()) ||
-      file.path.toLowerCase().includes(query.toLowerCase())
+    const filteredFiles = allFiles.filter(
+      file =>
+        file.name.toLowerCase().includes(query.toLowerCase())
+        || file.path.toLowerCase().includes(query.toLowerCase()),
     );
 
     filteredFiles.forEach(file => {
@@ -83,7 +95,7 @@ const CommandBar = ({
         action: () => {
           onFileSelect(file.path);
           onClose();
-        }
+        },
       });
     });
 
@@ -102,28 +114,28 @@ const CommandBar = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (commands.length === 0) {
       // Only handle Escape when no commands
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         e.preventDefault();
         onClose();
       }
       return;
     }
 
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       e.preventDefault();
       onClose();
-    } else if (e.key === 'Enter') {
+    } else if (e.key === "Enter") {
       e.preventDefault();
       if (commands[selectedIndex]) {
         commands[selectedIndex].action();
       }
-    } else if (e.key === 'ArrowDown') {
+    } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setSelectedIndex(prev => (prev + 1) % commands.length);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex(prev => prev === 0 ? commands.length - 1 : prev - 1);
-    } else if (e.key === 'Tab') {
+      setSelectedIndex(prev => (prev === 0 ? commands.length - 1 : prev - 1));
+    } else if (e.key === "Tab") {
       e.preventDefault();
       // Tab acts like ArrowDown
       setSelectedIndex(prev => (prev + 1) % commands.length);
@@ -138,11 +150,13 @@ const CommandBar = ({
   // Scroll selected item into view
   useEffect(() => {
     if (listRef.current && selectedIndex >= 0 && commands.length > 0) {
-      const selectedElement = listRef.current.children[selectedIndex] as HTMLElement;
+      const selectedElement = listRef.current.children[
+        selectedIndex
+      ] as HTMLElement;
       if (selectedElement) {
-        selectedElement.scrollIntoView({ 
-          block: 'nearest',
-          behavior: 'smooth'
+        selectedElement.scrollIntoView({
+          block: "nearest",
+          behavior: "smooth",
         });
       }
     }
@@ -176,10 +190,13 @@ const CommandBar = ({
         </div>
 
         {/* Command List */}
-        <div ref={listRef} className="max-h-80 overflow-y-auto custom-scrollbar">
+        <div
+          ref={listRef}
+          className="max-h-80 overflow-y-auto custom-scrollbar"
+        >
           {commands.length === 0 ? (
             <div className="px-4 py-6 text-center text-[var(--text-lighter)] text-sm font-mono">
-              {query ? 'No matching files found' : 'No files available'}
+              {query ? "No matching files found" : "No files available"}
             </div>
           ) : (
             commands.map((command, index) => (
@@ -188,9 +205,9 @@ const CommandBar = ({
                 onClick={command.action}
                 className={cn(
                   "w-full text-left px-4 py-2 flex items-center gap-3 transition-colors duration-150 border-none bg-transparent cursor-pointer focus:outline-none",
-                  index === selectedIndex 
-                    ? "bg-[var(--selected-color)] text-[var(--text-color)]" 
-                    : "hover:bg-[var(--hover-color)]"
+                  index === selectedIndex
+                    ? "bg-[var(--selected-color)] text-[var(--text-color)]"
+                    : "hover:bg-[var(--hover-color)]",
                 )}
               >
                 {command.icon}
@@ -213,4 +230,4 @@ const CommandBar = ({
   );
 };
 
-export default CommandBar; 
+export default CommandBar;

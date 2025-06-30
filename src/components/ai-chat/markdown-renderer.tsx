@@ -28,7 +28,10 @@ import "prismjs/components/prism-yaml";
 import "prismjs/components/prism-toml";
 
 // Simple markdown renderer for AI responses
-export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRendererProps) {
+export default function MarkdownRenderer({
+  content,
+  onApplyCode,
+}: MarkdownRendererProps) {
   const renderContent = (text: string) => {
     // First, handle code blocks (triple backticks)
     const codeBlockParts = text.split(/(```[\s\S]*?```)/g);
@@ -131,7 +134,7 @@ export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRende
       }
     };
 
-    lines.forEach((line) => {
+    lines.forEach(line => {
       const trimmedLine = line.trim();
 
       // Check for numbered lists (e.g., "1. ", "2. ", etc.)
@@ -198,9 +201,9 @@ export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRende
       const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
       return boldParts.map((boldPart, boldIndex) => {
         if (
-          boldPart.startsWith("**") &&
-          boldPart.endsWith("**") &&
-          boldPart.length > 4
+          boldPart.startsWith("**")
+          && boldPart.endsWith("**")
+          && boldPart.length > 4
         ) {
           return (
             <strong key={`${index}-${boldIndex}`} className="font-semibold">
@@ -213,10 +216,10 @@ export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRende
         const italicParts = boldPart.split(/(\*[^*]+\*)/g);
         return italicParts.map((italicPart, italicIndex) => {
           if (
-            italicPart.startsWith("*") &&
-            italicPart.endsWith("*") &&
-            italicPart.length > 2 &&
-            !italicPart.startsWith("**")
+            italicPart.startsWith("*")
+            && italicPart.endsWith("*")
+            && italicPart.length > 2
+            && !italicPart.startsWith("**")
           ) {
             return (
               <em
@@ -239,4 +242,4 @@ export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRende
   };
 
   return <div className="whitespace-pre-wrap">{renderContent(content)}</div>;
-} 
+}

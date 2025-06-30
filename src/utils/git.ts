@@ -3,7 +3,7 @@ import { isTauri } from "./platform";
 
 export interface GitFile {
   path: string;
-  status: 'modified' | 'added' | 'deleted' | 'untracked' | 'renamed';
+  status: "modified" | "added" | "deleted" | "untracked" | "renamed";
   staged: boolean;
 }
 
@@ -22,7 +22,7 @@ export interface GitCommit {
 }
 
 export interface GitDiffLine {
-  line_type: 'added' | 'removed' | 'context' | 'header';
+  line_type: "added" | "removed" | "context" | "header";
   content: string;
   old_line_number?: number;
   new_line_number?: number;
@@ -38,7 +38,9 @@ export interface GitDiff {
   lines: GitDiffLine[];
 }
 
-export const getGitStatus = async (repoPath: string): Promise<GitStatus | null> => {
+export const getGitStatus = async (
+  repoPath: string,
+): Promise<GitStatus | null> => {
   if (!isTauri()) {
     return null;
   }
@@ -52,7 +54,10 @@ export const getGitStatus = async (repoPath: string): Promise<GitStatus | null> 
   }
 };
 
-export const stageFile = async (repoPath: string, filePath: string): Promise<boolean> => {
+export const stageFile = async (
+  repoPath: string,
+  filePath: string,
+): Promise<boolean> => {
   if (!isTauri()) {
     return false;
   }
@@ -66,7 +71,10 @@ export const stageFile = async (repoPath: string, filePath: string): Promise<boo
   }
 };
 
-export const unstageFile = async (repoPath: string, filePath: string): Promise<boolean> => {
+export const unstageFile = async (
+  repoPath: string,
+  filePath: string,
+): Promise<boolean> => {
   if (!isTauri()) {
     return false;
   }
@@ -108,7 +116,10 @@ export const unstageAllFiles = async (repoPath: string): Promise<boolean> => {
   }
 };
 
-export const commitChanges = async (repoPath: string, message: string): Promise<boolean> => {
+export const commitChanges = async (
+  repoPath: string,
+  message: string,
+): Promise<boolean> => {
   if (!isTauri()) {
     return false;
   }
@@ -122,13 +133,19 @@ export const commitChanges = async (repoPath: string, message: string): Promise<
   }
 };
 
-export const getGitLog = async (repoPath: string, limit?: number): Promise<GitCommit[]> => {
+export const getGitLog = async (
+  repoPath: string,
+  limit?: number,
+): Promise<GitCommit[]> => {
   if (!isTauri()) {
     return [];
   }
 
   try {
-    const commits = await tauriInvoke<GitCommit[]>("git_log", { repoPath, limit });
+    const commits = await tauriInvoke<GitCommit[]>("git_log", {
+      repoPath,
+      limit,
+    });
     return commits;
   } catch (error) {
     console.error("Failed to get git log:", error);
@@ -150,7 +167,10 @@ export const getBranches = async (repoPath: string): Promise<string[]> => {
   }
 };
 
-export const checkoutBranch = async (repoPath: string, branchName: string): Promise<boolean> => {
+export const checkoutBranch = async (
+  repoPath: string,
+  branchName: string,
+): Promise<boolean> => {
   if (!isTauri()) {
     return false;
   }
@@ -164,13 +184,21 @@ export const checkoutBranch = async (repoPath: string, branchName: string): Prom
   }
 };
 
-export const createBranch = async (repoPath: string, branchName: string, fromBranch?: string): Promise<boolean> => {
+export const createBranch = async (
+  repoPath: string,
+  branchName: string,
+  fromBranch?: string,
+): Promise<boolean> => {
   if (!isTauri()) {
     return false;
   }
 
   try {
-    await tauriInvoke("git_create_branch", { repoPath, branchName, fromBranch });
+    await tauriInvoke("git_create_branch", {
+      repoPath,
+      branchName,
+      fromBranch,
+    });
     return true;
   } catch (error) {
     console.error("Failed to create branch:", error);
@@ -178,7 +206,10 @@ export const createBranch = async (repoPath: string, branchName: string, fromBra
   }
 };
 
-export const deleteBranch = async (repoPath: string, branchName: string): Promise<boolean> => {
+export const deleteBranch = async (
+  repoPath: string,
+  branchName: string,
+): Promise<boolean> => {
   if (!isTauri()) {
     return false;
   }
@@ -192,13 +223,21 @@ export const deleteBranch = async (repoPath: string, branchName: string): Promis
   }
 };
 
-export const getFileDiff = async (repoPath: string, filePath: string, staged: boolean = false): Promise<GitDiff | null> => {
+export const getFileDiff = async (
+  repoPath: string,
+  filePath: string,
+  staged: boolean = false,
+): Promise<GitDiff | null> => {
   if (!isTauri()) {
     return null;
   }
 
   try {
-    const diff = await tauriInvoke<GitDiff>("git_diff_file", { repoPath, filePath, staged });
+    const diff = await tauriInvoke<GitDiff>("git_diff_file", {
+      repoPath,
+      filePath,
+      staged,
+    });
     return diff;
   } catch (error) {
     console.error("Failed to get file diff:", error);
@@ -206,16 +245,24 @@ export const getFileDiff = async (repoPath: string, filePath: string, staged: bo
   }
 };
 
-export const getCommitDiff = async (repoPath: string, commitHash: string, filePath?: string): Promise<GitDiff[]> => {
+export const getCommitDiff = async (
+  repoPath: string,
+  commitHash: string,
+  filePath?: string,
+): Promise<GitDiff[]> => {
   if (!isTauri()) {
     return [];
   }
 
   try {
-    const diffs = await tauriInvoke<GitDiff[]>("git_commit_diff", { repoPath, commitHash, filePath });
+    const diffs = await tauriInvoke<GitDiff[]>("git_commit_diff", {
+      repoPath,
+      commitHash,
+      filePath,
+    });
     return diffs;
   } catch (error) {
     console.error("Failed to get commit diff:", error);
     return [];
   }
-}; 
+};

@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { X, Server, CheckCircle, AlertCircle, Eye, EyeOff, Save } from "lucide-react";
+import {
+  X,
+  Server,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Save,
+} from "lucide-react";
 import Button from "../button";
 import Dropdown from "../dropdown";
 import { RemoteConnection, RemoteConnectionFormData } from "./types";
@@ -18,13 +26,13 @@ const ConnectionDialog = ({
   editingConnection = null,
 }: ConnectionDialogProps) => {
   const [formData, setFormData] = useState<RemoteConnectionFormData>({
-    name: '',
-    host: '',
+    name: "",
+    host: "",
     port: 22,
-    username: '',
-    password: '',
-    keyPath: '',
-    type: 'ssh'
+    username: "",
+    password: "",
+    keyPath: "",
+    type: "ssh",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -34,8 +42,8 @@ const ConnectionDialog = ({
   const [errorMessage, setErrorMessage] = useState("");
 
   const connectionTypeOptions = [
-    { value: 'ssh', label: 'SSH' },
-    { value: 'sftp', label: 'SFTP' }
+    { value: "ssh", label: "SSH" },
+    { value: "sftp", label: "SFTP" },
   ];
 
   useEffect(() => {
@@ -46,19 +54,19 @@ const ConnectionDialog = ({
           host: editingConnection.host,
           port: editingConnection.port,
           username: editingConnection.username,
-          password: editingConnection.password || '',
-          keyPath: editingConnection.keyPath || '',
-          type: editingConnection.type
+          password: editingConnection.password || "",
+          keyPath: editingConnection.keyPath || "",
+          type: editingConnection.type,
         });
       } else {
         setFormData({
-          name: '',
-          host: '',
+          name: "",
+          host: "",
           port: 22,
-          username: '',
-          password: '',
-          keyPath: '',
-          type: 'ssh'
+          username: "",
+          password: "",
+          keyPath: "",
+          type: "ssh",
         });
       }
       setValidationStatus("idle");
@@ -71,20 +79,24 @@ const ConnectionDialog = ({
   useEffect(() => {
     if (isOpen) {
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
+        if (event.key === "Escape") {
           onClose();
         }
       };
 
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const handleSave = async () => {
-    if (!formData.name.trim() || !formData.host.trim() || !formData.username.trim()) {
+    if (
+      !formData.name.trim()
+      || !formData.host.trim()
+      || !formData.username.trim()
+    ) {
       setErrorMessage("Please fill in all required fields");
       setValidationStatus("invalid");
       return;
@@ -120,7 +132,8 @@ const ConnectionDialog = ({
     setErrorMessage("");
   };
 
-  const isFormValid = formData.name.trim() && formData.host.trim() && formData.username.trim();
+  const isFormValid =
+    formData.name.trim() && formData.host.trim() && formData.username.trim();
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 rounded-xl overflow-hidden">
@@ -130,7 +143,7 @@ const ConnectionDialog = ({
           <div className="flex items-center gap-2">
             <Server size={16} className="text-[var(--text-color)]" />
             <h3 className="font-mono text-sm text-[var(--text-color)]">
-              {editingConnection ? 'Edit Connection' : 'New Remote Connection'}
+              {editingConnection ? "Edit Connection" : "New Remote Connection"}
             </h3>
           </div>
           <button
@@ -143,10 +156,9 @@ const ConnectionDialog = ({
 
         <div className="p-4 space-y-4 flex-1 overflow-y-auto">
           <div className="text-xs text-[var(--text-lighter)] leading-relaxed">
-            {editingConnection 
-              ? 'Update your remote connection settings.'
-              : 'Connect to remote servers via SSH or SFTP.'
-            }
+            {editingConnection
+              ? "Update your remote connection settings."
+              : "Connect to remote servers via SSH or SFTP."}
           </div>
 
           {/* Connection Form */}
@@ -159,7 +171,7 @@ const ConnectionDialog = ({
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => updateFormData({ name: e.target.value })}
+                onChange={e => updateFormData({ name: e.target.value })}
                 placeholder="My Server"
                 className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs text-[var(--text-color)] focus:outline-none focus:border-blue-500 placeholder-[var(--text-lighter)]"
                 disabled={isValidating}
@@ -175,7 +187,7 @@ const ConnectionDialog = ({
                 <input
                   type="text"
                   value={formData.host}
-                  onChange={(e) => updateFormData({ host: e.target.value })}
+                  onChange={e => updateFormData({ host: e.target.value })}
                   placeholder="192.168.1.100"
                   className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs text-[var(--text-color)] focus:outline-none focus:border-blue-500 placeholder-[var(--text-lighter)]"
                   disabled={isValidating}
@@ -188,7 +200,9 @@ const ConnectionDialog = ({
                 <input
                   type="number"
                   value={formData.port}
-                  onChange={(e) => updateFormData({ port: parseInt(e.target.value) || 22 })}
+                  onChange={e =>
+                    updateFormData({ port: parseInt(e.target.value) || 22 })
+                  }
                   placeholder="22"
                   min="1"
                   max="65535"
@@ -203,7 +217,9 @@ const ConnectionDialog = ({
                 <Dropdown
                   value={formData.type}
                   options={connectionTypeOptions}
-                  onChange={(value) => updateFormData({ type: value as 'ssh' | 'sftp' })}
+                  onChange={value =>
+                    updateFormData({ type: value as "ssh" | "sftp" })
+                  }
                   className="text-xs"
                 />
               </div>
@@ -217,7 +233,7 @@ const ConnectionDialog = ({
               <input
                 type="text"
                 value={formData.username}
-                onChange={(e) => updateFormData({ username: e.target.value })}
+                onChange={e => updateFormData({ username: e.target.value })}
                 placeholder="root"
                 className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs text-[var(--text-color)] focus:outline-none focus:border-blue-500 placeholder-[var(--text-lighter)]"
                 disabled={isValidating}
@@ -231,9 +247,9 @@ const ConnectionDialog = ({
               </label>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => updateFormData({ password: e.target.value })}
+                  onChange={e => updateFormData({ password: e.target.value })}
                   placeholder="Leave empty to use key authentication"
                   className="w-full px-3 py-2 pr-10 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs text-[var(--text-color)] focus:outline-none focus:border-blue-500 placeholder-[var(--text-lighter)]"
                   disabled={isValidating}
@@ -256,7 +272,7 @@ const ConnectionDialog = ({
               <input
                 type="text"
                 value={formData.keyPath}
-                onChange={(e) => updateFormData({ keyPath: e.target.value })}
+                onChange={e => updateFormData({ keyPath: e.target.value })}
                 placeholder="~/.ssh/id_rsa"
                 className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs text-[var(--text-color)] focus:outline-none focus:border-blue-500 placeholder-[var(--text-lighter)]"
                 disabled={isValidating}
@@ -278,8 +294,6 @@ const ConnectionDialog = ({
               {errorMessage}
             </div>
           )}
-
-       
         </div>
 
         {/* Actions */}
@@ -294,8 +308,7 @@ const ConnectionDialog = ({
               ? "Saving..."
               : editingConnection
                 ? "Update Connection"
-                : "Save Connection"
-            }
+                : "Save Connection"}
           </Button>
           <Button onClick={onClose} variant="ghost" className="px-4">
             Cancel
@@ -306,4 +319,4 @@ const ConnectionDialog = ({
   );
 };
 
-export default ConnectionDialog; 
+export default ConnectionDialog;

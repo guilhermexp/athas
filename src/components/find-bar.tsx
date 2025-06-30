@@ -90,8 +90,8 @@ const FindBar = ({
           disabled={!searchQuery || totalMatches === 0}
           className={cn(
             "p-1 rounded hover:bg-[var(--hover-color)] transition-colors duration-150",
-            (!searchQuery || totalMatches === 0) &&
-              "opacity-50 cursor-not-allowed",
+            (!searchQuery || totalMatches === 0)
+              && "opacity-50 cursor-not-allowed",
           )}
           title="Previous match (Shift+Enter)"
         >
@@ -102,8 +102,8 @@ const FindBar = ({
           disabled={!searchQuery || totalMatches === 0}
           className={cn(
             "p-1 rounded hover:bg-[var(--hover-color)] transition-colors duration-150",
-            (!searchQuery || totalMatches === 0) &&
-              "opacity-50 cursor-not-allowed",
+            (!searchQuery || totalMatches === 0)
+              && "opacity-50 cursor-not-allowed",
           )}
           title="Next match (Enter)"
         >

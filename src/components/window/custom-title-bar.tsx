@@ -35,8 +35,8 @@ const CustomTitleBar = ({
       } catch (error) {
         console.error("Error getting platform:", error);
         if (
-          typeof navigator !== "undefined" &&
-          navigator.userAgent.includes("Mac")
+          typeof navigator !== "undefined"
+          && navigator.userAgent.includes("Mac")
         ) {
           setCurrentPlatform("macos");
         }

@@ -34,7 +34,7 @@ export default function BufferSelectorModal({
             </div>
           ) : (
             <div className="space-y-2">
-              {buffers.map((buffer) => (
+              {buffers.map(buffer => (
                 <div
                   key={buffer.id}
                   className={cn(
@@ -93,4 +93,4 @@ export default function BufferSelectorModal({
       </div>
     </div>
   );
-} 
+}

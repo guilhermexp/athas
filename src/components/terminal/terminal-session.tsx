@@ -28,7 +28,7 @@ const TerminalSession = ({
   return (
     <div
       ref={sessionRef}
-      className={`h-full ${isActive ? 'block' : 'hidden'}`}
+      className={`h-full ${isActive ? "block" : "hidden"}`}
       data-terminal-id={terminal.id}
     >
       <Terminal
@@ -41,4 +41,4 @@ const TerminalSession = ({
   );
 };
 
-export default TerminalSession; 
+export default TerminalSession;

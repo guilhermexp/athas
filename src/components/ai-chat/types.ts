@@ -62,4 +62,4 @@ export interface MarkdownRendererProps {
 export interface ModeSelectorProps {
   mode: "chat";
   onModeChange: (mode: "chat") => void;
-} 
+}

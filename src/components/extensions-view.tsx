@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Search, Package, Code, Palette, CheckCircle2, GitBranch, Server, Terminal, Settings, FileText } from "lucide-react";
+import {
+  Search,
+  Package,
+  Code,
+  Palette,
+  CheckCircle2,
+  GitBranch,
+  Server,
+  Terminal,
+  Settings,
+  FileText,
+} from "lucide-react";
 import Button from "./button";
 import { CoreFeature } from "../types/core-features";
 
@@ -376,7 +387,7 @@ interface CoreFeatureCardProps {
 
 const CoreFeatureCard = ({ feature, onToggle }: CoreFeatureCardProps) => {
   const Icon = feature.icon;
-  
+
   return (
     <div className="flex flex-col gap-2 p-4 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg">
       <div className="flex items-center justify-between">
@@ -416,7 +427,7 @@ export default function ExtensionsView({
   >("all");
   const [extensions, setExtensions] = useState<Extension[]>(() => {
     // Initialize extensions with the current theme state
-    return AVAILABLE_EXTENSIONS.map((ext) => ({
+    return AVAILABLE_EXTENSIONS.map(ext => ({
       ...ext,
       status:
         ext.category === "theme" && ext.themeId === currentTheme
@@ -427,8 +438,8 @@ export default function ExtensionsView({
 
   // Update extension states when currentTheme changes
   useEffect(() => {
-    setExtensions((prev) =>
-      prev.map((ext) => ({
+    setExtensions(prev =>
+      prev.map(ext => ({
         ...ext,
         status:
           ext.category === "theme" && ext.themeId === currentTheme
@@ -454,20 +465,25 @@ export default function ExtensionsView({
     }
   };
 
-  const filteredExtensions = extensions.filter((extension) => {
+  const filteredExtensions = extensions.filter(extension => {
     const matchesSearch =
-      extension.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      extension.description.toLowerCase().includes(searchQuery.toLowerCase());
+      extension.name.toLowerCase().includes(searchQuery.toLowerCase())
+      || extension.description
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === "all" || extension.category === activeTab;
     return matchesSearch && matchesTab;
   });
 
-  const filteredCoreFeatures = coreFeatures?.filter((feature) => {
-    const matchesSearch =
-      feature.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      feature.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  }) || [];
+  const filteredCoreFeatures =
+    coreFeatures?.filter(feature => {
+      const matchesSearch =
+        feature.name.toLowerCase().includes(searchQuery.toLowerCase())
+        || feature.description
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    }) || [];
 
   return (
     <div className="flex flex-col h-full bg-[var(--primary-bg)]">
@@ -484,7 +500,7 @@ export default function ExtensionsView({
             type="text"
             placeholder="Search extensions..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-4 text-xs py-1.5 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-[var(--text-color)] placeholder-[var(--text-lighter)] focus:outline-none focus:border-[var(--accent-color)]"
           />
         </div>
@@ -534,25 +550,29 @@ export default function ExtensionsView({
 
       <div className="flex-1 overflow-auto p-4">
         {/* Core Features */}
-        {(activeTab === "all" || activeTab === "core") && coreFeatures && coreFeatures.length > 0 && (
-          <div className="mb-6">
-            {activeTab === "all" && (
-              <h3 className="text-sm font-medium text-[var(--text-color)] mb-3 flex items-center gap-2">
-                <Settings size={16} />
-                Core Features
-              </h3>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              {filteredCoreFeatures.map((feature) => (
-                <CoreFeatureCard
-                  key={feature.id}
-                  feature={feature}
-                  onToggle={() => onCoreFeatureToggle?.(feature.id, !feature.enabled)}
-                />
-              ))}
+        {(activeTab === "all" || activeTab === "core")
+          && coreFeatures
+          && coreFeatures.length > 0 && (
+            <div className="mb-6">
+              {activeTab === "all" && (
+                <h3 className="text-sm font-medium text-[var(--text-color)] mb-3 flex items-center gap-2">
+                  <Settings size={16} />
+                  Core Features
+                </h3>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {filteredCoreFeatures.map(feature => (
+                  <CoreFeatureCard
+                    key={feature.id}
+                    feature={feature}
+                    onToggle={() =>
+                      onCoreFeatureToggle?.(feature.id, !feature.enabled)
+                    }
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Extensions */}
         {activeTab !== "core" && (
@@ -564,7 +584,7 @@ export default function ExtensionsView({
               </h3>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredExtensions.map((extension) => (
+              {filteredExtensions.map(extension => (
                 <ExtensionCard
                   key={extension.id}
                   extension={extension}
@@ -577,9 +597,13 @@ export default function ExtensionsView({
         )}
 
         {/* No results */}
-        {((activeTab === "core" && filteredCoreFeatures.length === 0) ||
-          (activeTab !== "core" && activeTab !== "all" && filteredExtensions.length === 0) ||
-          (activeTab === "all" && filteredCoreFeatures.length === 0 && filteredExtensions.length === 0)) && (
+        {((activeTab === "core" && filteredCoreFeatures.length === 0)
+          || (activeTab !== "core"
+            && activeTab !== "all"
+            && filteredExtensions.length === 0)
+          || (activeTab === "all"
+            && filteredCoreFeatures.length === 0
+            && filteredExtensions.length === 0)) && (
           <div className="text-center py-8 text-[var(--text-lighter)]">
             <Package size={24} className="mx-auto mb-2 opacity-50" />
             <p className="text-sm">No items found matching your search.</p>

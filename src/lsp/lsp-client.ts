@@ -1,36 +1,38 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
 import {
   CompletionItem,
   Diagnostic,
-  Hover
-} from 'vscode-languageserver-protocol';
+  Hover,
+} from "vscode-languageserver-protocol";
 
-import { LSPConfig, LSPClientEvents, CompletionResponse } from './types';
+import { LSPConfig, LSPClientEvents, CompletionResponse } from "./types";
 
 export class LSPClient {
   private processId: number | null = null;
   private documentVersion = new Map<string, number>();
   private isInitialized = false;
-  
+
   constructor(
     private language: string,
     private config: LSPConfig,
-    private events: LSPClientEvents = {}
+    private events: LSPClientEvents = {},
   ) {}
 
   async initialize(workspaceRoot: string): Promise<void> {
     try {
-      this.processId = await invoke('start_lsp_server', {
+      this.processId = await invoke("start_lsp_server", {
         language: this.language,
         command: this.config.command,
         args: this.config.args,
-        workingDir: workspaceRoot
+        workingDir: workspaceRoot,
       });
 
       this.isInitialized = true;
       this.events.onInitialized?.();
-      
-      console.log(`✅ ${this.language} LSP server started (PID: ${this.processId})`);
+
+      console.log(
+        `✅ ${this.language} LSP server started (PID: ${this.processId})`,
+      );
     } catch (error) {
       const message = `Failed to start ${this.language} LSP server: ${error}`;
       console.error(message);
@@ -43,16 +45,19 @@ export class LSPClient {
     if (!this.isInitialized) return;
 
     this.documentVersion.set(uri, 1);
-    
+
     try {
-      await invoke('lsp_did_open', {
+      await invoke("lsp_did_open", {
         language: this.language,
         uri,
         content,
-        version: 1
+        version: 1,
       });
     } catch (error) {
-      console.error(`Error in didOpenTextDocument for ${this.language}:`, error);
+      console.error(
+        `Error in didOpenTextDocument for ${this.language}:`,
+        error,
+      );
     }
   }
 
@@ -63,14 +68,17 @@ export class LSPClient {
     this.documentVersion.set(uri, version);
 
     try {
-      await invoke('lsp_did_change', {
+      await invoke("lsp_did_change", {
         language: this.language,
         uri,
         content,
-        version
+        version,
       });
     } catch (error) {
-      console.error(`Error in didChangeTextDocument for ${this.language}:`, error);
+      console.error(
+        `Error in didChangeTextDocument for ${this.language}:`,
+        error,
+      );
     }
   }
 
@@ -80,24 +88,31 @@ export class LSPClient {
     this.documentVersion.delete(uri);
 
     try {
-      await invoke('lsp_did_close', {
+      await invoke("lsp_did_close", {
         language: this.language,
-        uri
+        uri,
       });
     } catch (error) {
-      console.error(`Error in didCloseTextDocument for ${this.language}:`, error);
+      console.error(
+        `Error in didCloseTextDocument for ${this.language}:`,
+        error,
+      );
     }
   }
 
-  async completion(uri: string, line: number, character: number): Promise<CompletionItem[]> {
+  async completion(
+    uri: string,
+    line: number,
+    character: number,
+  ): Promise<CompletionItem[]> {
     if (!this.isInitialized) return [];
 
     try {
-      const response: CompletionResponse = await invoke('lsp_completion', {
+      const response: CompletionResponse = await invoke("lsp_completion", {
         language: this.language,
         uri,
         line,
-        character
+        character,
       });
 
       return response.items || [];
@@ -107,15 +122,19 @@ export class LSPClient {
     }
   }
 
-  async hover(uri: string, line: number, character: number): Promise<Hover | null> {
+  async hover(
+    uri: string,
+    line: number,
+    character: number,
+  ): Promise<Hover | null> {
     if (!this.isInitialized) return null;
 
     try {
-      return await invoke('lsp_hover', {
+      return await invoke("lsp_hover", {
         language: this.language,
         uri,
         line,
-        character
+        character,
       });
     } catch (error) {
       console.error(`Hover request failed for ${this.language}:`, error);
@@ -123,24 +142,26 @@ export class LSPClient {
     }
   }
 
-  onDiagnostics(callback: (uri: string, diagnostics: Diagnostic[]) => void): void {
+  onDiagnostics(
+    callback: (uri: string, diagnostics: Diagnostic[]) => void,
+  ): void {
     this.events.onDiagnostics = callback;
   }
 
   async dispose(): Promise<void> {
     if (this.processId) {
       try {
-        await invoke('stop_lsp_server', {
-          language: this.language
+        await invoke("stop_lsp_server", {
+          language: this.language,
         });
         console.log(`🛑 ${this.language} LSP server stopped`);
       } catch (error) {
         console.error(`Error stopping ${this.language} LSP server:`, error);
       }
-      
+
       this.processId = null;
     }
-    
+
     this.isInitialized = false;
     this.documentVersion.clear();
   }
@@ -148,4 +169,4 @@ export class LSPClient {
   get ready(): boolean {
     return this.isInitialized && this.processId !== null;
   }
-} 
+}

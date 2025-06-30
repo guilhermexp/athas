@@ -213,8 +213,8 @@ const buildContextPrompt = (context: ContextInfo): string => {
   // Other open files
   if (context.openBuffers && context.openBuffers.length > 1) {
     const otherFiles = context.openBuffers
-      .filter((buffer) => buffer.id !== context.activeBuffer?.id)
-      .map((buffer) => `${buffer.name}${buffer.isDirty ? " [modified]" : ""}`)
+      .filter(buffer => buffer.id !== context.activeBuffer?.id)
+      .map(buffer => `${buffer.name}${buffer.isDirty ? " [modified]" : ""}`)
       .slice(0, 10); // Limit to first 10 files
 
     if (otherFiles.length > 0) {
@@ -406,7 +406,12 @@ ${contextPrompt}`;
                 console.log("⚠️ No content found in chunk");
               }
             } catch (parseError) {
-              console.warn("❌ Failed to parse SSE data:", parseError, "Raw data:", trimmedLine);
+              console.warn(
+                "❌ Failed to parse SSE data:",
+                parseError,
+                "Raw data:",
+                trimmedLine,
+              );
             }
           }
         }

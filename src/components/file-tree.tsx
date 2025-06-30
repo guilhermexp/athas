@@ -50,18 +50,18 @@ const FileTree = ({
   }, []);
 
   const renderFileTree = (items: FileEntry[], depth = 0) => {
-    return items.map((file) => (
+    return items.map(file => (
       <div key={file.path}>
         <button
           draggable={!file.isDir}
-          onDragStart={(e) => {
+          onDragStart={e => {
             if (!file.isDir) {
               e.dataTransfer.setData("application/file-path", file.path);
               e.dataTransfer.effectAllowed = "copy";
             }
           }}
           onClick={() => onFileSelect(file.path, file.isDir)}
-          onContextMenu={(e) => handleContextMenu(e, file.path, file.isDir)}
+          onContextMenu={e => handleContextMenu(e, file.path, file.isDir)}
           className={`w-full text-left px-1.5 py-1 bg-transparent border-none text-[var(--text-color)] cursor-pointer text-xs font-mono flex items-center gap-1.5 transition-colors duration-150 whitespace-nowrap overflow-hidden text-ellipsis min-h-[22px] shadow-none outline-none hover:bg-[var(--hover-color)] focus:outline-none ${
             activeBufferPath === file.path ? "bg-[var(--selected-color)]" : ""
           }`}

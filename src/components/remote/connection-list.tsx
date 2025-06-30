@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { 
-  Server, 
-  Trash2, 
-  Edit, 
-  FolderOpen, 
-  Wifi, 
+import {
+  Server,
+  Trash2,
+  Edit,
+  FolderOpen,
+  Wifi,
   WifiOff,
   Plus,
 } from "lucide-react";
@@ -36,13 +36,13 @@ const ConnectionList = ({
   } | null>(null);
 
   const formatLastConnected = (dateString?: string): string => {
-    if (!dateString) return 'Never';
+    if (!dateString) return "Never";
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    
-    if (diffMinutes < 1) return 'Just now';
+
+    if (diffMinutes < 1) return "Just now";
     if (diffMinutes < 60) return `${diffMinutes}m ago`;
     if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}h ago`;
     return `${Math.floor(diffMinutes / 1440)}d ago`;
@@ -55,8 +55,9 @@ const ConnectionList = ({
     };
 
     if (connectionMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [connectionMenu]);
 
@@ -106,44 +107,52 @@ const ConnectionList = ({
           </div>
         ) : (
           <div className="p-2 sm:p-3 space-y-2">
-            {connections.map((connection) => (
+            {connections.map(connection => (
               <div
                 key={connection.id}
                 className={cn(
                   "group relative p-2 rounded-lg border transition-all duration-200 hover:shadow-sm overflow-hidden",
-                  connection.isConnected 
-                    ? "bg-green-50/50 border-green-200/50 dark:bg-green-950/20 dark:border-green-800/30" 
-                    : "bg-[var(--secondary-bg)] border-[var(--border-color)]"
+                  connection.isConnected
+                    ? "bg-green-50/50 border-green-200/50 dark:bg-green-950/20 dark:border-green-800/30"
+                    : "bg-[var(--secondary-bg)] border-[var(--border-color)]",
                 )}
               >
                 <div className="flex items-center gap-3">
                   {/* Connection Status */}
-                  <div className={cn(
-                    "w-2.5 h-2.5 rounded-full transition-colors flex-shrink-0",
-                    connection.isConnected ? "bg-green-500" : "bg-gray-400 dark:bg-gray-600"
-                  )} />
-                  
+                  <div
+                    className={cn(
+                      "w-2.5 h-2.5 rounded-full transition-colors flex-shrink-0",
+                      connection.isConnected
+                        ? "bg-green-500"
+                        : "bg-gray-400 dark:bg-gray-600",
+                    )}
+                  />
+
                   {/* Connection Info - Clickable */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span 
+                      <span
                         className="text-sm font-medium text-[var(--text-color)] truncate cursor-pointer hover:bg-[var(--hover-color)] px-1 py-0.5 rounded"
                         title="Click for options"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.preventDefault();
                           e.stopPropagation();
                           setConnectionMenu({
                             x: e.currentTarget.getBoundingClientRect().left,
-                            y: e.currentTarget.getBoundingClientRect().bottom + 5,
+                            y:
+                              e.currentTarget.getBoundingClientRect().bottom
+                              + 5,
                             connectionId: connection.id,
                           });
                         }}
-                        onContextMenu={(e) => {
+                        onContextMenu={e => {
                           e.preventDefault();
                           e.stopPropagation();
                           setConnectionMenu({
                             x: e.currentTarget.getBoundingClientRect().left,
-                            y: e.currentTarget.getBoundingClientRect().bottom + 5,
+                            y:
+                              e.currentTarget.getBoundingClientRect().bottom
+                              + 5,
                             connectionId: connection.id,
                           });
                         }}
@@ -155,12 +164,11 @@ const ConnectionList = ({
                       </span>
                     </div>
                     <div className="text-xs text-[var(--text-lighter)] truncate">
-                      {connection.isConnected 
-                        ? 'Connected' 
-                        : connection.lastConnected 
+                      {connection.isConnected
+                        ? "Connected"
+                        : connection.lastConnected
                           ? `Last connected ${formatLastConnected(connection.lastConnected)}`
-                          : 'Never connected'
-                      }
+                          : "Never connected"}
                     </div>
                   </div>
 
@@ -168,7 +176,9 @@ const ConnectionList = ({
                   <div className="flex items-center flex-shrink-0">
                     {connection.isConnected ? (
                       <Button
-                        onClick={() => onFileSelect?.(`/remote/${connection.id}/`, true)}
+                        onClick={() =>
+                          onFileSelect?.(`/remote/${connection.id}/`, true)
+                        }
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0 cursor-pointer"
@@ -203,15 +213,17 @@ const ConnectionList = ({
             left: connectionMenu.x,
             top: connectionMenu.y,
           }}
-          onMouseDown={(e) => {
+          onMouseDown={e => {
             e.stopPropagation();
           }}
         >
           <button
-            onMouseDown={(e) => {
+            onMouseDown={e => {
               e.preventDefault();
               e.stopPropagation();
-              const connection = connections.find(c => c.id === connectionMenu.connectionId);
+              const connection = connections.find(
+                c => c.id === connectionMenu.connectionId,
+              );
               if (connection) {
                 onEdit(connection);
               }
@@ -223,7 +235,7 @@ const ConnectionList = ({
             Edit
           </button>
           <button
-            onMouseDown={(e) => {
+            onMouseDown={e => {
               e.preventDefault();
               e.stopPropagation();
               onDelete(connectionMenu.connectionId);
@@ -240,4 +252,4 @@ const ConnectionList = ({
   );
 };
 
-export default ConnectionList; 
+export default ConnectionList;

@@ -48,7 +48,7 @@ export function useMenuEvents(props: UseMenuEventsProps) {
       listen("menu_go_to_line", () => props.onGoToLine()),
       listen("menu_next_tab", () => props.onNextTab()),
       listen("menu_prev_tab", () => props.onPrevTab()),
-      listen("menu_theme_change", (event) => {
+      listen("menu_theme_change", event => {
         props.onThemeChange(event.payload as string);
       }),
       listen("menu_about", () => props.onAbout()),
@@ -56,8 +56,8 @@ export function useMenuEvents(props: UseMenuEventsProps) {
     ];
 
     return () => {
-      Promise.all(unlistenPromises).then((unlisteners) => {
-        unlisteners.forEach((unlisten) => unlisten());
+      Promise.all(unlistenPromises).then(unlisteners => {
+        unlisteners.forEach(unlisten => unlisten());
       });
     };
   }, [props]);

@@ -14,7 +14,7 @@ export default function ChatHistoryModal({
 }: ChatHistoryModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredChats = chats.filter((chat) =>
+  const filteredChats = chats.filter(chat =>
     chat.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -45,7 +45,7 @@ export default function ChatHistoryModal({
               type="text"
               placeholder="Search chats..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-7 pr-2 py-1 text-xs bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded focus:outline-none focus:border-[var(--text-lighter)] text-[var(--text-color)]"
             />
           </div>
@@ -61,7 +61,7 @@ export default function ChatHistoryModal({
             </div>
           ) : (
             <div>
-              {filteredChats.map((chat) => (
+              {filteredChats.map(chat => (
                 <div
                   key={chat.id}
                   onClick={() => {
@@ -84,7 +84,7 @@ export default function ChatHistoryModal({
                     </div>
                   </div>
                   <button
-                    onClick={(e) => onDeleteChat(chat.id, e)}
+                    onClick={e => onDeleteChat(chat.id, e)}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all"
                     title="Delete chat"
                   >

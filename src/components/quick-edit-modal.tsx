@@ -44,7 +44,7 @@ const QuickEditInline = ({
         width: window.innerWidth,
         height: window.innerHeight,
       };
-      
+
       let left = cursorPosition.x;
       let top = cursorPosition.y + 20; // Slightly below cursor
 
@@ -83,9 +83,11 @@ const QuickEditInline = ({
 
     try {
       // Get stored provider and model settings
-      const storedProvider = localStorage.getItem("ai-chat-provider") || "openai";
-      const storedModel = localStorage.getItem("ai-chat-model") || "gpt-3.5-turbo";
-      
+      const storedProvider =
+        localStorage.getItem("ai-chat-provider") || "openai";
+      const storedModel =
+        localStorage.getItem("ai-chat-model") || "gpt-3.5-turbo";
+
       const provider = AI_PROVIDERS.find(p => p.id === storedProvider);
       const model = provider ? getModelById(provider.id, storedModel) : null;
 
@@ -99,18 +101,20 @@ const QuickEditInline = ({
         throw new Error("API key not found");
       }
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            {
-              role: "user",
-              content: `Edit this code according to the instruction.
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [
+              {
+                role: "user",
+                content: `Edit this code according to the instruction.
 
 File: ${filename || "unknown"} (${language || "text"})
 Instruction: ${instruction}
@@ -118,13 +122,14 @@ Instruction: ${instruction}
 Current code:
 ${selectedText}
 
-Return only the edited code, nothing else:`
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.1,
-        }),
-      });
+Return only the edited code, nothing else:`,
+              },
+            ],
+            max_tokens: 1000,
+            temperature: 0.1,
+          }),
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -134,14 +139,13 @@ Return only the edited code, nothing else:`
       const editedText = result.choices[0].message.content.trim();
 
       console.log("✅ AI response:", editedText);
-      
+
       if (editedText) {
         onApplyEdit(editedText);
         onClose();
       } else {
         throw new Error("No response from AI");
       }
-
     } catch (error) {
       console.error("❌ Error during AI edit:", error);
       // TODO: Show error feedback in UI instead of alert
@@ -168,17 +172,20 @@ Return only the edited code, nothing else:`
             ref={inputRef}
             type="text"
             value={instruction}
-            onChange={(e) => setInstruction(e.target.value)}
+            onChange={e => setInstruction(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Tell AI what to do with the selected text..."
             disabled={isStreaming}
             className="flex-1 bg-transparent text-xs text-[var(--text-color)] placeholder-[var(--text-lighter)] border-none outline-none"
           />
         </div>
-        
+
         <div className="flex items-center gap-1 flex-shrink-0">
           {isStreaming ? (
-            <Loader2 size={14} className="text-[var(--text-lighter)] animate-spin" />
+            <Loader2
+              size={14}
+              className="text-[var(--text-lighter)] animate-spin"
+            />
           ) : (
             <div className="text-xs text-[var(--text-lighter)] font-mono">
               {selectedText.length}ch
@@ -193,7 +200,7 @@ Return only the edited code, nothing else:`
           </button>
         </div>
       </div>
-      
+
       {/* Subtle hint */}
       <div className="px-3 pb-2">
         <div className="text-xs text-[var(--text-lighter)] font-mono">
@@ -204,4 +211,4 @@ Return only the edited code, nothing else:`
   );
 };
 
-export default QuickEditInline; 
+export default QuickEditInline;

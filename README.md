@@ -5,6 +5,7 @@ A lightweight code editor built with React, TypeScript, and Tauri. Designed for 
 ## Building
 
 ### Linux
+
 1. Download dependencies: rust, bun, tauri
 2. Install packages: `bun install`
 3. Build and run: `bun run tauri dev`
@@ -24,6 +25,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 If you encounter any issues or have questions:
+
 - Open an issue on GitHub
 - Check the documentation in the `/docs` folder
 - Join our community discussions
