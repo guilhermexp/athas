@@ -30,7 +30,8 @@ type ThemeType = 'auto' | 'light' | 'dark' | 'midnight' |
   'solarized-dark' | 'solarized-light' |
   'synthwave-84' |
   'monokai-pro' |
-  'ayu-dark' | 'ayu-mirage' | 'ayu-light';
+  'ayu-dark' | 'ayu-mirage' | 'ayu-light' |
+  'vercel-dark' | 'vesper';
 
 export interface CommandPaletteRef {
   focus: () => void;
@@ -105,6 +106,14 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
         icon: <Moon size={16} />,
         category: 'Theme',
         action: () => setTheme('tokyo-night')
+      },
+      {
+        id: 'theme-vesper',
+        label: 'Preferences: Color Theme (Vesper)',
+        description: 'Dark theme with deep blues, purples, and teals',
+        icon: <Moon size={16} />,
+        category: 'Theme',
+        action: () => setTheme('vesper')
       }
     ];
 
@@ -118,7 +127,7 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
 
 
     // Theme management
-    const setTheme = (theme: 'auto' | 'light' | 'dark' | 'midnight' | 'tokyo-night') => {
+    const setTheme = (theme: 'auto' | 'light' | 'dark' | 'midnight' | 'tokyo-night'| 'vesper') => {
       if (onThemeChange) {
         onThemeChange(theme);
       }
