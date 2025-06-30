@@ -13,7 +13,9 @@
     "format": "bun prettier . --write --ignore-path .gitignore",
     "typecheck": "bun tsc --noEmit",
     "lint": "bun eslint . --ext .ts,.tsx",
-    "lint:fix": "bun eslint . --ext .ts,.tsx --fix"
+    "lint:fix": "bun eslint . --ext .ts,.tsx --fix",
+    "commitlint": "commitlint --edit",
+    "prepare": "simple-git-hooks"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.5.0",
@@ -34,6 +36,8 @@
     "vscode-languageserver-protocol": "^3.17.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@tailwindcss/vite": "^4.1.8",
     "@tauri-apps/cli": "^2",
     "@types/react": "^19.1.6",
@@ -46,8 +50,12 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.2.0",
     "prettier": "3.6.2",
+    "simple-git-hooks": "^2.13.0",
     "tailwindcss": "^4.1.8",
     "typescript": "~5.6.2",
     "vite": "^6.3.5"
+  },
+  "simple-git-hooks": {
+    "commit-msg": "bun commitlint --edit $1"
   }
 }
