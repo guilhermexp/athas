@@ -18,7 +18,7 @@ interface UseFileOperationsProps {
 export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [rootFolderPath, setRootFolderPath] = useState<string>("");
-  
+
   // Cache for project files to avoid unnecessary re-scanning
   const [projectFilesCache, setProjectFilesCache] = useState<{
     path: string;
@@ -32,9 +32,9 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
 
     // Check cache first (cache for 30 seconds)
     const now = Date.now();
-    if (projectFilesCache && 
-        projectFilesCache.path === rootFolderPath && 
-        now - projectFilesCache.timestamp < 30000) {
+    if (projectFilesCache &&
+      projectFilesCache.path === rootFolderPath &&
+      now - projectFilesCache.timestamp < 30000) {
       console.log(`📋 Using cached project files: ${projectFilesCache.files.length} files`);
       return projectFilesCache.files;
     }
@@ -48,12 +48,12 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
       'vendor',
       '.pnpm',
       '.yarn',
-      
+
       // Version control
       '.git',
       '.svn',
       '.hg',
-      
+
       // Build outputs
       'dist',
       'build',
@@ -61,7 +61,7 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
       'target',
       '.next',
       '.nuxt',
-      
+
       // Cache/temp directories
       '.cache',
       'tmp',
@@ -69,23 +69,23 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
       '.tmp',
       '.DS_Store',
       'Thumbs.db',
-      
+
       // IDE/Editor files
       '.vscode',
       '.idea',
       '*.swp',
       '*.swo',
       '*~',
-      
+
       // Logs
       'logs',
       '*.log',
-      
+
       // OS generated files
       '.Spotlight-V100',
       '.Trashes',
       'ehthumbs.db',
-      
+
       // Package manager locks (large files)
       'package-lock.json',
       'yarn.lock',
@@ -97,22 +97,22 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
       // Binary files
       '.exe', '.dll', '.so', '.dylib',
       '.bin', '.obj', '.o', '.a',
-      
+
       // Large media files
       '.mov', '.mp4', '.avi', '.mkv',
       '.wav', '.mp3', '.flac',
       '.psd', '.ai', '.sketch',
-      
+
       // Archives
       '.zip', '.rar', '.7z', '.tar', '.gz',
-      
+
       // Database files
       '.db', '.sqlite', '.sqlite3',
     ];
 
     const shouldIgnore = (name: string, isDir: boolean): boolean => {
       const lowerName = name.toLowerCase();
-      
+
       // Check ignore patterns
       for (const pattern of IGNORE_PATTERNS) {
         if (pattern.includes('*')) {
@@ -125,7 +125,7 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
           return true;
         }
       }
-      
+
       // Check file extensions (only for files, not directories)
       if (!isDir) {
         const extension = name.substring(name.lastIndexOf('.')).toLowerCase();
@@ -133,12 +133,12 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
           return true;
         }
       }
-      
+
       // Skip hidden files/folders (starting with .) except important ones
       if (name.startsWith('.') && name !== '.env' && name !== '.gitignore' && name !== '.editorconfig') {
         return true;
       }
-      
+
       return false;
     };
 
@@ -203,19 +203,19 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
 
     console.log(`🔍 Starting project file scan for: ${rootFolderPath}`);
     const startTime = Date.now();
-    
+
     await scanDirectory(rootFolderPath);
-    
+
     const endTime = Date.now();
     console.log(`✅ File scan completed: ${allFiles.length} files found in ${endTime - startTime}ms`);
-    
+
     // Cache the results
     setProjectFilesCache({
       path: rootFolderPath,
       files: allFiles,
       timestamp: now,
     });
-    
+
     return allFiles;
   }, [rootFolderPath, projectFilesCache]);
 
@@ -229,7 +229,7 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
 
         // Store the root folder path
         setRootFolderPath(path);
-        
+
         // Clear the cache when changing folders
         setProjectFilesCache(null);
 
@@ -419,12 +419,35 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
     setFiles(updatedFiles);
   }, [files]);
 
+  // Function to open a folder directly by path (for recent folders)
+  const handleOpenFolderByPath = useCallback(async (folderPath: string) => {
+    try {
+      setRootFolderPath(folderPath);
+      setProjectFilesCache(null);
+
+      const entries = await readDirectory(folderPath);
+      const fileTree = (entries as any[]).map((entry: any) => ({
+        name: entry.name || "Unknown",
+        path: entry.path || `${folderPath}/${entry.name}`,
+        isDir: entry.is_dir || false,
+        expanded: false,
+        children: undefined,
+      }));
+      setFiles(fileTree);
+      return true;
+    } catch (error) {
+      console.error("Error opening folder by path:", error);
+      return false;
+    }
+  }, []);
+
   return {
     files,
     setFiles,
     rootFolderPath,
     getAllProjectFiles,
     handleOpenFolder,
+    handleOpenFolderByPath,
     handleFolderToggle,
     handleCreateNewFile,
     handleCreateNewFileInDirectory,
