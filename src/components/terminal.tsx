@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-import { X, Terminal as TerminalIcon } from "lucide-react";
-import { isTauri } from "../utils/platform";
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+import { X, Terminal as TerminalIcon } from 'lucide-react';
+import { isTauri } from '../utils/platform';
 
 // Add CSS for blinking cursor
 const cursorStyle = `
@@ -13,8 +13,8 @@ const cursorStyle = `
 `;
 
 // Insert style into document head
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
   style.textContent = cursorStyle;
   document.head.appendChild(style);
 }
@@ -36,14 +36,14 @@ interface TerminalEvent {
   cursor_col?: number;
 }
 
-const Terminal = ({
-  isVisible,
-  onClose,
-  currentDirectory,
-  isEmbedded,
+const Terminal = ({ 
+  isVisible, 
+  onClose, 
+  currentDirectory, 
+  isEmbedded 
 }: TerminalProps) => {
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
-  const [currentInput, setCurrentInput] = useState("");
+  const [currentInput, setCurrentInput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   const [terminalId, setTerminalId] = useState<string | null>(null);
   const [height, setHeight] = useState(320);
@@ -54,41 +54,35 @@ const Terminal = ({
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Terminal resize logic
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      setIsResizing(true);
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
 
-      const startY = e.clientY;
-      const startHeight = height;
+    const startY = e.clientY;
+    const startHeight = height;
 
-      const handleMouseMove = (e: MouseEvent) => {
-        const deltaY = startY - e.clientY;
-        const newHeight = Math.min(
-          Math.max(startHeight + deltaY, 200),
-          window.innerHeight * 0.8,
-        );
-        setHeight(newHeight);
-      };
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = startY - e.clientY;
+      const newHeight = Math.min(Math.max(startHeight + deltaY, 200), window.innerHeight * 0.8);
+      setHeight(newHeight);
+    };
 
-      const handleMouseUp = () => {
-        setIsResizing(false);
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-      };
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
 
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "ns-resize";
-      document.body.style.userSelect = "none";
-    },
-    [height],
-  );
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  }, [height]);
 
   const appendToTerminal = (content: string) => {
-    const newLines = content.split("\n");
+    const newLines = content.split('\n');
     setTerminalLines(prev => {
       const updated = [...prev];
       // Add new lines, splitting on newlines
@@ -96,7 +90,7 @@ const Terminal = ({
         if (index === 0 && updated.length > 0) {
           // Append to the last line if it exists
           updated[updated.length - 1] += line;
-        } else if (line !== "" || index < newLines.length - 1) {
+        } else if (line !== '' || index < newLines.length - 1) {
           // Add new line (skip empty trailing line from split)
           updated.push(line);
         }
@@ -106,7 +100,7 @@ const Terminal = ({
   };
 
   const setTerminalScreen = (screen: string) => {
-    setTerminalLines(screen.split("\n"));
+    setTerminalLines(screen.split('\n'));
   };
 
   // Create terminal on mount
@@ -115,71 +109,61 @@ const Terminal = ({
 
     const createTerminal = async () => {
       try {
-        const id = await invoke<string>("create_terminal_connection", {
+        const id = await invoke<string>('create_terminal_connection', {
           config: {
             kind: {
-              $type: "local",
+              $type: 'local',
               workingDirectory: currentDirectory,
-              shell: null,
+              shell: null
             },
             workingDir: currentDirectory,
             shellCommand: null,
             environment: null,
             lines: 24,
-            cols: 80,
-          },
+            cols: 80
+          }
         });
 
         setTerminalId(id);
         setIsConnected(true);
-        console.log("Terminal connected:", id);
+        console.log('Terminal connected:', id);
         appendToTerminal(`Terminal connected (ID: ${id})\n`);
 
         // Listen for terminal events
-        const eventUnlisten = await listen<any>(
-          `terminal-event-${id}`,
-          event => {
-            // Process terminal events (screen updates, cursor moves, etc.)
-            if (event.payload.type === "newLines") {
-              // Convert line items to plain text for simple display
-              const lines = event.payload.lines
-                .map((line: any[]) =>
-                  line.map((item: any) => item.lexeme).join(""),
-                )
-                .join("\n");
-              if (lines.trim()) {
-                appendToTerminal(lines + "\n");
-              }
-            } else if (event.payload.type === "screenUpdate") {
-              // Handle full screen updates - this represents the entire terminal screen
-              const screenText = event.payload.screen
-                .map((line: any[]) =>
-                  line.map((item: any) => item.lexeme).join(""),
-                )
-                .join("\n");
-              // Only update if the screen has actual content
-              if (screenText.trim()) {
-                setTerminalScreen(screenText);
-              }
+        const eventUnlisten = await listen<any>(`terminal-event-${id}`, (event) => {
+          // Process terminal events (screen updates, cursor moves, etc.)
+          if (event.payload.type === 'newLines') {
+            // Convert line items to plain text for simple display
+            const lines = event.payload.lines.map((line: any[]) => 
+              line.map((item: any) => item.lexeme).join('')
+            ).join('\n');
+            if (lines.trim()) {
+              appendToTerminal(lines + '\n');
             }
-          },
-        );
+          } else if (event.payload.type === 'screenUpdate') {
+            // Handle full screen updates - this represents the entire terminal screen
+            const screenText = event.payload.screen.map((line: any[]) => 
+              line.map((item: any) => item.lexeme).join('')
+            ).join('\n');
+            // Only update if the screen has actual content
+            if (screenText.trim()) {
+              setTerminalScreen(screenText);
+            }
+          }
+        });
 
         // Listen for terminal disconnect
-        const disconnectUnlisten = await listen<any>(
-          `terminal-disconnect-${id}`,
-          () => {
-            setIsConnected(false);
-            appendToTerminal("\n[Terminal session ended]\n");
-          },
-        );
+        const disconnectUnlisten = await listen<any>(`terminal-disconnect-${id}`, () => {
+          setIsConnected(false);
+          appendToTerminal('\n[Terminal session ended]\n');
+        });
 
         return () => {
           eventUnlisten();
           disconnectUnlisten();
         };
       } catch (error) {
-        console.error("Failed to create terminal:", error);
+        console.error('Failed to create terminal:', error);
         setIsConnected(false);
         appendToTerminal(`Failed to create terminal: ${error}\n`);
       }
@@ -190,13 +174,7 @@ const Terminal = ({
 
   // Auto-focus input when terminal becomes visible or connected
   useEffect(() => {
-    if (
-      isVisible
-      && inputRef.current
-      && isTauri()
-      && terminalId
-      && isConnected
-    ) {
+    if (isVisible && inputRef.current && isTauri() && terminalId && isConnected) {
       // Use setTimeout to ensure the input is rendered
       setTimeout(() => {
         inputRef.current?.focus();
@@ -208,14 +186,9 @@ const Terminal = ({
   const handleTerminalClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(
-      "Terminal clicked, terminalId:",
-      terminalId,
-      "isConnected:",
-      isConnected,
-    );
+    console.log('Terminal clicked, terminalId:', terminalId, 'isConnected:', isConnected);
     if (inputRef.current && terminalId) {
-      console.log("Focusing input field");
+      console.log('Focusing input field');
       inputRef.current.focus();
     }
   };
@@ -223,7 +196,7 @@ const Terminal = ({
   // Auto-scroll to bottom when terminal content changes
   useEffect(() => {
     if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [terminalLines, currentInput]);
 
@@ -231,9 +204,7 @@ const Terminal = ({
   useEffect(() => {
     return () => {
       if (terminalId) {
-        invoke("close_terminal_connection", { connectionId: terminalId }).catch(
-          console.error,
-        );
+        invoke('close_terminal_connection', { connectionId: terminalId }).catch(console.error);
       }
     };
   }, [terminalId]);
@@ -248,9 +219,9 @@ const Terminal = ({
     setIsExecuting(true);
 
     try {
-      await invoke("send_terminal_data", {
+      await invoke('send_terminal_data', {
         connectionId: terminalId,
-        data: command.trim() + "\n",
+        data: command.trim() + '\n',
       });
     } catch (error) {
       appendToTerminal(`Error: ${error}\n`);
@@ -261,11 +232,11 @@ const Terminal = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isConnected || isExecuting) return;
-
-    if (e.key === "Enter") {
+    
+    if (e.key === 'Enter') {
       e.preventDefault();
       executeCommand(currentInput);
-      setCurrentInput("");
+      setCurrentInput('');
     }
     // Let the input field handle all other keys naturally
   };
@@ -283,92 +254,92 @@ const Terminal = ({
   if (isEmbedded) {
     return (
       <div className="flex flex-col h-full">
-        <div
+        <div 
           ref={terminalRef}
           className="flex-1 overflow-y-auto font-mono text-sm p-3 bg-[var(--primary-bg)] custom-scrollbar relative focus:outline-none"
           onClick={handleTerminalClick}
           style={{ zIndex: 1 }}
         >
-          {/* Terminal Screen Content with integrated input */}
-          <div
-            className="text-[var(--text-light)] leading-relaxed cursor-text"
-            onClick={e => {
-              e.stopPropagation();
-              if (inputRef.current) {
-                inputRef.current.focus();
-              }
-            }}
-          >
-            {/* Render all terminal output lines */}
-            {terminalLines.map((line, index) => (
-              <div key={index} className="whitespace-pre-wrap">
-                {line || "\u00A0"}{" "}
-                {/* Use non-breaking space for empty lines */}
-              </div>
-            ))}
+                  {/* Terminal Screen Content with integrated input */}
+        <div 
+          className="text-[var(--text-light)] leading-relaxed cursor-text"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          }}
+        >
+          {/* Render all terminal output lines */}
+          {terminalLines.map((line, index) => (
+            <div key={index} className="whitespace-pre-wrap">
+              {line || '\u00A0'} {/* Use non-breaking space for empty lines */}
+            </div>
+          ))}
+          
+          {/* Current input line at the bottom */}
+          {terminalId && isConnected && (
+            <div className="flex items-start">
+              <span className="text-[#00ff00] mr-1">$</span>
+              <span className="text-[var(--text-color)] flex-1 relative">
+                {currentInput}
+                {/* Blinking cursor */}
+                <span 
+                  className={`inline-block w-2 h-5 ml-0.5 ${isExecuting ? 'bg-yellow-400' : 'bg-[var(--text-color)]'}`}
+                  style={{
+                    animation: 'blink 1s infinite'
+                  }}
+                />
+              </span>
+              {isExecuting && (
+                <span className="text-yellow-400 text-xs ml-2 animate-pulse">⚡</span>
+              )}
+            </div>
+          )}
+          
+          {/* Connection status for inline display */}
+          {terminalId && !isConnected && (
+            <div className="text-yellow-400">
+              <span className="text-[#00ff00]">$</span> <span className="animate-pulse">Connecting to terminal...</span>
+            </div>
+          )}
+          
+          {/* Bottom reference for auto-scrolling */}
+          <div ref={bottomRef} />
+        </div>
+        
+        {/* Hidden input field for actual text input */}
+        <input
+          ref={inputRef}
+          type="text"
+          value={currentInput}
+          onChange={(e) => setCurrentInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => console.log('Hidden input focused')}
+          onBlur={() => console.log('Hidden input blurred')}
+          disabled={isExecuting || !isConnected}
+          className="absolute opacity-0 w-0 h-0 border-0 outline-0"
+          style={{ 
+            position: 'absolute',
+            left: '-9999px',
+            top: '-9999px',
+            zIndex: -1
+          }}
+          autoComplete="off"
+          spellCheck={false}
+          tabIndex={1}
+        />
 
-            {/* Current input line at the bottom */}
-            {terminalId && isConnected && (
-              <div className="flex items-start">
-                <span className="text-[#00ff00] mr-1">$</span>
-                <span className="text-[var(--text-color)] flex-1 relative">
-                  {currentInput}
-                  {/* Blinking cursor */}
-                  <span
-                    className={`inline-block w-2 h-5 ml-0.5 ${isExecuting ? "bg-yellow-400" : "bg-[var(--text-color)]"}`}
-                    style={{
-                      animation: "blink 1s infinite",
-                    }}
-                  />
-                </span>
-                {isExecuting && (
-                  <span className="text-yellow-400 text-xs ml-2 animate-pulse">
-                    ⚡
-                  </span>
-                )}
-              </div>
-            )}
 
-            {/* Connection status for inline display */}
-            {terminalId && !isConnected && (
-              <div className="text-yellow-400">
-                <span className="text-[#00ff00]">$</span>{" "}
-                <span className="animate-pulse">Connecting to terminal...</span>
-              </div>
-            )}
 
-            {/* Bottom reference for auto-scrolling */}
-            <div ref={bottomRef} />
-          </div>
 
-          {/* Hidden input field for actual text input */}
-          <input
-            ref={inputRef}
-            type="text"
-            value={currentInput}
-            onChange={e => setCurrentInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => console.log("Hidden input focused")}
-            onBlur={() => console.log("Hidden input blurred")}
-            disabled={isExecuting || !isConnected}
-            className="absolute opacity-0 w-0 h-0 border-0 outline-0"
-            style={{
-              position: "absolute",
-              left: "-9999px",
-              top: "-9999px",
-              zIndex: -1,
-            }}
-            autoComplete="off"
-            spellCheck={false}
-            tabIndex={1}
-          />
         </div>
       </div>
     );
   }
 
   return (
-    <div
+    <div 
       className="fixed bottom-0 left-0 right-0 bg-[#1a1a1a] border-t border-[var(--border-color)] flex flex-col z-50"
       style={{ height: `${height}px` }}
     >
@@ -376,7 +347,7 @@ const Terminal = ({
       <div
         onMouseDown={handleMouseDown}
         className={`absolute top-0 left-0 right-0 h-1 cursor-ns-resize hover:bg-blue-500/30 transition-colors duration-150 group ${
-          isResizing ? "bg-blue-500/50" : ""
+          isResizing ? 'bg-blue-500/50' : ''
         }`}
       >
         <div className="absolute top-0 left-0 right-0 h-[3px] -translate-y-[1px] opacity-0 group-hover:opacity-100 bg-blue-500 transition-opacity duration-150" />
@@ -386,9 +357,7 @@ const Terminal = ({
       <div className="flex items-center justify-between px-4 py-2 bg-[#2a2a2a] border-b border-[var(--border-color)]">
         <div className="flex items-center gap-2">
           <TerminalIcon size={16} className="text-[var(--text-lighter)]" />
-          <span className="font-mono text-sm text-[var(--text-color)]">
-            Terminal
-          </span>
+          <span className="font-mono text-sm text-[var(--text-color)]">Terminal</span>
           {currentDirectory && (
             <span className="font-mono text-xs text-[var(--text-lighter)]">
               {currentDirectory}
@@ -404,87 +373,84 @@ const Terminal = ({
       </div>
 
       {/* Terminal Content */}
-      <div
+      <div 
         ref={terminalRef}
         className="flex-1 overflow-y-auto font-mono text-sm p-3 bg-[var(--primary-bg)] custom-scrollbar relative focus:outline-none"
         onClick={handleTerminalClick}
         style={{ zIndex: 1 }}
       >
-        {/* Terminal Screen Content with integrated input */}
-        <div
-          className="text-[var(--text-light)] leading-relaxed cursor-text"
-          onClick={e => {
-            e.stopPropagation();
-            if (inputRef.current) {
-              inputRef.current.focus();
-            }
-          }}
-        >
-          {/* Render all terminal output lines */}
-          {terminalLines.map((line, index) => (
-            <div key={index} className="whitespace-pre-wrap">
-              {line || "\u00A0"} {/* Use non-breaking space for empty lines */}
-            </div>
-          ))}
-
-          {/* Current input line at the bottom */}
-          {terminalId && isConnected && (
-            <div className="flex items-start">
-              <span className="text-[#00ff00] mr-1">$</span>
-              <span className="text-[var(--text-color)] flex-1 relative">
-                {currentInput}
-                {/* Blinking cursor */}
-                <span
-                  className={`inline-block w-2 h-5 ml-0.5 ${isExecuting ? "bg-yellow-400" : "bg-[var(--text-color)]"}`}
-                  style={{
-                    animation: "blink 1s infinite",
-                  }}
-                />
-              </span>
-              {isExecuting && (
-                <span className="text-yellow-400 text-xs ml-2 animate-pulse">
-                  ⚡
+                  {/* Terminal Screen Content with integrated input */}
+          <div 
+            className="text-[var(--text-light)] leading-relaxed cursor-text"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (inputRef.current) {
+                inputRef.current.focus();
+              }
+            }}
+          >
+            {/* Render all terminal output lines */}
+            {terminalLines.map((line, index) => (
+              <div key={index} className="whitespace-pre-wrap">
+                {line || '\u00A0'} {/* Use non-breaking space for empty lines */}
+              </div>
+            ))}
+            
+            {/* Current input line at the bottom */}
+            {terminalId && isConnected && (
+              <div className="flex items-start">
+                <span className="text-[#00ff00] mr-1">$</span>
+                <span className="text-[var(--text-color)] flex-1 relative">
+                  {currentInput}
+                  {/* Blinking cursor */}
+                  <span 
+                    className={`inline-block w-2 h-5 ml-0.5 ${isExecuting ? 'bg-yellow-400' : 'bg-[var(--text-color)]'}`}
+                    style={{
+                      animation: 'blink 1s infinite'
+                    }}
+                  />
                 </span>
-              )}
-            </div>
-          )}
-
-          {/* Connection status for inline display */}
-          {terminalId && !isConnected && (
-            <div className="text-yellow-400">
-              <span className="text-[#00ff00]">$</span>{" "}
-              <span className="animate-pulse">Connecting to terminal...</span>
-            </div>
-          )}
-
-          {/* Bottom reference for auto-scrolling */}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Hidden input field for actual text input */}
-        <input
-          ref={inputRef}
-          type="text"
-          value={currentInput}
-          onChange={e => setCurrentInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => console.log("Hidden input focused (embedded)")}
-          onBlur={() => console.log("Hidden input blurred (embedded)")}
-          disabled={isExecuting || !isConnected}
-          className="absolute opacity-0 w-0 h-0 border-0 outline-0"
-          style={{
-            position: "absolute",
-            left: "-9999px",
-            top: "-9999px",
-            zIndex: -1,
-          }}
-          autoComplete="off"
-          spellCheck={false}
-          tabIndex={1}
-        />
+                {isExecuting && (
+                  <span className="text-yellow-400 text-xs ml-2 animate-pulse">⚡</span>
+                )}
+              </div>
+            )}
+            
+            {/* Connection status for inline display */}
+            {terminalId && !isConnected && (
+              <div className="text-yellow-400">
+                <span className="text-[#00ff00]">$</span> <span className="animate-pulse">Connecting to terminal...</span>
+              </div>
+            )}
+            
+            {/* Bottom reference for auto-scrolling */}
+            <div ref={bottomRef} />
+          </div>
+          
+          {/* Hidden input field for actual text input */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => console.log('Hidden input focused (embedded)')}
+            onBlur={() => console.log('Hidden input blurred (embedded)')}
+            disabled={isExecuting || !isConnected}
+            className="absolute opacity-0 w-0 h-0 border-0 outline-0"
+            style={{ 
+              position: 'absolute',
+              left: '-9999px',
+              top: '-9999px',
+              zIndex: -1
+            }}
+            autoComplete="off"
+            spellCheck={false}
+            tabIndex={1}
+          />
       </div>
     </div>
   );
 };
 
-export default Terminal;
+export default Terminal; 

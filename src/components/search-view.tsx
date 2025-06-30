@@ -150,7 +150,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
             "crystal",
           ]);
 
-          const textFiles = allProjectFiles.filter(file => {
+          const textFiles = allProjectFiles.filter((file) => {
             if (file.isDir) return false;
 
             const extension = file.name.split(".").pop()?.toLowerCase();
@@ -185,7 +185,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
             const chunk = textFiles.slice(i, i + CHUNK_SIZE);
 
             await Promise.all(
-              chunk.map(async file => {
+              chunk.map(async (file) => {
                 if (signal.aborted) return;
 
                 try {
@@ -230,7 +230,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
             );
 
             // Allow UI to update between chunks - use requestAnimationFrame for better performance
-            await new Promise(resolve => requestAnimationFrame(resolve));
+            await new Promise((resolve) => requestAnimationFrame(resolve));
           }
 
           if (!signal.aborted) {
@@ -325,7 +325,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
               ref={searchInputRef}
               type="text"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search in files..."
               className="w-full pl-8 pr-8 py-2 text-xs bg-[var(--primary-bg)] border border-[var(--border-color)] rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-[var(--text-color)]"
             />

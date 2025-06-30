@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from '@tauri-apps/api/core';
 import ConnectionDialog from "./connection-dialog";
 import ConnectionList from "./connection-list";
 import { RemoteConnection, RemoteConnectionFormData } from "./types";
@@ -8,23 +8,22 @@ interface RemoteConnectionViewProps {
   onFileSelect?: (path: string, isDir: boolean) => void;
 }
 
-const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
+const RemoteConnectionView = ({
+  onFileSelect
+}: RemoteConnectionViewProps) => {
   const [connections, setConnections] = useState<RemoteConnection[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingConnection, setEditingConnection] =
-    useState<RemoteConnection | null>(null);
+  const [editingConnection, setEditingConnection] = useState<RemoteConnection | null>(null);
 
   // Load connections from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("athas-remote-connections");
+    const stored = localStorage.getItem('athas-remote-connections');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setConnections(
-          parsed.map((conn: any) => ({ ...conn, isConnected: false })),
-        );
+        setConnections(parsed.map((conn: any) => ({ ...conn, isConnected: false })));
       } catch (error) {
-        console.error("Error loading remote connections:", error);
+        console.error('Error loading remote connections:', error);
       }
     }
   }, []);
@@ -33,24 +32,21 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
   const saveConnections = (conns: RemoteConnection[]) => {
     try {
       const dataToStore = JSON.stringify(conns);
-      localStorage.setItem("athas-remote-connections", dataToStore);
+      localStorage.setItem('athas-remote-connections', dataToStore);
       setConnections(conns);
     } catch (error) {
-      console.error("Error saving remote connections:", error);
-
+      console.error('Error saving remote connections:', error);
+      
       // If quota exceeded, try to clear and retry
-      if (error instanceof Error && error.name === "QuotaExceededError") {
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
         try {
           // Clear existing connections and try again
-          localStorage.removeItem("athas-remote-connections");
-          localStorage.setItem(
-            "athas-remote-connections",
-            JSON.stringify(conns),
-          );
+          localStorage.removeItem('athas-remote-connections');
+          localStorage.setItem('athas-remote-connections', JSON.stringify(conns));
           setConnections(conns);
-          console.log("Successfully saved after clearing old data");
+          console.log('Successfully saved after clearing old data');
         } catch (retryError) {
-          console.error("Failed to save even after clearing:", retryError);
+          console.error('Failed to save even after clearing:', retryError);
           // At least update the state even if localStorage fails
           setConnections(conns);
         }
@@ -61,22 +57,20 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
     }
   };
 
-  const handleSaveConnection = async (
-    formData: RemoteConnectionFormData,
-  ): Promise<boolean> => {
+  const handleSaveConnection = async (formData: RemoteConnectionFormData): Promise<boolean> => {
     try {
       let updatedConnections: RemoteConnection[];
-
+      
       if (editingConnection) {
         // Update existing connection
-        updatedConnections = connections.map(conn =>
-          conn.id === editingConnection.id
-            ? {
-                ...conn,
+        updatedConnections = connections.map(conn => 
+          conn.id === editingConnection.id 
+            ? { 
+                ...conn, 
                 ...formData,
-                isConnected: false, // Reset connection status when editing
+                isConnected: false // Reset connection status when editing
               }
-            : conn,
+            : conn
         );
       } else {
         // Add new connection
@@ -87,13 +81,13 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
         };
         updatedConnections = [...connections, newConnection];
       }
-
+      
       // Use the safe save function
       saveConnections(updatedConnections);
-
+      
       return true;
     } catch (error) {
-      console.error("Error saving connection:", error);
+      console.error('Error saving connection:', error);
       return false;
     }
   };
@@ -105,57 +99,51 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
     try {
       if (connection.isConnected) {
         // Disconnect
-        await invoke("ssh_disconnect", { connectionId });
-
-        setConnections(
-          connections.map(conn =>
-            conn.id === connectionId ? { ...conn, isConnected: false } : conn,
-          ),
-        );
+        await invoke('ssh_disconnect', { connectionId });
+        
+        setConnections(connections.map(conn => 
+          conn.id === connectionId 
+            ? { ...conn, isConnected: false }
+            : conn
+        ));
       } else {
         // Connect
-        await invoke("ssh_connect", {
+        await invoke('ssh_connect', {
           connectionId,
           host: connection.host,
           port: connection.port,
           username: connection.username,
           password: connection.password || null,
           keyPath: connection.keyPath || null,
-          useSftp: connection.type === "sftp",
+          useSftp: connection.type === 'sftp'
         });
 
         // Update connection status
-        setConnections(
-          connections.map(conn =>
-            conn.id === connectionId
-              ? {
-                  ...conn,
-                  isConnected: true,
-                  lastConnected: new Date().toISOString(),
-                }
-              : conn,
-          ),
-        );
+        setConnections(connections.map(conn => 
+          conn.id === connectionId 
+            ? { ...conn, isConnected: true, lastConnected: new Date().toISOString() }
+            : conn
+        ));
 
         // Create new remote window
-        await invoke("create_remote_window", {
+        await invoke('create_remote_window', {
           connectionId,
-          connectionName: connection.name,
+          connectionName: connection.name
         });
       }
     } catch (error) {
-      console.error("Connection error:", error);
-
+      console.error('Connection error:', error);
+      
       // Use Tauri's dialog API instead of alert
       try {
-        const { message } = await import("@tauri-apps/plugin-dialog");
+        const { message } = await import('@tauri-apps/plugin-dialog');
         await message(`Connection failed: ${error}`, {
-          title: "SSH Connection Error",
-          kind: "error",
+          title: 'SSH Connection Error',
+          kind: 'error'
         });
       } catch {
         // Fallback to console if dialog fails
-        console.error("Connection failed:", error);
+        console.error('Connection failed:', error);
       }
     }
   };
@@ -200,4 +188,4 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
   );
 };
 
-export default RemoteConnectionView;
+export default RemoteConnectionView; 

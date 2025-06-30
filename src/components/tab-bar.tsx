@@ -29,6 +29,7 @@ interface ContextMenuProps {
   onCloseOthers: (bufferId: string) => void;
   onCloseAll: () => void;
   onCloseToRight: (bufferId: string) => void;
+
 }
 
 const ContextMenu = ({
@@ -41,6 +42,7 @@ const ContextMenu = ({
   onCloseOthers,
   onCloseAll,
   onCloseToRight,
+
 }: ContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -86,7 +88,9 @@ const ContextMenu = ({
         {buffer.isPinned ? <PinOff size={12} /> : <Pin size={12} />}
         {buffer.isPinned ? "Unpin Tab" : "Pin Tab"}
       </button>
+      
 
+      
       <div className="border-t border-[var(--border-color)] my-1 dark:border-gray-600" />
       <button
         className="w-full text-left px-3 py-1.5 text-xs hover:bg-[var(--hover-color)] flex items-center justify-between gap-2 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -97,7 +101,7 @@ const ContextMenu = ({
       >
         <span>Close</span>
         <span className="text-[var(--text-lighter)] text-[10px] font-mono opacity-60">
-          {getShortcutText("w", ["cmd"])}
+          {getShortcutText('w', ['cmd'])}
         </span>
       </button>
       <button
@@ -166,11 +170,7 @@ const TabBar = ({
 
   const tabBarRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (
-    e: React.MouseEvent,
-    buffer: Buffer,
-    index: number,
-  ) => {
+  const handleMouseDown = (e: React.MouseEvent, buffer: Buffer, index: number) => {
     if (e.button == 1) {
       onTabClose(buffer.id, e);
     }
@@ -188,13 +188,13 @@ const TabBar = ({
       return;
 
     const distance = Math.sqrt(
-      Math.pow(e.clientX - dragStartPosition.x, 2)
-        + Math.pow(e.clientY - dragStartPosition.y, 2),
+      Math.pow(e.clientX - dragStartPosition.x, 2) +
+        Math.pow(e.clientY - dragStartPosition.y, 2),
     );
 
     if (distance > 5 && !isDragging) {
       setIsDragging(true);
-
+      
       // Notify parent about drag start
       const draggedBuffer = sortedBuffers[draggedIndex];
       if (onTabDragStart && draggedBuffer) {
@@ -208,8 +208,7 @@ const TabBar = ({
       const y = e.clientY - rect.top;
 
       // Check if dragged outside the tab bar
-      const isOutside =
-        x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
+      const isOutside = x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
       setIsDraggedOutside(isOutside);
 
       if (!isOutside) {
@@ -241,16 +240,11 @@ const TabBar = ({
 
   const handleMouseUp = () => {
     if (draggedIndex !== null) {
-      if (
-        !isDraggedOutside
-        && dropTarget !== null
-        && dropTarget !== draggedIndex
-        && onTabReorder
-      ) {
+      if (!isDraggedOutside && dropTarget !== null && dropTarget !== draggedIndex && onTabReorder) {
         // Internal reordering
         onTabReorder(draggedIndex, dropTarget);
       }
-
+      
       // Notify parent about drag end
       if (onTabDragEnd) {
         onTabDragEnd();
@@ -269,26 +263,22 @@ const TabBar = ({
     const buffer = sortedBuffers[index];
     if (!buffer) return;
 
-    e.dataTransfer.setData(
-      "application/tab-data",
-      JSON.stringify({
-        bufferId: buffer.id,
-        paneId: paneId,
-        bufferData: buffer,
-      }),
-    );
-    e.dataTransfer.effectAllowed = "move";
-
+    e.dataTransfer.setData('application/tab-data', JSON.stringify({
+      bufferId: buffer.id,
+      paneId: paneId,
+      bufferData: buffer
+    }));
+    e.dataTransfer.effectAllowed = 'move';
+    
     // Create drag image
-    const dragImage = document.createElement("div");
-    dragImage.className =
-      "bg-[var(--primary-bg)] border border-[var(--border-color)] rounded px-2 py-1 text-xs font-mono shadow-lg";
+    const dragImage = document.createElement('div');
+    dragImage.className = 'bg-[var(--primary-bg)] border border-[var(--border-color)] rounded px-2 py-1 text-xs font-mono shadow-lg';
     dragImage.textContent = buffer.name;
-    dragImage.style.position = "absolute";
-    dragImage.style.top = "-1000px";
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
     document.body.appendChild(dragImage);
     e.dataTransfer.setDragImage(dragImage, 0, 0);
-
+    
     setTimeout(() => {
       document.body.removeChild(dragImage);
     }, 0);
@@ -300,7 +290,7 @@ const TabBar = ({
     setDropTarget(null);
     setDragStartPosition(null);
     setIsDraggedOutside(false);
-
+    
     if (onTabDragEnd) {
       onTabDragEnd();
     }
@@ -354,7 +344,7 @@ const TabBar = ({
               <div
                 key={buffer.id}
                 draggable={true}
-                onDragStart={e => handleDragStart(e, index)}
+                onDragStart={(e) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
                 className={`
                    group flex items-center gap-1.5 px-2 py-1.5 border-r border-[var(--border-color)]
@@ -369,13 +359,13 @@ const TabBar = ({
                    ${isDropTarget ? "bg-[var(--hover-color)]" : ""}
                    ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}
                  `}
-                onMouseDown={e => handleMouseDown(e, buffer, index)}
+                onMouseDown={(e) => handleMouseDown(e, buffer, index)}
                 onClick={() => {
                   if (!isDragging) {
                     onTabClick(buffer.id);
                   }
                 }}
-                onContextMenu={e => handleContextMenu(e, buffer)}
+                onContextMenu={(e) => handleContextMenu(e, buffer)}
               >
                 {/* Drop indicator */}
                 {isDropTarget && draggedIndex !== null && !isDraggedOutside && (
@@ -428,7 +418,7 @@ const TabBar = ({
                 {/* Close Button */}
                 {!buffer.isPinned && (
                   <button
-                    onClick={e => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       onTabClose(buffer.id, e);
                     }}
@@ -455,8 +445,8 @@ const TabBar = ({
         buffer={contextMenu.buffer}
         onClose={closeContextMenu}
         onPin={onTabPin || (() => {})}
-        onCloseTab={bufferId => {
-          const buffer = buffers.find(b => b.id === bufferId);
+        onCloseTab={(bufferId) => {
+          const buffer = buffers.find((b) => b.id === bufferId);
           if (buffer) {
             onTabClose(bufferId, {} as React.MouseEvent);
           }
@@ -464,6 +454,7 @@ const TabBar = ({
         onCloseOthers={onCloseOtherTabs || (() => {})}
         onCloseAll={onCloseAllTabs || (() => {})}
         onCloseToRight={onCloseTabsToRight || (() => {})}
+
       />
     </>
   );

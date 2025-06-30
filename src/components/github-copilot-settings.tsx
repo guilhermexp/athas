@@ -166,7 +166,7 @@ const GitHubCopilotSettings = ({
             <input
               type="password"
               value={apiKey}
-              onChange={e => handleKeyChange(e.target.value)}
+              onChange={(e) => handleKeyChange(e.target.value)}
               placeholder="sk-xxxxxxxxxxxxxxxxxxxx"
               className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-blue-500"
               disabled={isValidating}

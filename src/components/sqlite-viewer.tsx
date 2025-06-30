@@ -47,9 +47,9 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
 
   // Database file info
   const fileName =
-    databasePath.split("/").pop()
-    || databasePath.split("\\").pop()
-    || "Database";
+    databasePath.split("/").pop() ||
+    databasePath.split("\\").pop() ||
+    "Database";
 
   // Load table list when component mounts
   useEffect(() => {
@@ -87,7 +87,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
           query: `PRAGMA table_info(${selectedTable})`,
         })) as QueryResult;
 
-        const columns: ColumnInfo[] = result.rows.map(row => ({
+        const columns: ColumnInfo[] = result.rows.map((row) => ({
           name: row[1] as string,
           type: row[2] as string,
         }));
@@ -129,7 +129,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
         if (searchTerm.trim()) {
           // Search across all columns
           const searchableColumns = tableMeta
-            .map(col => col.name)
+            .map((col) => col.name)
             .join(' || " " || ');
           query = `SELECT * FROM "${selectedTable}" WHERE (${searchableColumns}) LIKE "%${searchTerm}%" LIMIT ${pageSize} OFFSET ${offset}`;
         }
@@ -176,7 +176,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
 
       // Add to history if not already present
       if (!sqlHistory.includes(customQuery)) {
-        setSqlHistory(prev => [customQuery, ...prev].slice(0, 10));
+        setSqlHistory((prev) => [customQuery, ...prev].slice(0, 10));
       }
     } catch (err) {
       console.error("Error executing custom query:", err);
@@ -208,9 +208,9 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
 
     const headers = queryResult.columns.join(",");
     const rows = queryResult.rows
-      .map(row =>
+      .map((row) =>
         row
-          .map(cell => {
+          .map((cell) => {
             if (cell === null) return "";
             return typeof cell === "object"
               ? JSON.stringify(cell).replace(/"/g, '""')
@@ -240,7 +240,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
   const copyAsJSON = () => {
     if (!queryResult) return;
 
-    const jsonData = queryResult.rows.map(row => {
+    const jsonData = queryResult.rows.map((row) => {
       const obj: Record<string, any> = {};
       queryResult.columns.forEach((col, index) => {
         obj[col] = row[index];
@@ -302,9 +302,9 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
               Tables ({tables.length})
             </h3>
           </div>
-
+          
           <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-            {tables.map(table => (
+            {tables.map((table) => (
               <button
                 key={table.name}
                 onClick={() => handleTableChange(table.name)}
@@ -357,7 +357,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
                 <div className="flex items-center gap-1">
                   <textarea
                     value={customQuery}
-                    onChange={e => setCustomQuery(e.target.value)}
+                    onChange={(e) => setCustomQuery(e.target.value)}
                     className="flex-1 px-2 py-1.5 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded text-xs font-mono h-16 resize-none focus:outline-none focus:border-blue-500"
                     placeholder="SELECT * FROM table_name WHERE condition LIMIT 100"
                     disabled={isLoading}
@@ -395,7 +395,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
                   <input
                     type="text"
                     value={searchTerm}
-                    onChange={e => {
+                    onChange={(e) => {
                       setSearchTerm(e.target.value);
                       setCurrentPage(1);
                     }}
@@ -463,13 +463,13 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
                           key={i}
                           className="border border-[var(--border-color)] px-2 py-1.5 text-left bg-[var(--secondary-bg)] whitespace-nowrap"
                           title={
-                            tableMeta.find(c => c.name === column)?.type || ""
+                            tableMeta.find((c) => c.name === column)?.type || ""
                           }
                         >
                           {column}
-                          {tableMeta.find(c => c.name === column) && (
+                          {tableMeta.find((c) => c.name === column) && (
                             <span className="ml-1 text-[var(--text-lighter)] text-xs">
-                              ({tableMeta.find(c => c.name === column)?.type})
+                              ({tableMeta.find((c) => c.name === column)?.type})
                             </span>
                           )}
                         </th>
@@ -522,7 +522,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
                 </span>
                 <select
                   value={pageSize}
-                  onChange={e => {
+                  onChange={(e) => {
                     setPageSize(Number(e.target.value));
                     setCurrentPage(1);
                   }}
@@ -547,7 +547,9 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
                   First
                 </Button>
                 <Button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                   variant="ghost"
                   size="sm"
@@ -562,7 +564,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
 
                 <Button
                   onClick={() =>
-                    setCurrentPage(prev => Math.min(totalPages, prev + 1))
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                   }
                   disabled={currentPage === totalPages}
                   variant="ghost"
