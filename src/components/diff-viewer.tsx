@@ -195,6 +195,92 @@ const DiffViewer = ({
     const oldNum = line.old_line_number?.toString() || '';
     const newNum = line.new_line_number?.toString() || '';
 
+    if (viewMode === 'split') {
+      return (
+        <div key={`${hunkId}-${index}`} className={`flex text-xs font-mono ${getLineClasses()}`}>
+          {/* Old/Left Side */}
+          <div className="flex-1 flex border-r border-[var(--border-color)]">
+            {/* Old Line Number */}
+            <div className={`w-12 px-2 py-1 text-right text-[var(--text-lighter)] select-none ${getLineNumberBg()} border-r border-[var(--border-color)]`}>
+              {line.line_type !== 'added' ? oldNum : ''}
+            </div>
+            
+            {/* Old Content */}
+            <div className="flex-1 py-1 px-3 overflow-x-auto">
+              {line.line_type === 'removed' ? (
+                <span className="text-red-300 bg-red-500/10">
+                  {line.content || ' '}
+                </span>
+              ) : line.line_type === 'context' ? (
+                <span className="text-[var(--text-color)]">
+                  {line.content || ' '}
+                </span>
+              ) : (
+                <span className="text-transparent select-none">&nbsp;</span>
+              )}
+            </div>
+          </div>
+
+          {/* New/Right Side */}
+          <div className="flex-1 flex">
+            {/* New Line Number */}
+            <div className={`w-12 px-2 py-1 text-right text-[var(--text-lighter)] select-none ${getLineNumberBg()} border-r border-[var(--border-color)]`}>
+              {line.line_type !== 'removed' ? newNum : ''}
+            </div>
+            
+            {/* New Content */}
+            <div className="flex-1 py-1 px-3 overflow-x-auto">
+              {line.line_type === 'added' ? (
+                <span className="text-green-300 bg-green-500/10">
+                  {line.content || ' '}
+                </span>
+              ) : line.line_type === 'context' ? (
+                <span className="text-[var(--text-color)]">
+                  {line.content || ' '}
+                </span>
+              ) : (
+                <span className="text-transparent select-none">&nbsp;</span>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => copyLineContent(line.content)}
+                className="text-[var(--text-lighter)] hover:text-[var(--text-color)] p-1 rounded hover:bg-[var(--hover-color)] transition-colors"
+                title="Copy line"
+              >
+                <Copy size={10} />
+              </button>
+              {(onStageLine || onUnstageLine) && line.line_type !== 'context' && (
+                <>
+                  {onStageLine && line.line_type === 'added' && (
+                    <button
+                      onClick={() => onStageLine(line)}
+                      className="text-green-400 hover:text-green-300 p-1 rounded hover:bg-green-500/20 transition-colors"
+                      title="Stage line"
+                    >
+                      <Plus size={10} />
+                    </button>
+                  )}
+                  {onUnstageLine && line.line_type === 'removed' && (
+                    <button
+                      onClick={() => onUnstageLine(line)}
+                      className="text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-500/20 transition-colors"
+                      title="Unstage line"
+                    >
+                      <Minus size={10} />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Unified view (original implementation)
     return (
       <div key={`${hunkId}-${index}`} className={`flex text-xs font-mono ${getLineClasses()}`}>
         {/* Line Numbers */}
@@ -328,6 +414,28 @@ const DiffViewer = ({
 
       {/* Diff Content */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Split View Column Headers */}
+        {viewMode === 'split' && hunks.length > 0 && (
+          <div className="sticky top-0 z-20 bg-[var(--secondary-bg)] border-b border-[var(--border-color)] flex text-xs font-medium">
+            <div className="flex-1 flex border-r border-[var(--border-color)]">
+              <div className="w-12 px-2 py-2 text-center text-[var(--text-lighter)] border-r border-[var(--border-color)]">
+                #
+              </div>
+              <div className="flex-1 px-3 py-2 text-[var(--text-color)]">
+                {diff.is_renamed && diff.old_path ? diff.old_path : 'Original'}
+              </div>
+            </div>
+            <div className="flex-1 flex">
+              <div className="w-12 px-2 py-2 text-center text-[var(--text-lighter)] border-r border-[var(--border-color)]">
+                #
+              </div>
+              <div className="flex-1 px-3 py-2 text-[var(--text-color)]">
+                {diff.is_renamed && diff.new_path ? diff.new_path : 'Modified'}
+              </div>
+            </div>
+          </div>
+        )}
+
         {hunks.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
