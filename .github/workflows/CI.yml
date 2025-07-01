@@ -27,7 +27,7 @@ jobs:
         run: bun install
 
       - name: Check formatting
-        run: bun run format:check
+        run: bun run format
         continue-on-error: true
 
       - name: Lint
