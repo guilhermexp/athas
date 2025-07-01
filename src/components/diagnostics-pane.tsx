@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 export interface Diagnostic {

@@ -29,9 +29,6 @@ export default function MinimapPane({ content, textareaRef, fontSize }: MinimapP
   // Memoize lines to avoid recalculation on every render
   const lines = useMemo(() => content.split('\n'), [content])
 
-  // Calculate dimensions
-  const totalMinimapHeight = lines.length * lineHeight
-
   const updateViewportFromTextarea = useCallback(() => {
     if (!textareaRef.current || !minimapRef.current) return
     

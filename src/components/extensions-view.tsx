@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Search, Package, Code, Palette, CheckCircle2, GitBranch, Server, Terminal, Settings, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Package, Code, Palette, Settings } from "lucide-react";
 import Button from "./button";
 import { CoreFeature } from "../types/core-features";
 

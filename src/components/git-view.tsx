@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   GitBranch,
   GitCommit as GitCommitIcon,
@@ -17,7 +17,6 @@ import {
   Upload,
   Download,
   GitPullRequest,
-  GitMerge,
   Settings,
 } from "lucide-react";
 import {
@@ -37,7 +36,6 @@ import {
   GitFile,
   GitStatus,
   GitCommit,
-  GitDiff,
 } from "../utils/git";
 import { safeLocalStorageSetItem, truncateJsonArrayData } from "../utils/storage";
 
@@ -53,7 +51,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
-  const [isCreatingBranch, setIsCreatingBranch] = useState(false);
+  const [_isCreatingBranch, setIsCreatingBranch] = useState(false);
   const [newBranchName, setNewBranchName] = useState("");
   const [showGitActionsMenu, setShowGitActionsMenu] = useState(false);
   const [gitActionsMenuPosition, setGitActionsMenuPosition] = useState<{x: number, y: number} | null>(null);
@@ -86,7 +84,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = () => {
       if (showBranchDropdown) {
         setShowBranchDropdown(false);
       }
@@ -267,11 +265,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
               onSuccess: () => {
                 onFileSelect(virtualPath, false);
               },
-              onTruncated: (originalSize, truncatedSize) => {
+              onTruncated: (_originalSize, _truncatedSize) => {
                 onFileSelect(virtualPath, false);
                 alert(`File diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
               },
-              onQuotaExceeded: (error) => {
+              onQuotaExceeded: (_error) => {
                 alert(`Failed to display diff: The file diff is too large to display.\nFile: ${filePath}\nTry viewing smaller portions of the file.`);
               }
             });
@@ -310,11 +308,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           onSuccess: () => {
             onFileSelect(virtualPath, false);
           },
-          onTruncated: (originalSize, truncatedSize) => {
+          onTruncated: (_originalSize, _truncatedSize) => {
             onFileSelect(virtualPath, false);
             alert(`Diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
           },
-          onQuotaExceeded: (error) => {
+          onQuotaExceeded: (_error) => {
             alert(`Failed to display diff: The commit diff is too large to display.\nCommit: ${commitHash}\nConsider viewing individual files instead.`);
           }
         });
@@ -792,7 +790,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
             </div>
           ) : (
             <div className="bg-[var(--primary-bg)]">
-              {commits.map((commit, index) => (
+              {commits.map((commit) => (
                 <div
                   key={commit.hash}
                   className="px-3 py-2 hover:bg-[var(--hover-color)] border-b border-[var(--border-color)] last:border-b-0 cursor-pointer"

@@ -63,11 +63,7 @@ import { useVim } from "./hooks/use-vim";
 
 function App() {
   const {
-    isOutlineVisible,
     isMinimapVisible,
-    toggleOutline,
-    toggleMinimap,
-    setIsOutlineVisible
   } = useBreadcrumbToggles()
 
   // UI State
@@ -287,7 +283,7 @@ function App() {
   const [allProjectFiles, setAllProjectFiles] = useState<FileEntry[]>([]);
 
   // State for tab dragging across panes
-  const [isDraggingTab, setIsDraggingTab] = useState(false);
+  const [_isDraggingTab, setIsDraggingTab] = useState(false);
 
   // File operations with proper callback
   const {
@@ -342,7 +338,6 @@ function App() {
     getCompletions,
     getHover,
     isLanguageSupported,
-    isReady,
   } = useLSP({
     workspaceRoot: rootFolderPath || undefined,
     onDiagnostics: (diagnostics) => {
@@ -918,7 +913,7 @@ function App() {
 
   // Handle clicking outside context menu to close it
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = () => {
       setFolderHeaderContextMenu(null);
       setProjectNameMenu(null);
     };
@@ -1129,7 +1124,7 @@ function App() {
 
   // Split view handlers (simplified for performance)
   // Handle tab drag start
-  const handleTabDragStart = (bufferId: string, paneId?: string) => {
+  const handleTabDragStart = () => {
     setIsDraggingTab(true);
   };
 
@@ -1243,9 +1238,8 @@ function App() {
   console.log("Debug: files.length =", files.length);
   console.log("Debug: isRemoteWindow =", isRemoteWindow);
 
-
-
   // Handle creating new folder
+  /** @ts-ignore Ignoring this unused function for now in case it's needed later */
   const handleCreateNewFolder = async () => {
     const folderName = prompt("Enter the name for the new folder:");
     if (!folderName) return;
@@ -1920,7 +1914,7 @@ function App() {
                   <div className="px-3 py-1 text-xs font-mono text-[var(--text-lighter)] uppercase tracking-wide">
                     Recent Folders
                   </div>
-                  {recentFolders.slice(0, 5).map((folder, index) => (
+                  {recentFolders.slice(0, 5).map((folder) => (
                     <button
                       key={folder.path}
                       onMouseDown={(e) => {

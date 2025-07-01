@@ -23,7 +23,6 @@ const TerminalContainer = ({
     updateTerminalActivity,
     pinTerminal,
     reorderTerminals,
-    getActiveTerminal,
     switchToNextTerminal,
     switchToPrevTerminal,
   } = useTerminalTabs();

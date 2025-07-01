@@ -20,7 +20,7 @@ const ResizableSidebar = ({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | undefined>(undefined);
 
   // Throttle resize updates for better performance
   const throttledSetWidth = useCallback((newWidth: number) => {

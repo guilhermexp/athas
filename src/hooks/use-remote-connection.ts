@@ -14,9 +14,9 @@ interface UseRemoteConnectionReturn extends RemoteConnectionState {
 }
 
 export function useRemoteConnection(
-  files: FileEntry[],
+  _files: FileEntry[],
   setFiles: (files: FileEntry[]) => void,
-  refreshAllProjectFiles?: () => void
+  _refreshAllProjectFiles?: () => void
 ): UseRemoteConnectionReturn {
   const [isRemoteWindow, setIsRemoteWindow] = useState(false)
   const [remoteConnectionId, setRemoteConnectionId] = useState<string | null>(null)
