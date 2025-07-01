@@ -88,8 +88,22 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         working-directory: src-tauri
         run: |
-          # Workaround for libsoup dependency issues on Ubuntu
-          cargo test || echo "Tests may have issues with dependencies on Ubuntu CI"
+          # Run tests and capture output and exit code
+          cargo test > test_output.txt 2>&1 || {
+            EXIT_CODE=$?
+            # Check if failure is due to libsoup dependency issues
+            if grep -q "libsoup\|soup" test_output.txt; then
+              echo "Tests failed with libsoup dependency issues on Ubuntu CI"
+              cat test_output.txt
+              echo "Continuing build process despite libsoup-related failures"
+              exit 0
+            else
+              # If failure is due to other reasons, fail the build
+              echo "Tests failed for reasons unrelated to libsoup dependencies"
+              cat test_output.txt
+              exit $EXIT_CODE
+            fi
+          }
 
   build:
     name: Build (${{ matrix.platform }})
