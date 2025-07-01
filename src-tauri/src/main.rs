@@ -231,6 +231,37 @@ fn write_file_custom(path: String, content: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn create_directory_custom(path: String) -> Result<(), String> {
+    let dir_path = Path::new(&path);
+
+    match fs::create_dir_all(dir_path) {
+        Ok(()) => Ok(()),
+        Err(e) => Err(format!("Failed to create directory: {}", e)),
+    }
+}
+
+#[tauri::command]
+fn delete_path_custom(path: String) -> Result<(), String> {
+    let target_path = Path::new(&path);
+
+    if !target_path.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    if target_path.is_dir() {
+        match fs::remove_dir_all(target_path) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(format!("Failed to delete directory: {}", e)),
+        }
+    } else {
+        match fs::remove_file(target_path) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(format!("Failed to delete file: {}", e)),
+        }
+    }
+}
+
+#[tauri::command]
 fn get_sqlite_tables(path: String) -> Result<Vec<TableInfo>, String> {
     let conn = Connection::open(&path).map_err(|e| e.to_string())?;
 
@@ -999,6 +1030,8 @@ fn main() {
             read_directory_custom,
             read_file_custom,
             write_file_custom,
+            create_directory_custom,
+            delete_path_custom,
             get_sqlite_tables,
             query_sqlite,
             git_status,
