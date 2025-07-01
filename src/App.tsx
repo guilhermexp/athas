@@ -39,7 +39,7 @@ import FileTree from "./components/file-tree";
 import FindBar from "./components/find-bar";
 import { GitDiff } from "./utils/git";
 import GitHubCopilotSettings from "./components/github-copilot-settings";
-import GitView from "./components/git-view";
+import GitView from "./components/git/git-view";
 
 import ImageViewer from "./components/image-viewer";
 import QuickEditInline from "./components/quick-edit-modal";
