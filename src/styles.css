@@ -1883,6 +1883,33 @@ textarea::-webkit-scrollbar-thumb:hover {
     --syntax-punctuation: #b0b0c3;
 }
 
+/* Aura */
+.force-aura {
+    --primary-bg: #15141b;
+    --secondary-bg: #111018;
+    --text-color: #e0def4;
+    --text-light: #a1a1c9;
+    --text-lighter: #6e6a86;
+    --border-color: #222222;
+    --hover-color: #2a283e;
+    --selected-color: rgba(80,250,123,0.08);
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: #222222;
+    --scrollbar-thumb-hover: #6d58cb;
+
+    /* Syntax highlighting colors - Aura theme */
+    --syntax-comment: #6e6a86;
+    --syntax-keyword: #6d58cb;
+    --syntax-string: #5eecb5;
+    --syntax-number: #f6c177;
+    --syntax-function: #9ccfd8;
+    --syntax-variable: #6d58cb;
+    --syntax-tag: #6d58cb;
+    --syntax-attribute: #a575ad;
+    --syntax-punctuation: #a575ad; 
+}
+
+
 /* Vercel Dark Theme Component Enhancements */
 .force-vercel-dark .tab-bar {
     background: var(--sidebar-bg);

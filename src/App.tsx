@@ -26,6 +26,8 @@ import {
 } from "./utils/file-utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+
+
 import AIChat from "./components/ai-chat/ai-chat";
 import BottomPane from "./components/bottom-pane";
 import Button from "./components/button";
@@ -1188,6 +1190,7 @@ function App() {
       "force-ayu-light",
       "force-vercel-dark",
       "force-vesper",
+      "force-aura",
     );
 
     if (theme !== "auto") {

@@ -31,7 +31,7 @@ type ThemeType = 'auto' | 'light' | 'dark' | 'midnight' |
   'synthwave-84' |
   'monokai-pro' |
   'ayu-dark' | 'ayu-mirage' | 'ayu-light' |
-  'vercel-dark' | 'vesper';
+  'vercel-dark' | 'vesper' | 'aura';
 
 export interface CommandPaletteRef {
   focus: () => void;
@@ -114,6 +114,14 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
         icon: <Moon size={16} />,
         category: 'Theme',
         action: () => setTheme('vesper')
+      },
+      {
+        id: 'theme-aura',
+        label: 'Preferences: Color Theme (aura)',
+        description: 'Dark theme with purple and green',
+        icon: <Moon size={16} />,
+        category: 'Theme',
+        action: () => setTheme('aura')
       }
     ];
 
@@ -127,7 +135,7 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
 
 
     // Theme management
-    const setTheme = (theme: 'auto' | 'light' | 'dark' | 'midnight' | 'tokyo-night'| 'vesper') => {
+    const setTheme = (theme: 'auto' | 'light' | 'dark' | 'midnight' | 'tokyo-night'| 'vesper' | 'aura') => {
       if (onThemeChange) {
         onThemeChange(theme);
       }
