@@ -5,7 +5,6 @@ import React, {
   useMemo,
   forwardRef,
   useImperativeHandle,
-  useCallback,
 } from "react";
 import Prism from "prismjs";
 import { cn } from "../utils/cn";
@@ -239,7 +238,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       aiCompletion = true,
       minimap = false,
       getCompletions,
-      getHover,
       isLanguageSupported,
       openDocument,
       changeDocument,
@@ -461,16 +459,13 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = content;
 
-      // Get the text content to find positions in the highlighted HTML
-      const textContent = tempDiv.textContent || "";
-
       // Sort matches by start position (descending) to process from end to beginning
       const sortedMatches = [...searchMatches].sort(
         (a, b) => b.start - a.start,
       );
 
       // Process each match from end to beginning to avoid position shifts
-      sortedMatches.forEach((match, index) => {
+      sortedMatches.forEach((match) => {
         const originalIndex = searchMatches.indexOf(match);
         const isCurrentMatch = originalIndex === currentMatchIndex;
         const matchClass = isCurrentMatch

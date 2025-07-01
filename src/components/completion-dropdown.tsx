@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { CompletionItem } from 'vscode-languageserver-protocol';
 
 interface CompletionDropdownProps {
@@ -13,7 +13,6 @@ export function CompletionDropdown({
   items,
   selectedIndex,
   onSelect,
-  onClose,
   position
 }: CompletionDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);

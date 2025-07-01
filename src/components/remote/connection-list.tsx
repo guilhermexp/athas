@@ -5,7 +5,6 @@ import {
   Edit, 
   FolderOpen, 
   Wifi, 
-  WifiOff,
   Plus,
 } from "lucide-react";
 import { cn } from "../../utils/cn";
@@ -50,7 +49,7 @@ const ConnectionList = ({
 
   // Handle click outside to close menu
   React.useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = () => {
       setConnectionMenu(null);
     };
 

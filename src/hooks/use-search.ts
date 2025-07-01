@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Buffer } from '../types/buffer';
 import { SearchState } from '../types/app';
 import { CodeEditorRef } from '../components/code-editor';

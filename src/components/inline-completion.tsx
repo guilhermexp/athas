@@ -66,7 +66,6 @@ const InlineCompletion = ({
       document.body.removeChild(span);
       
       // Get textarea's position
-      const textareaRect = textarea.getBoundingClientRect();
       const containerRect = textarea.parentElement?.getBoundingClientRect();
       
       if (!containerRect) return { top: 0, left: 0 };
