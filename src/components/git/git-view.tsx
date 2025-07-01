@@ -1,19 +1,12 @@
 import { useState, useEffect } from "react";
 import {
   GitBranch,
-  GitCommit as GitCommitIcon,
-  Plus,
-  Minus,
   RotateCcw,
-  Check,
   FileIcon,
   FilePlus,
   FileX,
   Edit3,
   RefreshCw,
-  Clock,
-  ChevronDown,
-  Trash2,
   Upload,
   Download,
   GitPullRequest,
@@ -21,16 +14,8 @@ import {
 } from "lucide-react";
 import {
   getGitStatus,
-  stageFile,
-  unstageFile,
-  stageAllFiles,
-  unstageAllFiles,
-  commitChanges,
   getGitLog,
   getBranches,
-  checkoutBranch,
-  createBranch,
-  deleteBranch,
   getFileDiff,
   getCommitDiff,
   GitFile,
@@ -55,12 +40,9 @@ interface GitViewProps {
 const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [commits, setCommits] = useState<GitCommit[]>([]);
-  const [branches, setBranches] = useState<string[]>([]);
+  const [_branches, setBranches] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [commitMessage, setCommitMessage] = useState("");
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
-  const [isCreatingBranch, setIsCreatingBranch] = useState(false);
-  const [newBranchName, setNewBranchName] = useState("");
   const [showGitActionsMenu, setShowGitActionsMenu] = useState(false);
   const [gitActionsMenuPosition, setGitActionsMenuPosition] = useState<{x: number, y: number} | null>(null);
   
@@ -111,86 +93,6 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showBranchDropdown, showGitActionsMenu]);
-
-  const handleStageFile = async (filePath: string) => {
-    if (!repoPath) return;
-
-    const success = await stageFile(repoPath, filePath);
-    if (success) {
-      await loadGitData();
-    }
-  };
-
-  const handleUnstageFile = async (filePath: string) => {
-    if (!repoPath) return;
-
-    const success = await unstageFile(repoPath, filePath);
-    if (success) {
-      await loadGitData();
-    }
-  };
-
-  const handleStageAll = async () => {
-    if (!repoPath) return;
-
-    const success = await stageAllFiles(repoPath);
-    if (success) {
-      await loadGitData();
-    }
-  };
-
-  const handleUnstageAll = async () => {
-    if (!repoPath) return;
-
-    const success = await unstageAllFiles(repoPath);
-    if (success) {
-      await loadGitData();
-    }
-  };
-
-  const handleCommit = async () => {
-    if (!repoPath || !commitMessage.trim()) return;
-
-    const success = await commitChanges(repoPath, commitMessage.trim());
-    if (success) {
-      setCommitMessage("");
-      await loadGitData();
-    }
-  };
-
-  const handleBranchChange = async (branchName: string) => {
-    if (!repoPath || !branchName) return;
-
-    const success = await checkoutBranch(repoPath, branchName);
-    if (success) {
-      setShowBranchDropdown(false);
-      await loadGitData();
-    }
-  };
-
-  const handleCreateBranch = async () => {
-    if (!repoPath || !newBranchName.trim()) return;
-
-    const success = await createBranch(
-      repoPath,
-      newBranchName.trim(),
-      gitStatus?.branch,
-    );
-    if (success) {
-      setNewBranchName("");
-      setIsCreatingBranch(false);
-      await loadGitData();
-    }
-  };
-
-  const handleDeleteBranch = async (branchName: string) => {
-    if (!repoPath || !branchName || branchName === gitStatus?.branch) return;
-
-    const success = await deleteBranch(repoPath, branchName);
-    if (success) {
-      await loadGitData();
-    }
-  };
 
   // Additional Git Actions
   const handlePush = async () => {
@@ -273,11 +175,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           onSuccess: () => {
             onFileSelect(virtualPath, false);
           },
-          onTruncated: (originalSize, truncatedSize) => {
+          onTruncated: (_originalSize, _truncatedSize) => {
             onFileSelect(virtualPath, false);
             alert(`File diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
           },
-          onQuotaExceeded: (error) => {
+          onQuotaExceeded: (_error) => {
             alert(`Failed to display diff: The file diff is too large to display.\nFile: ${filePath}\nTry viewing smaller portions of the file.`);
           }
         });
@@ -312,11 +214,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           onSuccess: () => {
             onFileSelect(virtualPath, false);
           },
-          onTruncated: (originalSize, truncatedSize) => {
+          onTruncated: (_originalSize, _truncatedSize) => {
             onFileSelect(virtualPath, false);
             alert(`Diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
           },
-          onQuotaExceeded: (error) => {
+          onQuotaExceeded: (_error) => {
             alert(`Failed to display diff: The commit diff is too large to display.\nCommit: ${commitHash}\nConsider viewing individual files instead.`);
           }
         });
@@ -333,6 +235,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     }
   };
 
+  /* @ts-ignore */
   const getFileIcon = (file: GitFile) => {
     switch (file.status) {
       case "added":
@@ -350,6 +253,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     }
   };
 
+  /* @ts-ignore */
   const getStatusText = (file: GitFile) => {
     switch (file.status) {
       case "added":
@@ -535,7 +439,6 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
   }
 
   const stagedFiles = gitStatus.files.filter((f) => f.staged);
-  const unstagedFiles = gitStatus.files.filter((f) => !f.staged);
 
   return (
     <>

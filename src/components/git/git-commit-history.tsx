@@ -122,7 +122,7 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
       </div>
 
       <div className="bg-[var(--primary-bg)] max-h-96 overflow-y-auto">
-        {commits.map((commit, index) => {
+        {commits.map((commit) => {
           const isExpanded = expandedCommits.has(commit.hash);
           const files = commitFiles[commit.hash] || [];
           const isLoading = loadingCommits.has(commit.hash);

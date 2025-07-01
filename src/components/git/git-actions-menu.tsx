@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  GitBranch,
   Upload,
   Download,
   GitPullRequest,
