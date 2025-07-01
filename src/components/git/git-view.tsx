@@ -36,8 +36,8 @@ import {
   GitFile,
   GitStatus,
   GitCommit,
-} from "../utils/git";
-import { safeLocalStorageSetItem, truncateJsonArrayData } from "../utils/storage";
+} from "../../utils/git";
+import { safeLocalStorageSetItem, truncateJsonArrayData } from "../../utils/storage";
 
 interface GitViewProps {
   repoPath?: string;
