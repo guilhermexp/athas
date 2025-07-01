@@ -8,7 +8,6 @@ import {
   X,
   Clock,
   GitBranch,
-  FileText,
 } from "lucide-react";
 import {
   getStashes,
@@ -228,7 +227,7 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
             </div>
           ) : (
             <div className="space-y-0">
-              {stashes.map((stash, index) => {
+              {stashes.map((stash) => {
                 const isActionLoading = actionLoading.has(stash.index);
                 
                 return (
