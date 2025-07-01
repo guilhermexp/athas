@@ -189,10 +189,6 @@ function App() {
     }
   };
 
-  const names = {
-    aurae: `${currentTheme.split("-")[0]} Dark`,
-}
-
   // Create core features array for extensions view
   const coreFeaturesList: CoreFeature[] = [
     {
