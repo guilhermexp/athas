@@ -40,7 +40,7 @@ import FindBar from "./components/find-bar";
 import { GitDiff } from "./utils/git";
 import GitHubCopilotSettings from "./components/github-copilot-settings";
 import GitView from "./components/git-view";
-import ImageGenerationModal from "./components/image-generation-modal";
+
 import ImageViewer from "./components/image-viewer";
 import QuickEditInline from "./components/quick-edit-modal";
 import { RecentFolder } from "./types/recent-folders";
@@ -1243,30 +1243,7 @@ function App() {
   console.log("Debug: files.length =", files.length);
   console.log("Debug: isRemoteWindow =", isRemoteWindow);
 
-  // Image Generation Modal state
-  const [isImageGenerationModalOpen, setIsImageGenerationModalOpen] =
-    useState(false);
-  const [imageGenerationFolder, setImageGenerationFolder] =
-    useState<string>("");
 
-  // Handle image generation request
-  const handleGenerateImage = (folderPath: string) => {
-    setImageGenerationFolder(folderPath);
-    setIsImageGenerationModalOpen(true);
-  };
-
-  // Handle image generation completion
-  const handleImageGenerated = async (imagePath: string) => {
-    // Refresh the directory that contains the new image
-    try {
-      await refreshDirectory(imageGenerationFolder);
-    } catch (error) {
-      console.error(
-        "Error refreshing directory after image generation:",
-        error,
-      );
-    }
-  };
 
   // Handle creating new folder
   const handleCreateNewFolder = async () => {
@@ -1569,7 +1546,6 @@ function App() {
                         onCreateNewFileInDirectory={
                           handleCreateNewFileInDirectory
                         }
-                        onGenerateImage={handleGenerateImage}
                       />
                     )}
                   </div>
@@ -1966,13 +1942,7 @@ function App() {
             </div>
           )}
 
-          {/* Image Generation Modal */}
-          <ImageGenerationModal
-            isOpen={isImageGenerationModalOpen}
-            onClose={() => setIsImageGenerationModalOpen(false)}
-            targetFolder={imageGenerationFolder}
-            onImageGenerated={handleImageGenerated}
-          />
+
 
 
         </div>
