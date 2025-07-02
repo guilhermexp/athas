@@ -10,6 +10,7 @@ export interface Settings {
   autoSave: boolean;
   vimMode: boolean;
   aiCompletion: boolean;
+  sidebarPosition: "left" | "right";
 }
 
 const defaultSettings: Settings = {
@@ -21,6 +22,7 @@ const defaultSettings: Settings = {
   autoSave: true,
   vimMode: false,
   aiCompletion: true,
+  sidebarPosition: "left",
 };
 
 export const useSettings = () => {
