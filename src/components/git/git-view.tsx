@@ -162,10 +162,30 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     if (!repoPath || !onFileSelect) return;
 
     try {
-      const diff = await getFileDiff(repoPath, filePath, staged);
+      // Handle special Git path formats
+      let actualFilePath = filePath;
+      
+      // Handle renamed files: "oldfile -> newfile"
+      if (filePath.includes(' -> ')) {
+        const parts = filePath.split(' -> ');
+        if (staged) {
+          // For staged renames, show the new file
+          actualFilePath = parts[1].trim();
+        } else {
+          // For unstaged renames, show the old file
+          actualFilePath = parts[0].trim();
+        }
+      }
+      
+      // Handle quoted filenames: "\"filename\""
+      if (actualFilePath.startsWith('"') && actualFilePath.endsWith('"')) {
+        actualFilePath = actualFilePath.slice(1, -1);
+      }
 
-      if (diff && diff.lines.length > 0) {
-        const diffFileName = `${filePath.split("/").pop()}.diff`;
+      const diff = await getFileDiff(repoPath, actualFilePath, staged);
+
+      if (diff && (diff.lines.length > 0 || diff.is_image)) {
+        const diffFileName = `${actualFilePath.split("/").pop()}.diff`;
         const virtualPath = `diff://${staged ? "staged" : "unstaged"}/${diffFileName}`;
         const diffJson = JSON.stringify(diff);
 
@@ -177,10 +197,14 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           },
           onTruncated: (_originalSize, _truncatedSize) => {
             onFileSelect(virtualPath, false);
-            alert(`File diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
+            if (diff.is_image) {
+              console.log(`Image diff displayed successfully.\nFile: ${actualFilePath}`);
+            } else {
+              alert(`File diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
+            }
           },
           onQuotaExceeded: (_error) => {
-            alert(`Failed to display diff: The file diff is too large to display.\nFile: ${filePath}\nTry viewing smaller portions of the file.`);
+            alert(`Failed to display diff: The file diff is too large to display.\nFile: ${actualFilePath}\nTry viewing smaller portions of the file.`);
           }
         });
         
@@ -188,7 +212,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           console.error('Failed to store file diff');
         }
       } else {
-        alert(`No ${staged ? 'staged' : 'unstaged'} changes for this file.`);
+        alert(`No ${staged ? 'staged' : 'unstaged'} changes for this file.\nFile: ${actualFilePath}`);
       }
     } catch (error) {
       console.error("Error getting file diff:", error);

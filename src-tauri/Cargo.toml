@@ -37,6 +37,7 @@ portable-pty = "0.8"
 anyhow = "1.0"
 lsp-types = { version = "0.95", features = ["proposed"] }
 crossbeam-channel = "0.5"
+base64 = "0.21"
 
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

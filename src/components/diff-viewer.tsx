@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { GitDiff, GitDiffLine } from '../utils/git';
 import { X, FileIcon, FilePlus, FileX, Edit3, ChevronRight, ChevronDown, Copy, Plus, Minus } from 'lucide-react';
 
@@ -23,6 +23,8 @@ const DiffViewer = ({
 }: DiffViewerProps) => {
   const [collapsedHunks, setCollapsedHunks] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<'unified' | 'split'>('unified');
+  const [zoom, setZoom] = useState<number>(1);
+
   if (!diff) {
     return (
       <div className="flex flex-col h-full bg-[var(--primary-bg)]">
@@ -37,6 +39,118 @@ const DiffViewer = ({
         </div>
         <div className="flex-1 flex items-center justify-center">
           <p className="text-[var(--text-lighter)] text-sm">No diff to display</p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- IMAGE DIFF HANDLING ---
+  if (diff.is_image) {
+    const fileLabel = fileName || diff.file_path.split('/').pop();
+    const ext = fileLabel?.split('.').pop()?.toUpperCase() || '';
+    const leftLabel = diff.is_deleted ? 'Deleted Version' : 'Previous Version';
+    const rightLabel = diff.is_new ? 'Added Version' : 'New Version';
+    const containerBase = 'flex flex-col items-center justify-center p-4';
+    const badge = (text: string, color: string) => (
+      <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded ${color}`}>{text}</span>
+    );
+    
+    // Compose image src
+    const getImgSrc = (base64: string | undefined) => base64 ? `data:image/*;base64,${base64}` : undefined;
+    
+    return (
+      <div className="flex flex-col h-full bg-[var(--primary-bg)] select-none">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] bg-[var(--secondary-bg)]">
+          <div className="flex items-center gap-2">
+            {diff.is_new ? <FilePlus size={14} className="text-green-500" /> : diff.is_deleted ? <FileX size={14} className="text-red-500" /> : <FileIcon size={14} className="text-[var(--text-color)]" />}
+            <span className="font-mono text-xs text-[var(--text-color)]">{fileLabel} {ext && <>• {ext}</>}</span>
+            {diff.is_new && badge('ADDED', 'bg-green-600 text-white')}
+            {diff.is_deleted && badge('DELETED', 'bg-red-600 text-white')}
+            {!diff.is_new && !diff.is_deleted && badge('MODIFIED', 'bg-blue-600 text-white')}
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setZoom(z => Math.max(0.1, z - 0.1))} className="p-1 text-[var(--text-lighter)] hover:text-[var(--text-color)]" title="Zoom out">-</button>
+            <span className="font-mono text-xs text-[var(--text-lighter)] px-2 min-w-[50px] text-center">{Math.round(zoom * 100)}%</span>
+            <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 text-[var(--text-lighter)] hover:text-[var(--text-color)]" title="Zoom in">+</button>
+            <button onClick={() => setZoom(1)} className="p-1 text-[var(--text-lighter)] hover:text-[var(--text-color)]" title="Reset zoom">Reset</button>
+            <button onClick={onClose} className="text-[var(--text-lighter)] hover:text-[var(--text-color)] p-1 ml-2" title="Close diff viewer"><X size={14} /></button>
+          </div>
+        </div>
+        {/* Image Diff Content */}
+        <div className="flex-1 flex items-center justify-center gap-8 bg-[var(--editor-bg)] overflow-auto">
+          {/* Side-by-side for modified, single for added/deleted */}
+          {diff.is_new && !diff.old_blob_base64 ? (
+            // Added
+            <div className={containerBase}>
+              <span className="text-xs font-mono text-green-600 mb-2">{rightLabel}</span>
+              {diff.new_blob_base64 ? (
+                <img
+                  src={getImgSrc(diff.new_blob_base64)}
+                  alt="Added"
+                  style={{ 
+                    transform: `scale(${zoom})`,
+                    transition: 'transform 0.1s ease-out'
+                  }}
+                  draggable={false}
+                />
+              ) : <div className="p-8 text-xs text-[var(--text-lighter)]">No image data</div>}
+            </div>
+          ) : diff.is_deleted && !diff.new_blob_base64 ? (
+            // Deleted
+            <div className={containerBase}>
+              <span className="text-xs font-mono text-red-600 mb-2">{leftLabel}</span>
+              {diff.old_blob_base64 ? (
+                <img
+                  src={getImgSrc(diff.old_blob_base64)}
+                  alt="Deleted"
+                  style={{ 
+                    transform: `scale(${zoom})`,
+                    transition: 'transform 0.1s ease-out'
+                  }}
+                  draggable={false}
+                />
+              ) : <div className="p-8 text-xs text-[var(--text-lighter)]">No image data</div>}
+            </div>
+          ) : (
+            // Modified (side-by-side)
+            <>
+              <div className={containerBase}>
+                <span className="text-xs font-mono text-[var(--text-lighter)] mb-2">{leftLabel}</span>
+                {diff.old_blob_base64 ? (
+                  <img
+                    src={getImgSrc(diff.old_blob_base64)}
+                    alt="Previous"
+                    style={{ 
+                      transform: `scale(${zoom})`,
+                      transition: 'transform 0.1s ease-out'
+                    }}
+                    draggable={false}
+                  />
+                ) : <div className="p-8 text-xs text-[var(--text-lighter)]">No image data</div>}
+              </div>
+              <div className={containerBase}>
+                <span className="text-xs font-mono text-[var(--text-lighter)] mb-2">{rightLabel}</span>
+                {diff.new_blob_base64 ? (
+                  <img
+                    src={getImgSrc(diff.new_blob_base64)}
+                    alt="New"
+                    style={{ 
+                      transform: `scale(${zoom})`,
+                      transition: 'transform 0.1s ease-out'
+                    }}
+                    draggable={false}
+                  />
+                ) : <div className="p-8 text-xs text-[var(--text-lighter)]">No image data</div>}
+              </div>
+            </>
+          )}
+        </div>
+        {/* Footer/Info */}
+        <div className="px-4 py-2 border-t border-[var(--border-color)] bg-[var(--secondary-bg)] flex items-center gap-4 text-xs text-[var(--text-lighter)]">
+          <span>Zoom: {Math.round(zoom * 100)}%</span>
+          <span>Type: {ext}</span>
+          <span>Use +/- buttons to zoom in/out</span>
         </div>
       </div>
     );
