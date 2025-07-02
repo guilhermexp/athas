@@ -36,6 +36,10 @@ export interface GitDiff {
   is_deleted: boolean;
   is_renamed: boolean;
   lines: GitDiffLine[];
+  is_binary?: boolean;
+  is_image?: boolean;
+  old_blob_base64?: string;
+  new_blob_base64?: string;
 }
 
 export const getGitStatus = async (repoPath: string): Promise<GitStatus | null> => {

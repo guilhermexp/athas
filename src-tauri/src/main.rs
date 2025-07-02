@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use git2::{Diff, DiffFormat, DiffLine, Oid, Repository};
+use git2::{Diff, Oid, Repository};
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
@@ -16,6 +16,7 @@ use tauri_plugin_opener;
 use tauri_plugin_os;
 use tauri_plugin_shell;
 use tauri_plugin_store;
+use base64::{engine::general_purpose, Engine as _};
 
 mod lsp;
 mod menu;
@@ -84,6 +85,23 @@ struct GitDiffLine {
     new_line_number: Option<u32>,
 }
 
+fn is_image_file(path: &str) -> bool {
+    let lower = path.to_lowercase();
+    lower.ends_with(".png") || lower.ends_with(".jpg") || lower.ends_with(".jpeg") || lower.ends_with(".gif") || lower.ends_with(".bmp") || lower.ends_with(".svg") || lower.ends_with(".webp") || lower.ends_with(".ico") || lower.ends_with(".tiff") || lower.ends_with(".tif") || lower.ends_with(".avif") || lower.ends_with(".heic") || lower.ends_with(".heif") || lower.ends_with(".jfif") || lower.ends_with(".pjpeg") || lower.ends_with(".pjp") || lower.ends_with(".apng")
+}
+
+fn get_blob_base64(repo: &Repository, oid: Option<Oid>, _file_path: &str) -> Option<String> {
+    if let Some(oid) = oid {
+        if !oid.is_zero() {
+            if let Ok(blob) = repo.find_blob(oid) {
+                let data = blob.content();
+                return Some(general_purpose::STANDARD.encode(data));
+            }
+        }
+    }
+    None
+}
+
 #[derive(serde::Serialize)]
 struct GitDiff {
     file_path: String,
@@ -92,6 +110,10 @@ struct GitDiff {
     is_new: bool,
     is_deleted: bool,
     is_renamed: bool,
+    is_binary: bool,
+    is_image: bool,
+    old_blob_base64: Option<String>,
+    new_blob_base64: Option<String>,
     lines: Vec<GitDiffLine>,
 }
 
@@ -564,53 +586,212 @@ fn git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>, Stri
 
 #[tauri::command]
 fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<GitDiff, String> {
-    let repo =
-        Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {}", e))?;
+    let repo = Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {}", e))?;
+    let is_image = is_image_file(&file_path);
 
-    // Get the HEAD commit's tree
-    let head = repo
-        .head()
-        .map_err(|e| format!("Failed to get HEAD: {}", e))?;
-    let head_commit = head
-        .peel_to_commit()
-        .map_err(|e| format!("Failed to peel to commit: {}", e))?;
-    let head_tree = head_commit
-        .tree()
-        .map_err(|e| format!("Failed to get HEAD tree: {}", e))?;
+    // Get HEAD commit and tree
+    let head = repo.head().map_err(|e| format!("Failed to get HEAD: {}", e))?;
+    let head_commit = head.peel_to_commit().map_err(|e| format!("Failed to peel to commit: {}", e))?;
+    let head_tree = head_commit.tree().map_err(|e| format!("Failed to get HEAD tree: {}", e))?;
 
+    // Create diff options for this specific file
     let mut diff_opts = git2::DiffOptions::new();
-    diff_opts.pathspec(&file_path); // Important: only look at the specified file
-
-    let mut diff = if staged {
-        // Diff between HEAD and the index (staged changes)
-        let index = repo
-            .index()
-            .map_err(|e| format!("Failed to get index: {}", e))?;
+    diff_opts.pathspec(&file_path);
+    
+    // Create the appropriate diff
+    let diff_result = if staged {
+        let index = repo.index().map_err(|e| format!("Failed to get index: {}", e))?;
         repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut diff_opts))
     } else {
-        // Diff between HEAD and the working directory (unstaged changes)
         repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut diff_opts))
+    };
+    
+    let mut diff = diff_result.map_err(|e| format!("Failed to create diff: {}", e))?;
+    
+    // Initialize default values
+    let mut old_blob_base64 = None;
+    let mut new_blob_base64 = None;
+    let mut lines = Vec::new();
+    
+    // Check if we have any deltas (changes) for this file
+    let deltas: Vec<_> = diff.deltas().collect();
+    
+    if deltas.is_empty() {
+        // No changes detected - might be a renamed file, try broader search
+        let mut broader_diff_opts = git2::DiffOptions::new();
+        // Don't specify pathspec to get all changes, then filter
+        let broader_diff_result = if staged {
+            let index = repo.index().map_err(|e| format!("Failed to get index: {}", e))?;
+            repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut broader_diff_opts))
+        } else {
+            repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut broader_diff_opts))
+        };
+        
+        if let Ok(broader_diff) = broader_diff_result {
+            let all_deltas: Vec<_> = broader_diff.deltas().collect();
+            
+            // Look for renamed files that involve our target file
+            for delta in all_deltas {
+                let delta_old_path = delta.old_file().path().map(|p| p.to_string_lossy().into_owned());
+                let delta_new_path = delta.new_file().path().map(|p| p.to_string_lossy().into_owned());
+                
+                // Check if our file path matches either old or new path
+                if delta_old_path.as_deref() == Some(&file_path) || delta_new_path.as_deref() == Some(&file_path) {
+                    // Found the file in a rename operation, process this delta
+                    let is_new = delta.status() == git2::Delta::Added;
+                    let is_deleted = delta.status() == git2::Delta::Deleted;
+                    let is_renamed = delta.status() == git2::Delta::Renamed;
+                    
+                    let old_path = delta_old_path;
+                    let new_path = delta_new_path;
+                    
+                    if is_image {
+                        let old_oid = delta.old_file().id();
+                        let new_oid = delta.new_file().id();
+                        
+                        if is_deleted {
+                            old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(&file_path));
+                        } else if is_renamed {
+                            old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(&file_path));
+                            if staged {
+                                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), new_path.as_deref().unwrap_or(&file_path));
+                            } else {
+                                let abs_path = Path::new(&repo_path).join(new_path.as_deref().unwrap_or(&file_path));
+                                if let Ok(data) = std::fs::read(abs_path) {
+                                    new_blob_base64 = Some(general_purpose::STANDARD.encode(data));
+                                }
+                            }
+                        } else {
+                            // Modified or added
+                            if !is_new {
+                                old_blob_base64 = get_blob_base64(&repo, Some(old_oid), &file_path);
+                            }
+                            if staged {
+                                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), &file_path);
+                            } else {
+                                let abs_path = Path::new(&repo_path).join(&file_path);
+                                if let Ok(data) = std::fs::read(abs_path) {
+                                    new_blob_base64 = Some(general_purpose::STANDARD.encode(data));
+                                }
+                            }
+                        }
+                        lines = Vec::new();
+                    } else {
+                        // For text files, create a new diff with the correct file
+                        let mut single_file_opts = git2::DiffOptions::new();
+                        let target_path = if is_deleted { 
+                            old_path.as_deref().unwrap_or(&file_path) 
+                        } else { 
+                            new_path.as_deref().unwrap_or(&file_path) 
+                        };
+                        single_file_opts.pathspec(target_path);
+                        
+                        let single_diff_result = if staged {
+                            let index = repo.index().map_err(|e| format!("Failed to get index: {}", e))?;
+                            repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut single_file_opts))
+                        } else {
+                            repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut single_file_opts))
+                        };
+                        
+                        if let Ok(mut single_diff) = single_diff_result {
+                            lines = parse_diff_to_lines(&mut single_diff).unwrap_or_default();
+                        }
+                    }
+                    
+                    return Ok(GitDiff {
+                        file_path: file_path.clone(),
+                        old_path,
+                        new_path,
+                        is_new,
+                        is_deleted,
+                        is_renamed,
+                        is_binary: is_image,
+                        is_image,
+                        old_blob_base64,
+                        new_blob_base64,
+                        lines,
+                    });
+                }
+            }
+        }
+        
+        return Err(format!("No changes found for file: {} (searched {} paths)", file_path, file_path));
     }
-    .map_err(|e| format!("Failed to create diff: {}", e))?;
-    let lines = parse_diff_to_lines(&mut diff)?;
-
-    // We can enhance this to get more accurate new/deleted/renamed status
-    // For now, this is a solid starting point.
-    let status_entry = repo
-        .status_file(Path::new(&file_path))
-        .map_err(|e| format!("Could not get file status: {}", e))?;
-    let is_new = status_entry.contains(git2::Status::WT_NEW)
-        || status_entry.contains(git2::Status::INDEX_NEW);
-    let is_deleted = status_entry.contains(git2::Status::WT_DELETED)
-        || status_entry.contains(git2::Status::INDEX_DELETED);
+    
+    // Process the first delta (should only be one for a specific file)
+    let delta = &deltas[0];
+    
+    // Determine file status from delta
+    let is_new = delta.status() == git2::Delta::Added;
+    let is_deleted = delta.status() == git2::Delta::Deleted;
+    let is_renamed = delta.status() == git2::Delta::Renamed;
+    
+    // Get old and new paths
+    let old_path = delta.old_file().path().map(|p| p.to_string_lossy().into_owned());
+    let new_path = delta.new_file().path().map(|p| p.to_string_lossy().into_owned());
+    
+    if is_image {
+        // Handle image files
+        let old_oid = delta.old_file().id();
+        let new_oid = delta.new_file().id();
+        
+        if is_new {
+            // Added image: only new blob
+            if staged {
+                // Get from index
+                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), &file_path);
+            } else {
+                // Get from working directory
+                let abs_path = Path::new(&repo_path).join(&file_path);
+                if let Ok(data) = std::fs::read(abs_path) {
+                    new_blob_base64 = Some(general_purpose::STANDARD.encode(data));
+                }
+            }
+        } else if is_deleted {
+            // Deleted image: only old blob from Git object database
+            old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(&file_path));
+        } else if is_renamed {
+            // Renamed image: both old and new blobs
+            old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(&file_path));
+            if staged {
+                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), new_path.as_deref().unwrap_or(&file_path));
+            } else {
+                let abs_path = Path::new(&repo_path).join(new_path.as_deref().unwrap_or(&file_path));
+                if let Ok(data) = std::fs::read(abs_path) {
+                    new_blob_base64 = Some(general_purpose::STANDARD.encode(data));
+                }
+            }
+        } else {
+            // Modified image: both old and new blobs
+            old_blob_base64 = get_blob_base64(&repo, Some(old_oid), &file_path);
+            if staged {
+                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), &file_path);
+            } else {
+                let abs_path = Path::new(&repo_path).join(&file_path);
+                if let Ok(data) = std::fs::read(abs_path) {
+                    new_blob_base64 = Some(general_purpose::STANDARD.encode(data));
+                }
+            }
+        }
+        
+        // No text lines for images
+        lines = Vec::new();
+    } else {
+        // Handle text files - parse diff lines
+        lines = parse_diff_to_lines(&mut diff)?;
+    }
 
     Ok(GitDiff {
         file_path: file_path.clone(),
-        old_path: None, // Simplified for now
-        new_path: None, // Simplified for now
+        old_path,
+        new_path,
         is_new,
         is_deleted,
-        is_renamed: false, // Simplified for now
+        is_renamed,
+        is_binary: is_image,
+        is_image,
+        old_blob_base64,
+        new_blob_base64,
         lines,
     })
 }
@@ -621,88 +802,99 @@ fn git_commit_diff(
     commit_hash: String,
     file_path: Option<String>,
 ) -> Result<Vec<GitDiff>, String> {
-    let repo =
-        Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {}", e))?;
+    let repo = Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {}", e))?;
     let oid = Oid::from_str(&commit_hash).map_err(|e| format!("Invalid commit hash: {}", e))?;
-    let commit = repo
-        .find_commit(oid)
-        .map_err(|e| format!("Commit not found: {}", e))?;
-    let commit_tree = commit
-        .tree()
-        .map_err(|e| format!("Failed to get commit tree: {}", e))?;
-
-    // Get the parent commit to diff against
+    let commit = repo.find_commit(oid).map_err(|e| format!("Commit not found: {}", e))?;
+    let commit_tree = commit.tree().map_err(|e| format!("Failed to get commit tree: {}", e))?;
     let parent = if commit.parent_count() > 0 {
-        Some(
-            commit
-                .parent(0)
-                .map_err(|e| format!("Failed to get parent commit: {}", e))?,
-        )
+        Some(commit.parent(0).map_err(|e| format!("Failed to get parent commit: {}", e))?)
     } else {
         None
     };
-
-    let parent_tree = if let Some(p) = parent {
-        Some(
-            p.tree()
-                .map_err(|e| format!("Failed to get parent tree: {}", e))?,
-        )
+    let parent_tree = if let Some(p) = &parent {
+        Some(p.tree().map_err(|e| format!("Failed to get parent tree: {}", e))?)
     } else {
-        None // This is the initial commit, diff against an empty tree
+        None
     };
-
     let mut diff_opts = git2::DiffOptions::new();
     if let Some(path) = &file_path {
         diff_opts.pathspec(path);
     }
-
-    let diff = repo
-        .diff_tree_to_tree(
-            parent_tree.as_ref(),
-            Some(&commit_tree),
-            Some(&mut diff_opts),
-        )
-        .map_err(|e| format!("Failed to create commit diff: {}", e))?;
-
+    let diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), Some(&mut diff_opts)).map_err(|e| format!("Failed to create commit diff: {}", e))?;
     let mut results: Vec<GitDiff> = Vec::new();
-
     for delta in diff.deltas() {
-        let file_path = delta
-            .new_file()
-            .path()
-            .unwrap_or_else(|| delta.old_file().path().unwrap())
-            .to_string_lossy()
-            .into_owned();
-
-        // To get lines for just THIS file, we need a new diff restricted to the file path
-        let mut single_file_opts = git2::DiffOptions::new();
-        single_file_opts.pathspec(&file_path);
-
-        let mut single_file_diff = repo
-            .diff_tree_to_tree(
-                parent_tree.as_ref(),
-                Some(&commit_tree),
-                Some(&mut single_file_opts),
-            )
-            .map_err(|e| format!("Failed to create single-file diff: {}", e))?;
-
+        // Use old_path for deleted/renamed, new_path otherwise
+        let old_path = delta.old_file().path().map(|p| p.to_string_lossy().into_owned());
+        let new_path = delta.new_file().path().map(|p| p.to_string_lossy().into_owned());
+        let file_path = if delta.status() == git2::Delta::Deleted {
+            old_path.clone().unwrap_or_default()
+        } else {
+            new_path.clone().unwrap_or_else(|| old_path.clone().unwrap_or_default())
+        };
+        let is_image = is_image_file(&file_path);
+        let mut is_binary = false;
+        let mut old_blob_base64 = None;
+        let mut new_blob_base64 = None;
+        let is_new = delta.status() == git2::Delta::Added;
+        let is_deleted = delta.status() == git2::Delta::Deleted;
+        let is_renamed = delta.status() == git2::Delta::Renamed;
+        let lines = if is_image {
+            is_binary = true;
+            // Always get blobs from the correct tree and path
+            let old_oid = delta.old_file().id();
+            let new_oid = delta.new_file().id();
+            if is_new {
+                // Added: only new blob from commit tree (new_path)
+                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), new_path.as_deref().unwrap_or(""));
+            } else if is_deleted {
+                // Deleted: only old blob from parent tree (old_path)
+                if let Some(parent_tree) = &parent_tree {
+                    let old_blob_oid = old_path.as_ref().and_then(|p| parent_tree.get_path(Path::new(p)).ok().map(|e| e.id()));
+                    old_blob_base64 = get_blob_base64(&repo, old_blob_oid, old_path.as_deref().unwrap_or(""));
+                } else {
+                    old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(""));
+                }
+            } else if is_renamed {
+                // Renamed: old blob from parent tree (old_path), new blob from commit tree (new_path)
+                if let Some(parent_tree) = &parent_tree {
+                    let old_blob_oid = old_path.as_ref().and_then(|p| parent_tree.get_path(Path::new(p)).ok().map(|e| e.id()));
+                    old_blob_base64 = get_blob_base64(&repo, old_blob_oid, old_path.as_deref().unwrap_or(""));
+                } else {
+                    old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(""));
+                }
+                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), new_path.as_deref().unwrap_or(""));
+            } else {
+                // Modified: old blob from parent tree (old_path), new blob from commit tree (new_path)
+                if let Some(parent_tree) = &parent_tree {
+                    let old_blob_oid = old_path.as_ref().and_then(|p| parent_tree.get_path(Path::new(p)).ok().map(|e| e.id()));
+                    old_blob_base64 = get_blob_base64(&repo, old_blob_oid, old_path.as_deref().unwrap_or(""));
+                } else {
+                    old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(""));
+                }
+                new_blob_base64 = get_blob_base64(&repo, Some(new_oid), new_path.as_deref().unwrap_or(""));
+            }
+            Vec::new()
+        } else {
+            // Text diff
+            let mut single_file_opts = git2::DiffOptions::new();
+            single_file_opts.pathspec(&file_path);
+            let mut single_file_diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), Some(&mut single_file_opts)).map_err(|e| format!("Failed to create single-file diff: {}", e))?;
+            parse_diff_to_lines(&mut single_file_diff).unwrap_or_default()
+        };
         results.push(GitDiff {
             file_path: file_path.clone(),
-            old_path: delta
-                .old_file()
-                .path()
-                .map(|p| p.to_string_lossy().into_owned()),
-            new_path: delta
-                .new_file()
-                .path()
-                .map(|p| p.to_string_lossy().into_owned()),
-            is_new: delta.status() == git2::Delta::Added,
-            is_deleted: delta.status() == git2::Delta::Deleted,
-            is_renamed: delta.status() == git2::Delta::Renamed,
-            lines: parse_diff_to_lines(&mut single_file_diff).unwrap_or_default(),
+            old_path: old_path.clone(),
+            new_path: new_path.clone(),
+            is_new,
+            is_deleted,
+            is_renamed,
+            is_binary,
+            is_image,
+            old_blob_base64,
+            new_blob_base64,
+            lines,
         });
     }
-
     Ok(results)
 }
 
