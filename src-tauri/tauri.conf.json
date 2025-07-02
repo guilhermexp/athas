@@ -23,7 +23,7 @@
         "center": true,
         "minWidth": 400,
         "minHeight": 400,
-        "shadow": false
+        "shadow": true
       }
     ],
     "security": {

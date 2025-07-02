@@ -750,7 +750,6 @@ button {
 /* Only apply border radius on macOS */
 .platform-macos .window-container {
     border-radius: 12px;
-    border: 1px solid var(--border-color);
 }
 
 /* Ensure scrolling works properly in all browsers */
