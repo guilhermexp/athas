@@ -33,7 +33,7 @@ import BottomPane from "./components/bottom-pane";
 import Button from "./components/button";
 import CommandBar from "./components/command-bar";
 import CustomTitleBar from "./components/window/custom-title-bar";
-import { Diagnostic } from "./components/diagnostics-pane";
+import { Diagnostic } from "./components/diagnostics/diagnostics-pane";
 import DiffViewer from "./components/diff-viewer";
 import ExtensionsView from "./components/extensions-view";
 import { FileEntry } from "./types/app";
