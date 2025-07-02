@@ -55,8 +55,9 @@ export const useKeyboardShortcuts = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
 
-      // Cmd+J (Mac) or Ctrl+J (Windows/Linux) to toggle terminal (desktop only)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'j' && isTauri() && coreFeatures.terminal) {
+      // Terminal toggle is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.key === 'j' && isTauri() && coreFeatures.terminal && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         if (isBottomPaneVisible && bottomPaneActiveTab === 'terminal') {
           setIsBottomPaneVisible(false);
@@ -79,8 +80,9 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+S (Mac) or Ctrl+S (Windows/Linux) to save
-      if ((e.metaKey || e.ctrlKey) && e.key === 's' && !e.shiftKey) {
+      // Save is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.key === 's' && !e.shiftKey && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         if (onSave) {
           onSave();
@@ -98,8 +100,9 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+F (Mac) or Ctrl+F (Windows/Linux) to toggle find
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !e.shiftKey) {
+      // Find is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !e.shiftKey && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         setIsFindVisible(prev => !prev);
         return;
@@ -151,8 +154,9 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+B (Mac) or Ctrl+B (Windows/Linux) to toggle sidebar
-      if ((e.metaKey || e.ctrlKey) && e.key === 'b' && !e.shiftKey) {
+      // Sidebar toggle is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b' && !e.shiftKey && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         setIsSidebarVisible(prev => !prev);
         return;
@@ -167,22 +171,25 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+R (Mac) or Ctrl+R (Windows/Linux) to toggle right pane
-      if ((e.metaKey || e.ctrlKey) && e.key === 'r' && coreFeatures.aiChat) {
+      // AI Chat toggle is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.key === 'r' && coreFeatures.aiChat && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         setIsRightPaneVisible(prev => !prev);
         return;
       }
 
-      // Cmd+P (Mac) or Ctrl+P (Windows/Linux) to toggle command bar
-      if ((e.metaKey || e.ctrlKey) && e.key === 'p' && !e.shiftKey) {
+      // Go to File is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.key === 'p' && !e.shiftKey && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         setIsCommandBarVisible(prev => !prev);
         return;
       }
 
-      // Cmd+Shift+P (Mac) or Ctrl+Shift+P (Windows/Linux) to toggle command palette
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'P') {
+      // Command Palette is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'P' && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         setIsCommandPaletteVisible(prev => !prev);
         // Focus the command palette after a short delay to ensure it's rendered
@@ -192,8 +199,9 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+W (Mac) or Ctrl+W (Windows/Linux) to close current buffer
-      if ((e.metaKey || e.ctrlKey) && e.key === 'w' && !e.shiftKey) {
+      // Close Tab is now handled by native menu accelerator on macOS
+      // Only handle on non-macOS platforms
+      if ((e.metaKey || e.ctrlKey) && e.key === 'w' && !e.shiftKey && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         if (activeBuffer) {
           closeBuffer(activeBuffer.id);
@@ -201,15 +209,17 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+Tab (Mac) or Ctrl+Tab (Windows/Linux) to switch to next buffer
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Tab' && !e.shiftKey) {
+      // Tab navigation is now handled by native menu accelerator on macOS
+      // Only handle Ctrl+Tab on non-macOS platforms
+      if (e.ctrlKey && e.key === 'Tab' && !e.shiftKey && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         switchToNextBuffer();
         return;
       }
 
-      // Cmd+Shift+Tab (Mac) or Ctrl+Shift+Tab (Windows/Linux) to switch to previous buffer
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'Tab') {
+      // Tab navigation is now handled by native menu accelerator on macOS  
+      // Only handle Ctrl+Shift+Tab on non-macOS platforms
+      if (e.ctrlKey && e.shiftKey && e.key === 'Tab' && !/Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
         switchToPreviousBuffer();
         return;
@@ -222,6 +232,34 @@ export const useKeyboardShortcuts = ({
         if (buffers[bufferIndex]) {
           setActiveBuffer(buffers[bufferIndex].id);
         }
+        return;
+      }
+
+      // Cmd+M (Mac) to minimize window (native macOS behavior)
+      if (e.metaKey && e.key === 'm' && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
+        e.preventDefault();
+        // Let the system handle window minimization
+        return;
+      }
+
+      // Cmd+H (Mac) to hide application (native macOS behavior)
+      if (e.metaKey && e.key === 'h' && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
+        e.preventDefault();
+        // Let the system handle app hiding
+        return;
+      }
+
+      // Cmd+Option+H (Mac) to hide other applications (native macOS behavior)
+      if (e.metaKey && e.altKey && e.key === 'h' && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
+        e.preventDefault();
+        // Let the system handle hiding other apps
+        return;
+      }
+
+      // Cmd+Q (Mac) to quit application (handled by menu, but ensure consistency)
+      if (e.metaKey && e.key === 'q' && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
+        e.preventDefault();
+        // Let the menu system handle quit
         return;
       }
     };
