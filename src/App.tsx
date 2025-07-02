@@ -1709,7 +1709,7 @@ function App() {
                           bottomPaneActiveTab !== "terminal",
                         );
                       }}
-                      className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible && bottomPaneActiveTab === "terminal"
+                      className={`cursor-pointer flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible && bottomPaneActiveTab === "terminal"
                         ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
                         : "bg-[var(--primary-bg)] border-[var(--border-color)] text-[var(--text-lighter)] hover:bg-[var(--hover-color)]"
                         }`}
