@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from "react";
-import { Terminal as TerminalIcon, AlertCircle, X } from "lucide-react";
-import TerminalContainer from "./terminal/terminal-container";
+import { AlertCircle, Terminal as TerminalIcon, X } from "lucide-react";
+import React, { useCallback, useState } from "react";
 import DiagnosticsPane, { Diagnostic } from "./diagnostics-pane";
+import TerminalContainer from "./terminal/terminal-container";
 
 interface BottomPaneProps {
   isVisible: boolean;
@@ -67,13 +67,11 @@ const BottomPane = ({
     onTabChange?.(tab);
   };
 
-  if (!isVisible) {
-    return null;
-  }
-
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 bg-[var(--secondary-bg)] border-t border-[var(--border-color)] flex flex-col z-50"
+      className={`fixed bottom-0 left-0 right-0 bg-[var(--secondary-bg)] border-t border-[var(--border-color)] flex flex-col z-50 ${
+        !isVisible ? "hidden" : ""
+      }`}
       style={{ height: `${height}px` }}
     >
       {/* Resize Handle */}
@@ -93,10 +91,10 @@ const BottomPane = ({
           {showTerminal && (
             <button
               onClick={() => handleTabClick("terminal")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 border ${
                 activeTab === "terminal"
-                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border border-[var(--border-color)]"
-                  : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)]"
+                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border-[var(--border-color)]"
+                  : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)] border-transparent"
               }`}
             >
               <TerminalIcon size={12} />
@@ -108,12 +106,12 @@ const BottomPane = ({
           {showDiagnostics && (
             <button
               onClick={() => handleTabClick("diagnostics")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 border ${
                 activeTab === "diagnostics"
-                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border border-[var(--border-color)]"
+                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border-[var(--border-color)]"
                   : diagnostics.length > 0
-                    ? "text-red-600 hover:bg-[var(--hover-color)]"
-                    : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)]"
+                    ? "text-red-600 hover:bg-[var(--hover-color)] border-transparent"
+                    : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)] border-transparent"
               }`}
             >
               <AlertCircle size={12} />
@@ -136,7 +134,7 @@ const BottomPane = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="p-1 hover:bg-[var(--hover-color)] rounded transition-colors"
+          className="p-1 hover:bg-[var(--hover-color)] rounded transition-colors cursor-pointer"
         >
           <X size={14} className="text-[var(--text-lighter)]" />
         </button>
@@ -144,12 +142,16 @@ const BottomPane = ({
 
       {/* Content Area */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === "terminal" && showTerminal ? (
+        {/* Terminal Container - Always mounted to preserve terminal sessions */}
+        {showTerminal && (
           <TerminalContainer
             currentDirectory={currentDirectory}
-            className="h-full"
+            className={`h-full ${activeTab === "terminal" ? "block" : "hidden"}`}
           />
-        ) : activeTab === "diagnostics" && showDiagnostics ? (
+        )}
+
+        {/* Diagnostics Pane */}
+        {activeTab === "diagnostics" && showDiagnostics ? (
           <div className="h-full">
             <DiagnosticsPane
               diagnostics={diagnostics}
@@ -159,11 +161,11 @@ const BottomPane = ({
               isEmbedded={true}
             />
           </div>
-        ) : (
+        ) : activeTab !== "terminal" && activeTab !== "diagnostics" ? (
           <div className="flex items-center justify-center h-full text-[var(--text-lighter)]">
             <span className="text-sm">No available panels</span>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
