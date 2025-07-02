@@ -30,6 +30,10 @@ body {
     background: transparent; /* Allow transparency for rounded corners */
 }
 
+button {
+  cursor:pointer;
+}
+
 /* Custom CSS variables for theming */
 :root {
     --primary-bg: #ffffff;
