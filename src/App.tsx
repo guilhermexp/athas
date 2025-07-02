@@ -7,6 +7,7 @@ import CommandBar from "./components/command-bar";
 import CommandPalette, { CommandPaletteRef } from "./components/command-palette";
 import { Diagnostic } from "./components/diagnostics/diagnostics-pane";
 import DiffViewer from "./components/diff-viewer";
+import BreadcrumbContainer from "./components/editor/breadcrumbs/breadcrumb-container";
 import ExtensionsView from "./components/extensions-view";
 import FindBar from "./components/find-bar";
 import GitHubCopilotSettings from "./components/github-copilot-settings";
@@ -21,7 +22,6 @@ import TabBar from "./components/tab-bar";
 import CustomTitleBar from "./components/window/custom-title-bar";
 import WelcomeScreen from "./components/window/welcome-screen";
 import { createCoreFeaturesList, handleCoreFeatureToggle } from "./constants/core-features";
-import { useBreadcrumbToggles } from "./hooks/use-breadcrumb-toggles";
 import { useBuffers } from "./hooks/use-buffers";
 import { ProjectNameMenu, useContextMenus } from "./hooks/use-context-menus";
 import { useFileOperations } from "./hooks/use-file-operations";
@@ -44,13 +44,6 @@ import { GitDiff } from "./utils/git";
 import { isMac, writeFile } from "./utils/platform";
 
 function App() {
-  const {
-    isMinimapVisible,
-    toggleOutline: _toggleOutline,
-    toggleMinimap: _toggleMinimap,
-    setIsOutlineVisible: _setIsOutlineVisible,
-  } = useBreadcrumbToggles();
-
   // Use modular hooks
   const uiState = useUIState();
   const { settings, updateSetting, updateSettingsFromJSON } = useSettings();
@@ -158,6 +151,9 @@ function App() {
   // State for tab dragging across panes
   const [_isDraggingTab, setIsDraggingTab] = useState(false);
 
+  // State for minimap visibility (controlled by breadcrumb)
+  const [isMinimapVisible, setIsMinimapVisible] = useState(false);
+
   // File operations with proper callback
   const {
     files,
@@ -171,7 +167,6 @@ function App() {
     handleCreateNewFileInDirectory,
     handleCreateNewFolderInDirectory,
     handleDeletePath,
-    refreshDirectory,
     handleCollapseAllFolders,
   } = useFileOperations({ openBuffer });
 
@@ -751,27 +746,6 @@ function App() {
     && !isRemoteFromUrl
     && !remoteParam;
 
-  // Handle creating new folder
-  const _handleCreateNewFolder = async () => {
-    const folderName = prompt("Enter the name for the new folder:");
-    if (!folderName) return;
-
-    try {
-      const newFolderPath = rootFolderPath ? `${rootFolderPath}/${folderName}` : folderName;
-
-      // Create the directory by writing a placeholder file and then removing it
-      // This is a workaround since create_directory might not be implemented
-      const placeholderPath = `${newFolderPath}/.gitkeep`;
-      await writeFile(placeholderPath, "");
-
-      // Refresh the file tree
-      await refreshDirectory(rootFolderPath || ".");
-    } catch (error) {
-      console.error("Error creating new folder:", error);
-      alert("Failed to create folder. This feature may not be fully implemented yet.");
-    }
-  };
-
   if (shouldShowWelcome) {
     return (
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
@@ -882,26 +856,15 @@ function App() {
                 maxOpenTabs={maxOpenTabs}
               />
 
-              {/* {!isSplitViewEnabled && activeBuffer && (
-                <Breadcrumb
-                  filePath={activeBuffer.path}
-                  rootPath={rootFolderPath}
-                  onNavigate={(path: string) => console.log("Navigate to:", path)}
-                  isOutlineVisible={isOutlineVisible}
-                  isMinimapVisible={isMinimapVisible}
-                  onToggleOutline={() => {
-                    if (isOutlineVisible) {
-                      setIsOutlineVisible(false)
-                      setIsRightPaneVisible(false)
-                    } else {
-                      setIsOutlineVisible(true)
-                      setIsRightPaneVisible(true)
-                    }
-                  }}
-                  onToggleMinimap={toggleMinimap}
-                />
-              )}
- */}
+              {/* Breadcrumb */}
+              <BreadcrumbContainer
+                activeBuffer={activeBuffer}
+                rootFolderPath={rootFolderPath}
+                onFileSelect={handleFileSelect}
+                setIsRightPaneVisible={uiState.setIsRightPaneVisible}
+                onMinimapStateChange={setIsMinimapVisible}
+              />
+
               {/* Find Bar */}
               <FindBar
                 isVisible={isFindVisible}

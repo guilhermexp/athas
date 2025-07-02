@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "athas-code",
+  "productName": "Athas",
   "version": "0.1.0",
   "identifier": "com.athas-code.app",
   "build": {
@@ -21,8 +21,8 @@
         "resizable": true,
         "fullscreen": false,
         "center": true,
-        "minWidth": 800,
-        "minHeight": 600,
+        "minWidth": 400,
+        "minHeight": 400,
         "shadow": false
       }
     ],
