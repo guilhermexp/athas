@@ -1,6 +1,6 @@
-import { isTauri } from "./platform";
-import { getProviderById, getModelById } from "../types/ai-provider";
 import { AIMessage } from "@/types/ai-chat";
+import { getModelById, getProviderById } from "../types/ai-provider";
+import { isTauri } from "./platform";
 
 interface ContextInfo {
   activeBuffer?: {
@@ -27,24 +27,19 @@ interface ContextInfo {
 }
 
 // Get API token for a specific provider
-export const getProviderApiToken = async (
-  providerId: string,
-): Promise<string | null> => {
+export const getProviderApiToken = async (providerId: string): Promise<string | null> => {
   try {
     if (isTauri()) {
       const { invoke } = await import("@tauri-apps/api/core");
 
       // For now, use the same storage key but we could extend this
       // to support multiple providers with different storage keys
-      const storageKey =
-        providerId === "openai"
-          ? "get_github_token"
-          : `get_${providerId}_token`;
+      const storageKey = providerId === "openai" ? "get_github_token" : `get_${providerId}_token`;
 
       try {
         const token = (await invoke(storageKey)) as string | null;
         return token;
-      } catch (error) {
+      } catch (_error) {
         // Fallback to github token for backward compatibility
         if (providerId !== "openai") {
           const token = (await invoke("get_github_token")) as string | null;
@@ -54,63 +49,54 @@ export const getProviderApiToken = async (
       }
     }
     return null;
-  } catch (error) {
-    console.error(`Error getting ${providerId} API token:`, error);
+  } catch (_error) {
+    console.error(`Error getting ${providerId} API token:`, _error);
     return null;
   }
 };
 
 // Store API token for a specific provider
-export const storeProviderApiToken = async (
-  providerId: string,
-  token: string,
-): Promise<void> => {
+export const storeProviderApiToken = async (providerId: string, token: string): Promise<void> => {
   try {
     if (isTauri()) {
       const { invoke } = await import("@tauri-apps/api/core");
 
       // For now, use the same storage method but we could extend this
       const storageKey =
-        providerId === "openai"
-          ? "store_github_token"
-          : `store_${providerId}_token`;
+        providerId === "openai" ? "store_github_token" : `store_${providerId}_token`;
 
       try {
         await invoke(storageKey, { token });
-      } catch (error) {
+      } catch (_error) {
         // Fallback to github token storage for backward compatibility
         await invoke("store_github_token", { token });
       }
     }
-  } catch (error) {
-    console.error(`Error storing ${providerId} API token:`, error);
-    throw error;
+  } catch (_error) {
+    console.error(`Error storing ${providerId} API token:`, _error);
+    throw _error;
   }
 };
 
 // Remove API token for a specific provider
-export const removeProviderApiToken = async (
-  providerId: string,
-): Promise<void> => {
+export const removeProviderApiToken = async (providerId: string): Promise<void> => {
   try {
     if (isTauri()) {
       const { invoke } = await import("@tauri-apps/api/core");
 
       const storageKey =
-        providerId === "openai"
-          ? "remove_github_token"
-          : `remove_${providerId}_token`;
+        providerId === "openai" ? "remove_github_token" : `remove_${providerId}_token`;
 
       try {
         await invoke(storageKey);
-      } catch (error) {
+      } catch (_error) {
         // Fallback to github token removal for backward compatibility
         await invoke("remove_github_token");
       }
     }
-  } catch (error) {
-    console.error(`Error removing ${providerId} API token:`, error);
-    throw error;
+  } catch (_error) {
+    console.error(`Error removing ${providerId} API token:`, _error);
+    throw _error;
   }
 };
 
@@ -177,8 +163,7 @@ const buildContextPrompt = (context: ContextInfo): string => {
 
   // Project information
   if (context.projectRoot) {
-    const projectName =
-      context.projectRoot.split("/").pop() || "Unknown Project";
+    const projectName = context.projectRoot.split("/").pop() || "Unknown Project";
     contextPrompt += `Project: ${projectName}\n`;
   }
 
@@ -214,8 +199,8 @@ const buildContextPrompt = (context: ContextInfo): string => {
   // Other open files
   if (context.openBuffers && context.openBuffers.length > 1) {
     const otherFiles = context.openBuffers
-      .filter((buffer) => buffer.id !== context.activeBuffer?.id)
-      .map((buffer) => `${buffer.name}${buffer.isDirty ? " [modified]" : ""}`)
+      .filter(buffer => buffer.id !== context.activeBuffer?.id)
+      .map(buffer => `${buffer.name}${buffer.isDirty ? " [modified]" : ""}`)
       .slice(0, 10); // Limit to first 10 files
 
     if (otherFiles.length > 0) {
@@ -322,9 +307,7 @@ ${contextPrompt}`;
       stream: true,
     };
 
-    console.log(
-      `🤖 Making ${provider.name} streaming chat request with model ${model.name}...`,
-    );
+    console.log(`🤖 Making ${provider.name} streaming chat request with model ${model.name}...`);
 
     const response = await fetch(provider.apiUrl, {
       method: "POST",
@@ -333,11 +316,7 @@ ${contextPrompt}`;
     });
 
     if (!response.ok) {
-      console.error(
-        `❌ ${provider.name} API error:`,
-        response.status,
-        response.statusText,
-      );
+      console.error(`❌ ${provider.name} API error:`, response.status, response.statusText);
       const errorText = await response.text();
       console.error("❌ Error details:", errorText);
       onError(`${provider.name} API error: ${response.status}`);
@@ -515,11 +494,7 @@ ${contextPrompt}`;
     });
 
     if (!response.ok) {
-      console.error(
-        "❌ OpenAI API error:",
-        response.status,
-        response.statusText,
-      );
+      console.error("❌ OpenAI API error:", response.status, response.statusText);
       const errorText = await response.text();
       console.error("❌ Error details:", errorText);
       throw new Error(`OpenAI API error: ${response.status}`);
@@ -542,9 +517,7 @@ ${contextPrompt}`;
 };
 
 // Quick context analysis for specific queries
-export const analyzeCurrentFile = async (
-  context: ContextInfo,
-): Promise<string | null> => {
+export const analyzeCurrentFile = async (context: ContextInfo): Promise<string | null> => {
   if (!context.activeBuffer || context.activeBuffer.isSQLite) {
     return "No suitable file is currently open for analysis.";
   }

@@ -1,3 +1,4 @@
+import React from "react";
 import { Buffer } from "../../types/buffer";
 
 export interface Message {
@@ -62,4 +63,4 @@ export interface MarkdownRendererProps {
 export interface ModeSelectorProps {
   mode: "chat";
   onModeChange: (mode: "chat") => void;
-} 
+}

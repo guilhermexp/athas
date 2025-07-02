@@ -1,22 +1,17 @@
-import { useState, useEffect } from "react";
-import { Key, CheckCircle, AlertCircle, Zap } from "lucide-react";
-import Button from "./button";
-import { storeGitHubToken, removeGitHubToken } from "../utils/ai-completion";
+import { AlertCircle, CheckCircle, Key, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { removeGitHubToken, storeGitHubToken } from "../utils/ai-completion";
+import Button from "./ui/button";
 
 interface GitHubCopilotSettingsProps {
   isVisible: boolean;
   onClose: () => void;
 }
 
-const GitHubCopilotSettings = ({
-  isVisible,
-  onClose,
-}: GitHubCopilotSettingsProps) => {
+const GitHubCopilotSettings = ({ isVisible, onClose }: GitHubCopilotSettingsProps) => {
   const [apiKey, setApiKey] = useState("");
   const [isValidating, setIsValidating] = useState(false);
-  const [validationStatus, setValidationStatus] = useState<
-    "idle" | "valid" | "invalid"
-  >("idle");
+  const [validationStatus, setValidationStatus] = useState<"idle" | "valid" | "invalid">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [hasExistingKey, setHasExistingKey] = useState(false);
 
@@ -60,8 +55,8 @@ const GitHubCopilotSettings = ({
       } else {
         throw new Error(`OpenAI API error: ${response.status}`);
       }
-    } catch (error) {
-      console.error("API key validation error:", error);
+    } catch (_error) {
+      console.error("API key validation error:", _error);
       return false;
     }
   };
@@ -93,11 +88,9 @@ const GitHubCopilotSettings = ({
         }, 1000);
       } else {
         setValidationStatus("invalid");
-        setErrorMessage(
-          "Invalid GitHub token. Please check your token and try again.",
-        );
+        setErrorMessage("Invalid GitHub token. Please check your token and try again.");
       }
-    } catch (error) {
+    } catch (_error) {
       setValidationStatus("invalid");
       setErrorMessage("Failed to validate token. Please try again.");
     } finally {
@@ -112,7 +105,7 @@ const GitHubCopilotSettings = ({
       setApiKey("");
       setValidationStatus("idle");
       setErrorMessage("");
-    } catch (error) {
+    } catch (_error) {
       setErrorMessage("Failed to remove token");
     }
   };
@@ -152,8 +145,7 @@ const GitHubCopilotSettings = ({
         {/* Content */}
         <div className="p-4 space-y-4">
           <div className="text-xs text-[var(--text-lighter)] leading-relaxed">
-            Connect to OpenAI's API for intelligent code completions powered by
-            GPT-3.5.
+            Connect to OpenAI's API for intelligent code completions powered by GPT-3.5.
           </div>
 
           {/* API Key Input */}
@@ -166,7 +158,7 @@ const GitHubCopilotSettings = ({
             <input
               type="password"
               value={apiKey}
-              onChange={(e) => handleKeyChange(e.target.value)}
+              onChange={e => handleKeyChange(e.target.value)}
               placeholder="sk-xxxxxxxxxxxxxxxxxxxx"
               className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-blue-500"
               disabled={isValidating}

@@ -1,18 +1,12 @@
 import { useRef, useEffect, useCallback } from "react";
-import {
-  CompletionItem,
-  Diagnostic as LspDiagnostic,
-} from "vscode-languageserver-protocol";
+import { CompletionItem, Diagnostic as LspDiagnostic } from "vscode-languageserver-protocol";
 import { LSPManager } from "../lsp/manager";
 import { Diagnostic } from "../components/diagnostics/diagnostics-pane";
 import { listen } from "@tauri-apps/api/event";
 
-const convertLspDiagnostics = (
-  lspDiagnostics: LspDiagnostic[]
-): Diagnostic[] => {
-  return lspDiagnostics.map((diag) => ({
-    severity:
-      diag.severity === 1 ? "error" : diag.severity === 2 ? "warning" : "info",
+const convertLspDiagnostics = (lspDiagnostics: LspDiagnostic[]): Diagnostic[] => {
+  return lspDiagnostics.map(diag => ({
+    severity: diag.severity === 1 ? "error" : diag.severity === 2 ? "warning" : "info",
     line: diag.range.start.line + 1,
     column: diag.range.start.character + 1,
     message: diag.message,
@@ -43,16 +37,15 @@ export function useLSP({ workspaceRoot, onDiagnostics }: UseLSPProps) {
     const unlinstenPromise = listen<{
       uri: string;
       diagnostics: LspDiagnostic[];
-    }>("lsp://diagnostics", (event) => {
+    }>("lsp://diagnostics", event => {
       const converted = convertLspDiagnostics(event.payload.diagnostics);
       onDiagnosticsRef.current?.(converted);
     });
 
     return () => {
-      console.log("Cleaning up LSPManager");
       lspManager.current?.disposeAll();
       lspManager.current = null;
-      unlinstenPromise.then((unlistenFn) => unlistenFn());
+      unlinstenPromise.then(unlistenFn => unlistenFn());
     };
   }, []);
 
@@ -63,29 +56,19 @@ export function useLSP({ workspaceRoot, onDiagnostics }: UseLSPProps) {
     }
   }, [workspaceRoot]);
 
-  const openDocument = useCallback(
-    async (filePath: string, content: string) => {
-      if (
-        !lspManager.current ||
-        !lspManager.current.isLanguageSupported(filePath)
-      )
-        return;
+  const openDocument = useCallback(async (filePath: string, content: string) => {
+    if (!lspManager.current || !lspManager.current.isLanguageSupported(filePath)) return;
 
-      const uri = `file://${filePath}`;
-      await lspManager.current.openDocument(uri, content);
-    },
-    []
-  );
+    const uri = `file://${filePath}`;
+    await lspManager.current.openDocument(uri, content);
+  }, []);
 
-  const changeDocument = useCallback(
-    async (filePath: string, content: string) => {
-      if (!lspManager.current) return;
+  const changeDocument = useCallback(async (filePath: string, content: string) => {
+    if (!lspManager.current) return;
 
-      const uri = `file://${filePath}`;
-      await lspManager.current.changeDocument(uri, content);
-    },
-    []
-  );
+    const uri = `file://${filePath}`;
+    await lspManager.current.changeDocument(uri, content);
+  }, []);
 
   const closeDocument = useCallback(async (filePath: string) => {
     if (!lspManager.current) return;
@@ -95,34 +78,23 @@ export function useLSP({ workspaceRoot, onDiagnostics }: UseLSPProps) {
   }, []);
 
   const getCompletions = useCallback(
-    async (
-      filePath: string,
-      line: number,
-      character: number
-    ): Promise<CompletionItem[]> => {
+    async (filePath: string, line: number, character: number): Promise<CompletionItem[]> => {
       if (!lspManager.current) return [];
 
       const uri = `file://${filePath}`;
-      const result = await lspManager.current.getCompletions(
-        uri,
-        line,
-        character
-      );
+      const result = await lspManager.current.getCompletions(uri, line, character);
 
       return result;
     },
-    []
+    [],
   );
 
-  const getHover = useCallback(
-    async (filePath: string, line: number, character: number) => {
-      if (!lspManager.current) return null;
+  const getHover = useCallback(async (filePath: string, line: number, character: number) => {
+    if (!lspManager.current) return null;
 
-      const uri = `file://${filePath}`;
-      return lspManager.current.getHover(uri, line, character);
-    },
-    []
-  );
+    const uri = `file://${filePath}`;
+    return lspManager.current.getHover(uri, line, character);
+  }, []);
 
   const isLanguageSupported = useCallback((filePath: string): boolean => {
     return lspManager.current?.isLanguageSupported(filePath) || false;

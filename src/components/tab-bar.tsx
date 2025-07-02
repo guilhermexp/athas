@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { Database, Package, Pin, PinOff, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Buffer } from "../types/buffer";
@@ -148,11 +147,6 @@ const TabBar = ({
   paneId,
   maxOpenTabs,
 }: TabBarProps) => {
-  // Early return BEFORE any hooks to avoid hooks order violation
-  if (buffers.length === 0) {
-    return null;
-  }
-
   const [isDragging, setIsDragging] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
@@ -175,9 +169,7 @@ const TabBar = ({
   useEffect(() => {
     if (maxOpenTabs > 0 && buffers.length > maxOpenTabs && onTabClose) {
       // Filter out pinned and active tabs
-      const closableBuffers = buffers.filter(
-        (b) => !b.isPinned && b.id !== activeBufferId
-      );
+      const closableBuffers = buffers.filter(b => !b.isPinned && b.id !== activeBufferId);
 
       // Close oldest tabs until under limit (oldest = lowest index)
       let tabsToClose = buffers.length - maxOpenTabs;
@@ -199,14 +191,12 @@ const TabBar = ({
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (draggedIndex === null || !dragStartPosition || !tabBarRef.current)
-      return;
+    if (draggedIndex === null || !dragStartPosition || !tabBarRef.current) return;
 
     setDragCurrentPosition({ x: e.clientX, y: e.clientY });
 
     const distance = Math.sqrt(
-      Math.pow(e.clientX - dragStartPosition.x, 2) +
-        Math.pow(e.clientY - dragStartPosition.y, 2)
+      Math.pow(e.clientX - dragStartPosition.x, 2) + Math.pow(e.clientY - dragStartPosition.y, 2),
     );
 
     if (distance > 5 && !isDragging) {
@@ -224,15 +214,12 @@ const TabBar = ({
       const y = e.clientY - rect.top;
 
       // Check if dragged outside the tab bar
-      const isOutside =
-        x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
+      const isOutside = x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
       setIsDraggedOutside(isOutside);
 
       if (!isOutside) {
         // Handle internal reordering
-        const tabElements = Array.from(
-          tabBarRef.current.children
-        ) as HTMLElement[];
+        const tabElements = Array.from(tabBarRef.current.children) as HTMLElement[];
 
         let newDropTarget: number | null = null;
         for (let i = 0; i < tabElements.length; i++) {
@@ -254,10 +241,7 @@ const TabBar = ({
 
         // Clamp drop target to valid range
         if (newDropTarget !== null) {
-          newDropTarget = Math.max(
-            0,
-            Math.min(tabElements.length, newDropTarget)
-          );
+          newDropTarget = Math.max(0, Math.min(tabElements.length, newDropTarget));
         }
 
         if (newDropTarget !== dropTarget) {
@@ -271,12 +255,7 @@ const TabBar = ({
 
   const handleMouseUp = () => {
     if (draggedIndex !== null) {
-      if (
-        !isDraggedOutside &&
-        dropTarget !== null &&
-        dropTarget !== draggedIndex &&
-        onTabReorder
-      ) {
+      if (!isDraggedOutside && dropTarget !== null && dropTarget !== draggedIndex && onTabReorder) {
         // Adjust dropTarget if moving right (forward)
         let adjustedDropTarget = dropTarget;
         if (draggedIndex < dropTarget) {
@@ -315,7 +294,7 @@ const TabBar = ({
         bufferId: buffer.id,
         paneId: paneId,
         bufferData: buffer,
-      })
+      }),
     );
     e.dataTransfer.effectAllowed = "move";
 
@@ -381,6 +360,11 @@ const TabBar = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draggedIndex, dragStartPosition, isDragging, dropTarget]);
 
+  // Early return after all hooks are declared
+  if (buffers.length === 0) {
+    return null;
+  }
+
   return (
     <>
       <div className="relative">
@@ -392,9 +376,7 @@ const TabBar = ({
             const isActive = buffer.id === activeBufferId;
             // Drop indicator should be shown before the tab at dropTarget
             const showDropIndicator =
-              dropTarget === index &&
-              draggedIndex !== null &&
-              !isDraggedOutside;
+              dropTarget === index && draggedIndex !== null && !isDraggedOutside;
 
             return (
               <React.Fragment key={buffer.id}>
@@ -409,7 +391,7 @@ const TabBar = ({
                 )}
                 <div
                   draggable={true}
-                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragStart={e => handleDragStart(e, index)}
                   onDragEnd={handleDragEnd}
                   className={`
                      group flex items-center gap-1.5 px-2 py-1.5 border-r border-[var(--border-color)]
@@ -423,23 +405,20 @@ const TabBar = ({
                      ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}
                     
                    `}
-                  onMouseDown={(e) => handleMouseDown(e, index)}
+                  onMouseDown={e => handleMouseDown(e, index)}
                   onClick={() => {
                     if (!isDragging) {
                       onTabClick(buffer.id);
                     }
                   }}
-                  onContextMenu={(e) => handleContextMenu(e, buffer)}
+                  onContextMenu={e => handleContextMenu(e, buffer)}
                 >
                   {/* File Icon */}
                   <div className="flex-shrink-0">
                     {buffer.path === "extensions://language-servers" ? (
                       <Package size={12} className="text-blue-500" />
                     ) : buffer.isSQLite ? (
-                      <Database
-                        size={12}
-                        className="text-[var(--text-lighter)]"
-                      />
+                      <Database size={12} className="text-[var(--text-lighter)]" />
                     ) : (
                       <FileIcon
                         fileName={buffer.name}
@@ -451,32 +430,24 @@ const TabBar = ({
                   </div>
 
                   {/* Pin indicator */}
-                  {buffer.isPinned && (
-                    <Pin size={8} className="text-blue-500 flex-shrink-0" />
-                  )}
+                  {buffer.isPinned && <Pin size={8} className="text-blue-500 flex-shrink-0" />}
 
                   {/* File Name */}
                   <span
                     className={`
                        font-mono text-xs whitespace-nowrap
-                       ${
-                         isActive
-                           ? "text-[var(--text-color)]"
-                           : "text-[var(--text-light)]"
-                       }
+                       ${isActive ? "text-[var(--text-color)]" : "text-[var(--text-light)]"}
                      `}
                     title={buffer.path}
                   >
                     {buffer.name}
-                    {buffer.isDirty && (
-                      <span className="text-[var(--text-lighter)] ml-1">•</span>
-                    )}
+                    {buffer.isDirty && <span className="text-[var(--text-lighter)] ml-1">•</span>}
                   </span>
 
                   {/* Close Button */}
                   {!buffer.isPinned && (
                     <button
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         onTabClose(buffer.id, e);
                       }}
@@ -500,21 +471,19 @@ const TabBar = ({
             );
           })}
           {/* Drop indicator after the last tab */}
-          {dropTarget === sortedBuffers.length &&
-            draggedIndex !== null &&
-            !isDraggedOutside && (
-              <div className="relative flex items-center">
-                <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-[var(--accent-color)] z-10"
-                  style={{ height: "100%" }}
-                />
-              </div>
-            )}
+          {dropTarget === sortedBuffers.length && draggedIndex !== null && !isDraggedOutside && (
+            <div className="relative flex items-center">
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-[var(--accent-color)] z-10"
+                style={{ height: "100%" }}
+              />
+            </div>
+          )}
         </div>
         {/* Floating tab name while dragging */}
         {isDragging && draggedIndex !== null && dragCurrentPosition && (
           <div
-            ref={(el) => {
+            ref={el => {
               if (el && window) {
                 // Center the floating tab on the cursor
                 const rect = el.getBoundingClientRect();
@@ -533,8 +502,7 @@ const TabBar = ({
           >
             {/* File Icon */}
             <span className="flex-shrink-0">
-              {sortedBuffers[draggedIndex].path ===
-              "extensions://language-servers" ? (
+              {sortedBuffers[draggedIndex].path === "extensions://language-servers" ? (
                 <Package size={12} className="text-blue-500" />
               ) : sortedBuffers[draggedIndex].isSQLite ? (
                 <Database size={12} className="text-[var(--text-lighter)]" />
@@ -567,8 +535,8 @@ const TabBar = ({
         buffer={contextMenu.buffer}
         onClose={closeContextMenu}
         onPin={onTabPin || (() => {})}
-        onCloseTab={(bufferId) => {
-          const buffer = buffers.find((b) => b.id === bufferId);
+        onCloseTab={bufferId => {
+          const buffer = buffers.find(b => b.id === bufferId);
           if (buffer) {
             onTabClose(bufferId, {} as React.MouseEvent);
           }

@@ -3,7 +3,6 @@ import { listen, UnlistenFn } from "@tauri-apps/api/event";
 
 function cleanupMenuListeners() {
   if (!listenersAreSetup) return;
-  console.log("remove menu listeners");
 
   cleanupFunctions.forEach(cleanup => cleanup());
 
@@ -18,15 +17,12 @@ let cleanupFunctions: UnlistenFn[] = [];
 
 async function setupMenuListeners(handlers: any) {
   if (listenersAreSetup) {
-    console.log("menu listeners exists, updating handlers");
     currentHandlers = handlers;
     return;
   }
 
   listenersAreSetup = true;
   currentHandlers = handlers;
-
-  console.log("setup menu listeners");
 
   const removeListeners = await Promise.all([
     listen("menu_new_file", () => currentHandlers.current.onNewFile()),
@@ -38,18 +34,10 @@ async function setupMenuListeners(handlers: any) {
     listen("menu_redo", () => currentHandlers.current.onRedo()),
     listen("menu_find", () => currentHandlers.current.onFind()),
     listen("menu_find_replace", () => currentHandlers.current.onFindReplace()),
-    listen("menu_command_palette", () =>
-      currentHandlers.current.onCommandPalette(),
-    ),
-    listen("menu_toggle_sidebar", () =>
-      currentHandlers.current.onToggleSidebar(),
-    ),
-    listen("menu_toggle_terminal", () =>
-      currentHandlers.current.onToggleTerminal(),
-    ),
-    listen("menu_toggle_ai_chat", () =>
-      currentHandlers.current.onToggleAiChat(),
-    ),
+    listen("menu_command_palette", () => currentHandlers.current.onCommandPalette()),
+    listen("menu_toggle_sidebar", () => currentHandlers.current.onToggleSidebar()),
+    listen("menu_toggle_terminal", () => currentHandlers.current.onToggleTerminal()),
+    listen("menu_toggle_ai_chat", () => currentHandlers.current.onToggleAiChat()),
     listen("menu_split_editor", () => currentHandlers.current.onSplitEditor()),
     listen("menu_toggle_vim", () => currentHandlers.current.onToggleVim()),
     listen("menu_go_to_file", () => currentHandlers.current.onGoToFile()),

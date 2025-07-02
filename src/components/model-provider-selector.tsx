@@ -1,11 +1,7 @@
-import { useState } from "react";
-import { ChevronDown, Bot, Key, Check } from "lucide-react";
+import { Bot, Check, ChevronDown, Key } from "lucide-react";
+import React, { useState } from "react";
+import { AI_PROVIDERS, getModelById, getProviderById } from "../types/ai-provider";
 import { cn } from "../utils/cn";
-import {
-  AI_PROVIDERS,
-  getProviderById,
-  getModelById,
-} from "../types/ai-provider";
 
 interface ModelProviderSelectorProps {
   currentProviderId: string;
@@ -23,8 +19,7 @@ const ModelProviderSelector = ({
   hasApiKey,
 }: ModelProviderSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedProviderId, setSelectedProviderId] =
-    useState(currentProviderId);
+  const [selectedProviderId, setSelectedProviderId] = useState(currentProviderId);
 
   const currentModel = getModelById(currentProviderId, currentModelId);
 
@@ -80,7 +75,7 @@ const ModelProviderSelector = ({
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded-lg shadow-xl z-[9999] min-w-[360px] max-h-[80vh] overflow-y-auto">
-          {AI_PROVIDERS.map((provider) => (
+          {AI_PROVIDERS.map(provider => (
             <div
               key={provider.id}
               className="border-b border-[var(--border-color)] last:border-b-0"
@@ -109,7 +104,7 @@ const ModelProviderSelector = ({
                 {/* API Key Status */}
                 {provider.requiresApiKey ? (
                   <button
-                    onClick={(e) => handleApiKeyClick(e, provider.id)}
+                    onClick={e => handleApiKeyClick(e, provider.id)}
                     className={cn(
                       "flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors",
                       hasApiKey(provider.id)
@@ -130,13 +125,12 @@ const ModelProviderSelector = ({
               {/* Models List */}
               {selectedProviderId === provider.id && (
                 <div className="bg-[var(--secondary-bg)] border-t border-[var(--border-color)]">
-                  {provider.models.map((model) => (
+                  {provider.models.map(model => (
                     <div
                       key={model.id}
                       className={cn(
                         "flex items-center gap-2 px-4 py-1.5 cursor-pointer transition-colors",
-                        currentModelId === model.id &&
-                          currentProviderId === provider.id
+                        currentModelId === model.id && currentProviderId === provider.id
                           ? "bg-blue-500/20 border-blue-500/30"
                           : "hover:bg-[var(--hover-color)]",
                       )}
@@ -147,23 +141,16 @@ const ModelProviderSelector = ({
                           <div className="font-medium text-xs text-[var(--text-color)] truncate">
                             {model.name}
                           </div>
-                          {currentModelId === model.id &&
-                            currentProviderId === provider.id && (
-                              <Check
-                                size={8}
-                                className="text-blue-400 flex-shrink-0"
-                              />
-                            )}
+                          {currentModelId === model.id && currentProviderId === provider.id && (
+                            <Check size={8} className="text-blue-400 flex-shrink-0" />
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-[var(--text-lighter)] flex-shrink-0">
                         <span>{formatTokens(model.maxTokens)}</span>
                         {model.costPer1kTokens !== undefined && (
                           <span>
-                            $
-                            {model.costPer1kTokens === 0
-                              ? "Free"
-                              : model.costPer1kTokens}
+                            ${model.costPer1kTokens === 0 ? "Free" : model.costPer1kTokens}
                             /1k
                           </span>
                         )}
@@ -179,10 +166,7 @@ const ModelProviderSelector = ({
 
       {/* Click Outside to Close */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-[9998] bg-black/20"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 z-[9998] bg-black/20" onClick={() => setIsOpen(false)} />
       )}
     </div>
   );

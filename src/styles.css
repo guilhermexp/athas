@@ -142,8 +142,9 @@ body {
     --syntax-punctuation: #a1a1a1;
 }
 
-/* Force Tokyo Night theme */
-.force-tokyonight {
+/* Force Tokyo Night theme - backward compatibility alias */
+.force-tokyonight,
+.force-tokyo-night {
     --primary-bg: #1a1b26;
     --secondary-bg: #24283b;
     --text-color: #c0caf5;
@@ -1956,7 +1957,7 @@ textarea::-webkit-scrollbar-thumb:hover {
     --syntax-variable: #6d58cb;
     --syntax-tag: #6d58cb;
     --syntax-attribute: #a575ad;
-    --syntax-punctuation: #a575ad; 
+    --syntax-punctuation: #a575ad;
 }
 
 
@@ -2217,18 +2218,18 @@ textarea::-webkit-scrollbar-thumb:hover {
     --secondary-bg: #0a0a0a;         /* Background 2 - Subtle elevation */
     --hover-color: #1a1a1a;          /* Color 1 - Hover background */
     --selected-color: #2a2a2a;       /* Color 2 - Active background */
-    
+
     /* Border colors following Geist scale */
     --border-color: #333333;         /* Color 4 - Default border */
-    
+
     /* Text colors following Geist scale */
     --text-color: #fafafa;           /* Color 10 - Primary text (high contrast) */
     --text-light: #a1a1a1;          /* Color 9 - Secondary text */
     --text-lighter: #666666;        /* Dimmed text for less important content */
-    
+
     /* Vercel brand accent */
     --accent-color: #0070f3;         /* Official Vercel blue */
-    
+
     /* Enhanced syntax highlighting inspired by Vercel's code blocks */
     --comment: #666666;              /* Subtle gray for comments */
     --keyword: #0070f3;              /* Vercel blue for keywords */
@@ -2239,24 +2240,24 @@ textarea::-webkit-scrollbar-thumb:hover {
     --tag: #ff0080;                  /* Hot pink for tags */
     --attribute: #f81ce5;            /* Magenta for attributes */
     --punctuation: #a1a1a1;          /* Secondary text for punctuation */
-    
+
     /* Additional Vercel-specific colors */
     --success-color: #00d9ff;        /* Vercel success cyan */
     --warning-color: #f5a623;        /* Vercel warning orange */
     --error-color: #ff0080;          /* Vercel error pink */
     --info-color: #0070f3;           /* Vercel info blue */
-    
+
     /* Component-specific overrides for better Vercel feel */
     --tab-active-bg: #000000;        /* Active tabs pure black */
     --tab-inactive-bg: #0a0a0a;      /* Inactive tabs slightly elevated */
     --sidebar-bg: #0a0a0a;           /* Sidebar with subtle elevation */
     --editor-bg: #000000;            /* Editor pure black */
     --terminal-bg: #000000;          /* Terminal pure black */
-    
+
     /* Enhanced contrast ratios */
     --high-contrast-bg: #ffffff;     /* Pure white for high contrast elements */
     --high-contrast-text: #000000;   /* Pure black text on white */
-    
+
     /* Scrollbar colors */
     --scrollbar-track: transparent;
     --scrollbar-thumb: #333333;

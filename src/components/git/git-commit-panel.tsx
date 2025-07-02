@@ -1,9 +1,5 @@
-import { useState } from "react";
-import {
-  GitCommit as GitCommitIcon,
-  Send,
-  AlertCircle,
-} from "lucide-react";
+import { AlertCircle, GitCommit as GitCommitIcon, Send } from "lucide-react";
+import React, { useState } from "react";
 import { commitChanges } from "../../utils/git";
 
 interface GitCommitPanelProps {
@@ -22,7 +18,7 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
 
     setIsCommitting(true);
     setError(null);
-    
+
     try {
       const success = await commitChanges(repoPath, commitMessage.trim());
       if (success) {
@@ -57,7 +53,7 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
         <div className="flex items-center gap-2 mb-2">
           <GitCommitIcon size={12} className="text-[var(--text-lighter)]" />
           <span className="text-xs text-[var(--text-color)] font-medium">
-            Commit {stagedFilesCount} file{stagedFilesCount !== 1 ? 's' : ''}
+            Commit {stagedFilesCount} file{stagedFilesCount !== 1 ? "s" : ""}
           </span>
         </div>
 
@@ -71,19 +67,17 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
         <div className="space-y-2">
           <textarea
             value={commitMessage}
-            onChange={(e) => setCommitMessage(e.target.value)}
+            onChange={e => setCommitMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter commit message..."
             className="w-full bg-[var(--primary-bg)] text-[var(--text-color)] border border-[var(--border-color)] px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-500 resize-none"
             rows={3}
             disabled={isCommitting}
           />
-          
+
           <div className="flex items-center justify-between">
-            <div className="text-[9px] text-[var(--text-lighter)]">
-              Ctrl+Enter to commit
-            </div>
-            
+            <div className="text-[9px] text-[var(--text-lighter)]">Ctrl+Enter to commit</div>
+
             <button
               onClick={handleCommit}
               disabled={isCommitDisabled}
@@ -112,4 +106,4 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
   );
 };
 
-export default GitCommitPanel; 
+export default GitCommitPanel;
