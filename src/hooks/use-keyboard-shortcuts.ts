@@ -24,6 +24,7 @@ interface UseKeyboardShortcutsProps {
   bottomPaneActiveTab: 'terminal' | 'diagnostics';
   onSave?: () => void;
   onQuickEdit?: () => void;
+  onToggleSidebarPosition?: () => void;
   coreFeatures: CoreFeaturesState;
 }
 
@@ -48,6 +49,7 @@ export const useKeyboardShortcuts = ({
   bottomPaneActiveTab,
   onSave,
   onQuickEdit,
+  onToggleSidebarPosition,
   coreFeatures,
 }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
@@ -150,9 +152,18 @@ export const useKeyboardShortcuts = ({
       }
 
       // Cmd+B (Mac) or Ctrl+B (Windows/Linux) to toggle sidebar
-      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b' && !e.shiftKey) {
         e.preventDefault();
         setIsSidebarVisible(prev => !prev);
+        return;
+      }
+
+      // Cmd+Shift+B (Mac) or Ctrl+Shift+B (Windows/Linux) to toggle sidebar position
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'B') {
+        e.preventDefault();
+        if (onToggleSidebarPosition) {
+          onToggleSidebarPosition();
+        }
         return;
       }
 
@@ -241,5 +252,7 @@ export const useKeyboardShortcuts = ({
     bottomPaneActiveTab,
     onSave,
     onQuickEdit,
+    onToggleSidebarPosition,
+    coreFeatures,
   ]);
 }; 

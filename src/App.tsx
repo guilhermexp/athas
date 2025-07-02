@@ -1,4 +1,4 @@
-import { AlertCircle, Terminal as TerminalIcon } from "lucide-react";
+import { AlertCircle, ArrowLeftRight, Terminal as TerminalIcon } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import AIChat from "./components/ai-chat/ai-chat";
 import BottomPane from "./components/bottom-pane";
@@ -467,6 +467,11 @@ function App() {
     uiState.setIsQuickEditVisible(false);
   };
 
+  const handleToggleSidebarPosition = () => {
+    const newPosition = settings.sidebarPosition === "left" ? "right" : "left";
+    updateSetting("sidebarPosition", newPosition);
+  };
+
   const handleApplyCodeFromChat = (code: string) => {
     if (!activeBuffer || !codeEditorRef.current?.textarea) return;
 
@@ -592,6 +597,7 @@ function App() {
     bottomPaneActiveTab: uiState.bottomPaneActiveTab,
     onSave: handleSave,
     onQuickEdit: handleQuickEdit,
+    onToggleSidebarPosition: handleToggleSidebarPosition,
     coreFeatures,
   });
 
@@ -799,43 +805,66 @@ function App() {
         {/* Main App Content */}
         <div className="flex flex-col h-full w-full bg-[var(--primary-bg)] overflow-hidden">
           <div className="flex flex-row flex-1 overflow-hidden custom-scrollbar-auto">
-            {/* Left Sidebar */}
-            {uiState.isSidebarVisible && (
-              <ResizableSidebar defaultWidth={220} minWidth={180} maxWidth={400}>
-                <MainSidebar
-                  ref={searchViewRef}
-                  isGitViewActive={uiState.isGitViewActive}
-                  isSearchViewActive={uiState.isSearchViewActive}
-                  isRemoteViewActive={uiState.isRemoteViewActive}
-                  isRemoteWindow={isRemoteWindow}
-                  remoteConnectionName={remoteConnectionName || undefined}
-                  coreFeatures={coreFeatures}
-                  files={files}
-                  rootFolderPath={rootFolderPath}
-                  allProjectFiles={allProjectFiles}
-                  activeBufferPath={activeBuffer?.path}
-                  onViewChange={uiState.setActiveView}
-                  onOpenExtensions={handleOpenExtensions}
-                  onOpenFolder={handleOpenFolder}
-                  onCreateNewFile={handleCreateNewFile}
-                  onCreateNewFolderInDirectory={handleCreateNewFolderInDirectory}
-                  onFileSelect={
-                    isRemoteWindow
-                      ? async (path: string, isDir: boolean) => {
-                          if (isDir) {
-                            await handleFolderToggle(path);
-                          } else {
-                            await remoteFileSelect(path, isDir, openBuffer);
+            {/* Left Side - AI Chat (when sidebar is on right) or File Tree (when sidebar is on left) */}
+            {settings.sidebarPosition === "right" ? (
+              // AI Chat on left when sidebar is on right
+              coreFeatures.aiChat && (
+                <ResizableRightPane
+                  isVisible={uiState.isRightPaneVisible}
+                  defaultWidth={300}
+                  minWidth={280}
+                  maxWidth={600}
+                  position="left"
+                >
+                  <AIChat
+                    activeBuffer={activeBuffer}
+                    buffers={buffers}
+                    rootFolderPath={rootFolderPath}
+                    selectedFiles={[]}
+                    mode="chat"
+                    onApplyCode={handleApplyCodeFromChat}
+                  />
+                </ResizableRightPane>
+              )
+            ) : (
+              // File Tree on left when sidebar is on left
+              uiState.isSidebarVisible && (
+                <ResizableSidebar defaultWidth={220} minWidth={200} maxWidth={400}>
+                  <MainSidebar
+                    ref={searchViewRef}
+                    isGitViewActive={uiState.isGitViewActive}
+                    isSearchViewActive={uiState.isSearchViewActive}
+                    isRemoteViewActive={uiState.isRemoteViewActive}
+                    isRemoteWindow={isRemoteWindow}
+                    remoteConnectionName={remoteConnectionName || undefined}
+                    coreFeatures={coreFeatures}
+                    files={files}
+                    rootFolderPath={rootFolderPath}
+                    allProjectFiles={allProjectFiles}
+                    activeBufferPath={activeBuffer?.path}
+                    onViewChange={uiState.setActiveView}
+                    onOpenExtensions={handleOpenExtensions}
+                    onOpenFolder={handleOpenFolder}
+                    onCreateNewFile={handleCreateNewFile}
+                    onCreateNewFolderInDirectory={handleCreateNewFolderInDirectory}
+                    onFileSelect={
+                      isRemoteWindow
+                        ? async (path: string, isDir: boolean) => {
+                            if (isDir) {
+                              await handleFolderToggle(path);
+                            } else {
+                              await remoteFileSelect(path, isDir, openBuffer);
+                            }
                           }
-                        }
-                      : handleFileSelect
-                  }
-                  onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
-                  onDeletePath={(path: string) => handleDeletePath(path, false)}
-                  onProjectNameMenuOpen={contextMenus.handleProjectNameMenuOpen}
-                  projectName={getProjectName()}
-                />
-              </ResizableSidebar>
+                        : handleFileSelect
+                    }
+                    onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
+                    onDeletePath={(path: string) => handleDeletePath(path, false)}
+                    onProjectNameMenuOpen={contextMenus.handleProjectNameMenuOpen}
+                    projectName={getProjectName()}
+                  />
+                </ResizableSidebar>
+              )
             )}
 
             {/* Main Content Area */}
@@ -1018,6 +1047,15 @@ function App() {
                   )}
                 </div>
                 <div className="flex items-center gap-4 font-mono text-xs text-[var(--text-lighter)]">
+                  {/* Sidebar Position Toggle */}
+                  <button
+                    onClick={handleToggleSidebarPosition}
+                    className="cursor-pointer flex items-center gap-1 px-2 py-1 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded hover:bg-[var(--hover-color)] transition-colors"
+                    title={`Switch sidebar to ${settings.sidebarPosition === "left" ? "right" : "left"} (Cmd+Shift+B)`}
+                  >
+                    <ArrowLeftRight size={12} />
+                  </button>
+
                   {activeBuffer && !activeBuffer.isSQLite && (
                     <button
                       onClick={() => uiState.setIsGitHubCopilotSettingsVisible(true)}
@@ -1032,23 +1070,72 @@ function App() {
               </div>
             </div>
 
-            {/* Right Pane */}
-            {coreFeatures.aiChat && (
-              <ResizableRightPane
-                isVisible={uiState.isRightPaneVisible}
-                defaultWidth={300}
-                minWidth={200}
-                maxWidth={600}
-              >
-                <AIChat
-                  activeBuffer={activeBuffer}
-                  buffers={buffers}
-                  rootFolderPath={rootFolderPath}
-                  selectedFiles={[]}
-                  mode="chat"
-                  onApplyCode={handleApplyCodeFromChat}
-                />
-              </ResizableRightPane>
+            {/* Right Side - File Tree (when sidebar is on right) or AI Chat (when sidebar is on left) */}
+            {settings.sidebarPosition === "right" ? (
+              // File Tree on right when sidebar is on right
+              uiState.isSidebarVisible && (
+                <ResizableRightPane
+                  isVisible={true}
+                  defaultWidth={220}
+                  minWidth={200}
+                  maxWidth={400}
+                  position="right"
+                >
+                  <MainSidebar
+                    ref={searchViewRef}
+                    isGitViewActive={uiState.isGitViewActive}
+                    isSearchViewActive={uiState.isSearchViewActive}
+                    isRemoteViewActive={uiState.isRemoteViewActive}
+                    isRemoteWindow={isRemoteWindow}
+                    remoteConnectionName={remoteConnectionName || undefined}
+                    coreFeatures={coreFeatures}
+                    files={files}
+                    rootFolderPath={rootFolderPath}
+                    allProjectFiles={allProjectFiles}
+                    activeBufferPath={activeBuffer?.path}
+                    onViewChange={uiState.setActiveView}
+                    onOpenExtensions={handleOpenExtensions}
+                    onOpenFolder={handleOpenFolder}
+                    onCreateNewFile={handleCreateNewFile}
+                    onCreateNewFolderInDirectory={handleCreateNewFolderInDirectory}
+                    onFileSelect={
+                      isRemoteWindow
+                        ? async (path: string, isDir: boolean) => {
+                            if (isDir) {
+                              await handleFolderToggle(path);
+                            } else {
+                              await remoteFileSelect(path, isDir, openBuffer);
+                            }
+                          }
+                        : handleFileSelect
+                    }
+                    onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
+                    onDeletePath={(path: string) => handleDeletePath(path, false)}
+                    onProjectNameMenuOpen={contextMenus.handleProjectNameMenuOpen}
+                    projectName={getProjectName()}
+                  />
+                </ResizableRightPane>
+              )
+            ) : (
+              // AI Chat on right when sidebar is on left
+              coreFeatures.aiChat && (
+                <ResizableRightPane
+                  isVisible={uiState.isRightPaneVisible}
+                  defaultWidth={300}
+                  minWidth={280}
+                  maxWidth={600}
+                  position="right"
+                >
+                  <AIChat
+                    activeBuffer={activeBuffer}
+                    buffers={buffers}
+                    rootFolderPath={rootFolderPath}
+                    selectedFiles={[]}
+                    mode="chat"
+                    onApplyCode={handleApplyCodeFromChat}
+                  />
+                </ResizableRightPane>
+              )
             )}
           </div>
 
