@@ -134,7 +134,7 @@ const BottomPane = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="p-1 hover:bg-[var(--hover-color)] rounded transition-colors"
+          className="p-1 hover:bg-[var(--hover-color)] rounded transition-colors cursor-pointer"
         >
           <X size={14} className="text-[var(--text-lighter)]" />
         </button>

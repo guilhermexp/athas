@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { X, Terminal as TerminalIcon, Pin, PinOff, Plus } from "lucide-react";
+import { Pin, PinOff, Plus, Terminal as TerminalIcon, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import { Terminal } from "../../types/terminal";
 import { cn } from "../../utils/cn";
 
@@ -34,10 +34,10 @@ const TerminalContextMenu = ({
       const handleEscape = (e: KeyboardEvent) => {
         if (e.key === "Escape") onClose();
       };
-      
+
       document.addEventListener("click", handleClickOutside);
       document.addEventListener("keydown", handleEscape);
-      
+
       return () => {
         document.removeEventListener("click", handleClickOutside);
         document.removeEventListener("keydown", handleEscape);
@@ -49,9 +49,9 @@ const TerminalContextMenu = ({
 
   return (
     <div
-      className="fixed bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-md shadow-lg z-50 py-1 min-w-[160px]"
+      className="fixed bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-md shadow-lg z-50 py-1 min-w-[160px] text-[var(--text-color)]"
       style={{ left: position.x, top: position.y }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
     >
       <button
         onClick={() => {
@@ -62,9 +62,9 @@ const TerminalContextMenu = ({
       >
         Rename Terminal
       </button>
-      
+
       <div className="h-px bg-[var(--border-color)] my-1" />
-      
+
       <button
         onClick={() => {
           onPin(terminal.id);
@@ -75,9 +75,9 @@ const TerminalContextMenu = ({
         {terminal.isPinned ? <PinOff size={12} /> : <Pin size={12} />}
         {terminal.isPinned ? "Unpin Terminal" : "Pin Terminal"}
       </button>
-      
+
       <div className="h-px bg-[var(--border-color)] my-1" />
-      
+
       <button
         onClick={() => {
           onCloseTab(terminal.id);
@@ -175,8 +175,8 @@ const TerminalTabBar = ({
       return;
 
     const distance = Math.sqrt(
-      Math.pow(e.clientX - dragStartPosition.x, 2) +
-        Math.pow(e.clientY - dragStartPosition.y, 2),
+      Math.pow(e.clientX - dragStartPosition.x, 2)
+        + Math.pow(e.clientY - dragStartPosition.y, 2),
     );
 
     if (distance > 5 && !isDragging) {
@@ -191,7 +191,8 @@ const TerminalTabBar = ({
       ) as HTMLElement[];
 
       let newDropTarget: number | null = null;
-      for (let i = 0; i < tabElements.length - 1; i++) { // -1 to exclude the new terminal button
+      for (let i = 0; i < tabElements.length - 1; i++) {
+        // -1 to exclude the new terminal button
         const tabRect = tabElements[i].getBoundingClientRect();
         const tabX = tabRect.left - rect.left;
         const tabWidth = tabRect.width;
@@ -210,10 +211,10 @@ const TerminalTabBar = ({
 
   const handleMouseUp = () => {
     if (
-      draggedIndex !== null &&
-      dropTarget !== null &&
-      dropTarget !== draggedIndex &&
-      onTabReorder
+      draggedIndex !== null
+      && dropTarget !== null
+      && dropTarget !== draggedIndex
+      && onTabReorder
     ) {
       onTabReorder(draggedIndex, dropTarget);
     }
@@ -260,7 +261,9 @@ const TerminalTabBar = ({
       <div className="flex items-center justify-between bg-[var(--secondary-bg)] border-b border-[var(--border-color)] px-2 py-1 min-h-[28px]">
         <div className="flex items-center gap-1.5">
           <TerminalIcon size={10} className="text-[var(--text-lighter)]" />
-          <span className="text-xs font-mono text-[var(--text-lighter)]">No terminals</span>
+          <span className="text-xs font-mono text-[var(--text-lighter)]">
+            No terminals
+          </span>
         </div>
         {onNewTerminal && (
           <button
@@ -280,9 +283,9 @@ const TerminalTabBar = ({
       <div
         ref={tabBarRef}
         className="flex items-center bg-[var(--secondary-bg)] border-b border-[var(--border-color)] px-0.5 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--border-color)] min-h-[28px]"
-        style={{ 
+        style={{
           scrollbarWidth: "thin",
-          scrollbarGutter: "stable"
+          scrollbarGutter: "stable",
         }}
       >
         {sortedTerminals.map((terminal, index) => {
@@ -300,25 +303,25 @@ const TerminalTabBar = ({
                   : "text-[var(--text-lighter)] hover:bg-[var(--hover-color)] hover:text-[var(--text-color)]",
                 isDraggedItem && "opacity-50 scale-95",
                 isDraggedOver && "bg-blue-500/20 border-blue-500/50",
-                terminal.isPinned && "border-l-2 border-l-blue-500"
+                terminal.isPinned && "border-l-2 border-l-blue-500",
               )}
-              onMouseDown={(e) => handleMouseDown(e, index)}
+              onMouseDown={e => handleMouseDown(e, index)}
               onClick={() => onTabClick(terminal.id)}
-              onContextMenu={(e) => handleContextMenu(e, terminal)}
+              onContextMenu={e => handleContextMenu(e, terminal)}
               title={`${terminal.name}\n${terminal.currentDirectory}`}
             >
               <TerminalIcon size={9} className="flex-shrink-0" />
-              
+
               <span className="truncate font-mono text-xs">
                 {terminal.name}
               </span>
-              
+
               {terminal.isPinned && (
                 <Pin size={7} className="flex-shrink-0 text-blue-400" />
               )}
 
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   onTabClose(terminal.id, e);
                 }}
@@ -348,10 +351,10 @@ const TerminalTabBar = ({
         position={contextMenu.position}
         terminal={contextMenu.terminal}
         onClose={closeContextMenu}
-        onPin={(terminalId) => {
+        onPin={terminalId => {
           onTabPin?.(terminalId);
         }}
-        onCloseTab={(terminalId) => {
+        onCloseTab={terminalId => {
           onTabClose(terminalId, {} as React.MouseEvent);
         }}
         onCloseOthers={onCloseOtherTabs || (() => {})}
@@ -363,4 +366,4 @@ const TerminalTabBar = ({
   );
 };
 
-export default TerminalTabBar; 
+export default TerminalTabBar;
