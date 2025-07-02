@@ -4,9 +4,9 @@ import { open as tauriOpen } from "@tauri-apps/plugin-dialog";
 
 // Detect if we're on macOS
 export const isMac = (): boolean => {
-  return /Mac|iPhone|iPod|iPad/.test(navigator.platform) || 
-         /Mac/.test(navigator.userAgent) ||
-         navigator.platform === 'MacIntel';
+  return /Mac|iPhone|iPod|iPad/.test(navigator.platform) ||
+    /Mac/.test(navigator.userAgent) ||
+    navigator.platform === 'MacIntel';
 };
 
 // Get the appropriate modifier key symbol for the platform
@@ -18,29 +18,29 @@ export const getModifierSymbol = (): string => {
 export const getShortcutText = (key: string, modifiers: string[] = []): string => {
   const modSymbol = isMac() ? '⌘' : 'Ctrl';
   const shiftSymbol = isMac() ? '⇧' : 'Shift';
-  
+
   let result = '';
-  
+
   if (modifiers.includes('ctrl') || modifiers.includes('cmd')) {
     result += modSymbol;
   }
-  
+
   if (modifiers.includes('shift')) {
     result += shiftSymbol;
   }
-  
+
   // Convert arrow keys to symbols
   const keyMap: { [key: string]: string } = {
     'ArrowRight': '→',
-    'ArrowLeft': '←', 
+    'ArrowLeft': '←',
     'ArrowUp': '↑',
     'ArrowDown': '↓',
     '\\': '\\',
     'w': 'W'
   };
-  
+
   result += keyMap[key] || key.toUpperCase();
-  
+
   return result;
 };
 
@@ -50,17 +50,17 @@ export const isTauri = (): boolean => {
   if (typeof window !== 'undefined' && '__TAURI__' in window && window.__TAURI__ !== undefined) {
     return true;
   }
-  
+
   // Method 2: Check for __TAURI_INTERNALS__ (Tauri v2)
   if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
     return true;
   }
-  
+
   // Method 3: Check for tauri:// protocol (Tauri specific)
   if (typeof window !== 'undefined' && window.location && window.location.protocol === 'tauri:') {
     return true;
   }
-  
+
   // Method 4: Check if we can import Tauri APIs (they exist in bundled environment)
   try {
     if (typeof tauriInvoke === 'function') {
@@ -69,12 +69,12 @@ export const isTauri = (): boolean => {
   } catch (error) {
     // Ignore error
   }
-  
+
   // Method 5: Check for absence of standard browser APIs (fallback)
   if (typeof window !== 'undefined' && !window.location.protocol.startsWith('http')) {
     return true;
   }
-  
+
   return false;
 };
 
@@ -98,7 +98,7 @@ export const openFolder = async (): Promise<string | FileList | null> => {
       input.type = 'file';
       input.webkitdirectory = true;
       input.multiple = true;
-      
+
       input.onchange = (event) => {
         const files = (event.target as HTMLInputElement).files;
         if (files && files.length > 0) {
@@ -109,7 +109,7 @@ export const openFolder = async (): Promise<string | FileList | null> => {
           resolve(null);
         }
       };
-      
+
       input.oncancel = () => resolve(null);
       input.click();
     });
@@ -176,9 +176,35 @@ export const writeFile = async (path: string, content: string): Promise<void> =>
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     // Also update the cached file content
     updateCachedWebFile(path, content);
+  }
+};
+
+export const createDirectory = async (path: string): Promise<void> => {
+  if (isTauri()) {
+    try {
+      await tauriInvoke("create_directory_custom", { path });
+    } catch (error) {
+      console.error("Error creating directory with Tauri:", error);
+      throw error;
+    }
+  } else {
+    console.log("Directory creation simulated for web:", path);
+  }
+};
+
+export const deletePath = async (path: string): Promise<void> => {
+  if (isTauri()) {
+    try {
+      await tauriInvoke("delete_path_custom", { path });
+    } catch (error) {
+      console.error("Error deleting path with Tauri:", error);
+      throw error;
+    }
+  } else {
+    console.log("Path deletion simulated for web:", path);
   }
 };
 
@@ -189,17 +215,17 @@ const webFileStructure: Map<string, any[]> = new Map();
 export const setWebFiles = (files: FileList) => {
   webFileCache.clear();
   webFileStructure.clear();
-  
+
   // Build file structure from FileList
   const structure: any = {};
-  
+
   Array.from(files).forEach(file => {
     const path = file.webkitRelativePath;
     const pathParts = path.split('/');
-    
+
     // Cache the file
     webFileCache.set(path, file);
-    
+
     // Build directory structure
     let current = structure;
     for (let i = 0; i < pathParts.length - 1; i++) {
@@ -210,13 +236,13 @@ export const setWebFiles = (files: FileList) => {
       current = current[part];
     }
   });
-  
+
   // Convert structure to format expected by the app
   const convertStructure = (obj: any, basePath: string = ''): any[] => {
     return Object.keys(obj).map(key => {
       const fullPath = basePath ? `${basePath}/${key}` : key;
       const isDir = typeof obj[key] === 'object' && Object.keys(obj[key]).length > 0;
-      
+
       return {
         name: key,
         path: fullPath,
@@ -225,11 +251,11 @@ export const setWebFiles = (files: FileList) => {
       };
     });
   };
-  
+
   // Cache directory structures
   const rootStructure = convertStructure(structure);
   webFileStructure.set('', rootStructure);
-  
+
   // Cache subdirectory structures
   const cacheSubdirectories = (items: any[], _basePath: string = '') => {
     items.forEach(item => {
@@ -239,7 +265,7 @@ export const setWebFiles = (files: FileList) => {
       }
     });
   };
-  
+
   cacheSubdirectories(rootStructure);
 };
 

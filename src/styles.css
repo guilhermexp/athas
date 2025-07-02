@@ -41,6 +41,11 @@ body {
     --hover-color: #f0f0f0;
     --selected-color: #e8e8e8;
 
+    /* Diagnostic colors - muted for better readability */
+    --error-color: #c53030;
+    --warning-color: #d69e2e;
+    --info-color: #3182ce;
+
     /* Syntax highlighting colors - Light theme */
     --syntax-comment: #6a737d;
     --syntax-keyword: #d73a49;
@@ -63,6 +68,11 @@ body {
     --border-color: #e0e0e0;
     --hover-color: #f0f0f0;
     --selected-color: #e8e8e8;
+
+    /* Diagnostic colors - muted for light theme */
+    --error-color: #c53030;
+    --warning-color: #d69e2e;
+    --info-color: #3182ce;
 
     /* Syntax highlighting colors - Light theme */
     --syntax-comment: #6a737d;
@@ -87,6 +97,11 @@ body {
     --hover-color: #333333;
     --selected-color: #404040;
 
+    /* Diagnostic colors */
+    --error-color: #f87171;
+    --warning-color: #fbbf24;
+    --info-color: #60a5fa;
+
     /* Syntax highlighting colors - Dark theme */
     --syntax-comment: #8b949e;
     --syntax-keyword: #ff7b72;
@@ -110,6 +125,11 @@ body {
     --hover-color: #1a1a1a;
     --selected-color: #262626;
 
+      /* More muted, professional diagnostic colors */
+  --error-color: #dc3545;
+  --warning-color: #e67e22;
+  --info-color: #17a2b8;
+
     /* Syntax highlighting colors - Midnight Dark theme */
     --syntax-comment: #6b7280;
     --syntax-keyword: #f59e0b;
@@ -132,6 +152,11 @@ body {
     --border-color: #3b4261;
     --hover-color: #292e42;
     --selected-color: #364a82;
+
+    /* Diagnostic colors */
+    --error-color: #f7768e;
+    --warning-color: #ff9e64;
+    --info-color: #7aa2f7;
 
     /* Syntax highlighting colors - Tokyo Night theme */
     --syntax-comment: #565f89;
@@ -179,6 +204,11 @@ body {
     --hover-color: #44475a;
     --selected-color: #6272a4;
 
+    /* Diagnostic colors */
+    --error-color: #ff5555;
+    --warning-color: #ffb86c;
+    --info-color: #8be9fd;
+
     /* Syntax highlighting colors - Dracula theme */
     --syntax-comment: #6272a4;
     --syntax-keyword: #ff79c6;
@@ -201,6 +231,11 @@ body {
     --border-color: #4c566a;
     --hover-color: #434c5e;
     --selected-color: #4c566a;
+
+    /* Diagnostic colors */
+    --error-color: #bf616a;
+    --warning-color: #ebcb8b;
+    --info-color: #5e81ac;
 
     /* Syntax highlighting colors - Nord theme */
     --syntax-comment: #616e87;
@@ -1293,6 +1328,11 @@ textarea::-webkit-scrollbar-thumb:hover {
     --text-lighter: #8b949e;
     --accent-color: #58a6ff;
 
+    /* Diagnostic colors */
+    --error-color: #f85149;
+    --warning-color: #d29922;
+    --info-color: #58a6ff;
+
     /* Syntax highlighting */
     --comment: #8b949e;
     --keyword: #ff7b72;
@@ -1316,6 +1356,11 @@ textarea::-webkit-scrollbar-thumb:hover {
     --text-lighter: #6a737d;
     --accent-color: #0366d6;
 
+    /* Diagnostic colors */
+    --error-color: #d1242f;
+    --warning-color: #bf8700;
+    --info-color: #0366d6;
+
     /* Syntax highlighting */
     --comment: #6a737d;
     --keyword: #d73a49;
@@ -1338,6 +1383,11 @@ textarea::-webkit-scrollbar-thumb:hover {
     --text-color: #abb2bf;
     --text-lighter: #5c6370;
     --accent-color: #61afef;
+
+    /* Diagnostic colors */
+    --error-color: #e06c75;
+    --warning-color: #e5c07b;
+    --info-color: #61afef;
 
     /* Syntax highlighting */
     --comment: #5c6370;

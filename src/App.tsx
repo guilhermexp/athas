@@ -4,6 +4,7 @@ import {
   FilePlus,
   Folder,
   FolderOpen,
+  FolderPlus,
   GitBranch,
   MessageSquare,
   Package,
@@ -39,7 +40,7 @@ import BottomPane from "./components/bottom-pane";
 import Button from "./components/button";
 import CommandBar from "./components/command-bar";
 import CustomTitleBar from "./components/window/custom-title-bar";
-import { Diagnostic } from "./components/diagnostics-pane";
+import { Diagnostic } from "./components/diagnostics/diagnostics-pane";
 import DiffViewer from "./components/diff-viewer";
 import ExtensionsView from "./components/extensions-view";
 import { FileEntry } from "./types/app";
@@ -144,6 +145,9 @@ function App() {
   const codeEditorRef = useRef<CodeEditorRef>(null);
   const searchViewRef = useRef<SearchViewRef>(null);
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
+  
+  // Autosave timeout ref for proper cleanup
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Apply platform-specific CSS class on mount
   useEffect(() => {
@@ -155,10 +159,14 @@ function App() {
 
     // Cleanup on unmount
     return () => {
-      document.documentElement.classList.remove(
+       document.documentElement.classList.remove(
         "platform-macos",
         "platform-other",
       );
+      // Clean up autosave timeout on unmount
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -314,6 +322,8 @@ function App() {
     handleFolderToggle: localHandleFolderToggle,
     handleCreateNewFile,
     handleCreateNewFileInDirectory,
+    handleCreateNewFolderInDirectory,
+    handleDeletePath,
     refreshDirectory,
     handleCollapseAllFolders,
   } = useFileOperations({ openBuffer });
@@ -1074,18 +1084,22 @@ function App() {
   const handleContentChange = useCallback(
     (content: string) => {
       if (!activeBuffer) return;
-
       const isRemoteFile = activeBuffer.path.startsWith("remote://");
 
       if (isRemoteFile) {
         // For remote files, use direct synchronous update to avoid any React delays
         updateBufferContent(activeBuffer.id, content, false);
       } else {
-        // For local files, update content and auto-save
+        // For local files, update content and auto-save if enabled
         updateBufferContent(activeBuffer.id, content, true);
-        if (!activeBuffer.isVirtual) {
-          // Auto-save local files with small debounce
-          setTimeout(async () => {
+
+        if (!activeBuffer.isVirtual && autoSave) {
+          // Clear previous autosave timeout to prevent accumulation
+          if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+          }
+          // Auto-save local files with optimized debounce
+          autoSaveTimeoutRef.current = setTimeout(async () => {
             try {
               await writeFile(activeBuffer.path, content);
               markBufferDirty(activeBuffer.id, false);
@@ -1093,11 +1107,11 @@ function App() {
               console.error("Error saving local file:", error);
               markBufferDirty(activeBuffer.id, true);
             }
-          }, 100);
+          }, 150); // Slightly increased for better batching
         }
       }
     },
-    [activeBuffer, updateBufferContent, markBufferDirty],
+    [activeBuffer, updateBufferContent, markBufferDirty, autoSave],
   );
 
   const handleTabClick = (bufferId: string) => {
@@ -1536,6 +1550,19 @@ function App() {
                           >
                             <FilePlus size={12} />
                           </Button>
+                          <Button
+                            onClick={() => {
+                              if (rootFolderPath) {
+                                handleCreateNewFolderInDirectory(rootFolderPath);
+                              }
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs flex items-center justify-center w-6 h-6 rounded hover:bg-[var(--hover-color)]"
+                            title="New Folder"
+                          >
+                            <FolderPlus size={12} />
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -1580,6 +1607,10 @@ function App() {
                         onCreateNewFileInDirectory={
                           handleCreateNewFileInDirectory
                         }
+                        onCreateNewFolderInDirectory={
+                          handleCreateNewFolderInDirectory
+                        }
+                        onDeletePath={handleDeletePath}
                       />
                     )}
                   </div>
@@ -1791,7 +1822,7 @@ function App() {
                   {activeBuffer && !activeBuffer.isSQLite && (
                     <button
                       onClick={() => setIsGitHubCopilotSettingsVisible(true)}
-                      className="flex items-center gap-1 px-2 py-1 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded hover:bg-[var(--hover-color)] transition-colors"
+                      className="cursor-pointer flex items-center gap-1 px-2 py-1 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded hover:bg-[var(--hover-color)] transition-colors"
                       title="AI Code Completion Settings"
                     >
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>

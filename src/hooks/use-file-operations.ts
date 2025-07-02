@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { openFolder, readDirectory, writeFile } from "../utils/platform";
+import { openFolder, readDirectory, writeFile, createDirectory, deletePath } from "../utils/platform";
 import { FileEntry } from "../types/app";
 import { getRootPath } from "../utils/file-utils";
 
@@ -391,6 +391,94 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
     [files, openBuffer, refreshDirectory, invalidateProjectFilesCache],
   );
 
+  const handleCreateNewFolderInDirectory = useCallback(
+    async (directoryPath: string) => {
+      const folderName = prompt("Enter the name for the new folder:");
+      if (!folderName) return;
+
+      try {
+        const newFolderPath = directoryPath
+          ? `${directoryPath}/${folderName}`
+          : folderName;
+
+        // Create the directory
+        await createDirectory(newFolderPath);
+
+        // Invalidate project files cache since we added a new folder
+        invalidateProjectFilesCache();
+
+        // If it's the root directory, just refresh the entire file tree
+        if (
+          !directoryPath ||
+          files.some(
+            (f) => f.path.split("/").slice(0, -1).join("/") === directoryPath,
+          )
+        ) {
+          // Refresh the root directory
+          const entries = await readDirectory(directoryPath || ".");
+          const updatedFileTree = (entries as any[]).map((entry: any) => ({
+            name: entry.name || "Unknown",
+            path:
+              entry.path ||
+              (directoryPath ? `${directoryPath}/${entry.name}` : entry.name),
+            isDir: entry.is_dir || false,
+            expanded: false,
+            children: undefined,
+          }));
+          setFiles(updatedFileTree);
+        } else {
+          // Refresh the specific directory
+          await refreshDirectory(directoryPath);
+        }
+      } catch (error) {
+        console.error("Error creating new folder:", error);
+        alert("Failed to create folder");
+      }
+    },
+    [files, refreshDirectory, invalidateProjectFilesCache],
+  );
+
+  const handleDeletePath = useCallback(
+    async (targetPath: string, isDirectory: boolean) => {
+      const itemType = isDirectory ? "folder" : "file";
+      const confirmMessage = isDirectory
+        ? `Are you sure you want to delete the folder "${targetPath.split("/").pop()}" and all its contents? This action cannot be undone.`
+        : `Are you sure you want to delete the file "${targetPath.split("/").pop()}"? This action cannot be undone.`;
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      try {
+        // Delete the file or directory
+        await deletePath(targetPath);
+
+        invalidateProjectFilesCache();
+
+        const parentPath = targetPath.split("/").slice(0, -1).join("/");
+
+        if (!parentPath) {
+          // If deleting from root, refresh the entire file tree
+          const entries = await readDirectory(".");
+          const updatedFileTree = (entries as any[]).map((entry: any) => ({
+            name: entry.name || "Unknown",
+            path: entry.path || entry.name,
+            isDir: entry.is_dir || false,
+            expanded: false,
+            children: undefined,
+          }));
+          setFiles(updatedFileTree);
+        } else {
+          await refreshDirectory(parentPath);
+        }
+      } catch (error) {
+        console.error(`Error deleting ${itemType}:`, error);
+        alert(`Failed to delete ${itemType}`);
+      }
+    },
+    [files, refreshDirectory, invalidateProjectFilesCache],
+  );
+
   const handleCreateNewFile = useCallback(async () => {
     if (files.length === 0) {
       alert("Please open a folder first");
@@ -451,6 +539,8 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
     handleFolderToggle,
     handleCreateNewFile,
     handleCreateNewFileInDirectory,
+    handleCreateNewFolderInDirectory,
+    handleDeletePath,
     refreshDirectory,
     handleCollapseAllFolders,
     invalidateProjectFilesCache,

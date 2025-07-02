@@ -27,36 +27,66 @@ export function CompletionDropdown({
     }
   }, [selectedIndex]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    console.log('LSP completion dropdown: No items to show');
+    return null;
+  }
+
+  console.log('LSP completion dropdown rendering:', { 
+    itemCount: items.length, 
+    position, 
+    selectedIndex,
+    firstItem: items[0]?.label 
+  });
+
+  // Ensure position is within screen bounds
+  const adjustedPosition = {
+    top: Math.min(Math.max(position.top, 0), window.innerHeight - 200),
+    left: Math.min(Math.max(position.left, 0), window.innerWidth - 280),
+  };
 
   return (
     <div
       ref={dropdownRef}
-      className="fixed z-50 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded shadow-lg max-h-48 overflow-y-auto min-w-[200px]"
+      className="fixed z-50 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded shadow-lg max-h-48 overflow-y-auto min-w-[240px] max-w-[360px] custom-scrollbar"
       style={{
-        top: position.top,
-        left: position.left
+        top: adjustedPosition.top,
+        left: adjustedPosition.left,
+        // Ensure it's visible with explicit display and positioning
+        display: 'block',
+        visibility: 'visible',
       }}
     >
       {items.map((item, index) => (
         <div
           key={`${item.label}-${index}`}
-          className={`px-3 py-2 cursor-pointer flex items-center gap-2 ${
+          className={`px-2 py-1 cursor-pointer flex items-center gap-2 transition-colors duration-150 text-xs ${
             index === selectedIndex
               ? 'bg-[var(--selected-color)] text-[var(--text-color)]'
               : 'hover:bg-[var(--hover-color)]'
           }`}
           onClick={() => onSelect(item)}
         >
-          <span className="text-xs text-[var(--text-lighter)] w-5 flex-shrink-0">
-            {getCompletionIcon(item.kind)}
-          </span>
-          <span className="font-mono text-sm">{item.label}</span>
-          {item.detail && (
-            <span className="text-xs text-[var(--text-lighter)] ml-auto truncate">
-              {item.detail}
+          <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center bg-[var(--secondary-bg)] rounded-sm border border-[var(--border-color)]">
+            <span className="text-xs font-medium text-[var(--text-lighter)]">
+              {getCompletionIcon(item.kind)}
             </span>
-          )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-mono text-xs text-[var(--text-color)] truncate">
+              {item.label}
+            </div>
+            {item.detail && (
+              <div className="text-xs text-[var(--text-lighter)] truncate opacity-70">
+                {item.detail}
+              </div>
+            )}
+          </div>
+          <div className="flex-shrink-0">
+            <span className="text-xs text-[var(--text-lighter)] opacity-60">
+              {getCompletionTypeLabel(item.kind)}
+            </span>
+          </div>
         </div>
       ))}
     </div>
@@ -65,31 +95,62 @@ export function CompletionDropdown({
 
 function getCompletionIcon(kind?: number): string {
   switch (kind) {
-    case 1: return '📝'; // Text
-    case 2: return '🔧'; // Method
-    case 3: return '🔧'; // Function
-    case 4: return '🔧'; // Constructor
-    case 5: return '🏷️'; // Field
-    case 6: return '📦'; // Variable
-    case 7: return '📋'; // Class
-    case 8: return '🔗'; // Interface
-    case 9: return '📁'; // Module
-    case 10: return '🏷️'; // Property
-    case 11: return '🔢'; // Unit
-    case 12: return '🔢'; // Value
-    case 13: return '📝'; // Enum
-    case 14: return '🔤'; // Keyword
-    case 15: return '📝'; // Snippet
+    case 1: return 'T'; // Text
+    case 2: return 'M'; // Method
+    case 3: return 'F'; // Function
+    case 4: return 'C'; // Constructor
+    case 5: return 'F'; // Field
+    case 6: return 'V'; // Variable
+    case 7: return 'C'; // Class
+    case 8: return 'I'; // Interface
+    case 9: return 'M'; // Module
+    case 10: return 'P'; // Property
+    case 11: return 'U'; // Unit
+    case 12: return 'V'; // Value
+    case 13: return 'E'; // Enum
+    case 14: return 'K'; // Keyword
+    case 15: return 'S'; // Snippet
     case 16: return '🎨'; // Color
-    case 17: return '📄'; // File
-    case 18: return '📂'; // Reference
-    case 19: return '📁'; // Folder
-    case 20: return '📝'; // EnumMember
-    case 21: return '🔧'; // Constant
-    case 22: return '📦'; // Struct
-    case 23: return '⚡'; // Event
-    case 24: return '⚙️'; // Operator
-    case 25: return '🏷️'; // TypeParameter
-    default: return '📝';
+    case 17: return 'F'; // File
+    case 18: return 'R'; // Reference
+    case 19: return 'D'; // Folder
+    case 20: return 'E'; // EnumMember
+    case 21: return 'C'; // Constant
+    case 22: return 'S'; // Struct
+    case 23: return 'E'; // Event
+    case 24: return 'O'; // Operator
+    case 25: return 'T'; // TypeParameter
+    default: return 'T';
+  }
+}
+
+function getCompletionTypeLabel(kind?: number): string {
+  switch (kind) {
+    case 1: return 'text';
+    case 2: return 'method';
+    case 3: return 'function';
+    case 4: return 'constructor';
+    case 5: return 'field';
+    case 6: return 'variable';
+    case 7: return 'class';
+    case 8: return 'interface';
+    case 9: return 'module';
+    case 10: return 'property';
+    case 11: return 'unit';
+    case 12: return 'value';
+    case 13: return 'enum';
+    case 14: return 'keyword';
+    case 15: return 'snippet';
+    case 16: return 'color';
+    case 17: return 'file';
+    case 18: return 'reference';
+    case 19: return 'folder';
+    case 20: return 'enum member';
+    case 21: return 'constant';
+    case 22: return 'struct';
+    case 23: return 'event';
+    case 24: return 'operator';
+    case 25: return 'type param';
+    default: return 'text';
   }
 } 
