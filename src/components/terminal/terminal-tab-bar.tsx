@@ -310,14 +310,14 @@ const TerminalTabBar = ({
               onContextMenu={e => handleContextMenu(e, terminal)}
               title={`${terminal.name}\n${terminal.currentDirectory}`}
             >
-              <TerminalIcon size={9} className="flex-shrink-0" />
+              <TerminalIcon size={12} className="flex-shrink-0" />
 
               <span className="truncate font-mono text-xs">
                 {terminal.name}
               </span>
 
               {terminal.isPinned && (
-                <Pin size={7} className="flex-shrink-0 text-blue-400" />
+                <Pin size={12} className="flex-shrink-0 text-blue-400" />
               )}
 
               <button
@@ -325,10 +325,10 @@ const TerminalTabBar = ({
                   e.stopPropagation();
                   onTabClose(terminal.id, e);
                 }}
-                className="flex-shrink-0 p-0.5 rounded hover:bg-[var(--border-color)] hover:text-red-400 transition-colors opacity-60 hover:opacity-100"
+                className="flex-shrink-0 p-0.5 rounded hover:bg-[var(--border-color)] hover:text-red-400 transition-colors opacity-60 hover:opacity-100 cursor-pointer"
                 title="Close Terminal"
               >
-                <X size={7} />
+                <X size={12} />
               </button>
             </div>
           );
@@ -338,10 +338,10 @@ const TerminalTabBar = ({
         {onNewTerminal && (
           <button
             onClick={onNewTerminal}
-            className="flex items-center gap-0.5 px-1.5 py-1 text-xs rounded hover:bg-[var(--hover-color)] transition-colors text-[var(--text-lighter)] flex-shrink-0 ml-0.5"
+            className="flex items-center gap-0.5 p-1.5 text-xs rounded hover:bg-[var(--hover-color)] transition-colors text-[var(--text-lighter)] flex-shrink-0 ml-0.5 cursor-pointer"
             title="New Terminal (Cmd+T)"
           >
-            <Plus size={9} />
+            <Plus size={12} />
           </button>
         )}
       </div>
