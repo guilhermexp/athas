@@ -4,6 +4,7 @@ import {
   FilePlus,
   Folder,
   FolderOpen,
+  FolderPlus,
   GitBranch,
   MessageSquare,
   Package,
@@ -305,6 +306,8 @@ function App() {
     handleFolderToggle: localHandleFolderToggle,
     handleCreateNewFile,
     handleCreateNewFileInDirectory,
+    handleCreateNewFolderInDirectory,
+    handleDeletePath,
     refreshDirectory,
     handleCollapseAllFolders,
   } = useFileOperations({ openBuffer });
@@ -1516,6 +1519,19 @@ function App() {
                           >
                             <FilePlus size={12} />
                           </Button>
+                          <Button
+                            onClick={() => {
+                              if (rootFolderPath) {
+                                handleCreateNewFolderInDirectory(rootFolderPath);
+                              }
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs flex items-center justify-center w-6 h-6 rounded hover:bg-[var(--hover-color)]"
+                            title="New Folder"
+                          >
+                            <FolderPlus size={12} />
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -1556,6 +1572,10 @@ function App() {
                         onCreateNewFileInDirectory={
                           handleCreateNewFileInDirectory
                         }
+                        onCreateNewFolderInDirectory={
+                          handleCreateNewFolderInDirectory
+                        }
+                        onDeletePath={handleDeletePath}
                       />
                     )}
                   </div>

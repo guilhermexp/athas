@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FilePlus, ImageIcon } from "lucide-react";
+import { FilePlus, ImageIcon, FolderPlus, Trash } from "lucide-react";
 import { FileEntry, ContextMenuState } from "../types/app";
 import FileIcon from "./file-icon";
 
@@ -8,6 +8,8 @@ interface FileTreeProps {
   activeBufferPath?: string;
   onFileSelect: (path: string, isDir: boolean) => void;
   onCreateNewFileInDirectory: (directoryPath: string) => void;
+  onCreateNewFolderInDirectory?: (directoryPath: string) => void;
+  onDeletePath?: (path: string, isDir: boolean) => void;
   onGenerateImage?: (directoryPath: string) => void;
 }
 
@@ -16,6 +18,8 @@ const FileTree = ({
   activeBufferPath,
   onFileSelect,
   onCreateNewFileInDirectory,
+  onCreateNewFolderInDirectory,
+  onDeletePath,
   onGenerateImage,
 }: FileTreeProps) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -28,14 +32,12 @@ const FileTree = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (isDir) {
-      setContextMenu({
-        x: e.clientX,
-        y: e.clientY,
-        path: filePath,
-        isDir: isDir,
-      });
-    }
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      path: filePath,
+      isDir: isDir,
+    });
   };
 
   const handleDocumentClick = () => {
@@ -62,9 +64,8 @@ const FileTree = ({
           }}
           onClick={() => onFileSelect(file.path, file.isDir)}
           onContextMenu={(e) => handleContextMenu(e, file.path, file.isDir)}
-          className={`w-full text-left px-1.5 py-1 bg-transparent border-none text-[var(--text-color)] cursor-pointer text-xs font-mono flex items-center gap-1.5 transition-colors duration-150 whitespace-nowrap overflow-hidden text-ellipsis min-h-[22px] shadow-none outline-none hover:bg-[var(--hover-color)] focus:outline-none ${
-            activeBufferPath === file.path ? "bg-[var(--selected-color)]" : ""
-          }`}
+          className={`w-full text-left px-1.5 py-1 bg-transparent border-none text-[var(--text-color)] cursor-pointer text-xs font-mono flex items-center gap-1.5 transition-colors duration-150 whitespace-nowrap overflow-hidden text-ellipsis min-h-[22px] shadow-none outline-none hover:bg-[var(--hover-color)] focus:outline-none ${activeBufferPath === file.path ? "bg-[var(--selected-color)]" : ""
+            }`}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
           <FileIcon
@@ -98,26 +99,56 @@ const FileTree = ({
             top: contextMenu.y,
           }}
         >
-          <button
-            onClick={() => {
-              onCreateNewFileInDirectory(contextMenu.path);
-              setContextMenu(null);
-            }}
-            className="w-full text-left px-3 py-1.5 text-xs font-mono text-[var(--text-color)] hover:bg-[var(--hover-color)] flex items-center gap-2"
-          >
-            <FilePlus size={12} />
-            New File
-          </button>
-          {onGenerateImage && (
+          {contextMenu.isDir && (
+            <>
+              <button
+                onClick={() => {
+                  onCreateNewFileInDirectory(contextMenu.path);
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-1.5 text-xs font-mono text-[var(--text-color)] hover:bg-[var(--hover-color)] flex items-center gap-2"
+              >
+                <FilePlus size={12} />
+                New File
+              </button>
+              {onCreateNewFolderInDirectory && (
+                <button
+                  onClick={() => {
+                    onCreateNewFolderInDirectory(contextMenu.path);
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs font-mono text-[var(--text-color)] hover:bg-[var(--hover-color)] flex items-center gap-2"
+                >
+                  <FolderPlus size={12} />
+                  New Folder
+                </button>
+              )}
+              {onGenerateImage && (
+                <button
+                  onClick={() => {
+                    onGenerateImage(contextMenu.path);
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs font-mono text-[var(--text-color)] hover:bg-[var(--hover-color)] flex items-center gap-2"
+                >
+                  <ImageIcon size={12} />
+                  Generate Image
+                </button>
+              )}
+              {(onCreateNewFolderInDirectory || onGenerateImage) && <div className="border-t border-[var(--border-color)] my-1" />}
+            </>
+          )}
+
+          {onDeletePath && (
             <button
               onClick={() => {
-                onGenerateImage(contextMenu.path);
+                onDeletePath(contextMenu.path, contextMenu.isDir);
                 setContextMenu(null);
               }}
-              className="w-full text-left px-3 py-1.5 text-xs font-mono text-[var(--text-color)] hover:bg-[var(--hover-color)] flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-xs font-mono text-[var(--text-color)] hover:bg-[var(--hover-color)] hover:text-red-500 flex items-center gap-2"
             >
-              <ImageIcon size={12} />
-              Generate Image
+              <Trash size={12} />
+              Delete
             </button>
           )}
         </div>
