@@ -5,11 +5,6 @@ const generateTerminalId = (name: string): string => {
   return `terminal_${name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
 };
 
-const generateTerminalName = (directory: string, index: number): string => {
-  const dirName = directory.split('/').pop() || directory;
-  return index === 0 ? dirName : `${dirName} (${index + 1})`;
-};
-
 const terminalReducer = (state: TerminalState, action: TerminalAction): TerminalState => {
   switch (action.type) {
     case 'CREATE_TERMINAL': {

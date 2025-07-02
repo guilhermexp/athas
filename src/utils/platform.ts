@@ -231,7 +231,7 @@ export const setWebFiles = (files: FileList) => {
   webFileStructure.set('', rootStructure);
   
   // Cache subdirectory structures
-  const cacheSubdirectories = (items: any[], basePath: string = '') => {
+  const cacheSubdirectories = (items: any[], _basePath: string = '') => {
     items.forEach(item => {
       if (item.is_dir && item.children) {
         webFileStructure.set(item.path, item.children);

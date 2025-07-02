@@ -14,8 +14,8 @@ export const useVim = ({ activeBuffer, updateBufferContent, codeEditorRef }: Use
   const [vimMode, setVimMode] = useState<VimMode>("normal");
   const [cursorPosition, setCursorPosition] = useState<number>(0);
   const [vimRegister, setVimRegister] = useState<string>(''); // For yank/paste operations
-  const [lastFindChar, setLastFindChar] = useState<string>(''); // For f/F/t/T operations
-  const [lastFindDirection, setLastFindDirection] = useState<'forward' | 'backward'>('forward');
+  const [lastFindChar, _setLastFindChar] = useState<string>(''); // For f/F/t/T operations
+  const [lastFindDirection, _setLastFindDirection] = useState<'forward' | 'backward'>('forward');
   const [pendingOperator, setPendingOperator] = useState<string | null>(null); // For d, c, y operators
 
   // Update cursor position for vim cursor visualization

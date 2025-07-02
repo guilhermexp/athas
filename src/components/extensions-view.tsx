@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Search, Package, Code, Palette, CheckCircle2, GitBranch, Server, Terminal, Settings, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Package, Code, Palette, Settings } from "lucide-react";
 import Button from "./button";
 import { CoreFeature } from "../types/core-features";
 
@@ -57,7 +57,7 @@ type ThemeType =
   | "ayu-light"
   | "vercel-dark"
   | "vesper"
-
+  | "aura"
 
 const AVAILABLE_EXTENSIONS: Extension[] = [
   // Language Servers
@@ -248,6 +248,7 @@ const AVAILABLE_EXTENSIONS: Extension[] = [
     status: "inactive",
     themeId: "material-palenight",
   },
+ 
   {
     id: "material-lighter",
     name: "Material Lighter",
@@ -343,6 +344,14 @@ const AVAILABLE_EXTENSIONS: Extension[] = [
     category: "theme",
     status: "inactive",
     themeId: "vesper",
+  },
+  {
+    id: "aura",
+    name: "Aura",
+    description: "A beautiful dark theme with purple and green",
+    category: "theme",
+    status: "inactive",
+    themeId: "aura",
   },
 ];
 

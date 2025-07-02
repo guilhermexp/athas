@@ -1,5 +1,6 @@
 import { isTauri } from "./platform";
 import { getProviderById, getModelById } from "../types/ai-provider";
+import { AIMessage } from "@/types/ai-chat";
 
 interface ContextInfo {
   activeBuffer?: {
@@ -237,7 +238,7 @@ export const getChatCompletionStream = async (
   onChunk: (chunk: string) => void,
   onComplete: () => void,
   onError: (error: string) => void,
-  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
+  conversationHistory?: AIMessage[],
 ): Promise<void> => {
   if (!isTauri()) {
     onError("Not in Tauri environment, skipping API call");
@@ -281,7 +282,7 @@ Current context:
 ${contextPrompt}`;
 
     // Build messages array with conversation history
-    const messages = [
+    const messages: AIMessage[] = [
       {
         role: "system" as const,
         content: systemPrompt,

@@ -102,7 +102,7 @@ export const getOpenAICompletion = async (request: CompletionRequest): Promise<C
 };
 
 // GitHub Copilot API (currently not working - keeping for reference)
-export const getGitHubCopilotCompletion = async (request: CompletionRequest): Promise<CompletionResponse | null> => {
+export const getGitHubCopilotCompletion = async (_request: CompletionRequest): Promise<CompletionResponse | null> => {
   console.log('⚠️ GitHub Copilot API not publicly available, skipping...');
   return null;
 };
@@ -178,6 +178,7 @@ const preparePromptForCompletion = (request: CompletionRequest): string => {
 };
 
 // Legacy function for compatibility
+/** @ts-ignore Ignoring this unused function for now in case it's needed later */
 const preparePromptForCopilot = (request: CompletionRequest): string => {
   return preparePromptForCompletion(request);
 };
@@ -323,7 +324,7 @@ const getPatternBasedCompletions = (linePrefix: string, language: string): strin
 };
 
 // Debounced completion requests with better logic
-let completionTimeout: number | null = null;
+let completionTimeout: NodeJS.Timeout | null = null;
 let lastRequestTime = 0;
 let lastRequestCode = '';
 
@@ -374,7 +375,7 @@ export const requestCompletion = (
     
     const completion = await getAICompletion(request);
     callback(completion);
-  }, delay) as number;
+  }, delay);
 };
 
 // Helper function to get current line

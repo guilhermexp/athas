@@ -19,7 +19,7 @@ const ImageGenerationModal = ({
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [imageSize, setImageSize] = useState<"1024x1024" | "1792x1024" | "1024x1792">("1024x1024");
+  const [imageSize, setImageSize] = useState<"1024x1024" | "1792x1024" | "1024x1792" | "512x512">("1024x1024");
   const [imageStyle, setImageStyle] = useState<"vivid" | "natural">("vivid");
   const [imageModel, setImageModel] = useState<"gpt-image-1" | "dall-e-3" | "dall-e-2">("gpt-image-1");
   const [fileName, setFileName] = useState("");
@@ -255,7 +255,7 @@ const ImageGenerationModal = ({
             {!generatedImage ? (
               <Button
                 onClick={handleGenerate}
-                variant="primary"
+                variant="default"
                 size="sm"
                 disabled={isGenerating || !prompt.trim()}
                 className="flex items-center gap-2"
@@ -275,7 +275,7 @@ const ImageGenerationModal = ({
             ) : (
               <Button
                 onClick={handleSaveImage}
-                variant="primary"
+                variant="default"
                 size="sm"
                 disabled={!fileName}
                 className="flex items-center gap-2"
@@ -421,8 +421,7 @@ async function saveImageToFolder(
     }
 
     // Import Tauri path utilities
-    const { BaseDirectory } = await import("@tauri-apps/api/path");
-    const { writeBinaryFile, exists, mkdir } = await import("@tauri-apps/plugin-fs");
+    const { writeFile, exists, mkdir } = await import("@tauri-apps/plugin-fs");
     
     // Create the full file path - handle both absolute and relative paths
     let fullPath = folderPath;
@@ -450,7 +449,7 @@ async function saveImageToFolder(
 
     // Save the image using writeBinaryFile
     try {
-      await writeBinaryFile(filePath, uint8Array);
+      await writeFile(filePath, uint8Array);
       console.log("Image saved successfully to:", filePath);
       return true;
     } catch (writeError) {
@@ -472,7 +471,7 @@ async function saveImageToFolder(
           newUint8Array[i] = binaryData.charCodeAt(i);
         }
         
-        await writeBinaryFile(filePath, newUint8Array);
+        await writeFile(filePath, newUint8Array);
         console.log("Image converted and saved successfully to:", filePath);
         return true;
       } catch (fallbackError) {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, File, Folder, Command } from 'lucide-react';
+import { X, File, Command } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 interface CommandBarProps {
