@@ -1729,7 +1729,7 @@ function App() {
                           bottomPaneActiveTab !== "diagnostics",
                         );
                       }}
-                      className={`flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible &&
+                      className={`cursor-pointer flex items-center gap-1 px-2 py-1 border rounded transition-colors ${isBottomPaneVisible &&
                         bottomPaneActiveTab === "diagnostics"
                         ? "bg-[var(--selected-color)] border-[var(--border-color)] text-[var(--text-color)]"
                         : diagnostics.length > 0
@@ -1751,7 +1751,7 @@ function App() {
                   {activeBuffer && !activeBuffer.isSQLite && (
                     <button
                       onClick={() => setIsGitHubCopilotSettingsVisible(true)}
-                      className="flex items-center gap-1 px-2 py-1 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded hover:bg-[var(--hover-color)] transition-colors"
+                      className="cursor-pointer flex items-center gap-1 px-2 py-1 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded hover:bg-[var(--hover-color)] transition-colors"
                       title="AI Code Completion Settings"
                     >
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
