@@ -4,7 +4,7 @@ import {
   Diagnostic as LspDiagnostic,
 } from "vscode-languageserver-protocol";
 import { LSPManager } from "../lsp/manager";
-import { Diagnostic } from "../components/diagnostics-pane";
+import { Diagnostic } from "../components/diagnostics/diagnostics-pane";
 import { listen } from "@tauri-apps/api/event";
 
 const convertLspDiagnostics = (

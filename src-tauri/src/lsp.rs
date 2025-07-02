@@ -1,6 +1,6 @@
 use anyhow::{Context, bail};
 use lsp_types::notification::{self, Notification};
-use lsp_types::request::{Completion, Initialize};
+use lsp_types::request::{Completion, Initialize, HoverRequest};
 use lsp_types::{
     ClientCapabilities, ClientInfo, CodeActionCapabilityResolveSupport,
     CodeActionClientCapabilities, CodeActionKind, CodeActionKindLiteralSupport,
@@ -21,7 +21,7 @@ use lsp_types::{
     TextDocumentPositionParams, TextDocumentSyncClientCapabilities, TraceValue,
     VersionedTextDocumentIdentifier, WindowClientCapabilities, WorkDoneProgressParams,
     WorkspaceClientCapabilities, WorkspaceEditClientCapabilities, WorkspaceFolder,
-    WorkspaceSymbolClientCapabilities,
+    WorkspaceSymbolClientCapabilities, HoverParams,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -675,19 +675,36 @@ pub async fn lsp_completion(
 #[tauri::command]
 pub async fn lsp_hover(
     language: String,
-    _uri: String,
+    uri: String,
     line: u32,
     character: u32,
+    state: State<'_, LSPState>,
 ) -> Result<Option<serde_json::Value>, String> {
-    // Mock hover information
-    let hover = serde_json::json!({
-        "contents": {
-            "kind": "markdown",
-            "value": format!("Hover info for {} at {}:{}", language, line, character)
-        }
-    });
+    if let Some(process_mutex) = state.processes.lock().await.get(&language) {
+        let params = HoverParams {
+            text_document_position_params: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier {
+                    uri: Url::parse(&uri).map_err(|e| format!("invalid uri: {e}"))?,
+                },
+                position: Position { line, character },
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+        };
 
-    Ok(Some(hover))
+        let mut lsp_process = process_mutex.lock().await;
+        if let Ok(result) = lsp_process.send_request::<HoverRequest>(params).await {
+            if let Some(hover) = result {
+                // Convert the hover result to a JSON value for easier handling on the frontend
+                Ok(Some(serde_json::to_value(hover).map_err(|e| e.to_string())?))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Err("error sending hover request".to_string())
+        }
+    } else {
+        Err(format!("LSP server for {language} not found"))
+    }
 }
 
 #[tauri::command]

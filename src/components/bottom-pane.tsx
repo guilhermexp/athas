@@ -1,6 +1,6 @@
 import { AlertCircle, Terminal as TerminalIcon, X } from "lucide-react";
 import React, { useCallback, useState } from "react";
-import DiagnosticsPane, { Diagnostic } from "./diagnostics-pane";
+import DiagnosticsPane, { Diagnostic } from "./diagnostics/diagnostics-pane";
 import TerminalContainer from "./terminal/terminal-container";
 
 interface BottomPaneProps {
