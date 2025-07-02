@@ -1,16 +1,9 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { Search, ChevronRight, ChevronDown, X } from "lucide-react";
 import { FileEntry } from "../types/app";
 import { readFile } from "../utils/platform";
 import FileIcon from "./file-icon";
-import Button from "./button";
+import Button from "./ui/button";
 
 interface SearchResult {
   file: string;
@@ -150,7 +143,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
             "crystal",
           ]);
 
-          const textFiles = allProjectFiles.filter((file) => {
+          const textFiles = allProjectFiles.filter(file => {
             if (file.isDir) return false;
 
             const extension = file.name.split(".").pop()?.toLowerCase();
@@ -164,18 +157,13 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
               searchPattern = new RegExp(query, caseSensitive ? "g" : "gi");
             } else {
               const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-              const pattern = wholeWord
-                ? `\\b${escapedQuery}\\b`
-                : escapedQuery;
+              const pattern = wholeWord ? `\\b${escapedQuery}\\b` : escapedQuery;
               searchPattern = new RegExp(pattern, caseSensitive ? "g" : "gi");
             }
           } catch {
             // If regex is invalid, fall back to literal search
             const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            searchPattern = new RegExp(
-              escapedQuery,
-              caseSensitive ? "g" : "gi",
-            );
+            searchPattern = new RegExp(escapedQuery, caseSensitive ? "g" : "gi");
           }
 
           // Process files in chunks for better responsiveness
@@ -185,7 +173,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
             const chunk = textFiles.slice(i, i + CHUNK_SIZE);
 
             await Promise.all(
-              chunk.map(async (file) => {
+              chunk.map(async file => {
                 if (signal.aborted) return;
 
                 try {
@@ -195,11 +183,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
 
                   const lines = content.split("\n");
 
-                  for (
-                    let lineIndex = 0;
-                    lineIndex < lines.length;
-                    lineIndex++
-                  ) {
+                  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
                     if (signal.aborted || results.length >= MAX_RESULTS) break;
 
                     const line = lines[lineIndex];
@@ -230,7 +214,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
             );
 
             // Allow UI to update between chunks - use requestAnimationFrame for better performance
-            await new Promise((resolve) => requestAnimationFrame(resolve));
+            await new Promise(resolve => requestAnimationFrame(resolve));
           }
 
           if (!signal.aborted) {
@@ -292,18 +276,12 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
     const highlightMatch = (text: string, match: string) => {
       if (!match) return text;
 
-      const regex = new RegExp(
-        `(${match.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-        "gi",
-      );
+      const regex = new RegExp(`(${match.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
       const parts = text.split(regex);
 
       return parts.map((part, index) =>
         regex.test(part) ? (
-          <span
-            key={index}
-            className="bg-yellow-200 text-yellow-900 px-0.5 rounded"
-          >
+          <span key={index} className="bg-yellow-200 text-yellow-900 px-0.5 rounded">
             {part}
           </span>
         ) : (
@@ -325,7 +303,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
               ref={searchInputRef}
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search in files..."
               className="w-full pl-8 pr-8 py-2 text-xs bg-[var(--primary-bg)] border border-[var(--border-color)] rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-[var(--text-color)]"
             />
@@ -374,9 +352,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
         {/* Search Results */}
         <div className="flex-1 overflow-auto custom-scrollbar">
           {isSearching && (
-            <div className="p-4 text-center text-[var(--text-lighter)] text-xs">
-              Searching...
-            </div>
+            <div className="p-4 text-center text-[var(--text-lighter)] text-xs">Searching...</div>
           )}
 
           {!isSearching && searchQuery && searchResults.length === 0 && (
@@ -388,9 +364,7 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
           {!isSearching && searchResults.length > 0 && (
             <div className="p-2">
               <div className="text-xs text-[var(--text-lighter)] mb-2 px-1">
-                {searchResults.length >= MAX_RESULTS
-                  ? `${MAX_RESULTS}+`
-                  : searchResults.length}{" "}
+                {searchResults.length >= MAX_RESULTS ? `${MAX_RESULTS}+` : searchResults.length}{" "}
                 result{searchResults.length !== 1 ? "s" : ""} in{" "}
                 {Object.keys(groupedResults).length} file
                 {Object.keys(groupedResults).length !== 1 ? "s" : ""}
@@ -407,21 +381,11 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
                     className="flex items-center gap-1 w-full p-1 hover:bg-[var(--hover-color)] rounded text-left"
                   >
                     {expandedFiles.has(filePath) ? (
-                      <ChevronDown
-                        size={12}
-                        className="text-[var(--text-lighter)]"
-                      />
+                      <ChevronDown size={12} className="text-[var(--text-lighter)]" />
                     ) : (
-                      <ChevronRight
-                        size={12}
-                        className="text-[var(--text-lighter)]"
-                      />
+                      <ChevronRight size={12} className="text-[var(--text-lighter)]" />
                     )}
-                    <FileIcon
-                      fileName={getFileName(filePath)}
-                      isDir={false}
-                      size={12}
-                    />
+                    <FileIcon fileName={getFileName(filePath)} isDir={false} size={12} />
                     <span className="text-xs font-medium text-[var(--text-color)] truncate">
                       {getFileName(filePath)}
                     </span>

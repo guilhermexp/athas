@@ -1,14 +1,7 @@
 import React, { useState } from "react";
-import { 
-  Server, 
-  Trash2, 
-  Edit, 
-  FolderOpen, 
-  Wifi, 
-  Plus,
-} from "lucide-react";
+import { Server, Trash2, Edit, FolderOpen, Wifi, Plus } from "lucide-react";
 import { cn } from "../../utils/cn";
-import Button from "../button";
+import Button from "../ui/button";
 import { RemoteConnection } from "./types";
 
 interface ConnectionListProps {
@@ -35,13 +28,13 @@ const ConnectionList = ({
   } | null>(null);
 
   const formatLastConnected = (dateString?: string): string => {
-    if (!dateString) return 'Never';
+    if (!dateString) return "Never";
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    
-    if (diffMinutes < 1) return 'Just now';
+
+    if (diffMinutes < 1) return "Just now";
     if (diffMinutes < 60) return `${diffMinutes}m ago`;
     if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}h ago`;
     return `${Math.floor(diffMinutes / 1440)}d ago`;
@@ -54,8 +47,8 @@ const ConnectionList = ({
     };
 
     if (connectionMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [connectionMenu]);
 
@@ -65,9 +58,7 @@ const ConnectionList = ({
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
         <div className="flex items-center gap-2">
           <Server size={14} className="text-[var(--text-lighter)]" />
-          <span className="text-sm font-medium text-[var(--text-color)]">
-            Remote
-          </span>
+          <span className="text-sm font-medium text-[var(--text-color)]">Remote</span>
         </div>
         <Button
           onClick={onAddNew}
@@ -93,42 +84,39 @@ const ConnectionList = ({
             <p className="text-sm text-[var(--text-lighter)] mb-4">
               Connect to remote servers via SSH or SFTP
             </p>
-            <Button
-              onClick={onAddNew}
-              variant="default"
-              size="sm"
-              className="h-8"
-            >
+            <Button onClick={onAddNew} variant="default" size="sm" className="h-8">
               <Plus size={14} className="mr-2" />
               Add Connection
             </Button>
           </div>
         ) : (
           <div className="p-2 sm:p-3 space-y-2">
-            {connections.map((connection) => (
+            {connections.map(connection => (
               <div
                 key={connection.id}
                 className={cn(
                   "group relative p-2 rounded-lg border transition-all duration-200 hover:shadow-sm overflow-hidden",
-                  connection.isConnected 
-                    ? "bg-green-50/50 border-green-200/50 dark:bg-green-950/20 dark:border-green-800/30" 
-                    : "bg-[var(--secondary-bg)] border-[var(--border-color)]"
+                  connection.isConnected
+                    ? "bg-green-50/50 border-green-200/50 dark:bg-green-950/20 dark:border-green-800/30"
+                    : "bg-[var(--secondary-bg)] border-[var(--border-color)]",
                 )}
               >
                 <div className="flex items-center gap-3">
                   {/* Connection Status */}
-                  <div className={cn(
-                    "w-2.5 h-2.5 rounded-full transition-colors flex-shrink-0",
-                    connection.isConnected ? "bg-green-500" : "bg-gray-400 dark:bg-gray-600"
-                  )} />
-                  
+                  <div
+                    className={cn(
+                      "w-2.5 h-2.5 rounded-full transition-colors flex-shrink-0",
+                      connection.isConnected ? "bg-green-500" : "bg-gray-400 dark:bg-gray-600",
+                    )}
+                  />
+
                   {/* Connection Info - Clickable */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span 
+                      <span
                         className="text-sm font-medium text-[var(--text-color)] truncate cursor-pointer hover:bg-[var(--hover-color)] px-1 py-0.5 rounded"
                         title="Click for options"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.preventDefault();
                           e.stopPropagation();
                           setConnectionMenu({
@@ -137,7 +125,7 @@ const ConnectionList = ({
                             connectionId: connection.id,
                           });
                         }}
-                        onContextMenu={(e) => {
+                        onContextMenu={e => {
                           e.preventDefault();
                           e.stopPropagation();
                           setConnectionMenu({
@@ -154,12 +142,11 @@ const ConnectionList = ({
                       </span>
                     </div>
                     <div className="text-xs text-[var(--text-lighter)] truncate">
-                      {connection.isConnected 
-                        ? 'Connected' 
-                        : connection.lastConnected 
+                      {connection.isConnected
+                        ? "Connected"
+                        : connection.lastConnected
                           ? `Last connected ${formatLastConnected(connection.lastConnected)}`
-                          : 'Never connected'
-                      }
+                          : "Never connected"}
                     </div>
                   </div>
 
@@ -202,12 +189,12 @@ const ConnectionList = ({
             left: connectionMenu.x,
             top: connectionMenu.y,
           }}
-          onMouseDown={(e) => {
+          onMouseDown={e => {
             e.stopPropagation();
           }}
         >
           <button
-            onMouseDown={(e) => {
+            onMouseDown={e => {
               e.preventDefault();
               e.stopPropagation();
               const connection = connections.find(c => c.id === connectionMenu.connectionId);
@@ -222,7 +209,7 @@ const ConnectionList = ({
             Edit
           </button>
           <button
-            onMouseDown={(e) => {
+            onMouseDown={e => {
               e.preventDefault();
               e.stopPropagation();
               onDelete(connectionMenu.connectionId);
@@ -239,4 +226,4 @@ const ConnectionList = ({
   );
 };
 
-export default ConnectionList; 
+export default ConnectionList;

@@ -14,8 +14,7 @@ dist/
 # dotenv environment variables file
 .env
 
-# .vscode workspace settings file
-.vscode/settings.json
+# .vscode workspace settings file (keep extensions.json and settings.json for team consistency)
 .vscode/launch.json
 .vscode/tasks.json
 

@@ -1,36 +1,36 @@
-import { useState, useEffect } from "react";
 import {
-  GitBranch,
-  RotateCcw,
+  Download,
+  Edit3,
   FileIcon,
   FilePlus,
   FileX,
-  Edit3,
-  RefreshCw,
-  Upload,
-  Download,
+  GitBranch,
   GitPullRequest,
+  RefreshCw,
+  RotateCcw,
   Settings,
+  Upload,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
-  getGitStatus,
-  getGitLog,
   getBranches,
-  getFileDiff,
   getCommitDiff,
+  getFileDiff,
+  getGitLog,
+  getGitStatus,
+  GitCommit,
   GitFile,
   GitStatus,
-  GitCommit,
 } from "../../utils/git";
 import { safeLocalStorageSetItem, truncateJsonArrayData } from "../../utils/storage";
 
 // Import modular components
-import GitStatusPanel from "./git-status-panel";
+import GitActionsMenu from "./git-actions-menu";
 import GitBranchManager from "./git-branch-manager";
 import GitCommitHistory from "./git-commit-history";
-import GitActionsMenu from "./git-actions-menu";
 import GitCommitPanel from "./git-commit-panel";
 import GitStashManager from "./git-stash-manager";
+import GitStatusPanel from "./git-status-panel";
 
 interface GitViewProps {
   repoPath?: string;
@@ -44,8 +44,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [showGitActionsMenu, setShowGitActionsMenu] = useState(false);
-  const [gitActionsMenuPosition, setGitActionsMenuPosition] = useState<{x: number, y: number} | null>(null);
-  
+  const [gitActionsMenuPosition, setGitActionsMenuPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
   // Modal states
   const [showStashManager, setShowStashManager] = useState(false);
 
@@ -89,8 +92,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
     if (showBranchDropdown || showGitActionsMenu) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showBranchDropdown, showGitActionsMenu]);
 
@@ -133,9 +135,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
   const handleDiscardAllChanges = async () => {
     if (!repoPath) return;
-    const confirmed = confirm("Are you sure you want to discard all changes? This cannot be undone.");
+    const confirmed = confirm(
+      "Are you sure you want to discard all changes? This cannot be undone.",
+    );
     if (!confirmed) return;
-    
+
     try {
       // Implement discard all functionality
       console.log("Discarding all changes...");
@@ -164,10 +168,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     try {
       // Handle special Git path formats
       let actualFilePath = filePath;
-      
+
       // Handle renamed files: "oldfile -> newfile"
-      if (filePath.includes(' -> ')) {
-        const parts = filePath.split(' -> ');
+      if (filePath.includes(" -> ")) {
+        const parts = filePath.split(" -> ");
         if (staged) {
           // For staged renames, show the new file
           actualFilePath = parts[1].trim();
@@ -176,7 +180,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           actualFilePath = parts[0].trim();
         }
       }
-      
+
       // Handle quoted filenames: "\"filename\""
       if (actualFilePath.startsWith('"') && actualFilePath.endsWith('"')) {
         actualFilePath = actualFilePath.slice(1, -1);
@@ -190,8 +194,8 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         const diffJson = JSON.stringify(diff);
 
         const success = safeLocalStorageSetItem(`diff-content-${virtualPath}`, diffJson, {
-          clearPrefix: 'diff-content-',
-          truncateData: (data) => truncateJsonArrayData(data, 1000),
+          clearPrefix: "diff-content-",
+          truncateData: data => truncateJsonArrayData(data, 1000),
           onSuccess: () => {
             onFileSelect(virtualPath, false);
           },
@@ -200,19 +204,25 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
             if (diff.is_image) {
               console.log(`Image diff displayed successfully.\nFile: ${actualFilePath}`);
             } else {
-              alert(`File diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
+              alert(
+                `File diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`,
+              );
             }
           },
-          onQuotaExceeded: (_error) => {
-            alert(`Failed to display diff: The file diff is too large to display.\nFile: ${actualFilePath}\nTry viewing smaller portions of the file.`);
-          }
+          onQuotaExceeded: _error => {
+            alert(
+              `Failed to display diff: The file diff is too large to display.\nFile: ${actualFilePath}\nTry viewing smaller portions of the file.`,
+            );
+          },
         });
-        
+
         if (!success) {
-          console.error('Failed to store file diff');
+          console.error("Failed to store file diff");
         }
       } else {
-        alert(`No ${staged ? 'staged' : 'unstaged'} changes for this file.\nFile: ${actualFilePath}`);
+        alert(
+          `No ${staged ? "staged" : "unstaged"} changes for this file.\nFile: ${actualFilePath}`,
+        );
       }
     } catch (error) {
       console.error("Error getting file diff:", error);
@@ -225,30 +235,34 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
     try {
       const diffs = await getCommitDiff(repoPath, commitHash, filePath);
-      
+
       if (diffs.length > 0) {
         const diff = diffs[0]; // For now, show first diff or specific file
         const diffFileName = `${diff.file_path.split("/").pop()}.diff`;
         const virtualPath = `diff://commit/${commitHash}/${diffFileName}`;
         const diffJson = JSON.stringify(diff);
-        
+
         const success = safeLocalStorageSetItem(`diff-content-${virtualPath}`, diffJson, {
-          clearPrefix: 'diff-content-',
-          truncateData: (data) => truncateJsonArrayData(data, 1000),
+          clearPrefix: "diff-content-",
+          truncateData: data => truncateJsonArrayData(data, 1000),
           onSuccess: () => {
             onFileSelect(virtualPath, false);
           },
           onTruncated: (_originalSize, _truncatedSize) => {
             onFileSelect(virtualPath, false);
-            alert(`Diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`);
+            alert(
+              `Diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`,
+            );
           },
-          onQuotaExceeded: (_error) => {
-            alert(`Failed to display diff: The commit diff is too large to display.\nCommit: ${commitHash}\nConsider viewing individual files instead.`);
-          }
+          onQuotaExceeded: _error => {
+            alert(
+              `Failed to display diff: The commit diff is too large to display.\nCommit: ${commitHash}\nConsider viewing individual files instead.`,
+            );
+          },
         });
-        
+
         if (!success) {
-          console.error('Failed to store commit diff');
+          console.error("Failed to store commit diff");
         }
       } else {
         alert(`No changes in this commit for the specified file.`);
@@ -260,7 +274,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
   };
 
   /* @ts-ignore */
-  const getFileIcon = (file: GitFile) => {
+  const _getFileIcon = (file: GitFile) => {
     switch (file.status) {
       case "added":
         return <FilePlus size={10} className="text-[var(--text-color)]" />;
@@ -278,7 +292,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
   };
 
   /* @ts-ignore */
-  const getStatusText = (file: GitFile) => {
+  const _getStatusText = (file: GitFile) => {
     switch (file.status) {
       case "added":
         return "A";
@@ -297,7 +311,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
   const renderGitButton = () => (
     <button
-      onClick={(e) => {
+      onClick={e => {
         const rect = e.currentTarget.getBoundingClientRect();
         setGitActionsMenuPosition({
           x: rect.left,
@@ -314,22 +328,23 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     </button>
   );
 
-  const renderGitActionsMenu = () => (
-    showGitActionsMenu && gitActionsMenuPosition && (
+  const renderGitActionsMenu = () =>
+    showGitActionsMenu
+    && gitActionsMenuPosition && (
       <div
         className="fixed bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-md shadow-lg z-50 py-1 min-w-[180px]"
         style={{
           left: gitActionsMenuPosition.x,
           top: gitActionsMenuPosition.y,
         }}
-        onMouseDown={(e) => {
+        onMouseDown={e => {
           e.stopPropagation();
         }}
       >
         {gitStatus && (
           <>
             <button
-              onMouseDown={(e) => {
+              onMouseDown={e => {
                 e.preventDefault();
                 e.stopPropagation();
                 handlePush();
@@ -340,9 +355,9 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
               <Upload size={12} />
               Push Changes
             </button>
-            
+
             <button
-              onMouseDown={(e) => {
+              onMouseDown={e => {
                 e.preventDefault();
                 e.stopPropagation();
                 handlePull();
@@ -353,9 +368,9 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
               <Download size={12} />
               Pull Changes
             </button>
-            
+
             <button
-              onMouseDown={(e) => {
+              onMouseDown={e => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleFetch();
@@ -366,11 +381,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
               <GitPullRequest size={12} />
               Fetch
             </button>
-            
+
             <div className="border-t border-[var(--border-color)] my-1"></div>
-            
+
             <button
-              onMouseDown={(e) => {
+              onMouseDown={e => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleDiscardAllChanges();
@@ -383,10 +398,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
             </button>
           </>
         )}
-        
+
         {!gitStatus && (
           <button
-            onMouseDown={(e) => {
+            onMouseDown={e => {
               e.preventDefault();
               e.stopPropagation();
               handleInitRepository();
@@ -399,8 +414,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           </button>
         )}
       </div>
-    )
-  );
+    );
 
   if (!repoPath) {
     return (
@@ -412,9 +426,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           <div className="flex-1 flex items-center justify-center p-4">
             <div className="text-center text-[var(--text-lighter)] font-mono text-xs">
               <div className="mb-1">No Git repository detected</div>
-              <div className="text-[10px] opacity-75">
-                Open a Git project folder
-              </div>
+              <div className="text-[10px] opacity-75">Open a Git project folder</div>
             </div>
           </div>
         </div>
@@ -451,9 +463,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           <div className="flex-1 flex items-center justify-center p-4">
             <div className="text-center text-[var(--text-lighter)] font-mono text-xs">
               <div className="mb-1">Not a Git repository</div>
-              <div className="text-[10px] opacity-75">
-                Initialize with: git init
-              </div>
+              <div className="text-[10px] opacity-75">Initialize with: git init</div>
             </div>
           </div>
         </div>
@@ -462,7 +472,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     );
   }
 
-  const stagedFiles = gitStatus.files.filter((f) => f.staged);
+  const stagedFiles = gitStatus.files.filter(f => f.staged);
 
   return (
     <>
@@ -470,7 +480,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         {/* Header */}
         <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-color)]">
           {renderGitButton()}
-          
+
           <GitBranchManager
             currentBranch={gitStatus.branch}
             repoPath={repoPath}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
 
 interface DropdownProps {
   value: string;
@@ -17,7 +17,7 @@ const Dropdown = ({
   onChange,
   placeholder = "Select...",
   className = "",
-  disabled = false
+  disabled = false,
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -29,8 +29,8 @@ const Dropdown = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const selectedOption = options.find(option => option.value === value);
@@ -43,18 +43,18 @@ const Dropdown = ({
         disabled={disabled}
         className={cn(
           "w-full px-3 py-2 text-sm bg-[var(--primary-bg)] border border-[var(--border-color)] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors text-[var(--text-color)] flex items-center justify-between",
-          disabled 
-            ? "opacity-50 cursor-not-allowed" 
-            : "hover:bg-[var(--hover-color)] cursor-pointer"
+          disabled
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:bg-[var(--hover-color)] cursor-pointer",
         )}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
         <ChevronDown size={14} className={cn("transition-transform", isOpen && "rotate-180")} />
       </button>
-      
+
       {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded-md shadow-lg max-h-60 overflow-auto">
-          {options.map((option) => (
+          {options.map(option => (
             <button
               key={option.value}
               type="button"
@@ -64,7 +64,7 @@ const Dropdown = ({
               }}
               className={cn(
                 "w-full px-3 py-2 text-sm text-left hover:bg-[var(--hover-color)] transition-colors",
-                value === option.value && "bg-[var(--hover-color)] text-[var(--text-color)]"
+                value === option.value && "bg-[var(--hover-color)] text-[var(--text-color)]",
               )}
             >
               {option.label}
@@ -76,4 +76,4 @@ const Dropdown = ({
   );
 };
 
-export default Dropdown; 
+export default Dropdown;

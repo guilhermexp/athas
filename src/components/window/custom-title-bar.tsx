@@ -7,12 +7,14 @@ interface CustomTitleBarProps {
   title?: string;
   projectName?: string;
   showMinimal?: boolean;
+  isWelcomeScreen?: boolean;
   onSettingsClick?: () => void;
 }
 
 const CustomTitleBar = ({
   projectName,
   showMinimal = false,
+  isWelcomeScreen = false,
   onSettingsClick,
 }: CustomTitleBarProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -34,10 +36,7 @@ const CustomTitleBar = ({
         setCurrentPlatform(platformName);
       } catch (error) {
         console.error("Error getting platform:", error);
-        if (
-          typeof navigator !== "undefined" &&
-          navigator.userAgent.includes("Mac")
-        ) {
+        if (typeof navigator !== "undefined" && navigator.userAgent.includes("Mac")) {
           setCurrentPlatform("macos");
         }
       }
@@ -82,14 +81,18 @@ const CustomTitleBar = ({
   const isMacOS = currentPlatform === "macos";
 
   if (showMinimal) {
+    const backgroundClass = isWelcomeScreen
+      ? "bg-white"
+      : isMacOS
+        ? "bg-[var(--primary-bg)]"
+        : "bg-[var(--secondary-bg)] backdrop-blur-sm";
+
     return (
       <div
         data-tauri-drag-region
         className={`flex items-center justify-between select-none relative z-50 ${
-          isMacOS
-            ? "h-11 bg-transparent"
-            : "h-7 bg-[var(--secondary-bg)] backdrop-blur-sm border-b border-[var(--border-color)]"
-        }`}
+          isMacOS ? "h-11" : "h-7"
+        } ${backgroundClass}`}
       >
         {/* macOS traffic light controls */}
         {isMacOS && (
@@ -163,7 +166,7 @@ const CustomTitleBar = ({
     return (
       <div
         data-tauri-drag-region
-        className="flex items-center justify-between select-none relative z-50 h-11 bg-transparent"
+        className="flex items-center justify-between select-none relative z-50 h-11 bg-[var(--primary-bg)]"
       >
         {/* macOS traffic light controls */}
         <div className="flex items-center space-x-2 pl-4">
@@ -208,10 +211,10 @@ const CustomTitleBar = ({
           {onSettingsClick && (
             <button
               onClick={onSettingsClick}
-              className="w-6 h-6 flex items-center justify-center hover:bg-[var(--hover-color)] transition-colors rounded mr-4"
+              className="w-6 h-6 flex items-center justify-center hover:bg-[var(--hover-color)] transition-colors rounded mr-4 text-[var(--text-lighter)] hover:text-[var(--text-color)]"
               title="Settings"
             >
-              <Settings className="w-3 h-3 text-[var(--text-lighter)] hover:text-[var(--text-color)]" />
+              <Settings className="w-3 h-3" />
             </button>
           )}
         </div>
@@ -223,7 +226,7 @@ const CustomTitleBar = ({
   return (
     <div
       data-tauri-drag-region
-      className="flex items-center justify-between select-none relative z-50 h-7 bg-[var(--secondary-bg)] backdrop-blur-sm border-b border-[var(--border-color)]"
+      className="flex items-center justify-between select-none relative z-50 h-7 bg-[var(--secondary-bg)] backdrop-blur-sm"
     >
       {/* Left side */}
       <div className="flex items-center px-2 flex-1">
@@ -240,10 +243,10 @@ const CustomTitleBar = ({
         {onSettingsClick && (
           <button
             onClick={onSettingsClick}
-            className="w-7 h-7 flex items-center justify-center hover:bg-[var(--hover-color)] transition-colors rounded mr-2"
+            className="w-7 h-7 flex items-center justify-center hover:bg-[var(--hover-color)] transition-colors rounded mr-2 text-[var(--text-lighter)] hover:text-[var(--text-color)]"
             title="Settings"
           >
-            <Settings className="w-3.5 h-3.5 text-[var(--text-lighter)] hover:text-[var(--text-color)]" />
+            <Settings className="w-3.5 h-3.5" />
           </button>
         )}
 

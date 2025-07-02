@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { X, Key, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
+import { AlertCircle, CheckCircle, ExternalLink, Key, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { getProviderById } from "../types/ai-provider";
-import Button from "./button";
+import Button from "./ui/button";
 
 interface ApiKeyModalProps {
   isOpen: boolean;
@@ -22,9 +22,7 @@ const ApiKeyModal = ({
 }: ApiKeyModalProps) => {
   const [apiKey, setApiKey] = useState("");
   const [isValidating, setIsValidating] = useState(false);
-  const [validationStatus, setValidationStatus] = useState<
-    "idle" | "valid" | "invalid"
-  >("idle");
+  const [validationStatus, setValidationStatus] = useState<"idle" | "valid" | "invalid">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
   const provider = getProviderById(providerId);
@@ -119,11 +117,9 @@ const ApiKeyModal = ({
         }, 1000);
       } else {
         setValidationStatus("invalid");
-        setErrorMessage(
-          "Invalid API key. Please check your key and try again.",
-        );
+        setErrorMessage("Invalid API key. Please check your key and try again.");
       }
-    } catch (error) {
+    } catch (_error) {
       setValidationStatus("invalid");
       setErrorMessage("Failed to validate API key. Please try again.");
     } finally {
@@ -137,7 +133,7 @@ const ApiKeyModal = ({
       setApiKey("");
       setValidationStatus("idle");
       setErrorMessage("");
-    } catch (error) {
+    } catch (_error) {
       setErrorMessage("Failed to remove API key");
     }
   };
@@ -157,9 +153,7 @@ const ApiKeyModal = ({
         <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-2">
             <Key size={16} className="text-[var(--text-color)]" />
-            <h3 className="font-mono text-sm text-[var(--text-color)]">
-              {provider.name} API Key
-            </h3>
+            <h3 className="font-mono text-sm text-[var(--text-color)]">{provider.name} API Key</h3>
           </div>
           <button
             onClick={onClose}
@@ -171,8 +165,7 @@ const ApiKeyModal = ({
 
         <div className="p-4 space-y-4 flex-1 overflow-y-auto">
           <div className="text-xs text-[var(--text-lighter)] leading-relaxed">
-            Connect to {provider.name} to access their AI models for intelligent
-            code assistance.
+            Connect to {provider.name} to access their AI models for intelligent code assistance.
           </div>
 
           {/* API Key Input */}
@@ -185,7 +178,7 @@ const ApiKeyModal = ({
             <input
               type="password"
               value={apiKey}
-              onChange={(e) => handleKeyChange(e.target.value)}
+              onChange={e => handleKeyChange(e.target.value)}
               placeholder={getApiKeyPlaceholder()}
               className="w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-blue-500"
               disabled={isValidating}
@@ -238,15 +231,11 @@ const ApiKeyModal = ({
               Available Models:
             </div>
             <div className="space-y-1">
-              {provider.models.slice(0, 3).map((model) => (
-                <div
-                  key={model.id}
-                  className="flex items-center justify-between text-xs"
-                >
+              {provider.models.slice(0, 3).map(model => (
+                <div key={model.id} className="flex items-center justify-between text-xs">
                   <span className="text-[var(--text-color)]">{model.name}</span>
                   <span className="text-[var(--text-lighter)]">
-                    {model.costPer1kTokens &&
-                      `$${model.costPer1kTokens}/1k tokens`}
+                    {model.costPer1kTokens && `$${model.costPer1kTokens}/1k tokens`}
                   </span>
                 </div>
               ))}

@@ -1,33 +1,33 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Bot,
+  ChevronDown,
   Database,
   FileText,
-  X,
-  Plus,
-  ChevronDown,
-  Square,
   MessageSquare,
+  Plus,
   Send,
+  Square,
+  X,
 } from "lucide-react";
-import { cn } from "../../utils/cn";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AI_PROVIDERS, getModelById } from "../../types/ai-provider";
 import {
-  getProviderApiToken,
   getChatCompletionStream,
-  storeProviderApiToken,
+  getProviderApiToken,
   removeProviderApiToken,
+  storeProviderApiToken,
   validateProviderApiKey,
 } from "../../utils/ai-chat";
-import { AI_PROVIDERS, getModelById } from "../../types/ai-provider";
-import ModelProviderSelector from "../model-provider-selector";
-import ApiKeyModal from "../api-key-modal";
-import Button from "../button";
-import MarkdownRenderer from "./markdown-renderer";
-import ChatHistoryModal from "./chat-history-modal";
-import { AIChatProps, Message, Chat, ContextInfo } from "./types";
-import { formatTime } from "./utils";
-import OutlineView from "../outline-view";
+import { cn } from "../../utils/cn";
 import { getLanguageFromFilename } from "../../utils/file-utils";
+import ApiKeyModal from "../api-key-modal";
+import ModelProviderSelector from "../model-provider-selector";
+import OutlineView from "../outline-view";
+import Button from "../ui/button";
+import ChatHistoryModal from "./chat-history-modal";
+import MarkdownRenderer from "./markdown-renderer";
+import { AIChatProps, Chat, ContextInfo, Message } from "./types";
+import { formatTime } from "./utils";
 
 export default function AIChat({
   className,
@@ -46,9 +46,7 @@ export default function AIChat({
   // Provider and Model State
   const [currentProviderId, setCurrentProviderId] = useState("openai");
   const [currentModelId, setCurrentModelId] = useState("gpt-4o-mini");
-  const [providerApiKeys, setProviderApiKeys] = useState<Map<string, boolean>>(
-    new Map(),
-  );
+  const [providerApiKeys, setProviderApiKeys] = useState<Map<string, boolean>>(new Map());
   const [apiKeyModalState, setApiKeyModalState] = useState<{
     isOpen: boolean;
     providerId: string | null;
@@ -58,13 +56,9 @@ export default function AIChat({
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
-  const [selectedBufferIds, setSelectedBufferIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedBufferIds, setSelectedBufferIds] = useState<Set<string>>(new Set());
   const [isContextDropdownOpen, setIsContextDropdownOpen] = useState(false);
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
-    null,
-  );
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [isSendAnimating, setIsSendAnimating] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -73,8 +67,8 @@ export default function AIChat({
   const contextDropdownRef = useRef<HTMLDivElement>(null);
 
   // Get current chat
-  const currentChat = chats.find((chat) => chat.id === currentChatId);
-  const messages = currentChat?.messages || [];
+  const currentChat = chats.find(chat => chat.id === currentChatId);
+  const messages = useMemo(() => currentChat?.messages || [], [currentChat?.messages]);
 
   // Theme detection removed - was causing unnecessary re-renders
 
@@ -82,8 +76,8 @@ export default function AIChat({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        contextDropdownRef.current &&
-        !contextDropdownRef.current.contains(event.target as Node)
+        contextDropdownRef.current
+        && !contextDropdownRef.current.contains(event.target as Node)
       ) {
         setIsContextDropdownOpen(false);
       }
@@ -98,22 +92,21 @@ export default function AIChat({
     const savedChats = localStorage.getItem("athas-code-ai-chats");
     if (savedChats) {
       try {
-              const parsedChats = JSON.parse(savedChats).map((chat: any) => ({
-        ...chat,
-        createdAt: new Date(chat.createdAt),
-        lastMessageAt: new Date(chat.lastMessageAt),
-        messages: chat.messages.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp),
-        })),
-      }));
+        const parsedChats = JSON.parse(savedChats).map((chat: any) => ({
+          ...chat,
+          createdAt: new Date(chat.createdAt),
+          lastMessageAt: new Date(chat.lastMessageAt),
+          messages: chat.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })),
+        }));
         setChats(parsedChats);
 
         // Set the most recent chat as current
         if (parsedChats.length > 0) {
           const mostRecent = parsedChats.sort(
-            (a: Chat, b: Chat) =>
-              b.lastMessageAt.getTime() - a.lastMessageAt.getTime(),
+            (a: Chat, b: Chat) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime(),
           )[0];
           setCurrentChatId(mostRecent.id);
         }
@@ -129,7 +122,7 @@ export default function AIChat({
       const timeoutId = setTimeout(() => {
         localStorage.setItem("athas-code-ai-chats", JSON.stringify(chats));
       }, 1000); // Debounce localStorage writes by 1 second
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [chats]);
@@ -144,7 +137,7 @@ export default function AIChat({
       lastMessageAt: new Date(),
     };
 
-    setChats((prev) => [newChat, ...prev]);
+    setChats(prev => [newChat, ...prev]);
     setCurrentChatId(newChat.id);
     setIsChatHistoryVisible(false);
   };
@@ -160,11 +153,11 @@ export default function AIChat({
   // Delete a chat
   const deleteChat = (chatId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+    setChats(prev => prev.filter(chat => chat.id !== chatId));
 
     // If we deleted the current chat, switch to the most recent one or create new
     if (chatId === currentChatId) {
-      const remainingChats = chats.filter((chat) => chat.id !== chatId);
+      const remainingChats = chats.filter(chat => chat.id !== chatId);
       if (remainingChats.length > 0) {
         const mostRecent = remainingChats.sort(
           (a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime(),
@@ -178,22 +171,17 @@ export default function AIChat({
 
   // Update chat title based on first message
   const updateChatTitle = (chatId: string, firstMessage: string) => {
-    const title =
-      firstMessage.length > 50
-        ? firstMessage.substring(0, 50) + "..."
-        : firstMessage;
+    const title = firstMessage.length > 50 ? firstMessage.substring(0, 50) + "..." : firstMessage;
 
-    setChats((prev) =>
-      prev.map((chat) => (chat.id === chatId ? { ...chat, title } : chat)),
-    );
+    setChats(prev => prev.map(chat => (chat.id === chatId ? { ...chat, title } : chat)));
   };
 
   // Update messages in current chat
   const updateMessages = (newMessages: Message[]) => {
     if (!currentChatId) return;
 
-    setChats((prev) =>
-      prev.map((chat) =>
+    setChats(prev =>
+      prev.map(chat =>
         chat.id === currentChatId
           ? {
               ...chat,
@@ -205,19 +193,7 @@ export default function AIChat({
     );
   };
 
-  // Check for API key on mount
-  useEffect(() => {
-    checkApiKey();
-  }, []);
-
-  // Auto-select active buffer when it changes
-  useEffect(() => {
-    if (activeBuffer) {
-      setSelectedBufferIds((prev) => new Set([...prev, activeBuffer.id]));
-    }
-  }, [activeBuffer?.id]);
-
-  const checkApiKey = async () => {
+  const checkApiKey = useCallback(async () => {
     try {
       const token = await getProviderApiToken(currentProviderId);
       setHasApiKey(!!token);
@@ -225,32 +201,44 @@ export default function AIChat({
       console.error("Error checking API key:", error);
       setHasApiKey(false);
     }
-  };
+  }, [currentProviderId]);
 
-  const checkAllProviderApiKeys = async () => {
+  const checkAllProviderApiKeys = useCallback(async () => {
     const newApiKeyMap = new Map<string, boolean>();
 
     for (const provider of AI_PROVIDERS) {
       try {
         const token = await getProviderApiToken(provider.id);
         newApiKeyMap.set(provider.id, !!token);
-      } catch (error) {
+      } catch (_error) {
         newApiKeyMap.set(provider.id, false);
       }
     }
 
     setProviderApiKeys(newApiKeyMap);
-  };
+  }, []);
+
+  // Check for API key on mount
+  useEffect(() => {
+    checkApiKey();
+  }, [checkApiKey]);
+
+  // Auto-select active buffer when it changes
+  useEffect(() => {
+    if (activeBuffer) {
+      setSelectedBufferIds(prev => new Set([...prev, activeBuffer.id]));
+    }
+  }, [activeBuffer]);
 
   // Check for API key on mount and when provider changes
   useEffect(() => {
     checkApiKey();
-  }, [currentProviderId]);
+  }, [checkApiKey]);
 
   // Check all provider API keys on mount
   useEffect(() => {
     checkAllProviderApiKeys();
-  }, []);
+  }, [checkAllProviderApiKeys]);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -259,7 +247,7 @@ export default function AIChat({
 
   // Get selected buffers for context (memoized)
   const getSelectedBuffers = useMemo(() => {
-    return buffers.filter((buffer) => selectedBufferIds.has(buffer.id));
+    return buffers.filter(buffer => selectedBufferIds.has(buffer.id));
   }, [buffers, selectedBufferIds]);
 
   // Calculate approximate tokens (memoized)
@@ -267,7 +255,7 @@ export default function AIChat({
     let totalChars = input.length;
 
     // Add characters from selected buffers (approximate)
-    getSelectedBuffers.forEach((buffer) => {
+    getSelectedBuffers.forEach(buffer => {
       if (buffer.content && !buffer.isSQLite) {
         totalChars += buffer.content.length;
       }
@@ -337,7 +325,7 @@ export default function AIChat({
 
     // Trigger send animation
     setIsSendAnimating(true);
-    
+
     // Reset animation after the flying animation completes
     setTimeout(() => setIsSendAnimating(false), 800);
 
@@ -351,7 +339,7 @@ export default function AIChat({
         createdAt: new Date(),
         lastMessageAt: new Date(),
       };
-      setChats((prev) => [newChat, ...prev]);
+      setChats(prev => [newChat, ...prev]);
       chatId = newChat.id;
       setCurrentChatId(chatId);
     }
@@ -393,8 +381,8 @@ export default function AIChat({
       // Build conversation context - include previous messages for continuity
       // Filter out system messages to avoid the linter error
       const conversationContext = messages
-        .filter((msg) => msg.role !== "system")
-        .map((msg) => ({
+        .filter(msg => msg.role !== "system")
+        .map(msg => ({
           role: msg.role as "user" | "assistant",
           content: msg.content,
         }));
@@ -408,12 +396,12 @@ export default function AIChat({
         context,
         // onChunk - update the streaming message
         (chunk: string) => {
-          setChats((prev) =>
-            prev.map((chat) =>
+          setChats(prev =>
+            prev.map(chat =>
               chat.id === chatId
                 ? {
                     ...chat,
-                    messages: chat.messages.map((msg) =>
+                    messages: chat.messages.map(msg =>
                       msg.id === assistantMessageId
                         ? { ...msg, content: msg.content + chunk }
                         : msg,
@@ -425,15 +413,13 @@ export default function AIChat({
         },
         // onComplete - mark streaming as finished
         () => {
-          setChats((prev) =>
-            prev.map((chat) =>
+          setChats(prev =>
+            prev.map(chat =>
               chat.id === chatId
                 ? {
                     ...chat,
-                    messages: chat.messages.map((msg) =>
-                      msg.id === assistantMessageId
-                        ? { ...msg, isStreaming: false }
-                        : msg,
+                    messages: chat.messages.map(msg =>
+                      msg.id === assistantMessageId ? { ...msg, isStreaming: false } : msg,
                     ),
                     lastMessageAt: new Date(),
                   }
@@ -447,12 +433,12 @@ export default function AIChat({
         // onError - handle errors
         (error: string) => {
           console.error("Streaming error:", error);
-          setChats((prev) =>
-            prev.map((chat) =>
+          setChats(prev =>
+            prev.map(chat =>
               chat.id === chatId
                 ? {
                     ...chat,
-                    messages: chat.messages.map((msg) =>
+                    messages: chat.messages.map(msg =>
                       msg.id === assistantMessageId
                         ? {
                             ...msg,
@@ -473,12 +459,12 @@ export default function AIChat({
       );
     } catch (error) {
       console.error("Failed to start streaming:", error);
-      setChats((prev) =>
-        prev.map((chat) =>
+      setChats(prev =>
+        prev.map(chat =>
           chat.id === chatId
             ? {
                 ...chat,
-                messages: chat.messages.map((msg) =>
+                messages: chat.messages.map(msg =>
                   msg.id === assistantMessageId
                     ? {
                         ...msg,
@@ -506,7 +492,7 @@ export default function AIChat({
   };
 
   const toggleBufferSelection = (bufferId: string) => {
-    setSelectedBufferIds((prev) => {
+    setSelectedBufferIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(bufferId)) {
         newSet.delete(bufferId);
@@ -534,10 +520,7 @@ export default function AIChat({
   };
 
   // Handle API key save
-  const handleApiKeySave = async (
-    providerId: string,
-    apiKey: string,
-  ): Promise<boolean> => {
+  const handleApiKeySave = async (providerId: string, apiKey: string): Promise<boolean> => {
     try {
       const isValid = await validateProviderApiKey(providerId, apiKey);
       if (isValid) {
@@ -569,11 +552,11 @@ export default function AIChat({
 
   if (mode === "outline") {
     const handleOutlineItemClick = (line: number) => {
-      const event = new CustomEvent('navigate-to-line', { 
-        detail: { line } 
-      })
-      window.dispatchEvent(event)
-    }
+      const event = new CustomEvent("navigate-to-line", {
+        detail: { line },
+      });
+      window.dispatchEvent(event);
+    };
 
     return (
       <OutlineView
@@ -613,9 +596,7 @@ export default function AIChat({
         >
           <MessageSquare size={14} />
         </button>
-        <span className="font-medium">
-          {currentChat ? currentChat.title : "New Chat"}
-        </span>
+        <span className="font-medium">{currentChat ? currentChat.title : "New Chat"}</span>
         <div className="flex-1" />
         <button
           onClick={createNewChat}
@@ -641,7 +622,7 @@ export default function AIChat({
           </div>
         )}
 
-        {messages.map((message) => (
+        {messages.map(message => (
           <div
             key={message.id}
             className={`p-3 ${message.role === "user" ? "flex justify-end" : ""}`}
@@ -656,14 +637,9 @@ export default function AIChat({
                     border: "1px solid var(--border-color)",
                   }}
                 >
-                  <div className="whitespace-pre-wrap break-words">
-                    {message.content}
-                  </div>
+                  <div className="whitespace-pre-wrap break-words">{message.content}</div>
                 </div>
-                <div
-                  className="mt-1 px-1"
-                  style={{ color: "var(--text-lighter)" }}
-                >
+                <div className="mt-1 px-1" style={{ color: "var(--text-lighter)" }}>
                   {formatTime(message.timestamp)}
                 </div>
               </div>
@@ -672,10 +648,7 @@ export default function AIChat({
               <div className="w-full">
                 {/* AI Message Header */}
                 <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className="flex items-center gap-1"
-                    style={{ color: "var(--text-lighter)" }}
-                  >
+                  <div className="flex items-center gap-1" style={{ color: "var(--text-lighter)" }}>
                     <Bot size={10} />
                     <span>ai</span>
                     {message.isStreaming && (
@@ -700,10 +673,7 @@ export default function AIChat({
 
                 {/* AI Message Content */}
                 <div className="leading-relaxed pr-1">
-                  <MarkdownRenderer
-                    content={message.content}
-                    onApplyCode={onApplyCode}
-                  />
+                  <MarkdownRenderer content={message.content} onApplyCode={onApplyCode} />
 
                   {message.isStreaming && (
                     <span className="inline-block w-2 h-4 animate-pulse ml-1 bg-[var(--text-lighter)]" />
@@ -731,9 +701,7 @@ export default function AIChat({
               {/* Context Selector Dropdown */}
               <div className="relative" ref={contextDropdownRef}>
                 <button
-                  onClick={() =>
-                    setIsContextDropdownOpen(!isContextDropdownOpen)
-                  }
+                  onClick={() => setIsContextDropdownOpen(!isContextDropdownOpen)}
                   className="flex items-center gap-1 px-2 pt-2 rounded transition-colors hover:bg-[var(--hover-color)]"
                   style={{ color: "var(--text-lighter)" }}
                   title="Add context files"
@@ -752,22 +720,16 @@ export default function AIChat({
                     }}
                   >
                     <div className="p-2">
-                      <div
-                        className="text-xs mb-2"
-                        style={{ color: "var(--text-lighter)" }}
-                      >
+                      <div className="text-xs mb-2" style={{ color: "var(--text-lighter)" }}>
                         Select files to include as context:
                       </div>
                       {buffers.length === 0 ? (
-                        <div
-                          className="text-xs p-2"
-                          style={{ color: "var(--text-lighter)" }}
-                        >
+                        <div className="text-xs p-2" style={{ color: "var(--text-lighter)" }}>
                           No files available
                         </div>
                       ) : (
                         <div className="space-y-1">
-                          {buffers.map((buffer) => (
+                          {buffers.map(buffer => (
                             <label
                               key={buffer.id}
                               className="flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-[var(--hover-color)]"
@@ -775,20 +737,12 @@ export default function AIChat({
                               <input
                                 type="checkbox"
                                 checked={selectedBufferIds.has(buffer.id)}
-                                onChange={() =>
-                                  toggleBufferSelection(buffer.id)
-                                }
+                                onChange={() => toggleBufferSelection(buffer.id)}
                                 className="w-3 h-3"
                               />
                               <div className="flex items-center gap-1 flex-1 min-w-0">
-                                {buffer.isSQLite ? (
-                                  <Database size={10} />
-                                ) : (
-                                  <FileText size={10} />
-                                )}
-                                <span className="truncate text-xs">
-                                  {buffer.name}
-                                </span>
+                                {buffer.isSQLite ? <Database size={10} /> : <FileText size={10} />}
+                                <span className="truncate text-xs">{buffer.name}</span>
                               </div>
                             </label>
                           ))}
@@ -806,8 +760,8 @@ export default function AIChat({
         {selectedBufferIds.size > 0 && (
           <div className="px-3 py-2">
             <div className="flex items-center gap-1 flex-wrap">
-              {Array.from(selectedBufferIds).map((bufferId) => {
-                const buffer = buffers.find((b) => b.id === bufferId);
+              {Array.from(selectedBufferIds).map(bufferId => {
+                const buffer = buffers.find(b => b.id === bufferId);
                 if (!buffer) return null;
                 return (
                   <div
@@ -818,11 +772,7 @@ export default function AIChat({
                       border: "1px solid var(--border-color)",
                     }}
                   >
-                    {buffer.isSQLite ? (
-                      <Database size={8} />
-                    ) : (
-                      <FileText size={8} />
-                    )}
+                    {buffer.isSQLite ? <Database size={8} /> : <FileText size={8} />}
                     <span className="truncate max-w-20">{buffer.name}</span>
                     <button
                       onClick={() => toggleBufferSelection(bufferId)}
@@ -843,12 +793,10 @@ export default function AIChat({
             <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                hasApiKey
-                  ? "Ask about your code..."
-                  : "Configure API key to enable AI chat..."
+                hasApiKey ? "Ask about your code..." : "Configure API key to enable AI chat..."
               }
               disabled={isTyping || !hasApiKey}
               className="flex-1 resize-none px-3 py-2 rounded focus:outline-none min-h-[60px] disabled:opacity-50"
@@ -860,10 +808,7 @@ export default function AIChat({
             />
           </div>
           <div className="flex items-center justify-between mt-2">
-            <div
-              className="hidden sm:block"
-              style={{ color: "var(--text-lighter)" }}
-            >
+            <div className="hidden sm:block" style={{ color: "var(--text-lighter)" }}>
               <span
                 className={
                   estimatedTokens > maxTokens * 0.8
@@ -873,8 +818,7 @@ export default function AIChat({
                       : ""
                 }
               >
-                {estimatedTokens.toLocaleString()}/
-                {(maxTokens / 1000).toFixed(0)}k tokens
+                {estimatedTokens.toLocaleString()}/{(maxTokens / 1000).toFixed(0)}k tokens
               </span>
             </div>
             <div className="flex items-center gap-2 ml-auto">
@@ -893,34 +837,31 @@ export default function AIChat({
                   className={cn(
                     "rounded flex items-center justify-center p-0",
                     "send-button-hover button-transition",
-                    (isTyping && streamingMessageId && !isSendAnimating) && "button-morphing"
+                    isTyping && streamingMessageId && !isSendAnimating && "button-morphing",
                   )}
                   style={{
-                    color: isTyping && streamingMessageId 
-                      ? "rgb(59, 130, 246)"
-                      : input.trim() && !isTyping && hasApiKey
-                        ? "white"
-                        : "var(--text-lighter)",
-                    border: isTyping && streamingMessageId 
-                      ? "1px solid rgba(59, 130, 246, 0.3)"
-                      : "1px solid transparent",
-                    cursor: (!input.trim() && !isTyping) || !hasApiKey
-                      ? "not-allowed"
-                      : "pointer",
+                    color:
+                      isTyping && streamingMessageId
+                        ? "rgb(59, 130, 246)"
+                        : input.trim() && !isTyping && hasApiKey
+                          ? "white"
+                          : "var(--text-lighter)",
+                    border:
+                      isTyping && streamingMessageId
+                        ? "1px solid rgba(59, 130, 246, 0.3)"
+                        : "1px solid transparent",
+                    cursor: (!input.trim() && !isTyping) || !hasApiKey ? "not-allowed" : "pointer",
                   }}
                   title={isTyping && streamingMessageId ? "Stop generation" : "Send message"}
                 >
                   {isTyping && streamingMessageId && !isSendAnimating ? (
-                    <Square 
-                      size={10} 
-                      className="transition-all duration-300"
-                    />
+                    <Square size={10} className="transition-all duration-300" />
                   ) : (
-                    <Send 
-                      size={10} 
+                    <Send
+                      size={10}
                       className={cn(
                         "send-icon transition-all duration-200",
-                        isSendAnimating && "flying"
+                        isSendAnimating && "flying",
                       )}
                     />
                   )}
@@ -939,9 +880,7 @@ export default function AIChat({
         onSave={handleApiKeySave}
         onRemove={handleApiKeyRemove}
         hasExistingKey={
-          apiKeyModalState.providerId
-            ? hasProviderApiKey(apiKeyModalState.providerId)
-            : false
+          apiKeyModalState.providerId ? hasProviderApiKey(apiKeyModalState.providerId) : false
         }
       />
 

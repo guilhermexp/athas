@@ -1,17 +1,14 @@
-import { useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTerminalTabs } from "../../hooks/use-terminal-tabs";
-import TerminalTabBar from "./terminal-tab-bar";
 import TerminalSession from "./terminal-session";
+import TerminalTabBar from "./terminal-tab-bar";
 
 interface TerminalContainerProps {
   currentDirectory?: string;
   className?: string;
 }
 
-const TerminalContainer = ({
-  currentDirectory = process.cwd?.() || "/",
-  className = "",
-}: TerminalContainerProps) => {
+const TerminalContainer = ({ currentDirectory = "/", className = "" }: TerminalContainerProps) => {
   const {
     terminals,
     activeTerminalId,
@@ -31,33 +28,45 @@ const TerminalContainer = ({
   const [newTerminalName, setNewTerminalName] = useState("");
 
   const handleNewTerminal = useCallback(() => {
-    const dirName = currentDirectory.split('/').pop() || 'terminal';
+    const dirName = currentDirectory.split("/").pop() || "terminal";
     createTerminal(dirName, currentDirectory);
   }, [createTerminal, currentDirectory]);
 
-  const handleTabClick = useCallback((terminalId: string) => {
-    setActiveTerminal(terminalId);
-  }, [setActiveTerminal]);
+  const handleTabClick = useCallback(
+    (terminalId: string) => {
+      setActiveTerminal(terminalId);
+    },
+    [setActiveTerminal],
+  );
 
-  const handleTabClose = useCallback((terminalId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    closeTerminal(terminalId);
-  }, [closeTerminal]);
+  const handleTabClose = useCallback(
+    (terminalId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      closeTerminal(terminalId);
+    },
+    [closeTerminal],
+  );
 
-  const handleTabPin = useCallback((terminalId: string) => {
-    const terminal = terminals.find(t => t.id === terminalId);
-    if (terminal) {
-      pinTerminal(terminalId, !terminal.isPinned);
-    }
-  }, [terminals, pinTerminal]);
-
-  const handleCloseOtherTabs = useCallback((terminalId: string) => {
-    terminals.forEach(terminal => {
-      if (terminal.id !== terminalId && !terminal.isPinned) {
-        closeTerminal(terminal.id);
+  const handleTabPin = useCallback(
+    (terminalId: string) => {
+      const terminal = terminals.find(t => t.id === terminalId);
+      if (terminal) {
+        pinTerminal(terminalId, !terminal.isPinned);
       }
-    });
-  }, [terminals, closeTerminal]);
+    },
+    [terminals, pinTerminal],
+  );
+
+  const handleCloseOtherTabs = useCallback(
+    (terminalId: string) => {
+      terminals.forEach(terminal => {
+        if (terminal.id !== terminalId && !terminal.isPinned) {
+          closeTerminal(terminal.id);
+        }
+      });
+    },
+    [terminals, closeTerminal],
+  );
 
   const handleCloseAllTabs = useCallback(() => {
     terminals.forEach(terminal => {
@@ -67,24 +76,30 @@ const TerminalContainer = ({
     });
   }, [terminals, closeTerminal]);
 
-  const handleCloseTabsToRight = useCallback((terminalId: string) => {
-    const targetIndex = terminals.findIndex(t => t.id === terminalId);
-    if (targetIndex === -1) return;
+  const handleCloseTabsToRight = useCallback(
+    (terminalId: string) => {
+      const targetIndex = terminals.findIndex(t => t.id === terminalId);
+      if (targetIndex === -1) return;
 
-    terminals.slice(targetIndex + 1).forEach(terminal => {
-      if (!terminal.isPinned) {
-        closeTerminal(terminal.id);
+      terminals.slice(targetIndex + 1).forEach(terminal => {
+        if (!terminal.isPinned) {
+          closeTerminal(terminal.id);
+        }
+      });
+    },
+    [terminals, closeTerminal],
+  );
+
+  const handleRenameTerminal = useCallback(
+    (terminalId: string) => {
+      const terminal = terminals.find(t => t.id === terminalId);
+      if (terminal) {
+        setRenamingTerminalId(terminalId);
+        setNewTerminalName(terminal.name);
       }
-    });
-  }, [terminals, closeTerminal]);
-
-  const handleRenameTerminal = useCallback((terminalId: string) => {
-    const terminal = terminals.find(t => t.id === terminalId);
-    if (terminal) {
-      setRenamingTerminalId(terminalId);
-      setNewTerminalName(terminal.name);
-    }
-  }, [terminals]);
+    },
+    [terminals],
+  );
 
   const confirmRename = useCallback(() => {
     if (renamingTerminalId && newTerminalName.trim()) {
@@ -99,13 +114,19 @@ const TerminalContainer = ({
     setNewTerminalName("");
   }, []);
 
-  const handleDirectoryChange = useCallback((terminalId: string, directory: string) => {
-    updateTerminalDirectory(terminalId, directory);
-  }, [updateTerminalDirectory]);
+  const handleDirectoryChange = useCallback(
+    (terminalId: string, directory: string) => {
+      updateTerminalDirectory(terminalId, directory);
+    },
+    [updateTerminalDirectory],
+  );
 
-  const handleActivity = useCallback((terminalId: string) => {
-    updateTerminalActivity(terminalId);
-  }, [updateTerminalActivity]);
+  const handleActivity = useCallback(
+    (terminalId: string) => {
+      updateTerminalActivity(terminalId);
+    },
+    [updateTerminalActivity],
+  );
 
   // Terminal-specific keyboard shortcuts
   useEffect(() => {
@@ -116,21 +137,21 @@ const TerminalContainer = ({
       }
 
       // Cmd+T (Mac) or Ctrl+T (Windows/Linux) to create new terminal
-      if ((e.metaKey || e.ctrlKey) && e.key === 't' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "t" && !e.shiftKey) {
         e.preventDefault();
         handleNewTerminal();
         return;
       }
 
       // Cmd+N (Mac) or Ctrl+N (Windows/Linux) to create new terminal (alternative)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "n" && !e.shiftKey) {
         e.preventDefault();
         handleNewTerminal();
         return;
       }
 
       // Cmd+W (Mac) or Ctrl+W (Windows/Linux) to close current terminal
-      if ((e.metaKey || e.ctrlKey) && e.key === 'w' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "w" && !e.shiftKey) {
         e.preventDefault();
         if (activeTerminalId) {
           closeTerminal(activeTerminalId);
@@ -139,14 +160,14 @@ const TerminalContainer = ({
       }
 
       // Cmd+Shift+T (Mac) or Ctrl+Shift+T (Windows/Linux) to create new terminal (backup)
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'T') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "T") {
         e.preventDefault();
         handleNewTerminal();
         return;
       }
 
       // Cmd+Shift+W (Mac) or Ctrl+Shift+W (Windows/Linux) to close current terminal (backup)
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'W') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "W") {
         e.preventDefault();
         if (activeTerminalId) {
           closeTerminal(activeTerminalId);
@@ -155,9 +176,9 @@ const TerminalContainer = ({
       }
 
       // Terminal tab navigation with Cmd/Ctrl + [ and ]
-      if ((e.metaKey || e.ctrlKey) && (e.key === '[' || e.key === ']')) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "[" || e.key === "]")) {
         e.preventDefault();
-        if (e.key === ']') {
+        if (e.key === "]") {
           switchToNextTerminal();
         } else {
           switchToPrevTerminal();
@@ -166,9 +187,9 @@ const TerminalContainer = ({
       }
 
       // Terminal tab navigation with Alt+Left/Right
-      if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         e.preventDefault();
-        if (e.key === 'ArrowRight') {
+        if (e.key === "ArrowRight") {
           switchToNextTerminal();
         } else {
           switchToPrevTerminal();
@@ -177,9 +198,9 @@ const TerminalContainer = ({
       }
 
       // Alternative: Ctrl+PageUp/PageDown for terminal navigation
-      if (e.ctrlKey && (e.key === 'PageUp' || e.key === 'PageDown')) {
+      if (e.ctrlKey && (e.key === "PageUp" || e.key === "PageDown")) {
         e.preventDefault();
-        if (e.key === 'PageDown') {
+        if (e.key === "PageDown") {
           switchToNextTerminal();
         } else {
           switchToPrevTerminal();
@@ -198,9 +219,17 @@ const TerminalContainer = ({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activeTerminalId, terminals, handleNewTerminal, closeTerminal, setActiveTerminal, switchToNextTerminal, switchToPrevTerminal]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [
+    activeTerminalId,
+    terminals,
+    handleNewTerminal,
+    closeTerminal,
+    setActiveTerminal,
+    switchToNextTerminal,
+    switchToPrevTerminal,
+  ]);
 
   // Auto-create first terminal when container is mounted
   useEffect(() => {
@@ -212,10 +241,7 @@ const TerminalContainer = ({
   // Create first terminal if none exist (fallback UI)
   if (terminals.length === 0) {
     return (
-      <div 
-        className={`flex flex-col h-full ${className}`}
-        data-terminal-container="active"
-      >
+      <div className={`flex flex-col h-full ${className}`} data-terminal-container="active">
         <TerminalTabBar
           terminals={[]}
           activeTerminalId={null}
@@ -245,10 +271,7 @@ const TerminalContainer = ({
   }
 
   return (
-    <div 
-      className={`flex flex-col h-full ${className}`}
-      data-terminal-container="active"
-    >
+    <div className={`flex flex-col h-full ${className}`} data-terminal-container="active">
       {/* Terminal Tab Bar */}
       <TerminalTabBar
         terminals={terminals}
@@ -266,7 +289,7 @@ const TerminalContainer = ({
 
       {/* Terminal Sessions */}
       <div className="flex-1 relative">
-        {terminals.map((terminal) => (
+        {terminals.map(terminal => (
           <TerminalSession
             key={terminal.id}
             terminal={terminal}
@@ -281,14 +304,12 @@ const TerminalContainer = ({
       {renamingTerminalId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg p-4 min-w-[300px]">
-            <h3 className="text-sm font-medium text-[var(--text-color)] mb-3">
-              Rename Terminal
-            </h3>
+            <h3 className="text-sm font-medium text-[var(--text-color)] mb-3">Rename Terminal</h3>
             <input
               type="text"
               value={newTerminalName}
-              onChange={(e) => setNewTerminalName(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => setNewTerminalName(e.target.value)}
+              onKeyDown={e => {
                 if (e.key === "Enter") {
                   confirmRename();
                 } else if (e.key === "Escape") {
@@ -320,4 +341,4 @@ const TerminalContainer = ({
   );
 };
 
-export default TerminalContainer; 
+export default TerminalContainer;
