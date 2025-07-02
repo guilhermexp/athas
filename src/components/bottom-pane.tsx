@@ -91,10 +91,10 @@ const BottomPane = ({
           {showTerminal && (
             <button
               onClick={() => handleTabClick("terminal")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 border ${
                 activeTab === "terminal"
-                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border border-[var(--border-color)]"
-                  : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)]"
+                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border-[var(--border-color)]"
+                  : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)] border-transparent"
               }`}
             >
               <TerminalIcon size={12} />
@@ -106,12 +106,12 @@ const BottomPane = ({
           {showDiagnostics && (
             <button
               onClick={() => handleTabClick("diagnostics")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded transition-all duration-200 border ${
                 activeTab === "diagnostics"
-                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border border-[var(--border-color)]"
+                  ? "bg-[var(--selected-color)] text-[var(--text-color)] border-[var(--border-color)]"
                   : diagnostics.length > 0
-                    ? "text-red-600 hover:bg-[var(--hover-color)]"
-                    : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)]"
+                    ? "text-red-600 hover:bg-[var(--hover-color)] border-transparent"
+                    : "text-[var(--text-lighter)] hover:text-[var(--text-color)] hover:bg-[var(--hover-color)] border-transparent"
               }`}
             >
               <AlertCircle size={12} />
