@@ -132,6 +132,9 @@ function App() {
   const codeEditorRef = useRef<CodeEditorRef>(null);
   const searchViewRef = useRef<SearchViewRef>(null);
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
+  
+  // Autosave timeout ref for proper cleanup
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Apply platform-specific CSS class on mount
   useEffect(() => {
@@ -144,6 +147,10 @@ function App() {
     // Cleanup on unmount
     return () => {
       document.documentElement.classList.remove('platform-macos', 'platform-other');
+      // Clean up autosave timeout on unmount
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -1066,11 +1073,17 @@ function App() {
       // For remote files, use direct synchronous update to avoid any React delays
       updateBufferContent(activeBuffer.id, content, false);
     } else {
-      // For local files, update content and auto-save
+      // For local files, update content and auto-save if enabled
       updateBufferContent(activeBuffer.id, content, true);
-      if (!activeBuffer.isVirtual) {
-        // Auto-save local files with small debounce
-        setTimeout(async () => {
+      
+      if (!activeBuffer.isVirtual && autoSave) {
+        // Clear previous autosave timeout to prevent accumulation
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+        }
+
+        // Auto-save local files with optimized debounce
+        autoSaveTimeoutRef.current = setTimeout(async () => {
           try {
             await writeFile(activeBuffer.path, content);
             markBufferDirty(activeBuffer.id, false);
@@ -1078,10 +1091,10 @@ function App() {
             console.error("Error saving local file:", error);
             markBufferDirty(activeBuffer.id, true);
           }
-        }, 100);
+        }, 150); // Slightly increased for better batching
       }
     }
-  }, [activeBuffer, updateBufferContent, markBufferDirty]);
+  }, [activeBuffer, updateBufferContent, markBufferDirty, autoSave]);
 
   const handleTabClick = (bufferId: string) => {
     setActiveBuffer(bufferId);

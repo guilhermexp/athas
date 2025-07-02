@@ -133,7 +133,7 @@ const safeHighlight = (code: string, language: string): string => {
       Prism.languages[language] || Prism.languages.text,
       language,
     );
-  } catch (error) {
+  } catch (_error) {
     // If highlighting fails, escape and return as plain text
     return escapeHtml(code);
   }
@@ -249,12 +249,15 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     const highlightRef = useRef<HTMLPreElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
     const [language, setLanguage] = useState<string>("text");
-      const [currentCompletion, setCurrentCompletion] =
+    const [currentCompletion, setCurrentCompletion] =
     useState<CompletionResponse | null>(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [lastCursorPosition, setLastCursorPosition] = useState(0);
 
-
+    // Refs to track timeouts for cleanup
+    const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // LSP completion state
     const [lspCompletions, setLspCompletions] = useState<CompletionItem[]>([]);
@@ -264,6 +267,13 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       top: 0,
       left: 0,
     });
+
+    // Hover tooltip state
+    const [hoverInfo, setHoverInfo] = useState<{
+      content: string;
+      position: { top: number; left: number };
+    } | null>(null);
+    const [isHovering, setIsHovering] = useState(false);
 
     // Expose textarea ref to parent
     useImperativeHandle(ref, () => ({
@@ -305,100 +315,173 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       }
     }, [filePath, openDocument, closeDocument, isLanguageSupported]);
 
-    // Update LSP when content changes
-    useEffect(() => {
-      if (filePath && changeDocument && isLanguageSupported?.(filePath)) {
-        changeDocument(filePath, value);
-      }
-    }, [value, filePath, changeDocument, isLanguageSupported]);
+    // Update LSP when content changes (debounced)
+    const debouncedChangeDocument = useCallback(
+      (newValue: string) => {
+        if (filePath && changeDocument && isLanguageSupported?.(filePath)) {
+          changeDocument(filePath, newValue);
+        }
+      },
+      [filePath, changeDocument, isLanguageSupported]
+    );
 
-    // Handle LSP completion requests
-    const handleLspCompletion = async (cursorPos: number) => {
+    useEffect(() => {
+      // Clear previous timeout
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+
+      // Debounce the LSP document change
+      highlightTimeoutRef.current = setTimeout(() => {
+        debouncedChangeDocument(value);
+      }, 150); // Reduced debounce time for better responsiveness
+
+      return () => {
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+        }
+      };
+    }, [value, debouncedChangeDocument]);
+
+    // Handle hover to show type information
+    const handleHover = useCallback(async (e: React.MouseEvent) => {
+      if (!getHover || !filePath || !isLanguageSupported?.(filePath)) {
+        return;
+      }
+      const isRemoteFile = filePath?.startsWith("remote://");
+      if (isRemoteFile) return;
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const rect = textarea.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const style = window.getComputedStyle(textarea);
+      const lineHeight = parseFloat(style.lineHeight) || fontSize * 1.4;
+      const measureElement = document.createElement('span');
+      measureElement.style.fontFamily = style.fontFamily;
+      measureElement.style.fontSize = style.fontSize;
+      measureElement.style.visibility = 'hidden';
+      measureElement.style.position = 'absolute';
+      measureElement.textContent = 'M';
+      document.body.appendChild(measureElement);
+      const charWidth = measureElement.offsetWidth;
+      document.body.removeChild(measureElement);
+      const paddingLeft = lineNumbers ? 8 : 16;
+      const line = Math.floor((y + textarea.scrollTop - 16) / lineHeight);
+      const character = Math.floor((x + textarea.scrollLeft - paddingLeft) / charWidth);
+      const lines = value.split('\n');
+      if (line >= lines.length || line < 0 || character < 0 || character >= (lines[line]?.length || 0)) {
+        return;
+      }
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+      hoverTimeoutRef.current = setTimeout(async () => {
+        try {
+          const hoverResult = await getHover(filePath, line, character);
+          if (hoverResult && hoverResult.contents) {
+            let content = '';
+            if (typeof hoverResult.contents === 'string') {
+              content = hoverResult.contents;
+            } else if (Array.isArray(hoverResult.contents)) {
+              content = hoverResult.contents.map((item: any) => {
+                if (typeof item === 'string') {
+                  return item;
+                } else if (item.language && item.value) {
+                  return `\`\`\`${item.language}\n${item.value}\n\`\`\``;
+                } else if (item.kind === 'markdown' && item.value) {
+                  return item.value;
+                } else if (item.value) {
+                  return item.value;
+                }
+                return '';
+              }).filter(Boolean).join('\n\n');
+            } else if (hoverResult.contents.language && hoverResult.contents.value) {
+              content = `\`\`\`${hoverResult.contents.language}\n${hoverResult.contents.value}\n\`\`\``;
+            } else if (hoverResult.contents.kind === 'markdown' && hoverResult.contents.value) {
+              content = hoverResult.contents.value;
+            } else if (hoverResult.contents.value) {
+              content = hoverResult.contents.value;
+            }
+            if (content.trim()) {
+              const tooltipPosition = {
+                top: Math.min(e.clientY + 15, window.innerHeight - 200),
+                left: Math.min(e.clientX + 15, window.innerWidth - 400),
+              };
+              setHoverInfo({
+                content: content.trim(),
+                position: tooltipPosition,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("LSP hover error:", error);
+        }
+      }, 500);
+    }, [getHover, filePath, isLanguageSupported, fontSize, lineNumbers, value]);
+
+    // LSP completion
+    const handleLspCompletion = useCallback(async (cursorPos: number) => {
       if (!getCompletions || !filePath || !isLanguageSupported?.(filePath)) {
         return;
       }
-
       const lines = value.substring(0, cursorPos).split("\n");
       const line = lines.length - 1;
       const character = lines[lines.length - 1].length;
-
       try {
         const completions = await getCompletions(filePath, line, character);
-
         if (completions.length > 0) {
           setLspCompletions(completions);
           setSelectedLspIndex(0);
           setIsLspCompletionVisible(true);
-
-          // Calculate position for dropdown
           if (textareaRef.current) {
             const textarea = textareaRef.current;
             const rect = textarea.getBoundingClientRect();
-            const scrollTop = textarea.scrollTop;
-            const scrollLeft = textarea.scrollLeft;
-
-            // Simple position calculation
-            const lineHeight = 20;
-            const charWidth = 8;
-            const top = rect.top + line * lineHeight - scrollTop + lineHeight;
-            const left = rect.left + character * charWidth - scrollLeft;
-
+            const lineHeight = fontSize * 1.4;
+            const charWidth = fontSize * 0.6;
+            const top = rect.top + (line + 1) * lineHeight;
+            const left = rect.left + character * charWidth;
             setCompletionPosition({ top, left });
           }
         }
       } catch (error) {
         console.error("LSP completion error:", error);
       }
-    };
+    }, [getCompletions, filePath, isLanguageSupported, fontSize, value]);
 
     // Apply LSP completion
-    const applyLspCompletion = (completion: CompletionItem) => {
+    const applyLspCompletion = useCallback((completion: CompletionItem) => {
       if (!textareaRef.current) return;
-
       const textarea = textareaRef.current;
       const cursorPos = textarea.selectionStart;
       const before = value.substring(0, cursorPos);
       const after = value.substring(cursorPos);
-
-      // Find the word start
       const wordMatch = before.match(/\w*$/);
       const wordStart = wordMatch ? cursorPos - wordMatch[0].length : cursorPos;
-
-      const newValue =
-        value.substring(0, wordStart) + completion.insertText + after;
+      const insertText = completion.insertText || completion.label;
+      const newValue = value.substring(0, wordStart) + insertText + after;
       onChange(newValue);
-
-      // Position cursor after insertion
-      const newCursorPos = wordStart + (completion.insertText?.length || 0);
+      const newCursorPos = wordStart + insertText.length;
       requestAnimationFrame(() => {
         if (textareaRef.current) {
           textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
           textareaRef.current.focus();
         }
       });
-
       setIsLspCompletionVisible(false);
-    };
+    }, [value, onChange]);
 
-    // Handle completion triggering on input
-    const handleCompletionTrigger = (cursorPos: number) => {
+    // Completion trigger
+    const handleCompletionTrigger = useCallback((cursorPos: number) => {
       if (disabled || !textareaRef.current) return;
-
-      // Allow completions in vim insert mode, but not in normal/visual modes
       if (vimEnabled && vimMode !== "insert") return;
-
-      // Skip completions for remote files to avoid delays
       const isRemoteFile = filePath?.startsWith("remote://");
       if (isRemoteFile) return;
-
-      // Trigger LSP completion if supported
       if (isLanguageSupported?.(filePath || "")) {
         handleLspCompletion(cursorPos);
       } else if (aiCompletion) {
-        // Fallback to AI completion for unsupported languages
         cancelCompletion();
         setShowCompletion(false);
-
         requestCompletion(
           {
             code: value,
@@ -414,39 +497,57 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
           },
         );
       }
-    };
+    }, [disabled, vimEnabled, vimMode, filePath, isLanguageSupported, handleLspCompletion, aiCompletion, language, filename, value]);
 
-    // Request completions when content changes (debounced)
-    useEffect(() => {
+    // Debounced completion trigger
+    const debouncedCompletionTrigger = useCallback((_newValue: string) => {
       if (!textareaRef.current) return;
-
       const currentCursorPos = textareaRef.current.selectionStart;
-
-      // Only trigger on forward cursor movement (typing)
       if (
         currentCursorPos > lastCursorPosition &&
         currentCursorPos - lastCursorPosition <= 5
       ) {
-        const timeoutId = setTimeout(() => {
+        if (completionTimeoutRef.current) {
+          clearTimeout(completionTimeoutRef.current);
+        }
+        completionTimeoutRef.current = setTimeout(() => {
           handleCompletionTrigger(currentCursorPos);
-        }, 300); // Debounce 300ms
-
+        }, 300);
         setLastCursorPosition(currentCursorPos);
-
-        return () => clearTimeout(timeoutId);
       } else {
         setLastCursorPosition(currentCursorPos);
       }
-    }, [value, language, filename, disabled, vimEnabled, vimMode]);
+    }, [lastCursorPosition, handleCompletionTrigger]);
+
+    // --- EFFECTS ---
+    useEffect(() => {
+      const triggerTimer = setTimeout(() => {
+        debouncedCompletionTrigger(value);
+      }, 100);
+      return () => {
+        clearTimeout(triggerTimer);
+        if (completionTimeoutRef.current) {
+          clearTimeout(completionTimeoutRef.current);
+        }
+      };
+    }, [value]);
 
     // Cleanup completion on unmount
     useEffect(() => {
       return () => {
         cancelCompletion();
+        // Clean up any pending timeouts
+        if (completionTimeoutRef.current) {
+          clearTimeout(completionTimeoutRef.current);
+        }
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+        }
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current);
+        }
       };
     }, []);
-
-
 
     // Function to add search highlighting to syntax highlighted content (memoized)
     const addSearchHighlighting = useMemo(() => {
@@ -522,22 +623,26 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       };
     }, [searchQuery, searchMatches, currentMatchIndex]);
 
-    // Highlight code when value, language, or search changes (debounced for performance)
+    // Highlight code when value, language, or search changes (optimized debouncing)
     useEffect(() => {
+      // Clear previous timeout to prevent accumulation
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+
       const isRemoteFile = filePath?.startsWith("remote://");
       
-      // For remote files, use much longer debounce and run in requestIdleCallback
-      // For local files, use minimal debounce for faster loading
-      const debounceTime = isRemoteFile ? 1000 : 50;
+      // Reduced debounce times for better responsiveness
+      const debounceTime = isRemoteFile ? 300 : 16; // ~1 frame for local files
       
-      const timeoutId = setTimeout(() => {
+      highlightTimeoutRef.current = setTimeout(() => {
         const performHighlighting = () => {
           if (highlightRef.current && language !== "text") {
             try {
               const highlighted = safeHighlight(value, language);
               const withSearchHighlighting = addSearchHighlighting(highlighted);
               highlightRef.current.innerHTML = withSearchHighlighting;
-            } catch (error) {
+            } catch (_error) {
               // Fallback to escaped plain text if highlighting fails
               const escapedValue = escapeHtml(value);
               const withSearchHighlighting = addSearchHighlighting(escapedValue);
@@ -551,24 +656,23 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
           }
         };
         
-        if (isRemoteFile) {
+        if (isRemoteFile && 'requestIdleCallback' in window) {
           // For remote files, use requestIdleCallback to run when browser is idle
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(performHighlighting, { timeout: 2000 });
-          } else {
-            // Fallback for browsers without requestIdleCallback
-            requestAnimationFrame(performHighlighting);
-          }
+          requestIdleCallback(performHighlighting, { timeout: 1000 });
         } else {
           performHighlighting();
         }
       }, debounceTime);
 
-      return () => clearTimeout(timeoutId);
-    }, [value, language, searchQuery, searchMatches, currentMatchIndex, filePath]);
+      return () => {
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+        }
+      };
+    }, [value, language, addSearchHighlighting, filePath]);
 
     // Sync scroll between textarea, highlight layer, and line numbers
-    const handleScroll = () => {
+    const handleScroll = useCallback(() => {
       if (
         textareaRef.current &&
         highlightRef.current &&
@@ -581,10 +685,10 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
         highlightRef.current.scrollLeft = scrollLeft;
         lineNumbersRef.current.scrollTop = scrollTop;
       }
-    };
+    }, []);
 
     // Handle cursor position changes
-    const handleCursorPositionChange = () => {
+    const handleCursorPositionChange = useCallback(() => {
       if (textareaRef.current && onCursorPositionChange) {
         const position = textareaRef.current.selectionStart;
         onCursorPositionChange(position);
@@ -597,10 +701,10 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
           handleLspCompletion(position);
         }
       }
-    };
+    }, [onCursorPositionChange, filePath, isLanguageSupported, vimEnabled, vimMode, handleLspCompletion]);
 
     // Handle completion acceptance
-    const handleAcceptCompletion = () => {
+    const handleAcceptCompletion = useCallback(() => {
       if (!currentCompletion || !textareaRef.current) return;
 
       const currentCursorPos = textareaRef.current.selectionStart;
@@ -618,18 +722,37 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
         if (textareaRef.current) {
           const newCursorPos =
             currentCursorPos + currentCompletion.completion.length;
-          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+          textareaRef.current.setSelectionRange(newCursorPos, newPos);
           textareaRef.current.focus();
         }
       });
-    };
+    }, [currentCompletion, value, onChange]);
 
     // Handle completion dismissal
-    const handleDismissCompletion = () => {
+    const handleDismissCompletion = useCallback(() => {
       setShowCompletion(false);
       setCurrentCompletion(null);
       cancelCompletion();
-    };
+    }, []);
+
+    // Handle mouse leave to hide hover
+    const handleMouseLeave = useCallback(() => {
+      setIsHovering(false);
+      // Clear hover timeout if mouse leaves
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+      // Small delay before hiding to allow moving to tooltip
+      setTimeout(() => {
+        if (!isHovering) {
+          setHoverInfo(null);
+        }
+      }, 150);
+    }, [isHovering]);
+
+    const handleMouseEnter = useCallback(() => {
+      setIsHovering(true);
+    }, []);
 
     const getTextareaClasses = useMemo(() => {
       // Always use transparent text so syntax highlighting layer shows through
@@ -683,7 +806,282 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       return Array.from({ length: maxLines }, (_, i) => i + 1);
     }, [value]);
 
+    // Memoized key handlers to prevent recreation on every render
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Handle LSP completion navigation
+      if (isLspCompletionVisible) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedLspIndex((prev) =>
+            prev < lspCompletions.length - 1 ? prev + 1 : 0,
+          );
+          return;
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedLspIndex((prev) =>
+            prev > 0 ? prev - 1 : lspCompletions.length - 1,
+          );
+          return;
+        } else if (e.key === "Enter" || e.key === "Tab") {
+          e.preventDefault();
+                      if (lspCompletions[selectedLspIndex]) {
+              applyLspCompletion(lspCompletions[selectedLspIndex]);
+            }
+          return;
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          setIsLspCompletionVisible(false);
+          return;
+        }
+      }
 
+      // Handle code editor shortcuts (before vim mode to allow vim to override if needed)
+      const textarea = textareaRef.current;
+      if (textarea && !disabled) {
+        const { selectionStart, selectionEnd } = textarea;
+        const currentValue = textarea.value;
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const cmdKey = isMac ? e.metaKey : e.ctrlKey;
+
+        // Tab for indentation
+        if (e.key === "Tab" && !e.shiftKey) {
+          e.preventDefault();
+          const spaces = " ".repeat(tabSize);
+          
+          if (selectionStart === selectionEnd) {
+            // No selection - insert tab at cursor
+            const newValue = 
+              currentValue.substring(0, selectionStart) + 
+              spaces + 
+              currentValue.substring(selectionStart);
+            onChange(newValue);
+            
+            requestAnimationFrame(() => {
+              if (textarea) {
+                const newPos = selectionStart + spaces.length;
+                textarea.setSelectionRange(newPos, newPos);
+              }
+            });
+          } else {
+            // Has selection - indent selected lines
+            const lines = currentValue.split('\n');
+            const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+            const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
+            
+            for (let i = startLine; i <= endLine; i++) {
+              lines[i] = spaces + lines[i];
+            }
+            
+            const newValue = lines.join('\n');
+            onChange(newValue);
+            
+            requestAnimationFrame(() => {
+              if (textarea) {
+                const newStart = selectionStart + spaces.length;
+                const newEnd = selectionEnd + (spaces.length * (endLine - startLine + 1));
+                textarea.setSelectionRange(newStart, newEnd);
+              }
+            });
+          }
+          return;
+        }
+
+        // Shift+Tab for unindentation
+        if (e.key === "Tab" && e.shiftKey) {
+          e.preventDefault();
+          const lines = currentValue.split('\n');
+          const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+          const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
+          
+          let removedChars = 0;
+          for (let i = startLine; i <= endLine; i++) {
+            const line = lines[i];
+            const leadingSpaces = line.match(/^ */)?.[0].length || 0;
+            const spacesToRemove = Math.min(leadingSpaces, tabSize);
+            lines[i] = line.substring(spacesToRemove);
+            if (i === startLine) removedChars = spacesToRemove;
+          }
+          
+          const newValue = lines.join('\n');
+          onChange(newValue);
+          
+          requestAnimationFrame(() => {
+            if (textarea) {
+              const newStart = Math.max(0, selectionStart - removedChars);
+              const totalRemoved = (endLine - startLine + 1) * Math.min(tabSize, 2); // Estimate
+              const newEnd = Math.max(newStart, selectionEnd - totalRemoved);
+              textarea.setSelectionRange(newStart, newEnd);
+            }
+          });
+          return;
+        }
+
+        // Alt/Option + Arrow Up/Down for moving lines
+        if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+          e.preventDefault();
+          const lines = currentValue.split('\n');
+          const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+          const targetLine = e.key === "ArrowUp" ? currentLine - 1 : currentLine + 1;
+          
+          if (targetLine >= 0 && targetLine < lines.length) {
+            // Swap lines
+            [lines[currentLine], lines[targetLine]] = [lines[targetLine], lines[currentLine]];
+            const newValue = lines.join('\n');
+            onChange(newValue);
+            
+            requestAnimationFrame(() => {
+              if (textarea) {
+                // Calculate new cursor position
+                const targetLineStart = lines.slice(0, targetLine).join('\n').length + (targetLine > 0 ? 1 : 0);
+                const currentLineText = lines[targetLine];
+                const cursorOffsetInLine = selectionStart - (currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1);
+                const newPos = targetLineStart + Math.min(cursorOffsetInLine, currentLineText.length);
+                textarea.setSelectionRange(newPos, newPos);
+              }
+            });
+          }
+          return;
+        }
+
+        // Cmd/Ctrl + D for duplicate line
+        if (cmdKey && e.key === "d") {
+          e.preventDefault();
+          const lines = currentValue.split('\n');
+          const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+          const lineToClone = lines[currentLine];
+          
+          lines.splice(currentLine + 1, 0, lineToClone);
+          const newValue = lines.join('\n');
+          onChange(newValue);
+          
+          requestAnimationFrame(() => {
+            if (textarea) {
+              const newPos = selectionStart + lineToClone.length + 1;
+              textarea.setSelectionRange(newPos, newPos);
+            }
+          });
+          return;
+        }
+
+        // Cmd/Ctrl + / for toggle comment
+        if (cmdKey && e.key === "/") {
+          e.preventDefault();
+          const lines = currentValue.split('\n');
+          const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+          const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
+          
+          // Determine comment syntax based on language
+          const getCommentSyntax = (lang: string) => {
+            const singleLineComments: { [key: string]: string } = {
+              javascript: "//",
+              typescript: "//",
+              java: "//",
+              css: "/*",
+              python: "#",
+              ruby: "#",
+              bash: "#",
+              yaml: "#",
+              sql: "--",
+            };
+            return singleLineComments[lang] || "//";
+          };
+          
+          const commentPrefix = getCommentSyntax(language);
+          const commentPattern = new RegExp(`^(\\s*)${commentPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s?`);
+          
+          // Check if all selected lines are commented
+          const allCommented = lines.slice(startLine, endLine + 1).every(line => 
+            line.trim() === '' || commentPattern.test(line)
+          );
+          
+          for (let i = startLine; i <= endLine; i++) {
+            if (lines[i].trim() === '') continue; // Skip empty lines
+            
+            if (allCommented) {
+              // Uncomment
+              lines[i] = lines[i].replace(commentPattern, '$1');
+            } else {
+              // Comment
+              const leadingWhitespace = lines[i].match(/^\s*/)?.[0] || '';
+              lines[i] = leadingWhitespace + commentPrefix + ' ' + lines[i].substring(leadingWhitespace.length);
+            }
+          }
+          
+          const newValue = lines.join('\n');
+          onChange(newValue);
+          return;
+        }
+
+        // Cmd/Ctrl + Enter for new line below (like VS Code)
+        if (cmdKey && e.key === "Enter") {
+          e.preventDefault();
+          const lines = currentValue.split('\n');
+          const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
+          const currentLineEnd = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1 + lines[currentLine].length;
+          
+          const newValue = 
+            currentValue.substring(0, currentLineEnd) + 
+            '\n' + 
+            currentValue.substring(currentLineEnd);
+          onChange(newValue);
+          
+          requestAnimationFrame(() => {
+            if (textarea) {
+              const newPos = currentLineEnd + 1;
+              textarea.setSelectionRange(newPos, newPos);
+            }
+          });
+          return;
+        }
+
+        // Cmd/Ctrl + Shift + Enter for new line above
+        if (cmdKey && e.shiftKey && e.key === "Enter") {
+          e.preventDefault();
+          const currentLineStart = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1;
+          
+          const newValue = 
+            currentValue.substring(0, currentLineStart) + 
+            '\n' + 
+            currentValue.substring(currentLineStart);
+          onChange(newValue);
+          
+          requestAnimationFrame(() => {
+            if (textarea) {
+              textarea.setSelectionRange(currentLineStart, currentLineStart);
+            }
+          });
+          return;
+        }
+
+        // Cmd/Ctrl + Z for undo - let browser handle it
+        if (cmdKey && e.key === "z" && !e.shiftKey) {
+          // Don't prevent default - let the browser handle undo
+          return;
+        }
+
+        // Cmd/Ctrl + Y or Cmd/Ctrl + Shift + Z for redo - let browser handle it
+        if ((cmdKey && e.key === "y") || (cmdKey && e.shiftKey && e.key === "z")) {
+          // Don't prevent default - let the browser handle redo
+          return;
+        }
+      }
+
+      // Handle vim mode if enabled
+      if (vimEnabled && onKeyDown) {
+        onKeyDown(e);
+      }
+    }, [
+      isLspCompletionVisible,
+              lspCompletions,
+        selectedLspIndex,
+        applyLspCompletion,
+        disabled,
+        tabSize,
+      onChange,
+      language,
+      vimEnabled,
+      onKeyDown
+    ]);
 
     return (
       <div className="flex-1 relative flex flex-col h-full">
@@ -727,273 +1125,13 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
               ref={textareaRef}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              onKeyDown={(e) => {
-                // Handle LSP completion navigation
-                if (isLspCompletionVisible) {
-                  if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    setSelectedLspIndex((prev) =>
-                      prev < lspCompletions.length - 1 ? prev + 1 : 0,
-                    );
-                    return;
-                  } else if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    setSelectedLspIndex((prev) =>
-                      prev > 0 ? prev - 1 : lspCompletions.length - 1,
-                    );
-                    return;
-                  } else if (e.key === "Enter" || e.key === "Tab") {
-                    e.preventDefault();
-                    if (lspCompletions[selectedLspIndex]) {
-                      applyLspCompletion(lspCompletions[selectedLspIndex]);
-                    }
-                    return;
-                  } else if (e.key === "Escape") {
-                    e.preventDefault();
-                    setIsLspCompletionVisible(false);
-                    return;
-                  }
-                }
-
-                // Handle code editor shortcuts (before vim mode to allow vim to override if needed)
-                const textarea = textareaRef.current;
-                if (textarea && !disabled) {
-                  const { selectionStart, selectionEnd } = textarea;
-                  const currentValue = textarea.value;
-                  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-                  const cmdKey = isMac ? e.metaKey : e.ctrlKey;
-
-                  // Tab for indentation
-                  if (e.key === "Tab" && !e.shiftKey) {
-                    e.preventDefault();
-                    const spaces = " ".repeat(tabSize);
-                    
-                    if (selectionStart === selectionEnd) {
-                      // No selection - insert tab at cursor
-                      const newValue = 
-                        currentValue.substring(0, selectionStart) + 
-                        spaces + 
-                        currentValue.substring(selectionStart);
-                      onChange(newValue);
-                      
-                      requestAnimationFrame(() => {
-                        if (textarea) {
-                          const newPos = selectionStart + spaces.length;
-                          textarea.setSelectionRange(newPos, newPos);
-                        }
-                      });
-                    } else {
-                      // Has selection - indent selected lines
-                      const lines = currentValue.split('\n');
-                      const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                      const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
-                      
-                      for (let i = startLine; i <= endLine; i++) {
-                        lines[i] = spaces + lines[i];
-                      }
-                      
-                      const newValue = lines.join('\n');
-                      onChange(newValue);
-                      
-                      requestAnimationFrame(() => {
-                        if (textarea) {
-                          const newStart = selectionStart + spaces.length;
-                          const newEnd = selectionEnd + (spaces.length * (endLine - startLine + 1));
-                          textarea.setSelectionRange(newStart, newEnd);
-                        }
-                      });
-                    }
-                    return;
-                  }
-
-                  // Shift+Tab for unindentation
-                  if (e.key === "Tab" && e.shiftKey) {
-                    e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
-                    
-                    let removedChars = 0;
-                    for (let i = startLine; i <= endLine; i++) {
-                      const line = lines[i];
-                      const leadingSpaces = line.match(/^ */)?.[0].length || 0;
-                      const spacesToRemove = Math.min(leadingSpaces, tabSize);
-                      lines[i] = line.substring(spacesToRemove);
-                      if (i === startLine) removedChars = spacesToRemove;
-                    }
-                    
-                    const newValue = lines.join('\n');
-                    onChange(newValue);
-                    
-                    requestAnimationFrame(() => {
-                      if (textarea) {
-                        const newStart = Math.max(0, selectionStart - removedChars);
-                        const totalRemoved = (endLine - startLine + 1) * Math.min(tabSize, 2); // Estimate
-                        const newEnd = Math.max(newStart, selectionEnd - totalRemoved);
-                        textarea.setSelectionRange(newStart, newEnd);
-                      }
-                    });
-                    return;
-                  }
-
-                  // Alt/Option + Arrow Up/Down for moving lines
-                  if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-                    e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const targetLine = e.key === "ArrowUp" ? currentLine - 1 : currentLine + 1;
-                    
-                    if (targetLine >= 0 && targetLine < lines.length) {
-                      // Swap lines
-                      [lines[currentLine], lines[targetLine]] = [lines[targetLine], lines[currentLine]];
-                      const newValue = lines.join('\n');
-                      onChange(newValue);
-                      
-                      requestAnimationFrame(() => {
-                        if (textarea) {
-                          // Calculate new cursor position
-                          const targetLineStart = lines.slice(0, targetLine).join('\n').length + (targetLine > 0 ? 1 : 0);
-                          const currentLineText = lines[targetLine];
-                          const cursorOffsetInLine = selectionStart - (currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1);
-                          const newPos = targetLineStart + Math.min(cursorOffsetInLine, currentLineText.length);
-                          textarea.setSelectionRange(newPos, newPos);
-                        }
-                      });
-                    }
-                    return;
-                  }
-
-                  // Cmd/Ctrl + D for duplicate line
-                  if (cmdKey && e.key === "d") {
-                    e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const lineToClone = lines[currentLine];
-                    
-                    lines.splice(currentLine + 1, 0, lineToClone);
-                    const newValue = lines.join('\n');
-                    onChange(newValue);
-                    
-                    requestAnimationFrame(() => {
-                      if (textarea) {
-                        const newPos = selectionStart + lineToClone.length + 1;
-                        textarea.setSelectionRange(newPos, newPos);
-                      }
-                    });
-                    return;
-                  }
-
-                  // Cmd/Ctrl + / for toggle comment
-                  if (cmdKey && e.key === "/") {
-                    e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const startLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const endLine = currentValue.substring(0, selectionEnd).split('\n').length - 1;
-                    
-                    // Determine comment syntax based on language
-                    const getCommentSyntax = (lang: string) => {
-                      const singleLineComments: { [key: string]: string } = {
-                        javascript: "//",
-                        typescript: "//",
-                        java: "//",
-                        css: "/*",
-                        python: "#",
-                        ruby: "#",
-                        bash: "#",
-                        yaml: "#",
-                        sql: "--",
-                      };
-                      return singleLineComments[lang] || "//";
-                    };
-                    
-                    const commentPrefix = getCommentSyntax(language);
-                    const commentPattern = new RegExp(`^(\\s*)${commentPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s?`);
-                    
-                    // Check if all selected lines are commented
-                    const allCommented = lines.slice(startLine, endLine + 1).every(line => 
-                      line.trim() === '' || commentPattern.test(line)
-                    );
-                    
-                    for (let i = startLine; i <= endLine; i++) {
-                      if (lines[i].trim() === '') continue; // Skip empty lines
-                      
-                      if (allCommented) {
-                        // Uncomment
-                        lines[i] = lines[i].replace(commentPattern, '$1');
-                      } else {
-                        // Comment
-                        const leadingWhitespace = lines[i].match(/^\s*/)?.[0] || '';
-                        lines[i] = leadingWhitespace + commentPrefix + ' ' + lines[i].substring(leadingWhitespace.length);
-                      }
-                    }
-                    
-                    const newValue = lines.join('\n');
-                    onChange(newValue);
-                    return;
-                  }
-
-                  // Cmd/Ctrl + Enter for new line below (like VS Code)
-                  if (cmdKey && e.key === "Enter") {
-                    e.preventDefault();
-                    const lines = currentValue.split('\n');
-                    const currentLine = currentValue.substring(0, selectionStart).split('\n').length - 1;
-                    const currentLineEnd = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1 + lines[currentLine].length;
-                    
-                    const newValue = 
-                      currentValue.substring(0, currentLineEnd) + 
-                      '\n' + 
-                      currentValue.substring(currentLineEnd);
-                    onChange(newValue);
-                    
-                    requestAnimationFrame(() => {
-                      if (textarea) {
-                        const newPos = currentLineEnd + 1;
-                        textarea.setSelectionRange(newPos, newPos);
-                      }
-                    });
-                    return;
-                  }
-
-                  // Cmd/Ctrl + Shift + Enter for new line above
-                  if (cmdKey && e.shiftKey && e.key === "Enter") {
-                    e.preventDefault();
-                    const currentLineStart = currentValue.substring(0, selectionStart).lastIndexOf('\n') + 1;
-                    
-                    const newValue = 
-                      currentValue.substring(0, currentLineStart) + 
-                      '\n' + 
-                      currentValue.substring(currentLineStart);
-                    onChange(newValue);
-                    
-                    requestAnimationFrame(() => {
-                      if (textarea) {
-                        textarea.setSelectionRange(currentLineStart, currentLineStart);
-                      }
-                    });
-                    return;
-                  }
-
-                  // Cmd/Ctrl + Z for undo - let browser handle it
-                  if (cmdKey && e.key === "z" && !e.shiftKey) {
-                    // Don't prevent default - let the browser handle undo
-                    return;
-                  }
-
-                  // Cmd/Ctrl + Y or Cmd/Ctrl + Shift + Z for redo - let browser handle it
-                  if ((cmdKey && e.key === "y") || (cmdKey && e.shiftKey && e.key === "z")) {
-                    // Don't prevent default - let the browser handle redo
-                    return;
-                  }
-                }
-
-                // Handle vim mode if enabled
-                if (vimEnabled && onKeyDown) {
-                  onKeyDown(e);
-                }
-              }}
+              onKeyDown={handleKeyDown}
               onKeyUp={handleCursorPositionChange}
               onClick={handleCursorPositionChange}
               onScroll={handleScroll}
+              onMouseMove={handleHover}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
               placeholder={placeholder}
               disabled={disabled}
               className={cn(getTextareaClasses, className)}
@@ -1049,6 +1187,62 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             onClose={() => setIsLspCompletionVisible(false)}
             position={completionPosition}
           />
+        )}
+
+        {/* Hover Tooltip */}
+        {hoverInfo && (
+          <div
+            className="fixed z-50 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded-lg shadow-lg max-w-lg pointer-events-none"
+            style={{
+              top: hoverInfo.position.top,
+              left: hoverInfo.position.left,
+            }}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            <div className="p-3">
+              {/* Check if content contains code blocks */}
+              {hoverInfo.content.includes('```') ? (
+                <div className="space-y-2">
+                  {hoverInfo.content.split(/```[\w]*\n?/).map((part, index) => {
+                    const trimmedPart = part.trim();
+                    if (!trimmedPart) return null;
+                    
+                    if (index % 2 === 1) {
+                      // This is inside code blocks
+                      return (
+                        <pre 
+                          key={index}
+                          className="font-mono text-xs bg-[var(--secondary-bg)] p-2 rounded border border-[var(--border-color)] text-[var(--text-color)] overflow-x-auto"
+                          style={{ fontSize: `${fontSize * 0.85}px` }}
+                        >
+                          {trimmedPart.replace(/```$/, '')}
+                        </pre>
+                      );
+                    } else {
+                      // This is markdown/plain text
+                      return trimmedPart ? (
+                        <div 
+                          key={index}
+                          className="text-xs text-[var(--text-color)] leading-relaxed whitespace-pre-wrap"
+                          style={{ fontSize: `${fontSize * 0.9}px` }}
+                        >
+                          {trimmedPart}
+                        </div>
+                      ) : null;
+                    }
+                  })}
+                </div>
+              ) : (
+                <div 
+                  className="text-xs text-[var(--text-color)] leading-relaxed whitespace-pre-wrap max-w-sm"
+                  style={{ fontSize: `${fontSize * 0.9}px` }}
+                >
+                  {hoverInfo.content}
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     );

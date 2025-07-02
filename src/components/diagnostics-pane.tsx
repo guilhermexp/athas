@@ -29,32 +29,39 @@ const DiagnosticsPane = ({
   const getSeverityIcon = (severity: Diagnostic['severity']) => {
     switch (severity) {
       case 'error':
-        return <AlertCircle size={14} className="text-red-500" />;
+        return <AlertCircle size={10} className="text-[var(--error-color)] opacity-80" />;
       case 'warning':
-        return <AlertTriangle size={14} className="text-yellow-500" />;
+        return <AlertTriangle size={10} className="text-[var(--warning-color)] opacity-80" />;
       case 'info':
-        return <Info size={14} className="text-blue-500" />;
+        return <Info size={10} className="text-[var(--info-color)] opacity-80" />;
       default:
-        return <Info size={14} className="text-gray-500" />;
+        return <Info size={10} className="text-[var(--text-lighter)]" />;
     }
   };
 
   const getSeverityColor = (severity: Diagnostic['severity']) => {
     switch (severity) {
       case 'error':
-        return 'text-red-600';
+        return 'text-[var(--error-color)] opacity-90';
       case 'warning':
-        return 'text-yellow-600';
+        return 'text-[var(--warning-color)] opacity-90';
       case 'info':
-        return 'text-blue-600';
+        return 'text-[var(--info-color)] opacity-90';
       default:
-        return 'text-gray-600';
+        return 'text-[var(--text-lighter)]';
     }
   };
 
-  const errorCount = diagnostics.filter(d => d.severity === 'error').length;
-  const warningCount = diagnostics.filter(d => d.severity === 'warning').length;
-  const infoCount = diagnostics.filter(d => d.severity === 'info').length;
+  // Group diagnostics by severity for better organization
+  const groupedDiagnostics = {
+    error: diagnostics.filter(d => d.severity === 'error'),
+    warning: diagnostics.filter(d => d.severity === 'warning'),
+    info: diagnostics.filter(d => d.severity === 'info'),
+  };
+
+  const errorCount = groupedDiagnostics.error.length;
+  const warningCount = groupedDiagnostics.warning.length;
+  const infoCount = groupedDiagnostics.info.length;
 
   // Content component that can be used both embedded and standalone
   const DiagnosticsContent = () => (
@@ -64,35 +71,49 @@ const DiagnosticsPane = ({
           No problems detected
         </div>
       ) : (
-        <div className="divide-y divide-[var(--border-color)]">
-          {diagnostics.map((diagnostic, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-2 p-2 hover:bg-[var(--hover-color)] cursor-pointer transition-colors"
-              onClick={() => onDiagnosticClick?.(diagnostic)}
-            >
-              {getSeverityIcon(diagnostic.severity)}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 text-xs text-[var(--text-lighter)]">
-                  <span className="font-mono">Ln {diagnostic.line}</span>
-                  <span className="font-mono">Col {diagnostic.column}</span>
-                  {diagnostic.source && (
-                    <span className="bg-[var(--border-color)] px-1.5 py-0.5 rounded text-xs font-mono">
-                      {diagnostic.source}
-                    </span>
-                  )}
-                  {diagnostic.code && (
-                    <span className="bg-[var(--selected-color)] px-1.5 py-0.5 rounded text-xs font-mono border border-[var(--border-color)]">
-                      {diagnostic.code}
-                    </span>
-                  )}
-                </div>
-                <div className={`text-xs mt-1 leading-relaxed ${getSeverityColor(diagnostic.severity)}`}>
-                  {diagnostic.message}
-                </div>
+        <div className="divide-y divide-[var(--border-color)]/20">
+          {/* Group by severity for better organization */}
+          {[
+            { severity: 'error' as const, items: groupedDiagnostics.error },
+            { severity: 'warning' as const, items: groupedDiagnostics.warning },
+            { severity: 'info' as const, items: groupedDiagnostics.info },
+          ].map(group => 
+            group.items.length > 0 && (
+              <div key={group.severity}>
+                {group.items.map((diagnostic, index) => (
+                  <div
+                    key={`${group.severity}-${index}`}
+                    className="flex items-start gap-1.5 px-2 py-0.5 hover:bg-[var(--hover-color)] cursor-pointer transition-colors duration-150 border-b border-[var(--border-color)]/10"
+                    onClick={() => onDiagnosticClick?.(diagnostic)}
+                  >
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getSeverityIcon(diagnostic.severity)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 text-xs text-[var(--text-lighter)] mb-0">
+                        <span className="font-mono text-xs opacity-70">
+                          {diagnostic.line}:{diagnostic.column}
+                        </span>
+                        {diagnostic.source && (
+                          <span className="text-xs opacity-50 truncate max-w-20">
+                            {diagnostic.source}
+                          </span>
+                        )}
+                        {diagnostic.code && (
+                          <span className="text-xs bg-[var(--secondary-bg)] px-1 rounded text-[var(--text-lighter)] opacity-60">
+                            {diagnostic.code}
+                          </span>
+                        )}
+                      </div>
+                      <div className={`text-xs leading-tight ${getSeverityColor(diagnostic.severity)} pr-1`}>
+                        {diagnostic.message}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
+            )
+          )}
         </div>
       )}
     </div>
@@ -109,41 +130,41 @@ const DiagnosticsPane = ({
 
   // Standalone version with full container and header
   return (
-    <div className="border-t border-[var(--border-color)] bg-[var(--secondary-bg)] flex flex-col h-48">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)]">
-        <div className="flex items-center gap-4">
-          <h3 className="font-mono text-sm text-[var(--text-color)]">Problems</h3>
-          <div className="flex items-center gap-4 text-xs">
+    <div className="border-t border-[var(--border-color)] bg-[var(--secondary-bg)] flex flex-col h-44">
+      {/* Header - more compact */}
+      <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--border-color)] bg-[var(--primary-bg)]">
+        <div className="flex items-center gap-2">
+          <h3 className="font-mono text-xs font-medium text-[var(--text-color)]">Problems</h3>
+          <div className="flex items-center gap-2 text-xs">
             {errorCount > 0 && (
-              <div className="flex items-center gap-1 text-red-600">
-                <AlertCircle size={12} />
-                <span>{errorCount}</span>
+              <div className="flex items-center gap-0.5 text-[var(--error-color)] opacity-80">
+                <AlertCircle size={8} />
+                <span className="text-xs">{errorCount}</span>
               </div>
             )}
             {warningCount > 0 && (
-              <div className="flex items-center gap-1 text-yellow-600">
-                <AlertTriangle size={12} />
-                <span>{warningCount}</span>
+              <div className="flex items-center gap-0.5 text-[var(--warning-color)] opacity-80">
+                <AlertTriangle size={8} />
+                <span className="text-xs">{warningCount}</span>
               </div>
             )}
             {infoCount > 0 && (
-              <div className="flex items-center gap-1 text-blue-600">
-                <Info size={12} />
-                <span>{infoCount}</span>
+              <div className="flex items-center gap-0.5 text-[var(--info-color)] opacity-80">
+                <Info size={8} />
+                <span className="text-xs">{infoCount}</span>
               </div>
             )}
             {diagnostics.length === 0 && (
-              <span className="text-[var(--text-lighter)]">No problems</span>
+              <span className="text-[var(--text-lighter)] text-xs">No problems</span>
             )}
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-[var(--hover-color)] rounded"
+          className="p-0.5 hover:bg-[var(--hover-color)] rounded transition-colors duration-150"
           title="Close"
         >
-          <X size={14} className="text-[var(--text-lighter)]" />
+          <X size={10} className="text-[var(--text-lighter)] hover:text-[var(--text-color)]" />
         </button>
       </div>
 
