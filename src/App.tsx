@@ -568,7 +568,7 @@ function App() {
       handleThemeChange(theme as ThemeType);
     },
     onAbout: () => {
-      alert("athas-code - A modern code editor built with Tauri and React");
+      // Native About dialog is handled by the menu system
     },
     onHelp: () => {
       console.log("Help triggered from menu");
