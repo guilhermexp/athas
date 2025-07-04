@@ -562,6 +562,17 @@ button {
     }
 }
 
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Custom utility classes */
 .vim-cursor-blink {
     animation: vim-cursor-blink 1s infinite;
@@ -703,6 +714,8 @@ button {
     scrollbar-width: thin;
     scrollbar-color: var(--border-color) transparent;
     overscroll-behavior-x: contain; /* Prevent elastic scroll on tabs only */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 .tab-scroll-container::-webkit-scrollbar {
@@ -716,10 +729,21 @@ button {
 .tab-scroll-container::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 3px;
+    transition: background-color 0.2s ease;
 }
 
 .tab-scroll-container::-webkit-scrollbar-thumb:hover {
     background: var(--text-lighter);
+}
+
+/* Enhance tab scrolling behavior */
+.tab-scroll-container:hover::-webkit-scrollbar-thumb {
+    background: rgba(var(--border-color-rgb, 224, 224, 224), 0.8);
+}
+
+/* Ensure tabs maintain consistent spacing */
+.tab-scroll-container > * {
+    flex-shrink: 0;
 }
 
 /* Prevent bounce scrolling only where needed */
