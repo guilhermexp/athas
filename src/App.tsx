@@ -885,14 +885,17 @@ function App() {
                 maxOpenTabs={maxOpenTabs}
               />
 
-              {/* Breadcrumb */}
-              <BreadcrumbContainer
-                activeBuffer={activeBuffer}
-                rootFolderPath={rootFolderPath}
-                onFileSelect={handleFileSelect}
-                setIsRightPaneVisible={uiState.setIsRightPaneVisible}
-                onMinimapStateChange={setIsMinimapVisible}
-              />
+              {/* Breadcrumb - Hidden in git view and extensions view */}
+              {!uiState.isGitViewActive
+                && activeBuffer?.path !== "extensions://language-servers" && (
+                  <BreadcrumbContainer
+                    activeBuffer={activeBuffer}
+                    rootFolderPath={rootFolderPath}
+                    onFileSelect={handleFileSelect}
+                    setIsRightPaneVisible={uiState.setIsRightPaneVisible}
+                    onMinimapStateChange={setIsMinimapVisible}
+                  />
+                )}
 
               {/* Find Bar */}
               <FindBar
