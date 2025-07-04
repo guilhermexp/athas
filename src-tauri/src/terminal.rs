@@ -282,16 +282,14 @@ impl TerminalConnection {
                     return Err(anyhow!("Git Bash is only available on Windows"));
                 }
             }
-            TerminalKind::Wsl { distribution: _, working_directory: _ } => {
+            TerminalKind::Wsl { distribution, working_directory: _ } => {
                 #[cfg(target_os = "windows")]
                 {
                     let mut cmd = CommandBuilder::new("wsl");
 
-                    if let Some(dist) = &config.kind {
-                        if let TerminalKind::Wsl { distribution: Some(dist_name), .. } = dist {
-                            cmd.arg("-d");
-                            cmd.arg(dist_name);
-                        }
+                    if let Some(dist_name) = distribution {
+                        cmd.arg("-d");
+                        cmd.arg(dist_name);
                     }
 
                     if let Some(wd) = config.working_dir.as_ref() {
