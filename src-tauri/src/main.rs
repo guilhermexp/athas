@@ -1135,9 +1135,15 @@ fn main() {
             }
 
             app.on_menu_event(move |_app_handle: &tauri::AppHandle, event| {
+                println!("Menu event triggered: {}", event.id().0.as_str());
                 if let Some(window) = _app_handle.get_webview_window("main") {
                     match event.id().0.as_str() {
                         "quit" => {
+                            println!("Quit menu item clicked");
+                            std::process::exit(0);
+                        }
+                        "quit_app" => {
+                            println!("Quit app menu item triggered");
                             std::process::exit(0);
                         }
                         "new_file" => {
@@ -1153,6 +1159,7 @@ fn main() {
                             let _ = window.emit("menu_save_as", ());
                         }
                         "close_tab" => {
+                            println!("Close tab menu item triggered");
                             let _ = window.emit("menu_close_tab", ());
                         }
                         "undo" => {
@@ -1198,7 +1205,7 @@ fn main() {
                             let _ = window.emit("menu_prev_tab", ());
                         }
                         "about" => {
-                            let _ = window.emit("menu_about", ());
+                            // Native About dialog is handled automatically by macOS
                         }
                         "help" => {
                             let _ = window.emit("menu_help", ());
