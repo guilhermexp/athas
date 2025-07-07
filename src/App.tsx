@@ -563,13 +563,20 @@ function App() {
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
-    setIsBottomPaneVisible: uiState.setIsBottomPaneVisible,
+    setIsBottomPaneVisible: v =>
+      uiState.setIsBottomPaneVisible(typeof v === "function" ? v(uiState.isBottomPaneVisible) : v),
     setBottomPaneActiveTab: uiState.setBottomPaneActiveTab,
-    setIsSidebarVisible: uiState.setIsSidebarVisible,
+    setIsSidebarVisible: v =>
+      uiState.setIsSidebarVisible(typeof v === "function" ? v(uiState.isSidebarVisible) : v),
     setIsFindVisible,
-    setIsRightPaneVisible: uiState.setIsRightPaneVisible,
-    setIsCommandBarVisible: uiState.setIsCommandBarVisible,
-    setIsCommandPaletteVisible: uiState.setIsCommandPaletteVisible,
+    setIsRightPaneVisible: v =>
+      uiState.setIsRightPaneVisible(typeof v === "function" ? v(uiState.isRightPaneVisible) : v),
+    setIsCommandBarVisible: v =>
+      uiState.setIsCommandBarVisible(typeof v === "function" ? v(uiState.isCommandBarVisible) : v),
+    setIsCommandPaletteVisible: v =>
+      uiState.setIsCommandPaletteVisible(
+        typeof v === "function" ? v(uiState.isCommandPaletteVisible) : v,
+      ),
     setIsSearchViewActive: uiState.setIsSearchViewActive,
     focusSearchInput,
     focusCommandPalette,
@@ -1132,13 +1139,7 @@ function App() {
             onTabChange={tab => uiState.setBottomPaneActiveTab(tab)}
             diagnostics={diagnostics}
             onDiagnosticClick={handleDiagnosticClick}
-            currentDirectory={
-              files.length > 0
-                ? typeof files[0]?.path === "string"
-                  ? files[0].path.split("/").slice(0, -1).join("/")
-                  : undefined
-                : undefined
-            }
+            currentDirectory={rootFolderPath}
             showTerminal={coreFeatures.terminal}
             showDiagnostics={coreFeatures.diagnostics}
           />
