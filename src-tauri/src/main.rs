@@ -9,19 +9,13 @@ use std::process::Command;
 use std::sync::Arc;
 use tauri::command;
 use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
-use tauri_plugin_dialog;
-use tauri_plugin_fs;
-use tauri_plugin_http;
-use tauri_plugin_opener;
-use tauri_plugin_os;
-use tauri_plugin_shell;
-use tauri_plugin_store;
 use base64::{engine::general_purpose, Engine as _};
 
 mod lsp;
 mod menu;
 mod ssh;
 mod terminal;
+mod file_watcher;
 use lsp::{
     list_lsp_servers, lsp_completion, lsp_did_change, lsp_did_close, lsp_did_open, lsp_hover,
     start_lsp_server, stop_lsp_server, LSPState,
@@ -35,6 +29,7 @@ use terminal::{
     resize_terminal, send_terminal_ctrl_c, send_terminal_ctrl_d, send_terminal_data,
     TerminalManager,
 };
+use file_watcher::FileWatcher;
 
 #[derive(serde::Serialize)]
 struct FileEntry {
@@ -204,13 +199,13 @@ fn read_directory_custom(path: String) -> Result<Vec<FileEntry>, String> {
                         });
                     }
                     Err(e) => {
-                        eprintln!("Error reading entry: {}", e);
+                        eprintln!("Error reading entry: {e}");
                     }
                 }
             }
         }
         Err(e) => {
-            return Err(format!("Failed to read directory: {}", e));
+            return Err(format!("Failed to read directory: {e}"));
         }
     }
 
@@ -238,7 +233,7 @@ fn read_file_custom(path: String) -> Result<String, String> {
 
     match fs::read_to_string(file_path) {
         Ok(content) => Ok(content),
-        Err(e) => Err(format!("Failed to read file: {}", e)),
+        Err(e) => Err(format!("Failed to read file: {e}")),
     }
 }
 
@@ -248,7 +243,7 @@ fn write_file_custom(path: String, content: String) -> Result<(), String> {
 
     match fs::write(file_path, content) {
         Ok(()) => Ok(()),
-        Err(e) => Err(format!("Failed to write file: {}", e)),
+        Err(e) => Err(format!("Failed to write file: {e}")),
     }
 }
 
@@ -258,7 +253,7 @@ fn create_directory_custom(path: String) -> Result<(), String> {
 
     match fs::create_dir_all(dir_path) {
         Ok(()) => Ok(()),
-        Err(e) => Err(format!("Failed to create directory: {}", e)),
+        Err(e) => Err(format!("Failed to create directory: {e}")),
     }
 }
 
@@ -273,12 +268,12 @@ fn delete_path_custom(path: String) -> Result<(), String> {
     if target_path.is_dir() {
         match fs::remove_dir_all(target_path) {
             Ok(()) => Ok(()),
-            Err(e) => Err(format!("Failed to delete directory: {}", e)),
+            Err(e) => Err(format!("Failed to delete directory: {e}")),
         }
     } else {
         match fs::remove_file(target_path) {
             Ok(()) => Ok(()),
-            Err(e) => Err(format!("Failed to delete file: {}", e)),
+            Err(e) => Err(format!("Failed to delete file: {e}")),
         }
     }
 }
@@ -337,10 +332,10 @@ fn query_sqlite(path: String, query: String) -> Result<QueryResult, String> {
                 Ok(rusqlite::types::ValueRef::Blob(b)) => {
                     let hex_string = b
                         .iter()
-                        .map(|byte| format!("{:02X}", byte))
+                        .map(|byte| format!("{byte:02X}"))
                         .collect::<Vec<String>>()
                         .join("");
-                    serde_json::Value::String(format!("BLOB({})", hex_string))
+                    serde_json::Value::String(format!("BLOB({hex_string})"))
                 }
                 Err(_) => serde_json::Value::Null,
             };
@@ -371,7 +366,7 @@ fn git_status(repo_path: String) -> Result<GitStatus, String> {
         .current_dir(repo_dir)
         .args(["rev-parse", "--abbrev-ref", "HEAD"])
         .output()
-        .map_err(|e| format!("Failed to get branch: {}", e))?;
+        .map_err(|e| format!("Failed to get branch: {e}"))?;
 
     let branch = if branch_output.status.success() {
         String::from_utf8_lossy(&branch_output.stdout)
@@ -389,7 +384,7 @@ fn git_status(repo_path: String) -> Result<GitStatus, String> {
         .current_dir(repo_dir)
         .args(["status", "--porcelain"])
         .output()
-        .map_err(|e| format!("Failed to get status: {}", e))?;
+        .map_err(|e| format!("Failed to get status: {e}"))?;
 
     let mut files = Vec::new();
     if status_output.status.success() {
@@ -438,7 +433,7 @@ fn get_ahead_behind_counts(repo_dir: &Path, branch: &str) -> (i32, i32) {
             "rev-list",
             "--left-right",
             "--count",
-            &format!("{}...origin/{}", branch, branch),
+            &format!("{branch}...origin/{branch}"),
         ])
         .output();
 
@@ -466,7 +461,7 @@ fn git_add(repo_path: String, file_path: String) -> Result<(), String> {
         .current_dir(repo_dir)
         .args(["add", &file_path])
         .output()
-        .map_err(|e| format!("Failed to add file: {}", e))?;
+        .map_err(|e| format!("Failed to add file: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -483,7 +478,7 @@ fn git_reset(repo_path: String, file_path: String) -> Result<(), String> {
         .current_dir(repo_dir)
         .args(["reset", "HEAD", &file_path])
         .output()
-        .map_err(|e| format!("Failed to unstage file: {}", e))?;
+        .map_err(|e| format!("Failed to unstage file: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -500,7 +495,7 @@ fn git_commit(repo_path: String, message: String) -> Result<(), String> {
         .current_dir(repo_dir)
         .args(["commit", "-m", &message])
         .output()
-        .map_err(|e| format!("Failed to commit: {}", e))?;
+        .map_err(|e| format!("Failed to commit: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -517,7 +512,7 @@ fn git_add_all(repo_path: String) -> Result<(), String> {
         .current_dir(repo_dir)
         .args(["add", "."])
         .output()
-        .map_err(|e| format!("Failed to add all files: {}", e))?;
+        .map_err(|e| format!("Failed to add all files: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -534,7 +529,7 @@ fn git_reset_all(repo_path: String) -> Result<(), String> {
         .current_dir(repo_dir)
         .args(["reset", "HEAD", "."])
         .output()
-        .map_err(|e| format!("Failed to unstage all files: {}", e))?;
+        .map_err(|e| format!("Failed to unstage all files: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -558,12 +553,12 @@ fn git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>, Stri
         .current_dir(repo_dir)
         .args([
             "log",
-            &format!("-{}", limit_str),
+            &format!("-{limit_str}"),
             "--pretty=format:%H|%s|%an|%ad",
             "--date=short",
         ])
         .output()
-        .map_err(|e| format!("Failed to get git log: {}", e))?;
+        .map_err(|e| format!("Failed to get git log: {e}"))?;
 
     let mut commits = Vec::new();
     if output.status.success() {
@@ -586,13 +581,13 @@ fn git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>, Stri
 
 #[tauri::command]
 fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<GitDiff, String> {
-    let repo = Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {}", e))?;
+    let repo = Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {e}"))?;
     let is_image = is_image_file(&file_path);
 
     // Get HEAD commit and tree
-    let head = repo.head().map_err(|e| format!("Failed to get HEAD: {}", e))?;
-    let head_commit = head.peel_to_commit().map_err(|e| format!("Failed to peel to commit: {}", e))?;
-    let head_tree = head_commit.tree().map_err(|e| format!("Failed to get HEAD tree: {}", e))?;
+    let head = repo.head().map_err(|e| format!("Failed to get HEAD: {e}"))?;
+    let head_commit = head.peel_to_commit().map_err(|e| format!("Failed to peel to commit: {e}"))?;
+    let head_tree = head_commit.tree().map_err(|e| format!("Failed to get HEAD tree: {e}"))?;
 
     // Create diff options for this specific file
     let mut diff_opts = git2::DiffOptions::new();
@@ -600,13 +595,13 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
     
     // Create the appropriate diff
     let diff_result = if staged {
-        let index = repo.index().map_err(|e| format!("Failed to get index: {}", e))?;
+        let index = repo.index().map_err(|e| format!("Failed to get index: {e}"))?;
         repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut diff_opts))
     } else {
         repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut diff_opts))
     };
     
-    let mut diff = diff_result.map_err(|e| format!("Failed to create diff: {}", e))?;
+    let mut diff = diff_result.map_err(|e| format!("Failed to create diff: {e}"))?;
     
     // Initialize default values
     let mut old_blob_base64 = None;
@@ -621,7 +616,7 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
         let mut broader_diff_opts = git2::DiffOptions::new();
         // Don't specify pathspec to get all changes, then filter
         let broader_diff_result = if staged {
-            let index = repo.index().map_err(|e| format!("Failed to get index: {}", e))?;
+            let index = repo.index().map_err(|e| format!("Failed to get index: {e}"))?;
             repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut broader_diff_opts))
         } else {
             repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut broader_diff_opts))
@@ -687,7 +682,7 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
                         single_file_opts.pathspec(target_path);
                         
                         let single_diff_result = if staged {
-                            let index = repo.index().map_err(|e| format!("Failed to get index: {}", e))?;
+                            let index = repo.index().map_err(|e| format!("Failed to get index: {e}"))?;
                             repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut single_file_opts))
                         } else {
                             repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut single_file_opts))
@@ -715,7 +710,7 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
             }
         }
         
-        return Err(format!("No changes found for file: {} (searched {} paths)", file_path, file_path));
+        return Err(format!("No changes found for file: {file_path} (searched {file_path} paths)"));
     }
     
     // Process the first delta (should only be one for a specific file)
@@ -802,17 +797,17 @@ fn git_commit_diff(
     commit_hash: String,
     file_path: Option<String>,
 ) -> Result<Vec<GitDiff>, String> {
-    let repo = Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {}", e))?;
-    let oid = Oid::from_str(&commit_hash).map_err(|e| format!("Invalid commit hash: {}", e))?;
-    let commit = repo.find_commit(oid).map_err(|e| format!("Commit not found: {}", e))?;
-    let commit_tree = commit.tree().map_err(|e| format!("Failed to get commit tree: {}", e))?;
+    let repo = Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {e}"))?;
+    let oid = Oid::from_str(&commit_hash).map_err(|e| format!("Invalid commit hash: {e}"))?;
+    let commit = repo.find_commit(oid).map_err(|e| format!("Commit not found: {e}"))?;
+    let commit_tree = commit.tree().map_err(|e| format!("Failed to get commit tree: {e}"))?;
     let parent = if commit.parent_count() > 0 {
-        Some(commit.parent(0).map_err(|e| format!("Failed to get parent commit: {}", e))?)
+        Some(commit.parent(0).map_err(|e| format!("Failed to get parent commit: {e}"))?)
     } else {
         None
     };
     let parent_tree = if let Some(p) = &parent {
-        Some(p.tree().map_err(|e| format!("Failed to get parent tree: {}", e))?)
+        Some(p.tree().map_err(|e| format!("Failed to get parent tree: {e}"))?)
     } else {
         None
     };
@@ -820,7 +815,7 @@ fn git_commit_diff(
     if let Some(path) = &file_path {
         diff_opts.pathspec(path);
     }
-    let diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), Some(&mut diff_opts)).map_err(|e| format!("Failed to create commit diff: {}", e))?;
+    let diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), Some(&mut diff_opts)).map_err(|e| format!("Failed to create commit diff: {e}"))?;
     let mut results: Vec<GitDiff> = Vec::new();
     for delta in diff.deltas() {
         // Use old_path for deleted/renamed, new_path otherwise
@@ -878,7 +873,7 @@ fn git_commit_diff(
             // Text diff
             let mut single_file_opts = git2::DiffOptions::new();
             single_file_opts.pathspec(&file_path);
-            let mut single_file_diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), Some(&mut single_file_opts)).map_err(|e| format!("Failed to create single-file diff: {}", e))?;
+            let mut single_file_diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), Some(&mut single_file_opts)).map_err(|e| format!("Failed to create single-file diff: {e}"))?;
             parse_diff_to_lines(&mut single_file_diff).unwrap_or_default()
         };
         results.push(GitDiff {
@@ -911,7 +906,7 @@ fn git_branches(repo_path: String) -> Result<Vec<String>, String> {
         .current_dir(repo_dir)
         .args(["branch", "--format=%(refname:short)"])
         .output()
-        .map_err(|e| format!("Failed to get branches: {}", e))?;
+        .map_err(|e| format!("Failed to get branches: {e}"))?;
 
     let mut branches = Vec::new();
     if output.status.success() {
@@ -934,7 +929,7 @@ fn git_checkout(repo_path: String, branch_name: String) -> Result<(), String> {
         .current_dir(repo_dir)
         .args(["checkout", &branch_name])
         .output()
-        .map_err(|e| format!("Failed to checkout branch: {}", e))?;
+        .map_err(|e| format!("Failed to checkout branch: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -960,7 +955,7 @@ fn git_create_branch(
         .current_dir(repo_dir)
         .args(&args)
         .output()
-        .map_err(|e| format!("Failed to create branch: {}", e))?;
+        .map_err(|e| format!("Failed to create branch: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -977,7 +972,7 @@ fn git_delete_branch(repo_path: String, branch_name: String) -> Result<(), Strin
         .current_dir(repo_dir)
         .args(["branch", "-d", &branch_name])
         .output()
-        .map_err(|e| format!("Failed to delete branch: {}", e))?;
+        .map_err(|e| format!("Failed to delete branch: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -993,13 +988,13 @@ async fn store_github_token(app: tauri::AppHandle, token: String) -> Result<(), 
 
     let store = app
         .store("secure.json")
-        .map_err(|e| format!("Failed to access store: {}", e))?;
+        .map_err(|e| format!("Failed to access store: {e}"))?;
 
     store.set("github_token", serde_json::Value::String(token));
 
     store
         .save()
-        .map_err(|e| format!("Failed to save store: {}", e))?;
+        .map_err(|e| format!("Failed to save store: {e}"))?;
 
     Ok(())
 }
@@ -1010,7 +1005,7 @@ async fn get_github_token(app: tauri::AppHandle) -> Result<Option<String>, Strin
 
     let store = app
         .store("secure.json")
-        .map_err(|e| format!("Failed to access store: {}", e))?;
+        .map_err(|e| format!("Failed to access store: {e}"))?;
 
     match store.get("github_token") {
         Some(token) => {
@@ -1030,13 +1025,13 @@ async fn remove_github_token(app: tauri::AppHandle) -> Result<(), String> {
 
     let store = app
         .store("secure.json")
-        .map_err(|e| format!("Failed to access store: {}", e))?;
+        .map_err(|e| format!("Failed to access store: {e}"))?;
 
     let _removed = store.delete("github_token");
 
     store
         .save()
-        .map_err(|e| format!("Failed to save store: {}", e))?;
+        .map_err(|e| format!("Failed to save store: {e}"))?;
 
     Ok(())
 }
@@ -1047,11 +1042,11 @@ async fn create_remote_window(
     connection_id: String,
     connection_name: String,
 ) -> Result<(), String> {
-    let window_label = format!("remote-{}", connection_id);
+    let window_label = format!("remote-{connection_id}");
 
-    let url = format!("index.html?remote={}", connection_id);
+    let url = format!("index.html?remote={connection_id}");
     let window = WebviewWindowBuilder::new(&app, &window_label, WebviewUrl::App(url.into()))
-        .title(format!("Remote: {}", connection_name))
+        .title(format!("Remote: {connection_name}"))
         .inner_size(1200.0, 800.0)
         .min_inner_size(800.0, 600.0)
         .center()
@@ -1059,7 +1054,7 @@ async fn create_remote_window(
         .transparent(true)
         .shadow(false)
         .build()
-        .map_err(|e| format!("Failed to create window: {}", e))?;
+        .map_err(|e| format!("Failed to create window: {e}"))?;
 
     #[cfg(target_os = "macos")]
     {
@@ -1110,6 +1105,27 @@ async fn create_remote_window(
     Ok(())
 }
 
+#[tauri::command]
+async fn start_watching(
+    path: String,
+    file_watcher: tauri::State<'_, Arc<FileWatcher>>,
+) -> Result<(), String> {
+    file_watcher
+        .watch_path(path)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn stop_watching(
+    path: String,
+    file_watcher: tauri::State<'_, Arc<FileWatcher>>,
+) -> Result<(), String> {
+    file_watcher
+        .stop_watching(path)
+        .map_err(|e| e.to_string())
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::new().build())
@@ -1123,6 +1139,9 @@ fn main() {
         .setup(|app| {
             let menu = menu::create_menu(app.handle())?;
             app.set_menu(menu)?;
+
+            // Set up the file watcher
+            app.manage(Arc::new(FileWatcher::new(app.handle().clone())));
 
             #[cfg(target_os = "macos")]
             {
@@ -1270,7 +1289,9 @@ fn main() {
             ssh_list_directory,
             ssh_read_file,
             ssh_write_file,
-            ssh_execute_command
+            ssh_execute_command,
+            start_watching,
+            stop_watching
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
