@@ -236,7 +236,7 @@ const TerminalContainer = ({ currentDirectory = "/", className = "" }: TerminalC
     if (terminals.length === 0) {
       handleNewTerminal();
     }
-  }, []); // Only run on mount
+  }, [handleNewTerminal, terminals.length]);
 
   // Create first terminal if none exist (fallback UI)
   if (terminals.length === 0) {
