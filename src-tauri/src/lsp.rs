@@ -212,6 +212,7 @@ pub struct StartLSPRequest {
     command: String,
     args: Vec<String>,
     working_dir: String,
+    initialization_options: Option<serde_json::Value>,
 }
 
 #[tauri::command]
@@ -273,7 +274,7 @@ pub async fn start_lsp_server(
 
     let initialize_params = InitializeParams {
         process_id: Some(pid),
-        initialization_options: None,
+        initialization_options: request.initialization_options,
         capabilities: ClientCapabilities {
             workspace: Some(WorkspaceClientCapabilities {
                 apply_edit: Some(true),

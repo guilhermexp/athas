@@ -27,7 +27,9 @@ import "prismjs/components/prism-markup-templating";
 import "prismjs/components/prism-php";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-ruby";
+import "prismjs/components/prism-rust";
 import "prismjs/components/prism-sql";
+import "prismjs/components/prism-toml";
 import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-yaml";
 
@@ -100,6 +102,8 @@ const getLanguageFromFilename = (filename: string): string => {
     php4: "php",
     php5: "php",
     php7: "php",
+    rs: "rust",
+    toml: "toml",
   };
 
   return languageMap[ext || ""] || "text";
