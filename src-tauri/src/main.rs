@@ -11,6 +11,7 @@ use tauri::command;
 use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 use base64::{engine::general_purpose, Engine as _};
 
+mod logger;
 mod lsp;
 mod menu;
 mod ssh;
@@ -199,7 +200,7 @@ fn read_directory_custom(path: String) -> Result<Vec<FileEntry>, String> {
                         });
                     }
                     Err(e) => {
-                        eprintln!("Error reading entry: {e}");
+                        log::error!("Error reading entry: {e}");
                     }
                 }
             }
@@ -592,7 +593,7 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
     // Create diff options for this specific file
     let mut diff_opts = git2::DiffOptions::new();
     diff_opts.pathspec(&file_path);
-    
+
     // Create the appropriate diff
     let diff_result = if staged {
         let index = repo.index().map_err(|e| format!("Failed to get index: {e}"))?;
@@ -600,17 +601,17 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
     } else {
         repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut diff_opts))
     };
-    
+
     let mut diff = diff_result.map_err(|e| format!("Failed to create diff: {e}"))?;
-    
+
     // Initialize default values
     let mut old_blob_base64 = None;
     let mut new_blob_base64 = None;
     let mut lines = Vec::new();
-    
+
     // Check if we have any deltas (changes) for this file
     let deltas: Vec<_> = diff.deltas().collect();
-    
+
     if deltas.is_empty() {
         // No changes detected - might be a renamed file, try broader search
         let mut broader_diff_opts = git2::DiffOptions::new();
@@ -621,29 +622,29 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
         } else {
             repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut broader_diff_opts))
         };
-        
+
         if let Ok(broader_diff) = broader_diff_result {
             let all_deltas: Vec<_> = broader_diff.deltas().collect();
-            
+
             // Look for renamed files that involve our target file
             for delta in all_deltas {
                 let delta_old_path = delta.old_file().path().map(|p| p.to_string_lossy().into_owned());
                 let delta_new_path = delta.new_file().path().map(|p| p.to_string_lossy().into_owned());
-                
+
                 // Check if our file path matches either old or new path
                 if delta_old_path.as_deref() == Some(&file_path) || delta_new_path.as_deref() == Some(&file_path) {
                     // Found the file in a rename operation, process this delta
                     let is_new = delta.status() == git2::Delta::Added;
                     let is_deleted = delta.status() == git2::Delta::Deleted;
                     let is_renamed = delta.status() == git2::Delta::Renamed;
-                    
+
                     let old_path = delta_old_path;
                     let new_path = delta_new_path;
-                    
+
                     if is_image {
                         let old_oid = delta.old_file().id();
                         let new_oid = delta.new_file().id();
-                        
+
                         if is_deleted {
                             old_blob_base64 = get_blob_base64(&repo, Some(old_oid), old_path.as_deref().unwrap_or(&file_path));
                         } else if is_renamed {
@@ -674,25 +675,25 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
                     } else {
                         // For text files, create a new diff with the correct file
                         let mut single_file_opts = git2::DiffOptions::new();
-                        let target_path = if is_deleted { 
-                            old_path.as_deref().unwrap_or(&file_path) 
-                        } else { 
-                            new_path.as_deref().unwrap_or(&file_path) 
+                        let target_path = if is_deleted {
+                            old_path.as_deref().unwrap_or(&file_path)
+                        } else {
+                            new_path.as_deref().unwrap_or(&file_path)
                         };
                         single_file_opts.pathspec(target_path);
-                        
+
                         let single_diff_result = if staged {
                             let index = repo.index().map_err(|e| format!("Failed to get index: {e}"))?;
                             repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut single_file_opts))
                         } else {
                             repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut single_file_opts))
                         };
-                        
+
                         if let Ok(mut single_diff) = single_diff_result {
                             lines = parse_diff_to_lines(&mut single_diff).unwrap_or_default();
                         }
                     }
-                    
+
                     return Ok(GitDiff {
                         file_path: file_path.clone(),
                         old_path,
@@ -709,27 +710,27 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
                 }
             }
         }
-        
+
         return Err(format!("No changes found for file: {file_path} (searched {file_path} paths)"));
     }
-    
+
     // Process the first delta (should only be one for a specific file)
     let delta = &deltas[0];
-    
+
     // Determine file status from delta
     let is_new = delta.status() == git2::Delta::Added;
     let is_deleted = delta.status() == git2::Delta::Deleted;
     let is_renamed = delta.status() == git2::Delta::Renamed;
-    
+
     // Get old and new paths
     let old_path = delta.old_file().path().map(|p| p.to_string_lossy().into_owned());
     let new_path = delta.new_file().path().map(|p| p.to_string_lossy().into_owned());
-    
+
     if is_image {
         // Handle image files
         let old_oid = delta.old_file().id();
         let new_oid = delta.new_file().id();
-        
+
         if is_new {
             // Added image: only new blob
             if staged {
@@ -768,7 +769,7 @@ fn git_diff_file(repo_path: String, file_path: String, staged: bool) -> Result<G
                 }
             }
         }
-        
+
         // No text lines for images
         lines = Vec::new();
     } else {
@@ -1128,6 +1129,7 @@ async fn stop_watching(
 
 fn main() {
     tauri::Builder::default()
+        .plugin(logger::init(log::LevelFilter::Info))
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
@@ -1139,6 +1141,8 @@ fn main() {
         .setup(|app| {
             let menu = menu::create_menu(app.handle())?;
             app.set_menu(menu)?;
+
+            log::info!("Starting app ☺️!");
 
             // Set up the file watcher
             app.manage(Arc::new(FileWatcher::new(app.handle().clone())));
