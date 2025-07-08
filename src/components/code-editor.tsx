@@ -32,6 +32,7 @@ import "prismjs/components/prism-sql";
 import "prismjs/components/prism-toml";
 import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-yaml";
+import "prismjs/components/prism-csharp";
 
 // Import minimal theme CSS
 import "prismjs/themes/prism.css";
@@ -102,6 +103,7 @@ const getLanguageFromFilename = (filename: string): string => {
     php4: "php",
     php5: "php",
     php7: "php",
+    cs: "csharp",
     rs: "rust",
     toml: "toml",
   };
