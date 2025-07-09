@@ -8,7 +8,7 @@ interface ToastItem {
   timestamp: number;
 }
 
-type FileReloadToastProps = {};
+type FileReloadToastProps = Record<string, never>;
 
 // Keep track of toasts outside component to handle rapid updates
 let toastCounter = 0;

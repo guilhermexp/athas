@@ -766,9 +766,11 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
           const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null);
 
           let currentPos = 0;
-          let node;
+          let node: Node | null;
 
-          while ((node = walker.nextNode())) {
+          while (true) {
+            node = walker.nextNode();
+            if (!node) break;
             const nodeText = node.textContent || "";
             const nodeStart = currentPos;
             const nodeEnd = currentPos + nodeText.length;

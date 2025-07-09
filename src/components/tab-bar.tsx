@@ -420,7 +420,9 @@ const TabBar = ({
                   </div>
                 )}
                 <div
-                  ref={el => (tabRefs.current[index] = el)}
+                  ref={el => {
+                    tabRefs.current[index] = el;
+                  }}
                   draggable={true}
                   onDragStart={e => handleDragStart(e, index)}
                   onDragEnd={handleDragEnd}

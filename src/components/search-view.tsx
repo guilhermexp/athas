@@ -189,8 +189,10 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
                     const line = lines[lineIndex];
                     searchPattern.lastIndex = 0; // Reset regex state
 
-                    let match;
-                    while ((match = searchPattern.exec(line)) !== null) {
+                    let match: RegExpExecArray | null;
+                    while (true) {
+                      match = searchPattern.exec(line);
+                      if (match === null) break;
                       if (results.length >= MAX_RESULTS) break;
 
                       results.push({
