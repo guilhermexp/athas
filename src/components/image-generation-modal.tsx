@@ -196,7 +196,6 @@ const ImageGenerationModal = ({
                 Style
               </label>
               <Dropdown
-                id="image-style"
                 value={imageStyle}
                 options={[
                   { value: "vivid", label: "Vivid (more creative)" },

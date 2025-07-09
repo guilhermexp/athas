@@ -204,7 +204,6 @@ const ConnectionDialog = ({
                   Type
                 </label>
                 <Dropdown
-                  id="type"
                   value={formData.type}
                   options={connectionTypeOptions}
                   onChange={value => updateFormData({ type: value as "ssh" | "sftp" })}
