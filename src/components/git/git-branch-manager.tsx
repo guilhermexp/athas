@@ -149,7 +149,6 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
                       }
                     }}
                     disabled={isLoading}
-                    autoFocus
                   />
                   <button
                     onClick={handleCreateBranch}

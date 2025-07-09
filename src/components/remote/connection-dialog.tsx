@@ -2,7 +2,7 @@ import { AlertCircle, CheckCircle, Eye, EyeOff, Save, Server, X } from "lucide-r
 import { useEffect, useState } from "react";
 import Button from "../ui/button";
 import Dropdown from "../ui/dropdown";
-import { RemoteConnection, RemoteConnectionFormData } from "./types";
+import type { RemoteConnection, RemoteConnectionFormData } from "./types";
 
 interface ConnectionDialogProps {
   isOpen: boolean;

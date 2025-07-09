@@ -53,7 +53,7 @@ export default function Breadcrumb({
             <button
               onClick={() => {
                 if (rootPath) {
-                  const fullPath = rootPath + "/" + segments.slice(0, index + 1).join("/");
+                  const fullPath = `${rootPath}/${segments.slice(0, index + 1).join("/")}`;
                   onNavigate(fullPath);
                 } else {
                   onNavigate(segments.slice(0, index + 1).join("/"));

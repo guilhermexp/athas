@@ -1,8 +1,9 @@
-import React, { useCallback } from "react";
-import { CodeEditorRef } from "../components/code-editor";
-import { VimMode } from "../types/app";
+import type React from "react";
+import { useCallback } from "react";
+import type { CodeEditorRef } from "../components/code-editor";
+import type { VimMode } from "../types/app";
 import { getFilenameFromPath, isImageFile, isSQLiteFile } from "../utils/file-utils";
-import { GitDiff, GitDiffLine } from "../utils/git";
+import type { GitDiff, GitDiffLine } from "../utils/git";
 import { readFile } from "../utils/platform";
 
 interface UseFileSelectionProps {
@@ -55,10 +56,10 @@ const parseRawDiffContent = (content: string, filePath: string): GitDiff => {
 
     // File headers (ignore for now)
     if (
-      line.startsWith("---")
-      || line.startsWith("+++")
-      || line.startsWith("diff ")
-      || line.startsWith("index ")
+      line.startsWith("---") ||
+      line.startsWith("+++") ||
+      line.startsWith("diff ") ||
+      line.startsWith("index ")
     ) {
       continue;
     }

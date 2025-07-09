@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
-import { Search, ChevronRight, ChevronDown, X } from "lucide-react";
-import { FileEntry } from "../types/app";
+import { ChevronDown, ChevronRight, Search, X } from "lucide-react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import type { FileEntry } from "../types/app";
 import { readFile } from "../utils/platform";
 import FileIcon from "./file-icon";
 import Button from "./ui/button";

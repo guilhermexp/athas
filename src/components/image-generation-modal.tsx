@@ -102,8 +102,8 @@ const ImageGenerationModal = ({
       setImageSize("1024x1024");
     }
     if (
-      imageModel === "gpt-image-1"
-      && !["1024x1024", "1536x1024", "1024x1536"].includes(imageSize)
+      imageModel === "gpt-image-1" &&
+      !["1024x1024", "1536x1024", "1024x1536"].includes(imageSize)
     ) {
       setImageSize("1024x1024");
     }
@@ -377,7 +377,7 @@ async function generateImage(
 
     if (model === "gpt-image-1") {
       // GPT-Image-1 returns base64 data
-      if (data.data && data.data[0] && data.data[0].b64_json) {
+      if (data.data?.[0]?.b64_json) {
         const base64Data = data.data[0].b64_json;
         const dataUrl = `data:image/jpeg;base64,${base64Data}`;
         return { success: true, imageUrl: dataUrl };
@@ -386,7 +386,7 @@ async function generateImage(
       }
     } else {
       // Traditional DALL-E returns URL
-      if (data.data && data.data[0] && data.data[0].url) {
+      if (data.data?.[0]?.url) {
         return { success: true, imageUrl: data.data[0].url };
       } else {
         return { success: false, error: "No image URL returned from DALL-E API" };
