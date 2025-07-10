@@ -50,6 +50,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          cache-all-crates: true
 
       - name: Check Rust formatting
         working-directory: src-tauri
@@ -57,4 +58,4 @@ jobs:
 
       - name: Check Rust code
         working-directory: src-tauri
-        run: cargo check
+        run: cargo check --workspace --locked
