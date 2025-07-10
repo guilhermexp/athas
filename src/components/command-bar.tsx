@@ -1,7 +1,13 @@
-import { Command, File, X } from "lucide-react";
-import type React from "react";
-import { useEffect, useRef, useState } from "react";
-import { cn } from "../utils/cn";
+import { Command as CommandIcon, File, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
 
 interface CommandBarProps {
   isVisible: boolean;
@@ -11,13 +17,45 @@ interface CommandBarProps {
   rootFolderPath?: string;
 }
 
-interface CommandItem {
-  id: string;
-  label: string;
-  description?: string;
-  icon: React.ReactNode;
-  action: () => void;
-}
+// Storage key for recently opened files
+const RECENT_FILES_KEY = "athas-recent-files";
+
+// In-memory cache for recent files to avoid localStorage reads
+// TODO: This is a hack to avoid localStorage reads. We should use redis maybe .
+let recentFilesCache: string[] = [];
+let cacheInitialized = false;
+
+// Initialize cache asynchronously
+const initializeCache = () => {
+  if (cacheInitialized) return;
+
+  setTimeout(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_FILES_KEY);
+      recentFilesCache = stored ? JSON.parse(stored) : [];
+      cacheInitialized = true;
+    } catch {
+      recentFilesCache = [];
+      cacheInitialized = true;
+    }
+  }, 0);
+};
+
+// Add file to recent files (async, non-blocking)
+const addToRecentFiles = (filePath: string) => {
+  // Update cache immediately for instant UI update
+  const filtered = recentFilesCache.filter(path => path !== filePath);
+  recentFilesCache = [filePath, ...filtered].slice(0, 20);
+
+  // Persist to localStorage asynchronously (non-blocking)
+  setTimeout(() => {
+    try {
+      localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(recentFilesCache));
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, 0);
+};
 
 const CommandBar = ({
   isVisible,
@@ -27,130 +65,123 @@ const CommandBar = ({
   rootFolderPath,
 }: CommandBarProps) => {
   const [query, setQuery] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
+  const [recentFiles, setRecentFiles] = useState<string[]>([]);
 
-  // Focus input when command bar becomes visible
+  // Initialize cache when component mounts
   useEffect(() => {
-    if (isVisible && inputRef.current) {
-      inputRef.current.focus();
+    initializeCache();
+  }, []);
+
+  // Update local state when command bar becomes visible
+  useEffect(() => {
+    if (isVisible) {
       setQuery("");
-      setSelectedIndex(0);
+      // Use cached recent files or empty array if cache not ready
+      setRecentFiles(cacheInitialized ? [...recentFilesCache] : []);
     }
   }, [isVisible]);
 
-  // Helper function to get relative path
-  const getRelativePath = (fullPath: string): string => {
-    if (!rootFolderPath) return fullPath;
-
-    // Normalize paths to handle different path separators
-    const normalizedFullPath = fullPath.replace(/\\/g, "/");
-    const normalizedRootPath = rootFolderPath.replace(/\\/g, "/");
-
-    if (normalizedFullPath.startsWith(normalizedRootPath)) {
-      const relativePath = normalizedFullPath.substring(normalizedRootPath.length);
-      // Remove leading slash if present
-      return relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
-    }
-
-    return fullPath;
-  };
-
-  // Get all files (already flattened from the new getAllProjectFiles function)
-  const getAllFiles = (
-    entries: Array<{ name: string; path: string; isDir: boolean; children?: any[] }>,
-  ): Array<{ name: string; path: string; isDir: boolean }> => {
-    // Since we're now getting a flat array of files from getAllProjectFiles,
-    // we can just filter out directories and return the files
-    return entries.filter(entry => !entry.isDir);
-  };
-
-  // Create command items
-  const createCommands = (): CommandItem[] => {
-    const commands: CommandItem[] = [];
-
-    // File commands
-    const allFiles = getAllFiles(files);
-    const filteredFiles = allFiles.filter(
-      file =>
-        file.name.toLowerCase().includes(query.toLowerCase()) ||
-        file.path.toLowerCase().includes(query.toLowerCase()),
-    );
-
-    filteredFiles.forEach(file => {
-      commands.push({
-        id: `file:${file.path}`,
-        label: file.name,
-        description: getRelativePath(file.path),
-        icon: <File size={14} className="text-[var(--text-lighter)]" />,
-        action: () => {
-          onFileSelect(file.path);
-          onClose();
-        },
-      });
-    });
-
-    return commands.slice(0, 20); // Limit to 20 results
-  };
-
-  const commands = createCommands();
-
-  // Reset selectedIndex when commands change to ensure it's within bounds
+  // Handle escape key and click outside
   useEffect(() => {
-    if (selectedIndex >= commands.length) {
-      setSelectedIndex(Math.max(0, commands.length - 1));
-    }
-  }, [commands.length, selectedIndex]);
+    if (!isVisible) return;
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (commands.length === 0) {
-      // Only handle Escape when no commands
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
       }
-      return;
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (!target.closest("[data-command-bar]")) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isVisible, onClose]);
+
+  // Memoize relative path function
+  const getRelativePath = useCallback(
+    (fullPath: string): string => {
+      if (!rootFolderPath) return fullPath;
+
+      const normalizedFullPath = fullPath.replace(/\\/g, "/");
+      const normalizedRootPath = rootFolderPath.replace(/\\/g, "/");
+
+      if (normalizedFullPath.startsWith(normalizedRootPath)) {
+        const relativePath = normalizedFullPath.substring(normalizedRootPath.length);
+        return relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
+      }
+
+      return fullPath;
+    },
+    [rootFolderPath],
+  );
+
+  // Memoize file filtering and sorting
+  const { recentFilesInResults, otherFiles } = useMemo(() => {
+    const allFiles = files.filter(entry => !entry.isDir);
+
+    if (!query.trim()) {
+      // No search query - show recent files first, then alphabetical
+      const recent = allFiles
+        .filter(file => recentFiles.includes(file.path))
+        .sort((a, b) => recentFiles.indexOf(a.path) - recentFiles.indexOf(b.path));
+
+      const others = allFiles
+        .filter(file => !recentFiles.includes(file.path))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      return {
+        recentFilesInResults: recent.slice(0, 10),
+        otherFiles: others.slice(0, 20 - recent.length),
+      };
     }
 
-    if (e.key === "Escape") {
-      e.preventDefault();
+    // With search query - filter first, then prioritize recent files
+    const queryLower = query.toLowerCase();
+    const filtered = allFiles.filter(
+      file =>
+        file.name.toLowerCase().includes(queryLower) ||
+        file.path.toLowerCase().includes(queryLower),
+    );
+
+    const recent = filtered
+      .filter(file => recentFiles.includes(file.path))
+      .sort((a, b) => recentFiles.indexOf(a.path) - recentFiles.indexOf(b.path));
+
+    const others = filtered
+      .filter(file => !recentFiles.includes(file.path))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return {
+      recentFilesInResults: recent.slice(0, 20),
+      otherFiles: others.slice(0, 20 - recent.length),
+    };
+  }, [files, recentFiles, query]);
+
+  const handleFileSelect = useCallback(
+    (path: string) => {
+      // Update cache and state immediately
+      addToRecentFiles(path);
+      setRecentFiles(prev => {
+        const filtered = prev.filter(p => p !== path);
+        return [path, ...filtered].slice(0, 20);
+      });
+
+      onFileSelect(path);
       onClose();
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (commands[selectedIndex]) {
-        commands[selectedIndex].action();
-      }
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % commands.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev === 0 ? commands.length - 1 : prev - 1));
-    } else if (e.key === "Tab") {
-      e.preventDefault();
-      // Tab acts like ArrowDown
-      setSelectedIndex(prev => (prev + 1) % commands.length);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-    setSelectedIndex(0); // Reset to first item when query changes
-  };
-
-  // Scroll selected item into view
-  useEffect(() => {
-    if (listRef.current && selectedIndex >= 0 && commands.length > 0) {
-      const selectedElement = listRef.current.children[selectedIndex] as HTMLElement;
-      if (selectedElement) {
-        selectedElement.scrollIntoView({
-          block: "nearest",
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [selectedIndex, commands.length]);
+    },
+    [onFileSelect, onClose],
+  );
 
   if (!isVisible) {
     return null;
@@ -158,60 +189,85 @@ const CommandBar = ({
 
   return (
     <div className="fixed inset-0 flex items-start justify-center pt-20 z-50 pointer-events-none">
-      <div className="bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg shadow-2xl w-96 max-h-96 overflow-hidden pointer-events-auto">
-        {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border-color)]">
-          <Command size={14} className="text-[var(--text-lighter)]" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Type to search files..."
-            className="flex-1 bg-transparent text-[var(--text-color)] text-sm font-mono focus:outline-none placeholder-[var(--text-lighter)]"
-          />
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-[var(--hover-color)] transition-colors duration-150"
-          >
-            <X size={14} className="text-[var(--text-lighter)]" />
-          </button>
-        </div>
-
-        {/* Command List */}
-        <div ref={listRef} className="max-h-80 overflow-y-auto custom-scrollbar">
-          {commands.length === 0 ? (
-            <div className="px-4 py-6 text-center text-[var(--text-lighter)] text-sm font-mono">
-              {query ? "No matching files found" : "No files available"}
+      <div
+        data-command-bar
+        className="bg-[#1a1a1a] border border-[#333] rounded-lg shadow-2xl w-96 max-h-96 overflow-hidden pointer-events-auto"
+      >
+        <Command className="bg-transparent border-none shadow-none" shouldFilter={false}>
+          {/* Minimal Header */}
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="flex items-center">
+              <CommandIcon size={16} className="text-[#666]" />
+              <CommandInput
+                value={query}
+                onValueChange={setQuery}
+                placeholder="Type to search files..."
+                className="flex-1 bg-transparent text-[#e0e0e0] text-sm font-mono focus:outline-none placeholder-[#666] border-none h-auto py-0 shadow-none ring-0 focus:ring-0"
+                autoFocus
+              />
             </div>
-          ) : (
-            commands.map((command, index) => (
-              <button
-                key={command.id}
-                onClick={command.action}
-                className={cn(
-                  "w-full text-left px-4 py-2 flex items-center gap-3 transition-colors duration-150 border-none bg-transparent cursor-pointer focus:outline-none",
-                  index === selectedIndex
-                    ? "bg-[var(--selected-color)] text-[var(--text-color)]"
-                    : "hover:bg-[var(--hover-color)]",
-                )}
-              >
-                {command.icon}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-[var(--text-color)] font-mono truncate">
-                    {command.label}
-                  </div>
-                  {command.description && (
-                    <div className="text-xs text-[var(--text-lighter)] font-mono truncate">
-                      {command.description}
+            <button
+              onClick={onClose}
+              className="p-1 rounded hover:bg-[#333] transition-colors duration-150"
+            >
+              <X size={16} className="text-[#666]" />
+            </button>
+          </div>
+
+          {/* Command List */}
+          <CommandList className="max-h-80 overflow-y-auto custom-scrollbar bg-transparent">
+            <CommandEmpty className="px-4 py-6 text-center text-[#666] text-sm font-mono">
+              {query ? "No matching files found" : "No files available"}
+            </CommandEmpty>
+
+            {/* Recent Files Section - Minimal */}
+            {recentFilesInResults.length > 0 && (
+              <CommandGroup className="p-0">
+                {recentFilesInResults.map((file, index) => (
+                  <CommandItem
+                    key={`recent-${file.path}`}
+                    value={`${file.name} ${file.path}`}
+                    onSelect={() => handleFileSelect(file.path)}
+                    className="px-4 py-2 flex items-center gap-3 cursor-pointer aria-selected:bg-[#2a2a2a] aria-selected:text-[#e0e0e0] hover:bg-[#2a2a2a] font-mono m-0 rounded-none border-none bg-transparent transition-colors duration-150"
+                  >
+                    <File size={16} className="text-[#8ab4f8]" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-[#e0e0e0] truncate">{file.name}</div>
+                      <div className="text-xs text-[#666] truncate">
+                        {getRelativePath(file.path)}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </button>
-            ))
-          )}
-        </div>
+                    {index < 3 && (
+                      <div className="w-1 h-1 bg-[#8ab4f8] rounded-full opacity-60"></div>
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {/* Other Files Section - Minimal */}
+            {otherFiles.length > 0 && (
+              <CommandGroup className="p-0">
+                {otherFiles.map(file => (
+                  <CommandItem
+                    key={`other-${file.path}`}
+                    value={`${file.name} ${file.path}`}
+                    onSelect={() => handleFileSelect(file.path)}
+                    className="px-4 py-2 flex items-center gap-3 cursor-pointer aria-selected:bg-[#2a2a2a] aria-selected:text-[#e0e0e0] hover:bg-[#2a2a2a] font-mono m-0 rounded-none border-none bg-transparent transition-colors duration-150"
+                  >
+                    <File size={16} className="text-[#666]" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-[#e0e0e0] truncate">{file.name}</div>
+                      <div className="text-xs text-[#666] truncate">
+                        {getRelativePath(file.path)}
+                      </div>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
       </div>
     </div>
   );
