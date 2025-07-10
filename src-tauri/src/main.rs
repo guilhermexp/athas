@@ -21,11 +21,7 @@ use ssh::{
     ssh_connect, ssh_disconnect, ssh_execute_command, ssh_list_directory, ssh_read_file,
     ssh_write_file,
 };
-use terminal::{
-    TerminalManager, close_terminal_connection, create_terminal_connection,
-    get_available_terminal_types, resize_terminal, send_terminal_ctrl_c, send_terminal_ctrl_d,
-    send_terminal_data,
-};
+use terminal::TerminalManager;
 
 fn main() {
     tauri::Builder::default()
