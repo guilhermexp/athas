@@ -1,4 +1,4 @@
-import { Command as CommandIcon, File, X } from "lucide-react";
+import { File, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface CommandBarProps {
@@ -11,6 +11,80 @@ interface CommandBarProps {
 
 // Storage key for recently opened files
 const RECENT_FILES_KEY = "athas-recent-files";
+
+// Files and directories to ignore in the command bar
+const IGNORED_PATTERNS = [
+  // Dependencies
+  "node_modules",
+  ".npm",
+  ".yarn",
+  ".pnpm-store",
+
+  // Version control (only .git directory, not .gitignore)
+  ".git",
+  ".svn",
+  ".hg",
+
+  // Build outputs
+  "dist",
+  "build",
+  "out",
+  ".next",
+  ".nuxt",
+  ".output",
+  "target",
+  "bin",
+  "obj",
+
+  // IDE/Editor temporary files
+  "*.swp",
+  "*.swo",
+  "*~",
+  ".DS_Store",
+  "Thumbs.db",
+
+  // Cache directories
+  ".cache",
+  ".tmp",
+  ".temp",
+  "tmp",
+  "temp",
+  ".turbo",
+
+  // Log files
+  "*.log",
+  "logs",
+
+  // Coverage reports
+  "coverage",
+  ".nyc_output",
+
+  // Misc cache
+  ".sass-cache",
+  ".eslintcache",
+  ".parcel-cache",
+];
+
+// Function to check if a file should be ignored
+const shouldIgnoreFile = (filePath: string): boolean => {
+  const fileName = filePath.split("/").pop() || "";
+  const fullPath = filePath.toLowerCase();
+
+  return IGNORED_PATTERNS.some(pattern => {
+    if (pattern.includes("*")) {
+      // Handle glob patterns like *.log
+      const regex = new RegExp(pattern.replace(/\*/g, ".*"));
+      return regex.test(fileName.toLowerCase()) || regex.test(fullPath);
+    } else {
+      // Handle exact matches
+      return (
+        fileName.toLowerCase() === pattern.toLowerCase() ||
+        fullPath.includes(`/${pattern.toLowerCase()}/`) ||
+        fullPath.endsWith(`/${pattern.toLowerCase()}`)
+      );
+    }
+  });
+};
 
 // Fuzzy search scoring function
 const fuzzyScore = (text: string, query: string): number => {
@@ -105,6 +179,7 @@ const CommandBar = ({
 }: CommandBarProps) => {
   const [query, setQuery] = useState("");
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Initialize cache when component mounts
@@ -116,6 +191,7 @@ const CommandBar = ({
   useEffect(() => {
     if (isVisible) {
       setQuery("");
+      setSelectedIndex(0);
       // Use cached recent files or empty array if cache not ready
       setRecentFiles(cacheInitialized ? [...recentFilesCache] : []);
       // Focus the input field immediately
@@ -131,6 +207,12 @@ const CommandBar = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+
+      // Handle Cmd+K (or Ctrl+K on Windows/Linux)
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         onClose();
       }
@@ -152,6 +234,11 @@ const CommandBar = ({
     };
   }, [isVisible, onClose]);
 
+  // Reset selected index when query changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
   // Memoize relative path function
   const getRelativePath = useCallback(
     (fullPath: string): string => {
@@ -170,9 +257,19 @@ const CommandBar = ({
     [rootFolderPath],
   );
 
+  // Helper function to get directory path without filename
+  const getDirectoryPath = useCallback(
+    (fullPath: string): string => {
+      const relativePath = getRelativePath(fullPath);
+      const lastSlashIndex = relativePath.lastIndexOf("/");
+      return lastSlashIndex > 0 ? relativePath.substring(0, lastSlashIndex) : "";
+    },
+    [getRelativePath],
+  );
+
   // Memoize file filtering and sorting
   const { recentFilesInResults, otherFiles } = useMemo(() => {
-    const allFiles = files.filter(entry => !entry.isDir);
+    const allFiles = files.filter(entry => !entry.isDir && !shouldIgnoreFile(entry.path));
 
     if (!query.trim()) {
       // No search query - show recent files first, then alphabetical
@@ -244,6 +341,34 @@ const CommandBar = ({
     [onFileSelect, onClose],
   );
 
+  // Handle arrow key navigation - separate effect after files are defined
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle arrow key navigation
+      const allResults = [...recentFilesInResults, ...otherFiles];
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev < allResults.length - 1 ? prev + 1 : prev));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (allResults[selectedIndex]) {
+          handleFileSelect(allResults[selectedIndex].path);
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isVisible, recentFilesInResults, otherFiles, selectedIndex, handleFileSelect]);
+
   if (!isVisible) {
     return null;
   }
@@ -252,24 +377,21 @@ const CommandBar = ({
     <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-20">
       <div
         data-command-bar
-        className="pointer-events-auto max-h-96 w-96 overflow-hidden rounded-lg border border-[#333] bg-[#1a1a1a] shadow-2xl"
+        className="pointer-events-auto max-h-96 w-[600px] overflow-hidden rounded-lg border border-[#333] bg-[#1a1a1a] shadow-2xl"
       >
         <div className="flex h-full w-full flex-col overflow-hidden">
           {/* Minimal Header */}
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <CommandIcon size={16} className="text-[#666]" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Type to search files..."
-                className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-[#e0e0e0] text-sm placeholder-[#666] outline-none"
-              />
-            </div>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Type to search files..."
+              className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-[#e0e0e0] text-sm placeholder-[#666] outline-none"
+            />
             <button
               onClick={onClose}
-              className="rounded p-1 transition-colors duration-150 hover:bg-[#333]"
+              className="flex-shrink-0 rounded p-1 transition-colors duration-150 hover:bg-[#333]"
             >
               <X size={16} className="text-[#666]" />
             </button>
@@ -286,45 +408,67 @@ const CommandBar = ({
                 {/* Recent Files Section - Minimal */}
                 {recentFilesInResults.length > 0 && (
                   <div className="p-0">
-                    {recentFilesInResults.map((file, index) => (
-                      <button
-                        key={`recent-${file.path}`}
-                        onClick={() => handleFileSelect(file.path)}
-                        className="m-0 flex w-full cursor-pointer items-center gap-3 rounded-none border-none bg-transparent px-4 py-2 font-mono transition-colors duration-150 hover:bg-[#2a2a2a]"
-                      >
-                        <File size={16} className="text-[#8ab4f8]" />
-                        <div className="min-w-0 flex-1 text-left">
-                          <div className="truncate text-[#e0e0e0] text-sm">{file.name}</div>
-                          <div className="truncate text-[#666] text-xs">
-                            {getRelativePath(file.path)}
+                    {recentFilesInResults.map((file, index) => {
+                      const globalIndex = index;
+                      const isSelected = globalIndex === selectedIndex;
+                      return (
+                        <button
+                          key={`recent-${file.path}`}
+                          onClick={() => handleFileSelect(file.path)}
+                          className={`m-0 flex w-full cursor-pointer items-center gap-2 rounded-none border-none px-3 py-1.5 font-mono transition-colors duration-150 ${
+                            isSelected ? "bg-[#2a2a2a]" : "bg-transparent hover:bg-[#2a2a2a]"
+                          }`}
+                        >
+                          <File size={13} className="text-[#8ab4f8]" />
+                          <div className="min-w-0 flex-1 text-left">
+                            <div className="truncate text-sm">
+                              <span className="text-[#e0e0e0]">{file.name}</span>
+                              {getDirectoryPath(file.path) && (
+                                <span className="ml-1 text-[#666]">
+                                  {getDirectoryPath(file.path)}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        {index < 3 && (
-                          <div className="h-1 w-1 rounded-full bg-[#8ab4f8] opacity-60"></div>
-                        )}
-                      </button>
-                    ))}
+                          <div className="flex items-center gap-1">
+                            <span className="rounded bg-[#8ab4f8]/10 px-1.5 py-0.5 font-medium text-[#8ab4f8] text-xs">
+                              recent
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
                 {/* Other Files Section - Minimal */}
                 {otherFiles.length > 0 && (
                   <div className="p-0">
-                    {otherFiles.map(file => (
-                      <button
-                        key={`other-${file.path}`}
-                        onClick={() => handleFileSelect(file.path)}
-                        className="m-0 flex w-full cursor-pointer items-center gap-3 rounded-none border-none bg-transparent px-4 py-2 font-mono transition-colors duration-150 hover:bg-[#2a2a2a]"
-                      >
-                        <File size={16} className="text-[#666]" />
-                        <div className="min-w-0 flex-1 text-left">
-                          <div className="truncate text-[#e0e0e0] text-sm">{file.name}</div>
-                          <div className="truncate text-[#666] text-xs">
-                            {getRelativePath(file.path)}
+                    {otherFiles.map((file, index) => {
+                      const globalIndex = recentFilesInResults.length + index;
+                      const isSelected = globalIndex === selectedIndex;
+                      return (
+                        <button
+                          key={`other-${file.path}`}
+                          onClick={() => handleFileSelect(file.path)}
+                          className={`m-0 flex w-full cursor-pointer items-center gap-2 rounded-none border-none px-3 py-1.5 font-mono transition-colors duration-150 ${
+                            isSelected ? "bg-[#2a2a2a]" : "bg-transparent hover:bg-[#2a2a2a]"
+                          }`}
+                        >
+                          <File size={13} className="text-[#666]" />
+                          <div className="min-w-0 flex-1 text-left">
+                            <div className="truncate text-sm">
+                              <span className="text-[#e0e0e0]">{file.name}</span>
+                              {getDirectoryPath(file.path) && (
+                                <span className="ml-1 text-[#666]">
+                                  {getDirectoryPath(file.path)}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </>

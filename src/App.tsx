@@ -1260,6 +1260,7 @@ function App() {
               );
             }}
             onThemeChange={handleThemeChange}
+            currentTheme={settings.theme}
             onQuickEditInline={handleQuickEdit}
           />
 

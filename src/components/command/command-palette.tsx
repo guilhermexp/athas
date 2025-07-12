@@ -1,7 +1,8 @@
-import { Bot, Monitor, Moon, Palette, Settings, Sun, X } from "lucide-react";
+import { Bot, Palette, Settings, X } from "lucide-react";
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import type { ThemeType } from "@/types/theme";
+import type { ThemeType } from "../../types/theme";
+import ThemeSelector from "./theme-selector";
 
 interface Action {
   id: string;
@@ -18,6 +19,7 @@ interface CommandPaletteProps {
   onOpenSettings: () => void;
   onThemeChange: (theme: ThemeType) => void;
   onQuickEditInline?: () => void;
+  currentTheme?: ThemeType;
 }
 
 export interface CommandPaletteRef {
@@ -25,9 +27,10 @@ export interface CommandPaletteRef {
 }
 
 const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
-  ({ isVisible, onClose, onOpenSettings, onThemeChange, onQuickEditInline }, ref) => {
+  ({ isVisible, onClose, onOpenSettings, onThemeChange, onQuickEditInline, currentTheme }, ref) => {
     const [query, setQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [isThemeSelectorVisible, setIsThemeSelectorVisible] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +43,7 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
     }));
 
     // Theme management
-    const setTheme = (
+    const _setTheme = (
       theme: "auto" | "light" | "dark" | "midnight" | "tokyo-night" | "vesper" | "aura",
     ) => {
       if (onThemeChange) {
@@ -76,60 +79,15 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
         },
       },
       {
-        id: "theme-auto",
-        label: "Preferences: Color Theme (Auto)",
-        description: "Follow system preference",
-        icon: <Monitor size={16} />,
+        id: "color-theme",
+        label: "Preferences: Color Theme",
+        description: "Choose a color theme",
+        icon: <Palette size={16} />,
         category: "Theme",
-        action: () => setTheme("auto"),
-      },
-      {
-        id: "theme-light",
-        label: "Preferences: Color Theme (Light)",
-        description: "Use light theme",
-        icon: <Sun size={16} />,
-        category: "Theme",
-        action: () => setTheme("light"),
-      },
-      {
-        id: "theme-dark",
-        label: "Preferences: Color Theme (Dark)",
-        description: "Use dark theme",
-        icon: <Moon size={16} />,
-        category: "Theme",
-        action: () => setTheme("dark"),
-      },
-      {
-        id: "theme-midnight",
-        label: "Preferences: Color Theme (Midnight)",
-        description: "Pure black with no borders",
-        icon: <Moon size={16} />,
-        category: "Theme",
-        action: () => setTheme("midnight"),
-      },
-      {
-        id: "theme-tokyo-night",
-        label: "Preferences: Color Theme (Tokyo Night)",
-        description: "Dark theme with vibrant purple and blue tones",
-        icon: <Moon size={16} />,
-        category: "Theme",
-        action: () => setTheme("tokyo-night"),
-      },
-      {
-        id: "theme-vesper",
-        label: "Preferences: Color Theme (Vesper)",
-        description: "Dark theme with deep blues, purples, and teals",
-        icon: <Moon size={16} />,
-        category: "Theme",
-        action: () => setTheme("vesper"),
-      },
-      {
-        id: "theme-aura",
-        label: "Preferences: Color Theme (aura)",
-        description: "Dark theme with purple and green",
-        icon: <Moon size={16} />,
-        category: "Theme",
-        action: () => setTheme("aura"),
+        action: () => {
+          console.log("Opening theme selector...");
+          setIsThemeSelectorVisible(true);
+        },
       },
     ];
 
@@ -177,6 +135,7 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
       if (isVisible) {
         setQuery("");
         setSelectedIndex(0);
+        setIsThemeSelectorVisible(false);
         // Immediate focus without delay for better UX
         requestAnimationFrame(() => {
           if (inputRef.current) {
@@ -207,57 +166,65 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
     if (!isVisible) return null;
 
     return (
-      <div className="-translate-x-1/2 fixed top-12 left-1/2 z-[9999] transform">
-        <div className="flex max-h-[320px] w-[480px] flex-col overflow-hidden rounded-lg border border-border bg-primary-bg shadow-lg">
-          {/* Header */}
-          <div className="flex items-center gap-2 border-border border-b px-3 py-2">
-            <Palette size={14} className="text-text-lighter" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Type a command..."
-              className="flex-1 bg-transparent text-sm text-text placeholder-text-lighter outline-none"
-            />
-            <button onClick={onClose} className="rounded p-1 transition-colors hover:bg-hover">
-              <X size={14} className="text-text-lighter" />
-            </button>
-          </div>
+      <>
+        <div className="-translate-x-1/2 fixed top-12 left-1/2 z-[9999] transform">
+          <div className="flex max-h-[400px] w-[600px] flex-col overflow-hidden rounded-lg border border-border bg-primary-bg shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center gap-3 border-border border-b px-4 py-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Type a command..."
+                className="flex-1 border-none bg-transparent text-sm text-text placeholder-text-lighter outline-none focus:border-none focus:shadow-none focus:outline-none focus:ring-0"
+                style={{
+                  outline: "none !important",
+                  boxShadow: "none !important",
+                  border: "none !important",
+                  WebkitAppearance: "none",
+                }}
+              />
+              <button onClick={onClose} className="rounded p-1 transition-colors hover:bg-hover">
+                <X size={14} className="text-text-lighter" />
+              </button>
+            </div>
 
-          {/* Results */}
-          <div ref={resultsRef} className="custom-scrollbar-thin flex-1 overflow-y-auto">
-            {filteredActions.length === 0 ? (
-              <div className="p-4 text-center text-sm text-text-lighter">No commands found</div>
-            ) : (
-              filteredActions.map((action, index) => (
-                <button
-                  key={action.id}
-                  onClick={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    action.action();
-                  }}
-                  className={`flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left transition-colors ${
-                    index === selectedIndex ? "bg-selected text-text" : "text-text hover:bg-hover"
-                  }`}
-                >
-                  <div className="flex-shrink-0 text-text-lighter">{action.icon}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium text-sm">{action.label}</div>
-                    {action.description && (
-                      <div className="truncate text-text-lighter text-xs">{action.description}</div>
-                    )}
-                  </div>
-                  <div className="flex-shrink-0 text-text-lighter text-xs uppercase tracking-wide">
-                    {action.category}
-                  </div>
-                </button>
-              ))
-            )}
+            {/* Results */}
+            <div ref={resultsRef} className="custom-scrollbar-thin flex-1 overflow-y-auto">
+              {filteredActions.length === 0 ? (
+                <div className="p-4 text-center text-sm text-text-lighter">No commands found</div>
+              ) : (
+                filteredActions.map((action, index) => (
+                  <button
+                    key={action.id}
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      action.action();
+                    }}
+                    className={`flex w-full cursor-pointer items-center px-4 py-1.5 text-left transition-colors ${
+                      index === selectedIndex ? "bg-selected text-text" : "text-text hover:bg-hover"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm">{action.label}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Theme Selector */}
+        <ThemeSelector
+          isVisible={isThemeSelectorVisible}
+          onClose={() => setIsThemeSelectorVisible(false)}
+          onThemeChange={onThemeChange}
+          currentTheme={currentTheme}
+        />
+      </>
     );
   },
 );

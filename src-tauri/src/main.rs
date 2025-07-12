@@ -59,7 +59,6 @@ fn main() {
             }
 
             app.on_menu_event(move |_app_handle: &tauri::AppHandle, event| {
-                println!("Menu event triggered: {}", event.id().0.as_str());
                 if let Some(window) = _app_handle.get_webview_window("main") {
                     match event.id().0.as_str() {
                         "quit" => {
