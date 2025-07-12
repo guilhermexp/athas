@@ -1,13 +1,5 @@
 import { Command as CommandIcon, File, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "./ui/command";
 
 interface CommandBarProps {
   isVisible: boolean;
@@ -193,17 +185,16 @@ const CommandBar = ({
         data-command-bar
         className="pointer-events-auto max-h-96 w-96 overflow-hidden rounded-lg border border-[#333] bg-[#1a1a1a] shadow-2xl"
       >
-        <Command className="border-none bg-transparent shadow-none" shouldFilter={false}>
+        <div className="flex h-full w-full flex-col overflow-hidden">
           {/* Minimal Header */}
           <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <CommandIcon size={16} className="text-[#666]" />
-              <CommandInput
+              <input
                 value={query}
-                onValueChange={setQuery}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Type to search files..."
-                className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-[#e0e0e0] text-sm placeholder-[#666] shadow-none ring-0 focus:outline-none focus:ring-0"
-                autoFocus
+                className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-[#e0e0e0] text-sm placeholder-[#666] outline-none"
               />
             </div>
             <button
@@ -215,59 +206,61 @@ const CommandBar = ({
           </div>
 
           {/* Command List */}
-          <CommandList className="custom-scrollbar max-h-80 overflow-y-auto bg-transparent">
-            <CommandEmpty className="px-4 py-6 text-center font-mono text-[#666] text-sm">
-              {query ? "No matching files found" : "No files available"}
-            </CommandEmpty>
+          <div className="custom-scrollbar max-h-80 overflow-y-auto bg-transparent">
+            {recentFilesInResults.length === 0 && otherFiles.length === 0 ? (
+              <div className="px-4 py-6 text-center font-mono text-[#666] text-sm">
+                {query ? "No matching files found" : "No files available"}
+              </div>
+            ) : (
+              <>
+                {/* Recent Files Section - Minimal */}
+                {recentFilesInResults.length > 0 && (
+                  <div className="p-0">
+                    {recentFilesInResults.map((file, index) => (
+                      <button
+                        key={`recent-${file.path}`}
+                        onClick={() => handleFileSelect(file.path)}
+                        className="m-0 flex w-full cursor-pointer items-center gap-3 rounded-none border-none bg-transparent px-4 py-2 font-mono transition-colors duration-150 hover:bg-[#2a2a2a]"
+                      >
+                        <File size={16} className="text-[#8ab4f8]" />
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="truncate text-[#e0e0e0] text-sm">{file.name}</div>
+                          <div className="truncate text-[#666] text-xs">
+                            {getRelativePath(file.path)}
+                          </div>
+                        </div>
+                        {index < 3 && (
+                          <div className="h-1 w-1 rounded-full bg-[#8ab4f8] opacity-60"></div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-            {/* Recent Files Section - Minimal */}
-            {recentFilesInResults.length > 0 && (
-              <CommandGroup className="p-0">
-                {recentFilesInResults.map((file, index) => (
-                  <CommandItem
-                    key={`recent-${file.path}`}
-                    value={`${file.name} ${file.path}`}
-                    onSelect={() => handleFileSelect(file.path)}
-                    className="m-0 flex cursor-pointer items-center gap-3 rounded-none border-none bg-transparent px-4 py-2 font-mono transition-colors duration-150 hover:bg-[#2a2a2a] aria-selected:bg-[#2a2a2a] aria-selected:text-[#e0e0e0]"
-                  >
-                    <File size={16} className="text-[#8ab4f8]" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[#e0e0e0] text-sm">{file.name}</div>
-                      <div className="truncate text-[#666] text-xs">
-                        {getRelativePath(file.path)}
-                      </div>
-                    </div>
-                    {index < 3 && (
-                      <div className="h-1 w-1 rounded-full bg-[#8ab4f8] opacity-60"></div>
-                    )}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+                {/* Other Files Section - Minimal */}
+                {otherFiles.length > 0 && (
+                  <div className="p-0">
+                    {otherFiles.map(file => (
+                      <button
+                        key={`other-${file.path}`}
+                        onClick={() => handleFileSelect(file.path)}
+                        className="m-0 flex w-full cursor-pointer items-center gap-3 rounded-none border-none bg-transparent px-4 py-2 font-mono transition-colors duration-150 hover:bg-[#2a2a2a]"
+                      >
+                        <File size={16} className="text-[#666]" />
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="truncate text-[#e0e0e0] text-sm">{file.name}</div>
+                          <div className="truncate text-[#666] text-xs">
+                            {getRelativePath(file.path)}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
-
-            {/* Other Files Section - Minimal */}
-            {otherFiles.length > 0 && (
-              <CommandGroup className="p-0">
-                {otherFiles.map(file => (
-                  <CommandItem
-                    key={`other-${file.path}`}
-                    value={`${file.name} ${file.path}`}
-                    onSelect={() => handleFileSelect(file.path)}
-                    className="m-0 flex cursor-pointer items-center gap-3 rounded-none border-none bg-transparent px-4 py-2 font-mono transition-colors duration-150 hover:bg-[#2a2a2a] aria-selected:bg-[#2a2a2a] aria-selected:text-[#e0e0e0]"
-                  >
-                    <File size={16} className="text-[#666]" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[#e0e0e0] text-sm">{file.name}</div>
-                      <div className="truncate text-[#666] text-xs">
-                        {getRelativePath(file.path)}
-                      </div>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
+          </div>
+        </div>
       </div>
     </div>
   );

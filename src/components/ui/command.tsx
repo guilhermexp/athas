@@ -1,11 +1,13 @@
-import { Command as CommandPrimitive } from "cmdk";
 import type * as React from "react";
-
 import { cn } from "../../utils/cn";
 
-function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
+interface CommandProps extends React.HTMLAttributes<HTMLDivElement> {
+  shouldFilter?: boolean;
+}
+
+function Command({ className, shouldFilter, ...props }: CommandProps) {
   return (
-    <CommandPrimitive
+    <div
       data-slot="command"
       className={cn(
         "flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground",
@@ -16,27 +18,38 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
   );
 }
 
-function CommandInput({
-  className,
-  ...props
-}: React.ComponentProps<typeof CommandPrimitive.Input>) {
+interface CommandInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  onValueChange?: (value: string) => void;
+}
+
+function CommandInput({ className, onValueChange, onChange, ...props }: CommandInputProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onValueChange) {
+      onValueChange(e.target.value);
+    }
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
   return (
     <div data-slot="command-input-wrapper" className="flex h-9 items-center gap-2 px-3">
-      <CommandPrimitive.Input
+      <input
         data-slot="command-input"
         className={cn(
-          "flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}
+        onChange={handleChange}
         {...props}
       />
     </div>
   );
 }
 
-function CommandList({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.List>) {
+function CommandList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <CommandPrimitive.List
+    <div
       data-slot="command-list"
       className={cn("max-h-[300px] scroll-py-1 overflow-y-auto overflow-x-hidden", className)}
       {...props}
@@ -44,38 +57,27 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
   );
 }
 
-function CommandEmpty({ ...props }: React.ComponentProps<typeof CommandPrimitive.Empty>) {
+function CommandEmpty({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <CommandPrimitive.Empty
-      data-slot="command-empty"
-      className="py-6 text-center text-sm"
-      {...props}
-    />
+    <div data-slot="command-empty" className={cn("py-6 text-center text-sm", className)} {...props}>
+      {children}
+    </div>
   );
 }
 
-function CommandGroup({
-  className,
-  ...props
-}: React.ComponentProps<typeof CommandPrimitive.Group>) {
+function CommandGroup({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <CommandPrimitive.Group
+    <div
       data-slot="command-group"
-      className={cn(
-        "overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs",
-        className,
-      )}
+      className={cn("overflow-hidden p-1 text-foreground", className)}
       {...props}
     />
   );
 }
 
-function CommandSeparator({
-  className,
-  ...props
-}: React.ComponentProps<typeof CommandPrimitive.Separator>) {
+function CommandSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <CommandPrimitive.Separator
+    <div
       data-slot="command-separator"
       className={cn("-mx-1 h-px bg-border", className)}
       {...props}
@@ -83,20 +85,35 @@ function CommandSeparator({
   );
 }
 
-function CommandItem({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.Item>) {
+interface CommandItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  value?: string;
+  onSelect?: () => void;
+}
+
+function CommandItem({ className, onSelect, onClick, ...props }: CommandItemProps) {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (onSelect) {
+      onSelect();
+    }
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
   return (
-    <CommandPrimitive.Item
+    <button
       data-slot="command-item"
       className={cn(
-        "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden data-[disabled=true]:pointer-events-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none disabled:pointer-events-none disabled:opacity-50",
         className,
       )}
+      onClick={handleClick}
       {...props}
     />
   );
 }
 
-function CommandShortcut({ className, ...props }: React.ComponentProps<"span">) {
+function CommandShortcut({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       data-slot="command-shortcut"
