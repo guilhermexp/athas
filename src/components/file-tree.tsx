@@ -115,7 +115,6 @@ const FileTree = ({
     e.preventDefault();
     e.stopPropagation();
 
-    const _rect = document.body.getBoundingClientRect();
     const x = Math.min(e.clientX, window.innerWidth - 200);
     const y = Math.min(e.clientY, window.innerHeight - 200);
 

@@ -375,7 +375,7 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
 
       // If no fileName provided, use the old prompt method for backward compatibility
       if (!fileName) {
-        fileName = prompt("Enter the name for the new file:");
+        fileName = prompt("Enter the name for the new file:") ?? undefined;
         if (!fileName) return;
       }
 
@@ -419,7 +419,7 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
 
       // If no folderName provided, use the old prompt method for backward compatibility
       if (!folderName) {
-        folderName = prompt("Enter the name for the new folder:");
+        folderName = prompt("Enter the name for the new folder:") ?? undefined;
         if (!folderName) return;
       }
 

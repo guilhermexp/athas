@@ -4,11 +4,6 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build:web": "tsc && vite build",
-    "build:tauri": "tauri build",
-    "preview": "vite preview",
     "tauri": "tauri",
     "format": "biome format --write",
     "format:check": "biome format",

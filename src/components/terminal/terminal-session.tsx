@@ -437,9 +437,6 @@ const TerminalSession = ({
       );
     }
 
-    // Convert line to text for pattern detection
-    const _lineText = line.map(item => item.lexeme || " ").join("");
-
     // Apply smart highlighting based on content patterns
     const enhancedLine = line.map((item, itemIndex) => {
       let className = "inline";
