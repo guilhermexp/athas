@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AI_PROVIDERS, getModelById } from "../../types/ai-provider";
+import { AI_PROVIDERS, getModelById, getProviderById } from "../../types/ai-provider";
 import {
   getChatCompletionStream,
   getProviderApiToken,
@@ -718,85 +718,89 @@ export default function AIChat({
           </div>
         )}
 
-        {messages.map(message => (
-          <div
-            key={message.id}
-            className={`p-3 ${message.role === "user" ? "flex justify-end" : ""}`}
-          >
-            {message.role === "user" ? (
-              /* User Message - Subtle Chat Bubble */
-              <div className="flex max-w-[80%] flex-col items-end">
-                <div
-                  className="rounded-lg rounded-br-none px-3 py-2"
-                  style={{
-                    background: "var(--secondary-bg)",
-                    border: "1px solid var(--border-color)",
-                  }}
-                >
-                  <div className="whitespace-pre-wrap break-words">{message.content}</div>
+        {messages.map((message, index) => {
+          // Check if this is the first assistant message in a sequence
+          const isFirstAssistantInSequence =
+            message.role === "assistant" &&
+            (index === 0 || messages[index - 1].role !== "assistant");
+
+          return (
+            <div
+              key={message.id}
+              className={`${message.role === "user" ? "flex justify-end p-3" : "p-3"}`}
+            >
+              {message.role === "user" ? (
+                /* User Message - Subtle Chat Bubble */
+                <div className="flex max-w-[80%] flex-col items-end">
+                  <div
+                    className="rounded-lg rounded-br-none px-3 py-2"
+                    style={{
+                      background: "var(--secondary-bg)",
+                      border: "1px solid var(--border-color)",
+                    }}
+                  >
+                    <div className="whitespace-pre-wrap break-words">{message.content}</div>
+                  </div>
                 </div>
-                <div className="mt-1 px-1" style={{ color: "var(--text-lighter)" }}>
-                  {formatTime(message.timestamp)}
-                </div>
-              </div>
-            ) : (
-              /* Assistant Message - Full Width with Header */
-              <div className="w-full">
-                {/* AI Message Header */}
-                <div className="mb-2 flex items-center gap-2">
-                  <div className="flex items-center gap-1" style={{ color: "var(--text-lighter)" }}>
-                    <Bot size={10} />
-                    <span>ai</span>
-                    {message.isStreaming && (
-                      <div className="ml-1 flex items-center gap-1">
-                        <span className="h-1 w-1 animate-pulse rounded-full bg-text-lighter" />
-                        <span
-                          className="h-1 w-1 animate-pulse rounded-full bg-text-lighter"
-                          style={{ animationDelay: "0.2s" }}
-                        />
-                        <span
-                          className="h-1 w-1 animate-pulse rounded-full bg-text-lighter"
-                          style={{ animationDelay: "0.4s" }}
-                        />
+              ) : (
+                /* Assistant Message - Full Width with Header */
+                <div className="w-full">
+                  {/* AI Message Header - Only show for first message in sequence */}
+                  {isFirstAssistantInSequence && (
+                    <div className="mb-2 flex items-center gap-2">
+                      <div
+                        className="flex items-center gap-1"
+                        style={{ color: "var(--text-lighter)" }}
+                      >
+                        <span>{getProviderById(currentProviderId)?.name || currentProviderId}</span>
+                        {message.isStreaming && (
+                          <div className="ml-1 flex items-center gap-1">
+                            <span className="h-1 w-1 animate-pulse rounded-full bg-text-lighter" />
+                            <span
+                              className="h-1 w-1 animate-pulse rounded-full bg-text-lighter"
+                              style={{ animationDelay: "0.2s" }}
+                            />
+                            <span
+                              className="h-1 w-1 animate-pulse rounded-full bg-text-lighter"
+                              style={{ animationDelay: "0.4s" }}
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1" />
-                  <span style={{ color: "var(--text-lighter)" }}>
-                    {formatTime(message.timestamp)}
-                  </span>
+                    </div>
+                  )}
+
+                  {/* Tool Calls */}
+                  {message.toolCalls && message.toolCalls.length > 0 && (
+                    <div className="mb-3 space-y-2">
+                      {message.toolCalls!.map((toolCall, toolIndex) => (
+                        <ToolCallDisplay
+                          key={`${message.id}-tool-${toolIndex}`}
+                          toolName={toolCall.name}
+                          input={toolCall.input}
+                          output={toolCall.output}
+                          error={toolCall.error}
+                          isStreaming={!toolCall.isComplete && message.isStreaming}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* AI Message Content */}
+                  {message.content && (
+                    <div className="pr-1 leading-relaxed">
+                      <MarkdownRenderer content={message.content} onApplyCode={onApplyCode} />
+
+                      {message.isStreaming && (
+                        <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[var(--text-lighter)]" />
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                {/* Tool Calls */}
-                {message.toolCalls && message.toolCalls.length > 0 && (
-                  <div className="mb-3 space-y-2">
-                    {message.toolCalls!.map((toolCall, index) => (
-                      <ToolCallDisplay
-                        key={`${message.id}-tool-${index}`}
-                        toolName={toolCall.name}
-                        input={toolCall.input}
-                        output={toolCall.output}
-                        error={toolCall.error}
-                        isStreaming={!toolCall.isComplete && message.isStreaming}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* AI Message Content */}
-                {message.content && (
-                  <div className="pr-1 leading-relaxed">
-                    <MarkdownRenderer content={message.content} onApplyCode={onApplyCode} />
-
-                    {message.isStreaming && (
-                      <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[var(--text-lighter)]" />
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
 
         <div ref={messagesEndRef} />
       </div>

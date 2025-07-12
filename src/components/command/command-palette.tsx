@@ -177,11 +177,12 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
       if (isVisible) {
         setQuery("");
         setSelectedIndex(0);
-        setTimeout(() => {
+        // Immediate focus without delay for better UX
+        requestAnimationFrame(() => {
           if (inputRef.current) {
             inputRef.current.focus();
           }
-        }, 100);
+        });
       }
     }, [isVisible]);
 

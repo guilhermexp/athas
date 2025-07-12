@@ -1,5 +1,5 @@
 import { Command as CommandIcon, File, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface CommandBarProps {
   isVisible: boolean;
@@ -11,6 +11,53 @@ interface CommandBarProps {
 
 // Storage key for recently opened files
 const RECENT_FILES_KEY = "athas-recent-files";
+
+// Fuzzy search scoring function
+const fuzzyScore = (text: string, query: string): number => {
+  if (!query) return 0;
+
+  const textLower = text.toLowerCase();
+  const queryLower = query.toLowerCase();
+
+  // Exact match gets highest score
+  if (textLower === queryLower) return 1000;
+
+  // Starts with query gets high score
+  if (textLower.startsWith(queryLower)) return 800;
+
+  // Contains query as substring gets medium score
+  if (textLower.includes(queryLower)) return 600;
+
+  // Fuzzy matching - check if all query characters exist in order
+  let textIndex = 0;
+  let queryIndex = 0;
+  let score = 0;
+  let consecutiveMatches = 0;
+
+  while (textIndex < textLower.length && queryIndex < queryLower.length) {
+    if (textLower[textIndex] === queryLower[queryIndex]) {
+      score += 10;
+      consecutiveMatches++;
+      // Bonus for consecutive matches
+      if (consecutiveMatches > 1) {
+        score += consecutiveMatches * 2;
+      }
+      queryIndex++;
+    } else {
+      consecutiveMatches = 0;
+    }
+    textIndex++;
+  }
+
+  // If we matched all query characters, it's a valid fuzzy match
+  if (queryIndex === queryLower.length) {
+    // Bonus for shorter text (more precise match)
+    score += Math.max(0, 100 - textLower.length);
+    return score;
+  }
+
+  return 0; // No match
+};
 
 // In-memory cache for recent files to avoid localStorage reads
 // TODO: This is a hack to avoid localStorage reads. We should use redis maybe .
@@ -58,6 +105,7 @@ const CommandBar = ({
 }: CommandBarProps) => {
   const [query, setQuery] = useState("");
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Initialize cache when component mounts
   useEffect(() => {
@@ -70,6 +118,10 @@ const CommandBar = ({
       setQuery("");
       // Use cached recent files or empty array if cache not ready
       setRecentFiles(cacheInitialized ? [...recentFilesCache] : []);
+      // Focus the input field immediately
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   }, [isVisible]);
 
@@ -138,21 +190,38 @@ const CommandBar = ({
       };
     }
 
-    // With search query - filter first, then prioritize recent files
-    const queryLower = query.toLowerCase();
-    const filtered = allFiles.filter(
-      file =>
-        file.name.toLowerCase().includes(queryLower) ||
-        file.path.toLowerCase().includes(queryLower),
-    );
+    // With search query - use fuzzy search
+    const scoredFiles = allFiles
+      .map(file => {
+        // Score both filename and full path, take the higher score
+        const nameScore = fuzzyScore(file.name, query);
+        const pathScore = fuzzyScore(file.path, query);
+        const score = Math.max(nameScore, pathScore);
 
-    const recent = filtered
-      .filter(file => recentFiles.includes(file.path))
-      .sort((a, b) => recentFiles.indexOf(a.path) - recentFiles.indexOf(b.path));
+        return { file, score };
+      })
+      .filter(({ score }) => score > 0) // Only include files with positive scores
+      .sort((a, b) => {
+        // First sort by score (highest first)
+        if (b.score !== a.score) return b.score - a.score;
 
-    const others = filtered
-      .filter(file => !recentFiles.includes(file.path))
-      .sort((a, b) => a.name.localeCompare(b.name));
+        // Then prioritize recent files
+        const aIsRecent = recentFiles.includes(a.file.path);
+        const bIsRecent = recentFiles.includes(b.file.path);
+        if (aIsRecent && !bIsRecent) return -1;
+        if (!aIsRecent && bIsRecent) return 1;
+
+        // Finally sort alphabetically
+        return a.file.name.localeCompare(b.file.name);
+      });
+
+    const recent = scoredFiles
+      .filter(({ file }) => recentFiles.includes(file.path))
+      .map(({ file }) => file);
+
+    const others = scoredFiles
+      .filter(({ file }) => !recentFiles.includes(file.path))
+      .map(({ file }) => file);
 
     return {
       recentFilesInResults: recent.slice(0, 20),
@@ -191,8 +260,9 @@ const CommandBar = ({
             <div className="flex items-center gap-2">
               <CommandIcon size={16} className="text-[#666]" />
               <input
+                ref={inputRef}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={e => setQuery(e.target.value)}
                 placeholder="Type to search files..."
                 className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-[#e0e0e0] text-sm placeholder-[#666] outline-none"
               />
