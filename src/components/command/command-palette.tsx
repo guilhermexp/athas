@@ -1,7 +1,7 @@
 import { Bot, Monitor, Moon, Palette, Settings, Sun, X } from "lucide-react";
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import type { ThemeType } from "../types/theme";
+import type { ThemeType } from "@/types/theme";
 
 interface Action {
   id: string;
