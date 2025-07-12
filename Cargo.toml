@@ -1,5 +1,10 @@
 [workspace]
 members = [
-    "src-tauri"
+    "src-tauri",
+    "interceptor"
 ]
 resolver = "2"
+
+[workspace.lints.clippy]
+uninlined_format_args = "allow"
+new-without-default = "allow"

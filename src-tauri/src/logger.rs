@@ -7,6 +7,7 @@ use tauri_plugin_log::Builder;
 pub fn init<R: Runtime>(level: LevelFilter) -> TauriPlugin<R> {
     Builder::new()
         .level(LevelFilter::Warn) // external crates unrelated to "athas"
+        .level_for("interceptor", level) // interceptor
         .level_for("athas_code", level) // athas
         .format(|cb, _, record| {
             use env_logger::fmt::style;
@@ -19,17 +20,26 @@ pub fn init<R: Runtime>(level: LevelFilter) -> TauriPlugin<R> {
                     .on_default()
                     .effects(style::Effects::BOLD),
             };
-            cb.finish(format_args!(
-                "[{}] [{style}{}{style:#}] [{}]: {}",
-                chrono::Local::now()
-                    .format("%I:%M:%S%p")
-                    .to_string()
-                    .yellow()
-                    .dimmed(),
-                record.level(),
-                record.target(),
-                record.args()
-            ));
+            if cfg!(debug_assertions) {
+                cb.finish(format_args!(
+                    "[{style}{}{style:#}] [{}]: {}",
+                    record.level(),
+                    record.target(),
+                    record.args()
+                ));
+            } else {
+                cb.finish(format_args!(
+                    "[{}] [{style}{}{style:#}] [{}]: {}",
+                    chrono::Local::now()
+                        .format("%I:%M:%S%p")
+                        .to_string()
+                        .yellow()
+                        .dimmed(),
+                    record.level(),
+                    record.target(),
+                    record.args()
+                ));
+            }
         })
         .build()
 }

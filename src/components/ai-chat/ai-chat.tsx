@@ -26,7 +26,9 @@ import ModelProviderSelector from "../model-provider-selector";
 import OutlineView from "../outline-view";
 import Button from "../ui/button";
 import ChatHistoryModal from "./chat-history-modal";
+import ClaudeStatusIndicator from "./claude-status";
 import MarkdownRenderer from "./markdown-renderer";
+import ToolCallDisplay from "./tool-call-display";
 import type { AIChatProps, Chat, ContextInfo, Message } from "./types";
 import { formatTime } from "./utils";
 
@@ -100,6 +102,10 @@ export default function AIChat({
           messages: chat.messages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
+            toolCalls: msg.toolCalls?.map((tc: any) => ({
+              ...tc,
+              timestamp: new Date(tc.timestamp),
+            })),
           })),
         }));
         setChats(parsedChats);
@@ -196,6 +202,12 @@ export default function AIChat({
 
   const checkApiKey = useCallback(async () => {
     try {
+      // Claude Code doesn't require an API key in the frontend
+      if (currentProviderId === "claude-code") {
+        setHasApiKey(true);
+        return;
+      }
+
       const token = await getProviderApiToken(currentProviderId);
       setHasApiKey(!!token);
     } catch (error) {
@@ -209,6 +221,12 @@ export default function AIChat({
 
     for (const provider of AI_PROVIDERS) {
       try {
+        // Claude Code doesn't require an API key in the frontend
+        if (provider.id === "claude-code") {
+          newApiKeyMap.set(provider.id, true);
+          continue;
+        }
+
         const token = await getProviderApiToken(provider.id);
         newApiKeyMap.set(provider.id, !!token);
       } catch (_error) {
@@ -279,6 +297,7 @@ export default function AIChat({
       openBuffers: getSelectedBuffers,
       selectedFiles,
       projectRoot: rootFolderPath,
+      providerId: currentProviderId,
     };
 
     if (activeBuffer) {
@@ -309,7 +328,7 @@ export default function AIChat({
     }
 
     return context;
-  }, [activeBuffer, getSelectedBuffers, selectedFiles, rootFolderPath]);
+  }, [activeBuffer, getSelectedBuffers, selectedFiles, rootFolderPath, currentProviderId]);
 
   // Stop streaming response
   const stopStreaming = () => {
@@ -389,6 +408,7 @@ export default function AIChat({
         }));
 
       const enhancedMessage = userMessage.content;
+      let currentAssistantMessageId = assistantMessageId;
 
       await getChatCompletionStream(
         currentProviderId,
@@ -403,7 +423,7 @@ export default function AIChat({
                 ? {
                     ...chat,
                     messages: chat.messages.map(msg =>
-                      msg.id === assistantMessageId
+                      msg.id === currentAssistantMessageId
                         ? { ...msg, content: msg.content + chunk }
                         : msg,
                     ),
@@ -420,7 +440,7 @@ export default function AIChat({
                 ? {
                     ...chat,
                     messages: chat.messages.map(msg =>
-                      msg.id === assistantMessageId ? { ...msg, isStreaming: false } : msg,
+                      msg.id === currentAssistantMessageId ? { ...msg, isStreaming: false } : msg,
                     ),
                     lastMessageAt: new Date(),
                   }
@@ -440,7 +460,7 @@ export default function AIChat({
                 ? {
                     ...chat,
                     messages: chat.messages.map(msg =>
-                      msg.id === assistantMessageId
+                      msg.id === currentAssistantMessageId
                         ? {
                             ...msg,
                             content: msg.content || `Error: ${error}`,
@@ -457,6 +477,85 @@ export default function AIChat({
           abortControllerRef.current = null;
         },
         conversationContext, // Pass conversation history for context
+        // onNewMessage - create a new assistant message
+        () => {
+          const newMessageId = Date.now().toString();
+          const newAssistantMessage: Message = {
+            id: newMessageId,
+            content: "",
+            role: "assistant",
+            timestamp: new Date(),
+            isStreaming: true,
+          };
+
+          setChats(prev =>
+            prev.map(chat =>
+              chat.id === chatId
+                ? {
+                    ...chat,
+                    messages: [...chat.messages, newAssistantMessage],
+                  }
+                : chat,
+            ),
+          );
+
+          // Update the current message ID to append chunks to the new message
+          currentAssistantMessageId = newMessageId;
+          setStreamingMessageId(newMessageId);
+        },
+        // onToolUse - mark the current message as tool use
+        (toolName: string, toolInput?: any) => {
+          setChats(prev =>
+            prev.map(chat =>
+              chat.id === chatId
+                ? {
+                    ...chat,
+                    messages: chat.messages.map(msg =>
+                      msg.id === currentAssistantMessageId
+                        ? {
+                            ...msg,
+                            isToolUse: true,
+                            toolName,
+                            toolCalls: [
+                              ...(msg.toolCalls || []),
+                              {
+                                name: toolName,
+                                input: toolInput,
+                                timestamp: new Date(),
+                              },
+                            ],
+                          }
+                        : msg,
+                    ),
+                  }
+                : chat,
+            ),
+          );
+        },
+        // onToolComplete - mark tool as complete
+        (toolName: string) => {
+          setChats(prev =>
+            prev.map(chat =>
+              chat.id === chatId
+                ? {
+                    ...chat,
+                    messages: chat.messages.map(msg =>
+                      msg.id === currentAssistantMessageId
+                        ? {
+                            ...msg,
+                            toolCalls: msg.toolCalls?.map(tc =>
+                              tc.name === toolName && !tc.isComplete
+                                ? { ...tc, isComplete: true }
+                                : tc,
+                            ),
+                          }
+                        : msg,
+                    ),
+                  }
+                : chat,
+            ),
+          );
+        },
       );
     } catch (error) {
       console.error("Failed to start streaming:", error);
@@ -668,14 +767,32 @@ export default function AIChat({
                   </span>
                 </div>
 
-                {/* AI Message Content */}
-                <div className="pr-1 leading-relaxed">
-                  <MarkdownRenderer content={message.content} onApplyCode={onApplyCode} />
+                {/* Tool Calls */}
+                {message.toolCalls && message.toolCalls.length > 0 && (
+                  <div className="mb-3 space-y-2">
+                    {message.toolCalls!.map((toolCall, index) => (
+                      <ToolCallDisplay
+                        key={`${message.id}-tool-${index}`}
+                        toolName={toolCall.name}
+                        input={toolCall.input}
+                        output={toolCall.output}
+                        error={toolCall.error}
+                        isStreaming={!toolCall.isComplete && message.isStreaming}
+                      />
+                    ))}
+                  </div>
+                )}
 
-                  {message.isStreaming && (
-                    <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-text-lighter" />
-                  )}
-                </div>
+                {/* AI Message Content */}
+                {message.content && (
+                  <div className="pr-1 leading-relaxed">
+                    <MarkdownRenderer content={message.content} onApplyCode={onApplyCode} />
+
+                    {message.isStreaming && (
+                      <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[var(--text-lighter)]" />
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -819,6 +936,10 @@ export default function AIChat({
               </span>
             </div>
             <div className="ml-auto flex items-center gap-2">
+              <ClaudeStatusIndicator
+                isActive={currentProviderId === "claude-code"}
+                workspacePath={rootFolderPath}
+              />
               <ModelProviderSelector
                 currentProviderId={currentProviderId}
                 currentModelId={currentModelId}
