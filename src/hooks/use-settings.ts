@@ -19,7 +19,7 @@ const defaultSettings: Settings = {
   tabSize: 2,
   wordWrap: true,
   lineNumbers: true,
-  autoSave: true,
+  autoSave: false,
   vimMode: false,
   aiCompletion: true,
   sidebarPosition: "left",
