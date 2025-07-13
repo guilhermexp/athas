@@ -52,6 +52,8 @@ log = "0.4.27"
 tokio-tungstenite = "0.21"
 futures-util = "0.3"
 url = "2.5"
+vt100 = "0.15"
+unicode-width = "0.2.1"
 
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
