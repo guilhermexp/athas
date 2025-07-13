@@ -12,6 +12,7 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAIChatMentionStore } from "../../stores/ai-chat-mention-store";
+import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import { AI_PROVIDERS, getModelById, getProviderById } from "../../types/ai-provider";
 import type { FileEntry } from "../../types/app";
 import {
@@ -49,9 +50,8 @@ export default function AIChat({
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isChatHistoryVisible, setIsChatHistoryVisible] = useState(false);
 
-  // Provider and Model State
-  const [currentProviderId, setCurrentProviderId] = useState("openai");
-  const [currentModelId, setCurrentModelId] = useState("gpt-4o-mini");
+  // Provider and Model State from persistent store
+  const { aiProviderId, aiModelId, setAIProviderAndModel } = usePersistentSettingsStore();
   const [providerApiKeys, setProviderApiKeys] = useState<Map<string, boolean>>(new Map());
   const [apiKeyModalState, setApiKeyModalState] = useState<{
     isOpen: boolean;
@@ -279,18 +279,18 @@ export default function AIChat({
   const checkApiKey = useCallback(async () => {
     try {
       // Claude Code doesn't require an API key in the frontend
-      if (currentProviderId === "claude-code") {
+      if (aiProviderId === "claude-code") {
         setHasApiKey(true);
         return;
       }
 
-      const token = await getProviderApiToken(currentProviderId);
+      const token = await getProviderApiToken(aiProviderId);
       setHasApiKey(!!token);
     } catch (error) {
       console.error("Error checking API key:", error);
       setHasApiKey(false);
     }
-  }, [currentProviderId]);
+  }, [aiProviderId]);
 
   const checkAllProviderApiKeys = useCallback(async () => {
     const newApiKeyMap = new Map<string, boolean>();
@@ -360,11 +360,11 @@ export default function AIChat({
     const estimatedTokens = Math.ceil(totalChars / 4);
 
     // Get max tokens from current model
-    const currentModel = getModelById(currentProviderId, currentModelId);
+    const currentModel = getModelById(aiProviderId, aiModelId);
     const maxTokens = currentModel?.maxTokens || 4096; // Fallback to 4k tokens
 
     return { estimatedTokens, maxTokens };
-  }, [input, getSelectedBuffers, currentProviderId, currentModelId]);
+  }, [input, getSelectedBuffers, aiProviderId, aiModelId]);
 
   // Build context information for the AI (memoized)
   const buildContext = useMemo((): ContextInfo => {
@@ -373,7 +373,7 @@ export default function AIChat({
       openBuffers: getSelectedBuffers,
       selectedFiles,
       projectRoot: rootFolderPath,
-      providerId: currentProviderId,
+      providerId: aiProviderId,
     };
 
     if (activeBuffer) {
@@ -404,7 +404,7 @@ export default function AIChat({
     }
 
     return context;
-  }, [activeBuffer, getSelectedBuffers, selectedFiles, rootFolderPath, currentProviderId]);
+  }, [activeBuffer, getSelectedBuffers, selectedFiles, rootFolderPath, aiProviderId]);
 
   // Stop streaming response
   const stopStreaming = () => {
@@ -491,8 +491,8 @@ export default function AIChat({
       let currentAssistantMessageId = assistantMessageId;
 
       await getChatCompletionStream(
-        currentProviderId,
-        currentModelId,
+        aiProviderId,
+        aiModelId,
         enhancedMessage,
         context,
         // onChunk - update the streaming message
@@ -771,8 +771,7 @@ export default function AIChat({
 
   // Handle provider/model selection
   const handleProviderChange = (providerId: string, modelId: string) => {
-    setCurrentProviderId(providerId);
-    setCurrentModelId(modelId);
+    setAIProviderAndModel(providerId, modelId);
   };
 
   // Handle API key request
@@ -905,7 +904,7 @@ export default function AIChat({
                         className="flex items-center gap-1"
                         style={{ color: "var(--text-lighter)" }}
                       >
-                        <span>{getProviderById(currentProviderId)?.name || currentProviderId}</span>
+                        <span>{getProviderById(aiProviderId)?.name || aiProviderId}</span>
                         {message.isStreaming && (
                           <div className="ml-1 flex items-center gap-1">
                             <span className="h-1 w-1 animate-pulse rounded-full bg-text-lighter" />
@@ -1094,12 +1093,12 @@ export default function AIChat({
             </div>
             <div className="ml-auto flex items-center gap-2">
               <ClaudeStatusIndicator
-                isActive={currentProviderId === "claude-code"}
+                isActive={aiProviderId === "claude-code"}
                 workspacePath={rootFolderPath}
               />
               <ModelProviderSelector
-                currentProviderId={currentProviderId}
-                currentModelId={currentModelId}
+                currentProviderId={aiProviderId}
+                currentModelId={aiModelId}
                 onProviderChange={handleProviderChange}
                 onApiKeyRequest={handleApiKeyRequest}
                 hasApiKey={hasProviderApiKey}
