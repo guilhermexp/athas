@@ -8,7 +8,7 @@ export interface FileEntry {
   isNewItem?: boolean;
 }
 
-export type VimMode = "normal" | "insert" | "visual";
+export type VimMode = "normal" | "insert" | "visual" | "visual-line" | "visual-block";
 
 export interface ContextMenuState {
   x: number;

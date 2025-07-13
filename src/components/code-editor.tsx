@@ -1,15 +1,20 @@
 import type React from "react";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { CompletionItem } from "vscode-languageserver-protocol";
 import { useCodeHighlighting } from "../hooks/use-code-highlighting";
 import { useEditorKeyboard } from "../hooks/use-editor-keyboard";
 import { useEditorScroll } from "../hooks/use-editor-scroll";
+import { useEditorSync } from "../hooks/use-editor-sync";
+import { useHover } from "../hooks/use-hover";
+import { useLspCompletion } from "../hooks/use-lsp-completion";
+import { getCursorPosition, setCursorPosition, useVim } from "../hooks/use-vim";
 import { useCodeEditorStore } from "../store/code-editor-store";
-import { cancelCompletion, requestCompletion } from "../utils/ai-completion";
+import { requestCompletion } from "../utils/ai-completion";
 import { cn } from "../utils/cn";
 import { CompletionDropdown } from "./completion-dropdown";
-import InlineCompletion from "./inline-completion";
-import MinimapPane from "./minimap-pane";
+import { HoverTooltip } from "./editor/hover-tooltip";
+import { VimCursor } from "./editor/vim-cursor";
+import VimCommandLine, { type VimCommandLineRef } from "./vim-command-line";
 
 // Import language definitions
 import "prismjs/components/prism-bash";
@@ -30,13 +35,13 @@ import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-yaml";
 import "prismjs/components/prism-csharp";
 
-// Import minimal theme CSS
-import "prismjs/themes/prism.css";
+// Import custom theme CSS that adapts to app themes
+import "../styles/prism-theme.css";
 
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   onCursorPositionChange?: (position: number) => void;
   placeholder?: string;
   disabled?: boolean;
@@ -54,7 +59,6 @@ interface CodeEditorProps {
   wordWrap?: boolean;
   lineNumbers?: boolean;
   aiCompletion?: boolean;
-  minimap?: boolean;
   // LSP functions passed from parent
   getCompletions?: (filePath: string, line: number, character: number) => Promise<CompletionItem[]>;
   getHover?: (filePath: string, line: number, character: number) => Promise<any>;
@@ -65,119 +69,8 @@ interface CodeEditorProps {
 }
 
 export interface CodeEditorRef {
-  textarea: HTMLTextAreaElement | null;
+  editor: HTMLDivElement | null;
 }
-
-// Vim Cursor Component
-interface VimCursorProps {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  cursorPosition: number;
-  visible: boolean;
-}
-
-const VimCursor = ({ textareaRef, cursorPosition, visible }: VimCursorProps) => {
-  const fontSize = useCodeEditorStore(state => state.fontSize);
-
-  const cursorStyle = useMemo(() => {
-    if (!textareaRef.current || !visible) {
-      return { display: "none" };
-    }
-
-    const textarea = textareaRef.current;
-    const text = textarea.value;
-    const textBeforeCursor = text.substring(0, cursorPosition);
-    const lines = textBeforeCursor.split("\n");
-    const currentLineIndex = lines.length - 1;
-    const currentLineText = lines[currentLineIndex];
-
-    const lineHeight = fontSize * 1.4;
-    const charWidth = fontSize * 0.6; // Approximate character width
-    const top = currentLineIndex * lineHeight + 16;
-    const left = currentLineText.length * charWidth + 8;
-
-    return {
-      position: "absolute" as const,
-      top: `${top}px`,
-      left: `${left}px`,
-      width: "8px",
-      height: `${lineHeight}px`,
-      backgroundColor: "var(--text-color)",
-      opacity: 0.8,
-      pointerEvents: "none" as const,
-      zIndex: 10,
-      animation: "vim-cursor-blink 1s infinite",
-    };
-  }, [textareaRef, cursorPosition, visible, fontSize]);
-
-  return <div style={cursorStyle} />;
-};
-
-// Hover Tooltip Component
-interface HoverTooltipProps {
-  hoverInfo: { content: string; position: { top: number; left: number } } | null;
-  fontSize: number;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-}
-
-const HoverTooltip = ({ hoverInfo, fontSize, onMouseEnter, onMouseLeave }: HoverTooltipProps) => {
-  if (!hoverInfo) return null;
-
-  return (
-    <div
-      className="pointer-events-auto fixed z-[110] rounded-lg border border-border bg-primary-bg shadow-xl"
-      style={{
-        top: hoverInfo.position.top,
-        left: hoverInfo.position.left,
-        maxWidth: "400px",
-        maxHeight: "300px",
-        backdropFilter: "blur(8px)",
-        animation: "fadeInUp 0.2s ease-out",
-      }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      <div className="scrollbar-hidden overflow-auto p-4">
-        {hoverInfo.content.includes("```") ? (
-          <div className="space-y-3">
-            {hoverInfo.content.split(/```[\w]*\n?/).map((part, index) => {
-              const trimmedPart = part.trim();
-              if (!trimmedPart) return null;
-
-              if (index % 2 === 1) {
-                return (
-                  <pre
-                    key={index}
-                    className="scrollbar-hidden overflow-x-auto rounded-md border border-border bg-secondary-bg p-3 font-mono text-sm text-text"
-                    style={{ fontSize: `${fontSize * 0.85}px` }}
-                  >
-                    {trimmedPart.replace(/```$/, "")}
-                  </pre>
-                );
-              }
-              return trimmedPart ? (
-                <div
-                  key={index}
-                  className="whitespace-pre-wrap text-sm text-text leading-relaxed"
-                  style={{ fontSize: `${fontSize * 0.9}px` }}
-                >
-                  {trimmedPart}
-                </div>
-              ) : null;
-            })}
-          </div>
-        ) : (
-          <div
-            className="whitespace-pre-wrap text-sm text-text leading-relaxed"
-            style={{ fontSize: `${fontSize * 0.9}px` }}
-          >
-            {hoverInfo.content}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 // Main CodeEditor Component
 const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
@@ -203,7 +96,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       wordWrap = false,
       lineNumbers = true,
       aiCompletion = false,
-      minimap = false,
       getCompletions,
       getHover,
       isLanguageSupported,
@@ -214,11 +106,15 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     ref,
   ) => {
     // Refs
-    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const editorRef = useRef<HTMLDivElement | null>(null);
     const highlightRef = useRef<HTMLPreElement | null>(null);
     const lineNumbersRef = useRef<HTMLDivElement | null>(null);
-    const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const mountedRef = useRef(true);
+    const vimCommandLineRef = useRef<VimCommandLineRef>(null);
+
+    // Vim command line state
+    const [isVimCommandLineVisible, setIsVimCommandLineVisible] = useState(false);
+    const [vimCommandLineInitialCommand, setVimCommandLineInitialCommand] = useState("");
 
     // Store subscriptions - only what we need
     const language = useCodeEditorStore(state => state.language);
@@ -227,108 +123,95 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     const isLspCompletionVisible = useCodeEditorStore(state => state.isLspCompletionVisible);
     const completionPosition = useCodeEditorStore(state => state.completionPosition);
     const hoverInfo = useCodeEditorStore(state => state.hoverInfo);
-    const isHovering = useCodeEditorStore(state => state.isHovering);
-    const currentCompletion = useCodeEditorStore(state => state.currentCompletion);
-    const showCompletion = useCodeEditorStore(state => state.showCompletion);
+    const _currentCompletion = useCodeEditorStore(state => state.currentCompletion);
 
-    // Store actions
-    const setFilename = useCodeEditorStore(state => state.setFilename);
-    const setFilePath = useCodeEditorStore(state => state.setFilePath);
-    const setFontSize = useCodeEditorStore(state => state.setFontSize);
-    const setTabSize = useCodeEditorStore(state => state.setTabSize);
-    const setWordWrap = useCodeEditorStore(state => state.setWordWrap);
-    const setLineNumbers = useCodeEditorStore(state => state.setLineNumbers);
-    const setDisabled = useCodeEditorStore(state => state.setDisabled);
-    const setVimEnabled = useCodeEditorStore(state => state.setVimEnabled);
-    const setVimMode = useCodeEditorStore(state => state.setVimMode);
-    const setAiCompletion = useCodeEditorStore(state => state.setAiCompletion);
-    const setMinimap = useCodeEditorStore(state => state.setMinimap);
-    const setSearchQuery = useCodeEditorStore(state => state.setSearchQuery);
-    const setSearchMatches = useCodeEditorStore(state => state.setSearchMatches);
-    const setCurrentMatchIndex = useCodeEditorStore(state => state.setCurrentMatchIndex);
-    const setValue = useCodeEditorStore(state => state.setValue);
-    const setLspCompletions = useCodeEditorStore(state => state.setLspCompletions);
-    const setSelectedLspIndex = useCodeEditorStore(state => state.setSelectedLspIndex);
-    const setIsLspCompletionVisible = useCodeEditorStore(state => state.setIsLspCompletionVisible);
-    const setCompletionPosition = useCodeEditorStore(state => state.setCompletionPosition);
-    const setHoverInfo = useCodeEditorStore(state => state.setHoverInfo);
-    const setIsHovering = useCodeEditorStore(state => state.setIsHovering);
+    // Store actions for AI completion
     const setCurrentCompletion = useCodeEditorStore(state => state.setCurrentCompletion);
     const setShowCompletion = useCodeEditorStore(state => state.setShowCompletion);
 
     // Initialize hooks
     useCodeHighlighting(highlightRef);
-    const { handleKeyDown } = useEditorKeyboard(textareaRef, onChange, onKeyDown);
+    const { handleKeyDown } = useEditorKeyboard(
+      editorRef as React.RefObject<HTMLTextAreaElement>,
+      onChange,
+      onKeyDown,
+    );
+
+    // Sync props with store
+    useEditorSync({
+      value,
+      filename,
+      filePath,
+      fontSize,
+      tabSize,
+      wordWrap,
+      lineNumbers,
+      disabled,
+      vimEnabled,
+      vimMode,
+      aiCompletion,
+      searchQuery,
+      searchMatches,
+      currentMatchIndex,
+    });
+
+    // LSP completion hook
+    const { handleLspCompletion, applyLspCompletion, handleCompletionClose } = useLspCompletion({
+      getCompletions,
+      isLanguageSupported,
+      filePath,
+      value,
+      fontSize,
+      lineNumbers,
+    });
+
+    // Hover hook
+    const { handleHover, handleMouseLeave, handleMouseEnter } = useHover({
+      getHover,
+      isLanguageSupported,
+      filePath,
+      fontSize,
+      lineNumbers,
+    });
+
+    // Vim integration
+    const { vimEngine } = useVim(
+      editorRef as React.RefObject<HTMLDivElement>,
+      value,
+      onChange,
+      vimEnabled,
+      (pos: number) => onCursorPositionChange?.(pos),
+      () => {}, // Already synced via useEditorSync
+      (initialCommand?: string) => {
+        setVimCommandLineInitialCommand(initialCommand || "");
+        setIsVimCommandLineVisible(true);
+        requestAnimationFrame(() => {
+          vimCommandLineRef.current?.focus();
+        });
+      },
+    );
     const { handleScroll, handleCursorPositionChange, handleUserInteraction } = useEditorScroll(
-      textareaRef,
+      editorRef,
       highlightRef,
       lineNumbersRef,
     );
 
-    // Sync props with store
+    // Sync content with contenteditable
     useEffect(() => {
-      setValue(value);
-    }, [value, setValue]);
-
-    useEffect(() => {
-      setFilename(filename);
-    }, [filename, setFilename]);
-
-    useEffect(() => {
-      setFilePath(filePath);
-    }, [filePath, setFilePath]);
-
-    useEffect(() => {
-      setFontSize(fontSize);
-    }, [fontSize, setFontSize]);
-
-    useEffect(() => {
-      setTabSize(tabSize);
-    }, [tabSize, setTabSize]);
-
-    useEffect(() => {
-      setWordWrap(wordWrap);
-    }, [wordWrap, setWordWrap]);
-
-    useEffect(() => {
-      setLineNumbers(lineNumbers);
-    }, [lineNumbers, setLineNumbers]);
-
-    useEffect(() => {
-      setDisabled(disabled);
-    }, [disabled, setDisabled]);
-
-    useEffect(() => {
-      setVimEnabled(vimEnabled);
-    }, [vimEnabled, setVimEnabled]);
-
-    useEffect(() => {
-      setVimMode(vimMode);
-    }, [vimMode, setVimMode]);
-
-    useEffect(() => {
-      setAiCompletion(aiCompletion);
-    }, [aiCompletion, setAiCompletion]);
-
-    useEffect(() => {
-      setMinimap(minimap);
-    }, [minimap, setMinimap]);
-
-    useEffect(() => {
-      setSearchQuery(searchQuery);
-    }, [searchQuery, setSearchQuery]);
-
-    useEffect(() => {
-      setSearchMatches(searchMatches);
-    }, [searchMatches, setSearchMatches]);
-
-    useEffect(() => {
-      setCurrentMatchIndex(currentMatchIndex);
-    }, [currentMatchIndex, setCurrentMatchIndex]);
+      if (editorRef.current && editorRef.current.textContent !== value) {
+        const cursorPos = getCursorPosition(editorRef.current);
+        editorRef.current.textContent = value;
+        requestAnimationFrame(() => {
+          if (editorRef.current) {
+            setCursorPosition(editorRef.current, Math.min(cursorPos, value.length));
+          }
+        });
+      }
+    }, [value]);
 
     // Handle imperative ref
     useImperativeHandle(ref, () => ({
-      textarea: textareaRef.current,
+      editor: editorRef.current as HTMLDivElement | null,
     }));
 
     // Cleanup on unmount
@@ -338,213 +221,19 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       };
     }, []);
 
-    // LSP completion handler
-    const handleLspCompletion = useCallback(
-      async (cursorPos: number) => {
-        if (
-          !mountedRef.current ||
-          !getCompletions ||
-          !filePath ||
-          !isLanguageSupported?.(filePath)
-        ) {
-          return;
-        }
-
-        const isRemoteFile = filePath?.startsWith("remote://");
-        if (isRemoteFile) return;
-
-        const lines = value.substring(0, cursorPos).split("\n");
-        const line = lines.length - 1;
-        const character = lines[lines.length - 1].length;
-
-        try {
-          const completions = await getCompletions(filePath, line, character);
-          if (!mountedRef.current) return;
-          if (completions.length > 0) {
-            setLspCompletions(completions);
-            setSelectedLspIndex(0);
-            setIsLspCompletionVisible(true);
-
-            // Calculate completion position
-            if (textareaRef.current) {
-              const textarea = textareaRef.current;
-              const rect = textarea.getBoundingClientRect();
-              const lineHeight = fontSize * 1.4;
-              const charWidth = fontSize * 0.6;
-              const paddingLeft = lineNumbers ? 8 : 16;
-              const paddingTop = 16;
-              const scrollLeft = textarea.scrollLeft;
-              const scrollTop = textarea.scrollTop;
-
-              const x = rect.left + character * charWidth + paddingLeft - scrollLeft;
-              const y = rect.top + (line + 1) * lineHeight + paddingTop - scrollTop;
-
-              const dropdownHeight = Math.min(completions.length * 40, 320);
-              const dropdownWidth = 320;
-
-              let finalX = x;
-              let finalY = y;
-
-              if (finalX + dropdownWidth > window.innerWidth - 10) {
-                finalX = Math.max(10, x - dropdownWidth);
-              }
-
-              if (finalY + dropdownHeight > window.innerHeight - 10) {
-                finalY = Math.max(10, y - dropdownHeight - lineHeight);
-              }
-
-              setCompletionPosition({ top: finalY, left: finalX });
-            }
-          }
-        } catch (error) {
-          console.error("LSP completion error:", error);
-        }
-      },
-      [
-        getCompletions,
-        isLanguageSupported,
-        filePath,
-        value,
-        fontSize,
-        lineNumbers,
-        setLspCompletions,
-        setSelectedLspIndex,
-        setIsLspCompletionVisible,
-        setCompletionPosition,
-      ],
-    );
-
-    // Apply LSP completion
-    const applyLspCompletion = useCallback(
-      (completion: CompletionItem) => {
-        if (!textareaRef.current) return;
-        const textarea = textareaRef.current;
-        const cursorPos = textarea.selectionStart;
-        const before = value.substring(0, cursorPos);
-        const after = value.substring(cursorPos);
-        const wordMatch = before.match(/\w*$/);
-        const wordStart = wordMatch ? cursorPos - wordMatch[0].length : cursorPos;
-        const insertText = completion.insertText || completion.label;
-        const newValue = value.substring(0, wordStart) + insertText + after;
-        onChange(newValue);
-        const newCursorPos = wordStart + insertText.length;
-        requestAnimationFrame(() => {
-          if (textareaRef.current) {
-            textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-            textareaRef.current.focus();
-          }
-        });
-        setIsLspCompletionVisible(false);
-      },
-      [value, onChange, setIsLspCompletionVisible],
-    );
-
-    // Handle completion close
-    const handleCompletionClose = useCallback(() => {
-      setIsLspCompletionVisible(false);
-    }, [setIsLspCompletionVisible]);
-
-    // Handle hover
-    const handleHover = useCallback(
-      (e: React.MouseEvent<HTMLTextAreaElement>) => {
-        if (!getHover || !isLanguageSupported?.(filePath || "")) {
-          return;
-        }
-
-        if (hoverTimeoutRef.current) {
-          clearTimeout(hoverTimeoutRef.current);
-        }
-
-        hoverTimeoutRef.current = setTimeout(async () => {
-          const textarea = e.currentTarget;
-          if (!textarea) return;
-          const rect = textarea.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-
-          const lineHeight = fontSize * 1.4;
-          const charWidth = fontSize * 0.6;
-          const paddingLeft = lineNumbers ? 8 : 16;
-          const paddingTop = 16;
-
-          const line = Math.floor((y - paddingTop + textarea.scrollTop) / lineHeight);
-          const character = Math.floor((x - paddingLeft + textarea.scrollLeft) / charWidth);
-
-          if (line >= 0 && character >= 0) {
-            try {
-              const hoverResult = await getHover(filePath || "", line, character);
-              if (hoverResult?.contents) {
-                let content = "";
-
-                if (typeof hoverResult.contents === "string") {
-                  content = hoverResult.contents;
-                } else if (Array.isArray(hoverResult.contents)) {
-                  content = hoverResult.contents
-                    .map((item: any) => {
-                      if (typeof item === "string") {
-                        return item;
-                      } else if (item.language && item.value) {
-                        return `\`\`\`${item.language}\n${item.value}\n\`\`\``;
-                      } else if (item.kind === "markdown" && item.value) {
-                        return item.value;
-                      } else if (item.value) {
-                        return item.value;
-                      }
-                      return "";
-                    })
-                    .filter(Boolean)
-                    .join("\n\n");
-                } else if (hoverResult.contents.value) {
-                  content = hoverResult.contents.value;
-                }
-
-                if (content.trim()) {
-                  const tooltipWidth = 400;
-                  const tooltipHeight = 200;
-                  const margin = 10;
-
-                  let tooltipX = e.clientX + 15;
-                  let tooltipY = e.clientY + 15;
-
-                  if (tooltipX + tooltipWidth > window.innerWidth - margin) {
-                    tooltipX = e.clientX - tooltipWidth - 15;
-                  }
-
-                  if (tooltipY + tooltipHeight > window.innerHeight - margin) {
-                    tooltipY = e.clientY - tooltipHeight - 15;
-                  }
-
-                  tooltipX = Math.max(
-                    margin,
-                    Math.min(tooltipX, window.innerWidth - tooltipWidth - margin),
-                  );
-                  tooltipY = Math.max(
-                    margin,
-                    Math.min(tooltipY, window.innerHeight - tooltipHeight - margin),
-                  );
-
-                  setHoverInfo({
-                    content: content.trim(),
-                    position: { top: tooltipY, left: tooltipX },
-                  });
-                }
-              }
-            } catch (error) {
-              console.error("LSP hover error:", error);
-            }
-          }
-        }, 300);
-      },
-      [getHover, isLanguageSupported, filePath, fontSize, lineNumbers, setHoverInfo],
-    );
-
     // Handle AI completion
     useEffect(() => {
-      if (!aiCompletion || !textareaRef.current) return;
+      if (!aiCompletion || !editorRef.current) return;
 
-      const textarea = textareaRef.current;
       const handleAiCompletion = async () => {
-        const cursorPos = textarea.selectionStart;
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        const cursorPos = range.startOffset;
         const textBeforeCursor = value.substring(0, cursorPos);
 
         if (textBeforeCursor.trim().length < 3) return;
@@ -571,64 +260,11 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
       const timeoutId = setTimeout(handleAiCompletion, 500);
       return () => clearTimeout(timeoutId);
-    }, [value, language, aiCompletion, setCurrentCompletion, setShowCompletion]);
+    }, [value, language, aiCompletion, setCurrentCompletion, setShowCompletion, filename]);
 
-    // Handle completion acceptance
-    const handleAcceptCompletion = useCallback(() => {
-      if (!currentCompletion || !textareaRef.current) return;
-
-      const currentCursorPos = textareaRef.current.selectionStart;
-      const newValue =
-        value.substring(0, currentCursorPos) +
-        currentCompletion.completion +
-        value.substring(currentCursorPos);
-
-      onChange(newValue);
-      setShowCompletion(false);
-      setCurrentCompletion(null);
-
-      requestAnimationFrame(() => {
-        if (textareaRef.current) {
-          const newCursorPos = currentCursorPos + currentCompletion.completion.length;
-          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-          textareaRef.current.focus();
-        }
-      });
-    }, [currentCompletion, value, onChange, setShowCompletion, setCurrentCompletion]);
-
-    // Handle completion dismissal
-    const handleDismissCompletion = useCallback(() => {
-      setShowCompletion(false);
-      setCurrentCompletion(null);
-      cancelCompletion();
-    }, [setShowCompletion, setCurrentCompletion]);
-
-    // Handle mouse events
-    const handleMouseLeave = useCallback(() => {
-      setIsHovering(false);
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-      setTimeout(() => {
-        if (!isHovering) {
-          setHoverInfo(null);
-        }
-      }, 150);
-    }, [isHovering, setIsHovering, setHoverInfo]);
-
-    const handleMouseEnter = useCallback(() => {
-      setIsHovering(true);
-    }, [setIsHovering]);
-
-    // Calculate styles
-    const getTextareaClasses = useMemo(() => {
-      let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 p-4 font-mono leading-6 text-transparent bg-transparent border-none outline-none resize-none overflow-auto z-[2] shadow-none rounded-none transition-none`;
-
-      if (wordWrap) {
-        classes += " whitespace-pre-wrap break-words";
-      } else {
-        classes += " whitespace-pre";
-      }
+    // Calculate styles for contenteditable
+    const getEditorClasses = useMemo(() => {
+      let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 p-4 font-mono text-text bg-transparent border-none outline-none overflow-auto z-[2] shadow-none rounded-none transition-none`;
 
       if (lineNumbers) {
         classes += " pl-2";
@@ -651,7 +287,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       }
 
       return classes;
-    }, [wordWrap, lineNumbers, vimEnabled, vimMode]);
+    }, [lineNumbers, vimEnabled, vimMode]);
 
     const getEditorStyles = useMemo(() => {
       return {
@@ -664,27 +300,89 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     // Calculate line numbers
     const lineNumbersArray = useMemo(() => {
       const lines = value.split("\n");
-      return Array.from({ length: lines.length }, (_, i) => i + 1);
+      // Ensure we always have at least one line number, even for empty content
+      const lineCount = Math.max(1, lines.length);
+      return Array.from({ length: lineCount }, (_, i) => i + 1);
     }, [value]);
 
     return (
       <div className="relative flex h-full flex-1 flex-col">
+        <style>
+          {`
+            .code-editor-content {
+              font-family: inherit;
+              background: transparent;
+              border: none;
+              outline: none;
+              caret-color: var(--text-color);
+            }
+            .code-editor-content.vim-normal-mode {
+              caret-color: transparent;
+            }
+            .code-editor-content.vim-insert-mode {
+              caret-color: var(--text-color);
+            }
+            .code-editor-content:focus {
+              outline: none;
+            }
+            .code-editor-content::selection {
+              background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
+            }
+            .code-editor-content::-moz-selection {
+              background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
+            }
+            .code-editor-content:empty:before {
+              content: attr(data-placeholder);
+              color: var(--text-lighter);
+              pointer-events: none;
+            }
+            .vim-cursor-blink {
+              animation: vim-cursor-blink 1s infinite;
+            }
+            @keyframes vim-cursor-blink {
+              0%, 50% { opacity: 1; }
+              51%, 100% { opacity: 0; }
+            }
+
+            /* Hide scrollbars on line numbers */
+            .line-numbers-container {
+              scrollbar-width: none;
+              -ms-overflow-style: none;
+            }
+            .line-numbers-container::-webkit-scrollbar {
+              display: none;
+            }
+          `}
+        </style>
         <div className="relative flex h-full flex-1 overflow-hidden">
           {/* Line numbers */}
           {lineNumbers && (
-            <div className="relative w-12 overflow-hidden border-border border-r bg-secondary-bg">
+            <div className="relative w-16 overflow-hidden border-border border-r bg-secondary-bg">
               <div
                 ref={lineNumbersRef}
-                className="pointer-events-none absolute inset-0 select-none overflow-hidden p-4 pt-4 pr-2 text-right font-mono"
+                className="line-numbers-container pointer-events-none absolute inset-0 select-none overflow-hidden p-4 pt-4 pr-2 text-right font-mono"
                 style={{
                   fontSize: `${fontSize * 0.85}px`,
                   lineHeight: `${fontSize * 1.4}px`,
                   color: "var(--text-lighter)",
+                  minHeight: "100%",
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                  transform: "translateZ(0)", // Force hardware acceleration for smooth scrolling
                 }}
               >
                 {lineNumbersArray.map(num => (
-                  <div key={num} style={{ height: `${fontSize * 1.4}px` }}>
-                    {num}
+                  <div
+                    key={num}
+                    className="flex items-center justify-end"
+                    style={{
+                      height: `${fontSize * 1.4}px`,
+                      minHeight: `${fontSize * 1.4}px`,
+                      lineHeight: `${fontSize * 1.4}px`,
+                      fontSize: `${fontSize * 0.85}px`,
+                    }}
+                  >
+                    <span style={{ lineHeight: `${fontSize * 1.4}px` }}>{num}</span>
                   </div>
                 ))}
               </div>
@@ -693,28 +391,32 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
           {/* Editor content area */}
           <div className="relative h-full flex-1 overflow-hidden">
-            {/* Syntax highlighting layer */}
-            <pre
-              ref={highlightRef}
-              className={`pointer-events-none absolute top-0 right-0 bottom-0 left-0 z-[1] m-0 overflow-auto border-none bg-transparent p-4 font-mono text-text outline-none ${wordWrap ? "whitespace-pre-wrap break-words" : "whitespace-pre"}`}
-              style={{
-                ...getEditorStyles,
-                paddingLeft: lineNumbers ? "8px" : "16px",
-              }}
-              aria-hidden="true"
-            />
-
-            {/* Textarea for input */}
-            <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={e => {
+            {/* Contenteditable div for input with syntax highlighting */}
+            <div
+              ref={editorRef}
+              contentEditable={!disabled}
+              suppressContentEditableWarning={true}
+              onInput={e => {
                 handleUserInteraction();
-                onChange(e.target.value);
+                const content = e.currentTarget.textContent || "";
+                // Only call onChange if content actually changed to prevent unnecessary saves
+                if (content !== value) {
+                  onChange(content);
+                }
               }}
               onKeyDown={e => {
                 handleUserInteraction();
-                handleKeyDown(e);
+                if (vimEnabled && vimEngine) {
+                  const handled = vimEngine.handleKeyDown(
+                    e as any,
+                    editorRef.current as any,
+                    value,
+                  );
+                  if (handled) {
+                    return;
+                  }
+                }
+                handleKeyDown(e as any);
               }}
               onKeyUp={() =>
                 handleCursorPositionChange(
@@ -723,7 +425,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   isLanguageSupported,
                   vimEnabled,
                   vimMode,
-                  handleLspCompletion,
+                  (pos: number) => handleLspCompletion(pos, editorRef),
                 )
               }
               onClick={() => {
@@ -734,45 +436,51 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                   isLanguageSupported,
                   vimEnabled,
                   vimMode,
-                  handleLspCompletion,
+                  (pos: number) => handleLspCompletion(pos, editorRef),
                 );
               }}
               onScroll={handleScroll}
               onMouseMove={handleHover}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
-              placeholder={placeholder}
-              disabled={disabled}
-              className={cn(getTextareaClasses, className)}
+              className={cn(
+                getEditorClasses,
+                "code-editor-content",
+                vimEnabled && vimMode === "normal" && "vim-normal-mode",
+                vimEnabled && vimMode === "insert" && "vim-insert-mode",
+                className,
+              )}
               style={{
                 ...getEditorStyles,
-                paddingLeft: lineNumbers ? "8px" : "16px",
+                paddingLeft: lineNumbers ? "16px" : "16px",
+                minHeight: "100%",
+                outline: "none",
+                whiteSpace: wordWrap ? "pre-wrap" : "pre",
+                wordBreak: wordWrap ? "break-word" : "normal",
+                overflowWrap: wordWrap ? "break-word" : "normal",
+                color: "var(--text-color)",
+                background: "transparent",
+                border: "none",
+                zIndex: 2,
+                maxWidth: "fit-content",
+                minWidth: "100%",
               }}
               spellCheck={false}
               autoCapitalize="off"
-              autoComplete="off"
-              autoCorrect="off"
+              data-placeholder={placeholder}
             />
-
-            {/* AI Completion */}
-            {(!vimEnabled || vimMode === "insert") && (
-              <InlineCompletion
-                textareaRef={textareaRef as React.RefObject<HTMLTextAreaElement>}
-                completion={currentCompletion?.completion || ""}
-                cursorPosition={textareaRef.current?.selectionStart || 0}
-                visible={showCompletion}
-                onAccept={handleAcceptCompletion}
-                onDismiss={handleDismissCompletion}
-              />
-            )}
 
             {/* Vim cursor for normal mode */}
             {vimEnabled && vimMode === "normal" && (
-              <VimCursor textareaRef={textareaRef} cursorPosition={cursorPosition} visible={true} />
+              <VimCursor
+                editorRef={editorRef}
+                cursorPosition={cursorPosition}
+                visible={true}
+                fontSize={fontSize}
+                lineNumbers={lineNumbers}
+              />
             )}
           </div>
-
-          {minimap && <MinimapPane content={value} textareaRef={textareaRef} fontSize={fontSize} />}
         </div>
 
         {/* LSP Completion Dropdown */}
@@ -780,7 +488,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
           <CompletionDropdown
             items={lspCompletions}
             selectedIndex={selectedLspIndex}
-            onSelect={applyLspCompletion}
+            onSelect={completion => applyLspCompletion(completion, editorRef, onChange)}
             onClose={handleCompletionClose}
             position={completionPosition}
           />
@@ -793,6 +501,32 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         />
+
+        {/* Vim Command Line */}
+        {vimEnabled && (
+          <VimCommandLine
+            ref={vimCommandLineRef}
+            isVisible={isVimCommandLineVisible}
+            initialCommand={vimCommandLineInitialCommand}
+            onClose={() => {
+              setIsVimCommandLineVisible(false);
+              setVimCommandLineInitialCommand("");
+              if (editorRef.current) {
+                editorRef.current.focus();
+              }
+            }}
+            onExecuteCommand={command => {
+              if (vimEngine) {
+                vimEngine.executeExCommand(command, editorRef.current as any, value);
+              }
+              setIsVimCommandLineVisible(false);
+              setVimCommandLineInitialCommand("");
+              if (editorRef.current) {
+                editorRef.current.focus();
+              }
+            }}
+          />
+        )}
       </div>
     );
   },

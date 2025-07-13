@@ -155,7 +155,6 @@ function App() {
 
   const [allProjectFiles, setAllProjectFiles] = useState<FileEntry[]>([]);
   const [_isDraggingTab, setIsDraggingTab] = useState(false);
-  const [isMinimapVisible, setIsMinimapVisible] = useState(false);
 
   // File operations with proper callback
   const {
@@ -457,45 +456,56 @@ function App() {
   };
 
   const handleQuickEdit = () => {
-    if (!activeBuffer || !codeEditorRef.current?.textarea) return;
+    if (!activeBuffer || !codeEditorRef.current?.editor) return;
 
-    const textarea = codeEditorRef.current.textarea;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
+    const editor = codeEditorRef.current.editor;
+    const selection = window.getSelection();
+    if (!selection) return;
 
-    const textareaRect = textarea.getBoundingClientRect();
-    const scrollLeft = textarea.scrollLeft;
-    const scrollTop = textarea.scrollTop;
+    const selectedText = selection.toString();
+    const editorRect = editor.getBoundingClientRect();
+    const scrollLeft = editor.scrollLeft;
+    const scrollTop = editor.scrollTop;
 
-    const textBeforeCursor = textarea.value.substring(0, start);
-    const lines = textBeforeCursor.split("\n");
-    const currentLine = lines.length - 1;
-    const currentColumn = lines[currentLine].length;
+    // Get cursor position for contenteditable
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
 
-    const lineHeight = 20;
-    const charWidth = 8;
-
-    const cursorX = textareaRect.left + currentColumn * charWidth - scrollLeft;
-    const cursorY = textareaRect.top + currentLine * lineHeight - scrollTop;
+    const cursorX = rect.left - editorRect.left + scrollLeft;
+    const cursorY = rect.top - editorRect.top + scrollTop;
 
     let text = selectedText;
-    let selectionRange = { start, end };
+    let selectionRange = { start: 0, end: 0 };
 
-    if (start === end) {
-      const linesArr = textarea.value.split("\n");
+    if (selectedText) {
+      // Use selected text
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(editor);
+      preCaretRange.setEnd(range.startContainer, range.startOffset);
+      const start = preCaretRange.toString().length;
+      const end = start + selectedText.length;
+      selectionRange = { start, end };
+    } else {
+      // Select current line if no selection
+      const lines = activeBuffer.content.split("\n");
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(editor);
+      preCaretRange.setEnd(range.startContainer, range.startOffset);
+      const cursorPos = preCaretRange.toString().length;
+
       let currentPos = 0;
       let lineIndex = 0;
-      for (let i = 0; i < linesArr.length; i++) {
-        if (currentPos + linesArr[i].length >= start) {
+      for (let i = 0; i < lines.length; i++) {
+        if (currentPos + lines[i].length >= cursorPos) {
           lineIndex = i;
           break;
         }
-        currentPos += linesArr[i].length + 1;
+        currentPos += lines[i].length + 1;
       }
+
       const lineStart = currentPos;
-      const lineEnd = currentPos + linesArr[lineIndex].length;
-      text = linesArr[lineIndex];
+      const lineEnd = currentPos + lines[lineIndex].length;
+      text = lines[lineIndex];
       selectionRange = { start: lineStart, end: lineEnd };
     }
 
@@ -507,9 +517,9 @@ function App() {
   };
 
   const handleQuickEditApply = (editedText: string) => {
-    if (!activeBuffer || !codeEditorRef.current?.textarea) return;
+    if (!activeBuffer || !codeEditorRef.current?.editor) return;
 
-    const textarea = codeEditorRef.current.textarea;
+    const editor = codeEditorRef.current.editor;
     const { start, end } = quickEdit.selectionRange;
 
     const newContent =
@@ -518,8 +528,37 @@ function App() {
     updateBufferContent(activeBuffer.id, newContent);
 
     requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start, start + editedText.length);
+      editor.focus();
+      // Set cursor position in contenteditable
+      const range = document.createRange();
+      const textNodes: Text[] = [];
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+      let node: Node | null = walker.nextNode();
+      while (node) {
+        textNodes.push(node as Text);
+        node = walker.nextNode();
+      }
+
+      let currentPos = 0;
+      const targetStart = start;
+      const targetEnd = start + editedText.length;
+
+      for (const textNode of textNodes) {
+        const nodeLength = textNode.textContent?.length || 0;
+        if (currentPos + nodeLength >= targetStart) {
+          const startOffset = targetStart - currentPos;
+          const endOffset = Math.min(targetEnd - currentPos, nodeLength);
+          range.setStart(textNode, startOffset);
+          range.setEnd(textNode, endOffset);
+          const selection = window.getSelection();
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          break;
+        }
+        currentPos += nodeLength;
+      }
     });
 
     quickEdit.closeQuickEdit();
@@ -535,11 +574,18 @@ function App() {
   };
 
   const handleApplyCodeFromChat = (code: string) => {
-    if (!activeBuffer || !codeEditorRef.current?.textarea) return;
+    if (!activeBuffer || !codeEditorRef.current?.editor) return;
 
-    const textarea = codeEditorRef.current.textarea;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const editor = codeEditorRef.current.editor;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(editor);
+    preCaretRange.setEnd(range.startContainer, range.startOffset);
+    const start = preCaretRange.toString().length;
+    const end = start + selection.toString().length;
 
     const newContent =
       activeBuffer.content.substring(0, start) + code + activeBuffer.content.substring(end);
@@ -547,9 +593,31 @@ function App() {
     updateBufferContent(activeBuffer.id, newContent);
 
     requestAnimationFrame(() => {
-      textarea.focus();
+      editor.focus();
+      // Set cursor position after the inserted code
       const newCursorPosition = start + code.length;
-      textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+      const textNodes: Text[] = [];
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+      let node: Node | null = walker.nextNode();
+      while (node) {
+        textNodes.push(node as Text);
+        node = walker.nextNode();
+      }
+
+      let currentPos = 0;
+      for (const textNode of textNodes) {
+        const nodeLength = textNode.textContent?.length || 0;
+        if (currentPos + nodeLength >= newCursorPosition) {
+          const newRange = document.createRange();
+          const offset = newCursorPosition - currentPos;
+          newRange.setStart(textNode, Math.min(offset, nodeLength));
+          newRange.setEnd(textNode, Math.min(offset, nodeLength));
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+          break;
+        }
+        currentPos += nodeLength;
+      }
     });
   };
 
@@ -567,12 +635,12 @@ function App() {
       }
     },
     onUndo: () => {
-      if (codeEditorRef.current?.textarea) {
+      if (codeEditorRef.current?.editor) {
         document.execCommand("undo");
       }
     },
     onRedo: () => {
-      if (codeEditorRef.current?.textarea) {
+      if (codeEditorRef.current?.editor) {
         document.execCommand("redo");
       }
     },
@@ -608,19 +676,44 @@ function App() {
     },
     onGoToLine: () => {
       const line = prompt("Go to line:");
-      if (line && codeEditorRef.current?.textarea) {
+      if (line && codeEditorRef.current?.editor) {
         const lineNumber = parseInt(line, 10);
         if (!Number.isNaN(lineNumber)) {
-          const textarea = codeEditorRef.current.textarea;
-          const lines = textarea.value.split("\n");
+          const editor = codeEditorRef.current.editor;
+          const lines = activeBuffer?.content.split("\n") || [];
           let targetPosition = 0;
 
           for (let i = 0; i < lineNumber - 1 && i < lines.length; i++) {
             targetPosition += lines[i].length + 1;
           }
 
-          textarea.focus();
-          textarea.setSelectionRange(targetPosition, targetPosition);
+          editor.focus();
+          // Set cursor position in contenteditable
+          const textNodes: Text[] = [];
+          const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+          let node: Node | null = walker.nextNode();
+          while (node) {
+            textNodes.push(node as Text);
+            node = walker.nextNode();
+          }
+
+          let currentPos = 0;
+          for (const textNode of textNodes) {
+            const nodeLength = textNode.textContent?.length || 0;
+            if (currentPos + nodeLength >= targetPosition) {
+              const range = document.createRange();
+              const offset = targetPosition - currentPos;
+              range.setStart(textNode, Math.min(offset, nodeLength));
+              range.setEnd(textNode, Math.min(offset, nodeLength));
+              const selection = window.getSelection();
+              if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+              }
+              break;
+            }
+            currentPos += nodeLength;
+          }
         }
       }
     },
@@ -673,20 +766,46 @@ function App() {
   useEffect(() => {
     const handleNavigateToLine = (event: CustomEvent) => {
       const { line } = event.detail;
-      if (codeEditorRef.current?.textarea) {
-        const textarea = codeEditorRef.current.textarea;
-        const lines = textarea.value.split("\n");
+      if (codeEditorRef.current?.editor) {
+        const editor = codeEditorRef.current.editor;
+        const lines = activeBuffer?.content.split("\n") || [];
         let targetPosition = 0;
 
         for (let i = 0; i < line - 1 && i < lines.length; i++) {
           targetPosition += lines[i].length + 1;
         }
 
-        textarea.focus();
-        textarea.setSelectionRange(targetPosition, targetPosition);
+        editor.focus();
+        // Set cursor position in contenteditable
+        const textNodes: Text[] = [];
+        const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+        let node: Node | null = walker.nextNode();
+        while (node) {
+          textNodes.push(node as Text);
+          node = walker.nextNode();
+        }
+
+        let currentPos = 0;
+        for (const textNode of textNodes) {
+          const nodeLength = textNode.textContent?.length || 0;
+          if (currentPos + nodeLength >= targetPosition) {
+            const range = document.createRange();
+            const offset = targetPosition - currentPos;
+            range.setStart(textNode, Math.min(offset, nodeLength));
+            range.setEnd(textNode, Math.min(offset, nodeLength));
+            const selection = window.getSelection();
+            if (selection) {
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+            break;
+          }
+          currentPos += nodeLength;
+        }
+
         const lineHeight = 20;
-        const scrollTop = Math.max(0, (line - 1) * lineHeight - textarea.clientHeight / 2);
-        textarea.scrollTop = scrollTop;
+        const scrollTop = Math.max(0, (line - 1) * lineHeight - editor.clientHeight / 2);
+        editor.scrollTop = scrollTop;
       }
     };
 
@@ -694,7 +813,7 @@ function App() {
     return () => {
       window.removeEventListener("navigate-to-line", handleNavigateToLine as any);
     };
-  }, []);
+  }, [activeBuffer]);
 
   const handleContentChange = useCallback(
     (content: string) => {
@@ -795,9 +914,9 @@ function App() {
   };
 
   const handleDiagnosticClick = (diagnostic: Diagnostic) => {
-    if (codeEditorRef.current?.textarea) {
-      const textarea = codeEditorRef.current.textarea;
-      const lines = textarea.value.split("\n");
+    if (codeEditorRef.current?.editor) {
+      const editor = codeEditorRef.current.editor;
+      const lines = activeBuffer?.content.split("\n") || [];
       let targetPosition = 0;
 
       for (let i = 0; i < diagnostic.line - 1 && i < lines.length; i++) {
@@ -805,8 +924,33 @@ function App() {
       }
       targetPosition += diagnostic.column - 1;
 
-      textarea.focus();
-      textarea.setSelectionRange(targetPosition, targetPosition);
+      editor.focus();
+      // Set cursor position in contenteditable
+      const textNodes: Text[] = [];
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+      let node: Node | null = walker.nextNode();
+      while (node) {
+        textNodes.push(node as Text);
+        node = walker.nextNode();
+      }
+
+      let currentPos = 0;
+      for (const textNode of textNodes) {
+        const nodeLength = textNode.textContent?.length || 0;
+        if (currentPos + nodeLength >= targetPosition) {
+          const range = document.createRange();
+          const offset = targetPosition - currentPos;
+          range.setStart(textNode, Math.min(offset, nodeLength));
+          range.setEnd(textNode, Math.min(offset, nodeLength));
+          const selection = window.getSelection();
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          break;
+        }
+        currentPos += nodeLength;
+      }
     }
   };
 
@@ -964,7 +1108,6 @@ function App() {
                     rootFolderPath={rootFolderPath}
                     onFileSelect={handleFileSelect}
                     setIsRightPaneVisible={uiState.setIsRightPaneVisible}
-                    onMinimapStateChange={setIsMinimapVisible}
                   />
                 )}
 
@@ -1041,7 +1184,6 @@ function App() {
                     lineNumbers={settings.lineNumbers}
                     ref={codeEditorRef}
                     aiCompletion={settings.aiCompletion}
-                    minimap={isMinimapVisible}
                     getCompletions={getCompletions || undefined}
                     getHover={getHover || undefined}
                     isLanguageSupported={isLanguageSupported || (() => false)}
@@ -1262,6 +1404,8 @@ function App() {
             onThemeChange={handleThemeChange}
             currentTheme={settings.theme}
             onQuickEditInline={handleQuickEdit}
+            onToggleVimMode={toggleVimMode}
+            vimEnabled={vimEnabled}
           />
 
           {/* GitHub Copilot Settings */}

@@ -20,10 +20,8 @@ import {
   validateProviderApiKey,
 } from "../../utils/ai-chat";
 import { cn } from "../../utils/cn";
-import { getLanguageFromFilename } from "../../utils/file-utils";
 import ApiKeyModal from "../api-key-modal";
 import ModelProviderSelector from "../model-provider-selector";
-import OutlineView from "../outline-view";
 import Button from "../ui/button";
 import ChatHistoryModal from "./chat-history-modal";
 import ClaudeStatusIndicator from "./claude-status";
@@ -38,7 +36,7 @@ export default function AIChat({
   buffers = [],
   rootFolderPath,
   selectedFiles = [],
-  mode,
+  mode: _,
   onApplyCode,
 }: AIChatProps) {
   // Chat History State
@@ -649,24 +647,6 @@ export default function AIChat({
   };
 
   const { estimatedTokens, maxTokens } = calculateTokens;
-
-  if (mode === "outline") {
-    const handleOutlineItemClick = (line: number) => {
-      const event = new CustomEvent("navigate-to-line", {
-        detail: { line },
-      });
-      window.dispatchEvent(event);
-    };
-
-    return (
-      <OutlineView
-        content={activeBuffer?.content}
-        language={activeBuffer ? getLanguageFromFilename(activeBuffer.name) : undefined}
-        onItemClick={handleOutlineItemClick}
-        className={className}
-      />
-    );
-  }
 
   return (
     <div

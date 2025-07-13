@@ -45,7 +45,7 @@ export interface AIChatProps {
   buffers?: Buffer[];
   rootFolderPath?: string;
   selectedFiles?: string[];
-  mode: "chat" | "outline";
+  mode: "chat";
   // Buffer update functions
   onApplyCode?: (code: string) => void;
 }

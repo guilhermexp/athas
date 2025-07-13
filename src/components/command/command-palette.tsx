@@ -1,4 +1,4 @@
-import { Bot, Palette, Settings, X } from "lucide-react";
+import { Bot, Palette, Settings, Terminal, X } from "lucide-react";
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { ThemeType } from "../../types/theme";
@@ -20,6 +20,8 @@ interface CommandPaletteProps {
   onThemeChange: (theme: ThemeType) => void;
   onQuickEditInline?: () => void;
   currentTheme?: ThemeType;
+  onToggleVimMode?: () => void;
+  vimEnabled?: boolean;
 }
 
 export interface CommandPaletteRef {
@@ -27,7 +29,19 @@ export interface CommandPaletteRef {
 }
 
 const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
-  ({ isVisible, onClose, onOpenSettings, onThemeChange, onQuickEditInline, currentTheme }, ref) => {
+  (
+    {
+      isVisible,
+      onClose,
+      onOpenSettings,
+      onThemeChange,
+      onQuickEditInline,
+      currentTheme,
+      onToggleVimMode,
+      vimEnabled,
+    },
+    ref,
+  ) => {
     const [query, setQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isThemeSelectorVisible, setIsThemeSelectorVisible] = useState(false);
@@ -87,6 +101,19 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
         action: () => {
           console.log("Opening theme selector...");
           setIsThemeSelectorVisible(true);
+        },
+      },
+      {
+        id: "toggle-vim-mode",
+        label: `Editor: ${vimEnabled ? "Disable" : "Enable"} Vim Mode`,
+        description: `${vimEnabled ? "Turn off" : "Turn on"} Vim key bindings`,
+        icon: <Terminal size={16} />,
+        category: "Editor",
+        action: () => {
+          if (onToggleVimMode) {
+            onToggleVimMode();
+          }
+          onClose();
         },
       },
     ];
