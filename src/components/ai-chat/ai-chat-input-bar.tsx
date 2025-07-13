@@ -266,69 +266,71 @@ export default function AIChatInputBar({
       }}
     >
       {/* Model Provider Selector and Mode Toggle */}
-      <div className="px-2 py-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* Context Selector Dropdown */}
-            <div className="relative" ref={contextDropdownRef}>
-              <button
-                onClick={() => setIsContextDropdownOpen(!isContextDropdownOpen)}
-                className="flex items-center gap-1 rounded px-2 pt-2 transition-colors hover:bg-hover"
-                style={{ color: "var(--text-lighter)" }}
-                title="Add context files"
-              >
-                <FileText size={12} />
-                <span>Context ({selectedBufferIds.size})</span>
-                <ChevronDown size={10} />
-              </button>
-
-              {isContextDropdownOpen && (
-                <div
-                  className="absolute top-full left-0 z-50 mt-1 max-h-64 w-64 overflow-y-auto rounded shadow-lg"
-                  style={{
-                    background: "var(--primary-bg)",
-                    border: "1px solid var(--border-color)",
-                  }}
+      {aiProviderId !== "claude-code" && (
+        <div className="px-2 py-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {/* Context Selector Dropdown */}
+              <div className="relative" ref={contextDropdownRef}>
+                <button
+                  onClick={() => setIsContextDropdownOpen(!isContextDropdownOpen)}
+                  className="flex items-center gap-1 rounded px-2 pt-2 transition-colors hover:bg-hover"
+                  style={{ color: "var(--text-lighter)" }}
+                  title="Add context files"
                 >
-                  <div className="p-2">
-                    <div className="mb-2 text-xs" style={{ color: "var(--text-lighter)" }}>
-                      Select files to include as context:
+                  <FileText size={12} />
+                  <span>Context ({selectedBufferIds.size})</span>
+                  <ChevronDown size={10} />
+                </button>
+
+                {isContextDropdownOpen && (
+                  <div
+                    className="absolute top-full left-0 z-50 mt-1 max-h-64 w-64 overflow-y-auto rounded shadow-lg"
+                    style={{
+                      background: "var(--primary-bg)",
+                      border: "1px solid var(--border-color)",
+                    }}
+                  >
+                    <div className="p-2">
+                      <div className="mb-2 text-xs" style={{ color: "var(--text-lighter)" }}>
+                        Select files to include as context:
+                      </div>
+                      {buffers.length === 0 ? (
+                        <div className="p-2 text-xs" style={{ color: "var(--text-lighter)" }}>
+                          No files available
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {buffers.map(buffer => (
+                            <label
+                              key={buffer.id}
+                              className="flex cursor-pointer items-center gap-2 rounded p-1 hover:bg-hover"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedBufferIds.has(buffer.id)}
+                                onChange={() => toggleBufferSelection(buffer.id)}
+                                className="h-3 w-3"
+                              />
+                              <div className="flex min-w-0 flex-1 items-center gap-1">
+                                {buffer.isSQLite ? <Database size={10} /> : <FileText size={10} />}
+                                <span className="truncate text-xs">{buffer.name}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {buffers.length === 0 ? (
-                      <div className="p-2 text-xs" style={{ color: "var(--text-lighter)" }}>
-                        No files available
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        {buffers.map(buffer => (
-                          <label
-                            key={buffer.id}
-                            className="flex cursor-pointer items-center gap-2 rounded p-1 hover:bg-hover"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedBufferIds.has(buffer.id)}
-                              onChange={() => toggleBufferSelection(buffer.id)}
-                              className="h-3 w-3"
-                            />
-                            <div className="flex min-w-0 flex-1 items-center gap-1">
-                              {buffer.isSQLite ? <Database size={10} /> : <FileText size={10} />}
-                              <span className="truncate text-xs">{buffer.name}</span>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Context badges */}
-      {selectedBufferIds.size > 0 && (
+      {aiProviderId !== "claude-code" && selectedBufferIds.size > 0 && (
         <div className="px-3 py-2">
           <div className="flex flex-wrap items-center gap-1">
             {Array.from(selectedBufferIds).map(bufferId => {
