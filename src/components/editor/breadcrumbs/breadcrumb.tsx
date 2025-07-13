@@ -1,24 +1,14 @@
-import { ChevronRight, List, Map as MapIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface BreadcrumbProps {
   filePath: string;
   rootPath?: string | null;
   onNavigate: (path: string) => void;
   isOutlineVisible: boolean;
-  isMinimapVisible: boolean;
   onToggleOutline: () => void;
-  onToggleMinimap: () => void;
 }
 
-export default function Breadcrumb({
-  filePath,
-  rootPath,
-  onNavigate,
-  isOutlineVisible,
-  isMinimapVisible,
-  onToggleOutline,
-  onToggleMinimap,
-}: BreadcrumbProps) {
+export default function Breadcrumb({ filePath, rootPath, onNavigate }: BreadcrumbProps) {
   const getPathSegments = () => {
     if (!filePath) return [];
 
@@ -59,39 +49,13 @@ export default function Breadcrumb({
                   onNavigate(segments.slice(0, index + 1).join("/"));
                 }
               }}
-              className="max-w-[120px] truncate rounded px-1 py-0.5 text-xs transition-colors hover:text-text"
+              className="max-w-[240px] truncate rounded px-1 py-0.5 text-xs transition-colors hover:text-text"
               title={segment}
             >
               {segment}
             </button>
           </div>
         ))}
-      </div>
-
-      <div className="flex items-center gap-0.5">
-        <button
-          onClick={onToggleOutline}
-          className={`rounded p-1 transition-colors ${
-            isOutlineVisible
-              ? "bg-selected text-text"
-              : "text-text-lighter hover:bg-hover hover:text-text"
-          }`}
-          title="Toggle Outline"
-        >
-          <List size={12} />
-        </button>
-
-        <button
-          onClick={onToggleMinimap}
-          className={`rounded p-1 transition-colors ${
-            isMinimapVisible
-              ? "bg-selected text-text"
-              : "text-text-lighter hover:bg-hover hover:text-text"
-          }`}
-          title="Toggle Minimap"
-        >
-          <MapIcon size={12} />
-        </button>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ This guide covers everything you need to know to contribute to Athas, build it f
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/athas.git
+git clone https://github.com/athasdev/athas.git
 cd athas
 ```
 
@@ -100,7 +100,7 @@ interface MyComponentProps {
   // Define props
 }
 
-export const MyComponent: React.FC<MyComponentProps> = ({ /* props */ }) => {
+export const MyComponent = ({ /* props */ }: MyComponentProps) => {
   // Implementation
   return <div>Component</div>;
 };
@@ -114,7 +114,7 @@ Follow existing patterns:
 #### 2. **Adding a Custom Hook**
 
 ```typescript
-// src/hooks/useMyFeature.ts
+// src/hooks/use-my-feature.ts
 import { useState, useCallback, useEffect } from 'react';
 
 export const useMyFeature = () => {

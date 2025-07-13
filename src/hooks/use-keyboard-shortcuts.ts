@@ -83,14 +83,8 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Save is now handled by native menu accelerator on macOS
-      // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === "s" &&
-        !e.shiftKey &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      // Handle save on all platforms (with fallback for macOS if native menu fails)
+      if ((e.metaKey || e.ctrlKey) && e.key === "s" && !e.shiftKey) {
         e.preventDefault();
         if (onSave) {
           onSave();
@@ -253,27 +247,15 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Tab navigation is now handled by native menu accelerator on macOS
-      // Only handle Ctrl+Tab on non-macOS platforms
-      if (
-        e.ctrlKey &&
-        e.key === "Tab" &&
-        !e.shiftKey &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      // Handle tab navigation on all platforms (Ctrl+Tab for next tab)
+      if (e.ctrlKey && e.key === "Tab" && !e.shiftKey) {
         e.preventDefault();
         switchToNextBuffer();
         return;
       }
 
-      // Tab navigation is now handled by native menu accelerator on macOS
-      // Only handle Ctrl+Shift+Tab on non-macOS platforms
-      if (
-        e.ctrlKey &&
-        e.shiftKey &&
-        e.key === "Tab" &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      // Handle tab navigation on all platforms (Ctrl+Shift+Tab for previous tab)
+      if (e.ctrlKey && e.shiftKey && e.key === "Tab") {
         e.preventDefault();
         switchToPreviousBuffer();
         return;

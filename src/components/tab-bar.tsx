@@ -429,7 +429,7 @@ const TabBar = ({
                   className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-border border-r px-3 py-1.5 transition-colors duration-150 hover:bg-hover ${
                     isActive ? "border-b-2 border-b-accent bg-primary-bg" : "bg-secondary-bg"
                   } ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""} `}
-                  style={{ minWidth: "120px", maxWidth: "200px" }}
+                  style={{ minWidth: "120px", maxWidth: "400px" }}
                   onMouseDown={e => handleMouseDown(e, index)}
                   onClick={() => {
                     if (!isDragging) {

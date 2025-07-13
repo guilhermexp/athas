@@ -1,7 +1,7 @@
 import { Bot, Check, ChevronDown, Key } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
-import { AI_PROVIDERS, getModelById, getProviderById } from "../types/ai-provider";
+import { AI_PROVIDERS, getModelById } from "../types/ai-provider";
 import { cn } from "../utils/cn";
 
 interface ModelProviderSelectorProps {
@@ -21,28 +21,31 @@ const ModelProviderSelector = ({
 }: ModelProviderSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState(currentProviderId);
+  const [hoveredModel, setHoveredModel] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const currentModel = getModelById(currentProviderId, currentModelId);
 
   const handleProviderSelect = (providerId: string) => {
     setSelectedProviderId(providerId);
-    const provider = getProviderById(providerId);
-    if (provider && provider.models.length > 0) {
-      // Auto-select the first model for the new provider
-      const firstModel = provider.models[0];
-      onProviderChange(providerId, firstModel.id);
-      setIsOpen(false);
-    }
+  };
+
+  const handleModelSelectAndClose = (providerId: string, modelId: string) => {
+    onProviderChange(providerId, modelId);
+    setIsOpen(false);
   };
 
   const handleModelSelect = (modelId: string) => {
-    onProviderChange(selectedProviderId, modelId);
-    setIsOpen(false);
+    handleModelSelectAndClose(selectedProviderId, modelId);
   };
 
   const handleApiKeyClick = (e: React.MouseEvent, providerId: string) => {
     e.stopPropagation();
     onApiKeyRequest(providerId);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
   };
 
   const formatTokens = (tokens: number): string => {
@@ -73,7 +76,7 @@ const ModelProviderSelector = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-[9999] max-h-[80vh] min-w-[360px] transform overflow-y-auto rounded-lg border border-border bg-primary-bg shadow-xl">
+        <div className="-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-[9999] max-h-[80vh] min-w-[480px] transform overflow-y-auto rounded-lg border border-border bg-primary-bg shadow-xl">
           {AI_PROVIDERS.map(provider => (
             <div key={provider.id} className="border-border border-b last:border-b-0">
               {/* Provider Header */}
@@ -102,7 +105,7 @@ const ModelProviderSelector = ({
                     className={cn(
                       "flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors",
                       hasApiKey(provider.id)
-                        ? "border border-green-500/30 bg-green-500/20 text-green-400"
+                        ? "border border-border bg-secondary-bg text-text-lighter hover:bg-hover"
                         : "border border-red-500/30 bg-red-500/20 text-red-400 hover:bg-red-500/30",
                     )}
                   >
@@ -123,12 +126,15 @@ const ModelProviderSelector = ({
                     <div
                       key={model.id}
                       className={cn(
-                        "flex cursor-pointer items-center gap-2 px-4 py-1.5 transition-colors",
+                        "relative flex cursor-pointer items-center gap-2 px-4 py-1.5 transition-colors",
                         currentModelId === model.id && currentProviderId === provider.id
                           ? "border-blue-500/30 bg-blue-500/20"
                           : "hover:bg-hover",
                       )}
                       onClick={() => handleModelSelect(model.id)}
+                      onMouseEnter={() => setHoveredModel(model.id)}
+                      onMouseLeave={() => setHoveredModel(null)}
+                      onMouseMove={handleMouseMove}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -160,6 +166,24 @@ const ModelProviderSelector = ({
       {isOpen && (
         <div className="fixed inset-0 z-[9998] bg-black/20" onClick={() => setIsOpen(false)} />
       )}
+
+      {/* Floating Tooltip */}
+      {hoveredModel &&
+        isOpen &&
+        (() => {
+          const model = AI_PROVIDERS.flatMap(p => p.models).find(m => m.id === hoveredModel);
+          return model?.description ? (
+            <div
+              className="pointer-events-none fixed z-[10000] max-w-xs rounded border border-border bg-primary-bg px-2 py-1 shadow-lg"
+              style={{
+                left: mousePos.x + 10,
+                top: mousePos.y - 30,
+              }}
+            >
+              <div className="text-text text-xs">{model.description}</div>
+            </div>
+          ) : null;
+        })()}
     </div>
   );
 };

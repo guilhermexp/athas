@@ -1,5 +1,4 @@
 import { RefreshCw } from "lucide-react";
-import type React from "react";
 import { useEffect, useState } from "react";
 
 interface ToastItem {
@@ -8,12 +7,10 @@ interface ToastItem {
   timestamp: number;
 }
 
-type FileReloadToastProps = Record<string, never>;
-
 // Keep track of toasts outside component to handle rapid updates
 let toastCounter = 0;
 
-const FileReloadToast: React.FC<FileReloadToastProps> = () => {
+const FileReloadToast = () => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   useEffect(() => {

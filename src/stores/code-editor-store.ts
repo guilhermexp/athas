@@ -59,7 +59,6 @@ interface CodeEditorState {
   vimRegister: string;
 
   // UI State
-  minimap: boolean;
   isTyping: boolean;
 
   // Actions - Core Editor
@@ -101,7 +100,6 @@ interface CodeEditorState {
   setVimRegister: (register: string) => void;
 
   // Actions - UI
-  setMinimap: (show: boolean) => void;
   setIsTyping: (typing: boolean) => void;
 
   // Helper Actions
@@ -158,7 +156,6 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => ({
   vimRegister: "",
 
   // Initial UI State
-  minimap: false,
   isTyping: false,
 
   // Core Editor Actions
@@ -201,7 +198,6 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => ({
   setVimRegister: (register: string) => set({ vimRegister: register }),
 
   // UI Actions
-  setMinimap: (show: boolean) => set({ minimap: show }),
   setIsTyping: (typing: boolean) => set({ isTyping: typing }),
 
   // Helper Actions
