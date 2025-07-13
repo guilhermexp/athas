@@ -1,6 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
-import { Maximize2, Minimize2, Minus, Settings, X } from "lucide-react";
+import { Bot, Maximize2, Minimize2, Minus, Settings, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface CustomTitleBarProps {
@@ -9,6 +9,8 @@ interface CustomTitleBarProps {
   showMinimal?: boolean;
   isWelcomeScreen?: boolean;
   onSettingsClick?: () => void;
+  onAIChatClick?: () => void;
+  isAIChatVisible?: boolean;
 }
 
 const CustomTitleBar = ({
@@ -16,6 +18,8 @@ const CustomTitleBar = ({
   showMinimal = false,
   isWelcomeScreen = false,
   onSettingsClick,
+  onAIChatClick,
+  isAIChatVisible = false,
 }: CustomTitleBarProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [currentWindow, setCurrentWindow] = useState<any>(null);
@@ -206,8 +210,21 @@ const CustomTitleBar = ({
           )}
         </div>
 
-        {/* Settings button */}
+        {/* Settings and AI Chat buttons */}
         <div className="flex items-center">
+          {onAIChatClick && (
+            <button
+              onClick={onAIChatClick}
+              className={`mr-2 flex h-6 w-6 items-center justify-center rounded transition-colors ${
+                isAIChatVisible
+                  ? "bg-hover text-text"
+                  : "text-text-lighter hover:bg-hover hover:text-text"
+              }`}
+              title="Toggle AI Chat"
+            >
+              <Bot className="h-3 w-3" />
+            </button>
+          )}
           {onSettingsClick && (
             <button
               onClick={onSettingsClick}
@@ -237,6 +254,20 @@ const CustomTitleBar = ({
 
       {/* Right side */}
       <div className="flex items-center">
+        {/* AI Chat button */}
+        {onAIChatClick && (
+          <button
+            onClick={onAIChatClick}
+            className={`mr-1 flex h-7 w-7 items-center justify-center rounded transition-colors ${
+              isAIChatVisible
+                ? "bg-hover text-text"
+                : "text-text-lighter hover:bg-hover hover:text-text"
+            }`}
+            title="Toggle AI Chat"
+          >
+            <Bot className="h-3.5 w-3.5" />
+          </button>
+        )}
         {/* Settings button */}
         {onSettingsClick && (
           <button

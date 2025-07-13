@@ -1046,6 +1046,8 @@ function App() {
         {/* Custom Titlebar */}
         <CustomTitleBar
           projectName={getProjectName() !== "Explorer" ? getProjectName() : undefined}
+          onAIChatClick={() => uiState.toggleRightPane()}
+          isAIChatVisible={uiState.isRightPaneVisible}
           onSettingsClick={() => {
             // Create settings JSON buffer with current values
             const settingsContent = JSON.stringify(
