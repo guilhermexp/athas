@@ -4,6 +4,7 @@ import Convert from "ansi-to-html";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Terminal as TerminalType } from "../../types/terminal";
+import "../../styles/prism-terminal.css";
 
 interface TerminalSessionProps {
   terminal: TerminalType;
@@ -66,7 +67,7 @@ const TerminalSession = ({
       fg: "inherit", // Use shell's default foreground
       bg: "transparent", // Transparent background to use theme
       newline: false,
-      escapeXML: true,
+      escapeXML: false, // Don't escape XML to preserve Unicode characters (Nerd Fonts)
       // Don't override colors - let shell/terminal defaults come through
       colors: undefined,
     }),
@@ -504,6 +505,25 @@ const TerminalSession = ({
         }
       }
 
+      // Check for Nerd Font characters in Private Use Area (U+E000-U+F8FF)
+      const codePoints = Array.from(item.lexeme || "").map(char => char.codePointAt(0));
+      const hasNerdFont = codePoints.some(cp => cp && cp >= 0xe000 && cp <= 0xf8ff);
+
+      if (hasNerdFont) {
+        // Nerd Font characters need explicit font-family to render correctly
+        const nerdFontStyle = {
+          ...style,
+          fontFamily:
+            "'JetBrainsMono Nerd Font', 'FiraCode Nerd Font', 'Hack Nerd Font', monospace",
+        };
+
+        return (
+          <span key={itemIndex} className={className} style={nerdFontStyle}>
+            {item.lexeme}
+          </span>
+        );
+      }
+
       return (
         <span
           key={itemIndex}
@@ -533,7 +553,7 @@ const TerminalSession = ({
         {/* Terminal content */}
         <div
           ref={terminalRef}
-          className="relative flex-1 cursor-text overflow-hidden bg-primary-bg p-3 font-mono text-text text-xs"
+          className="terminal-content relative flex-1 cursor-text overflow-hidden bg-primary-bg p-3 font-mono text-text text-xs"
           onClick={() => {
             // Focus the hidden input when terminal is clicked
             const hiddenInput = document.getElementById(`terminal-input-${terminal.id}`);

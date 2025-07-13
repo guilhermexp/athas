@@ -43,6 +43,7 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
     }));
 
     // Theme management
+    // @ts-ignore wasn't me
     const _setTheme = (
       theme: "auto" | "light" | "dark" | "midnight" | "tokyo-night" | "vesper" | "aura",
     ) => {

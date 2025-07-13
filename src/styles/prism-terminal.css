@@ -1,6 +1,6 @@
 /* Terminal-specific Prism.js theme */
 .terminal-content {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-family: 'JetBrainsMono Nerd Font', 'FiraCode Nerd Font', 'Hack Nerd Font', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 }
 
 /* Token styles for terminal output */
