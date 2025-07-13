@@ -9,11 +9,31 @@ interface MentionState {
   selectedIndex: number;
 }
 
-interface AIchatMentionStore {
+interface AIChatStore {
+  // Input state
+  input: string;
+  isTyping: boolean;
+  streamingMessageId: string | null;
+  selectedBufferIds: Set<string>;
+  isContextDropdownOpen: boolean;
+  isSendAnimating: boolean;
+  hasApiKey: boolean;
+
   // Mention state
   mentionState: MentionState;
 
-  // Actions
+  // Input actions
+  setInput: (input: string) => void;
+  setIsTyping: (isTyping: boolean) => void;
+  setStreamingMessageId: (id: string | null) => void;
+  toggleBufferSelection: (bufferId: string) => void;
+  setIsContextDropdownOpen: (isOpen: boolean) => void;
+  setIsSendAnimating: (isAnimating: boolean) => void;
+  setHasApiKey: (hasKey: boolean) => void;
+  clearSelectedBuffers: () => void;
+  setSelectedBufferIds: (ids: Set<string>) => void;
+
+  // Mention actions
   showMention: (
     position: { top: number; left: number },
     search: string,
@@ -38,9 +58,40 @@ const initialMentionState: MentionState = {
   selectedIndex: 0,
 };
 
-export const useAIChatMentionStore = create<AIchatMentionStore>((set, get) => ({
+export const useAIChatStore = create<AIChatStore>((set, get) => ({
+  // Input state
+  input: "",
+  isTyping: false,
+  streamingMessageId: null,
+  selectedBufferIds: new Set<string>(),
+  isContextDropdownOpen: false,
+  isSendAnimating: false,
+  hasApiKey: false,
+
+  // Mention state
   mentionState: initialMentionState,
 
+  // Input actions
+  setInput: input => set({ input }),
+  setIsTyping: isTyping => set({ isTyping }),
+  setStreamingMessageId: streamingMessageId => set({ streamingMessageId }),
+  toggleBufferSelection: bufferId =>
+    set(state => {
+      const newSet = new Set(state.selectedBufferIds);
+      if (newSet.has(bufferId)) {
+        newSet.delete(bufferId);
+      } else {
+        newSet.add(bufferId);
+      }
+      return { selectedBufferIds: newSet };
+    }),
+  setIsContextDropdownOpen: isContextDropdownOpen => set({ isContextDropdownOpen }),
+  setIsSendAnimating: isSendAnimating => set({ isSendAnimating }),
+  setHasApiKey: hasApiKey => set({ hasApiKey }),
+  clearSelectedBuffers: () => set({ selectedBufferIds: new Set<string>() }),
+  setSelectedBufferIds: selectedBufferIds => set({ selectedBufferIds }),
+
+  // Mention actions
   showMention: (position, search, startIndex) =>
     set({
       mentionState: {
@@ -128,3 +179,6 @@ export const useAIChatMentionStore = create<AIchatMentionStore>((set, get) => ({
       .map(({ file }) => file);
   },
 }));
+
+// Export with old name for backward compatibility
+export const useAIChatMentionStore = useAIChatStore;

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { useAIChatMentionStore } from "../../stores/ai-chat-mention-store";
+import { useAIChatStore } from "../../stores/ai-chat-store";
 import type { FileEntry } from "../../types/app";
 
 interface FileMentionDropdownProps {
@@ -16,7 +16,7 @@ export const FileMentionDropdown = React.memo(function FileMentionDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get state from store
-  const { mentionState, hideMention, getFilteredFiles } = useAIChatMentionStore();
+  const { mentionState, hideMention, getFilteredFiles } = useAIChatStore();
   const { position, selectedIndex } = mentionState;
 
   // Get filtered files from store

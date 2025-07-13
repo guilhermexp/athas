@@ -79,3 +79,14 @@ export interface ModeSelectorProps {
   mode: "chat";
   onModeChange: (mode: "chat") => void;
 }
+
+export interface AIChatInputBarProps {
+  buffers: Buffer[];
+  allProjectFiles: FileEntry[];
+  rootFolderPath?: string;
+  onSendMessage: () => Promise<void>;
+  onStopStreaming: () => void;
+  onApiKeyRequest: (providerId: string) => void;
+  onProviderChange: (providerId: string, modelId: string) => void;
+  hasProviderApiKey: (providerId: string) => boolean;
+}
