@@ -1,9 +1,10 @@
 import type React from "react";
 import { useCallback } from "react";
 import { useCodeEditorStore } from "../store/code-editor-store";
+import { getCursorPosition } from "./use-vim";
 
 export const useEditorScroll = (
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>,
+  editorRef: React.RefObject<HTMLDivElement | null>,
   highlightRef: React.RefObject<HTMLPreElement | null>,
   lineNumbersRef: React.RefObject<HTMLDivElement | null>,
 ) => {
@@ -11,17 +12,17 @@ export const useEditorScroll = (
   const setCursorPosition = useCodeEditorStore(state => state.setCursorPosition);
   const setIsTyping = useCodeEditorStore(state => state.setIsTyping);
 
-  // Sync scroll between textarea, highlight layer, and line numbers
+  // Sync scroll between contenteditable, highlight layer, and line numbers
   const handleScroll = useCallback(() => {
-    if (textareaRef.current && highlightRef.current && lineNumbersRef.current) {
-      const scrollTop = textareaRef.current.scrollTop;
-      const scrollLeft = textareaRef.current.scrollLeft;
+    if (editorRef.current && highlightRef.current && lineNumbersRef.current) {
+      const scrollTop = editorRef.current.scrollTop;
+      const scrollLeft = editorRef.current.scrollLeft;
 
       highlightRef.current.scrollTop = scrollTop;
       highlightRef.current.scrollLeft = scrollLeft;
       lineNumbersRef.current.scrollTop = scrollTop;
     }
-  }, [textareaRef, highlightRef, lineNumbersRef]);
+  }, [editorRef, highlightRef, lineNumbersRef]);
 
   // Handle cursor position changes
   const handleCursorPositionChange = useCallback(
@@ -33,8 +34,9 @@ export const useEditorScroll = (
       vimMode?: string,
       handleLspCompletion?: (position: number) => void,
     ) => {
-      if (textareaRef.current) {
-        const position = textareaRef.current.selectionStart;
+      if (editorRef.current) {
+        // Use the getCursorPosition utility for contenteditable
+        const position = getCursorPosition(editorRef.current);
         setCursorPosition(position);
 
         if (onCursorPositionChange) {
@@ -55,7 +57,7 @@ export const useEditorScroll = (
         }
       }
     },
-    [textareaRef, setCursorPosition],
+    [editorRef, setCursorPosition],
   );
 
   // Handle user interaction (typing, clicking, etc.)

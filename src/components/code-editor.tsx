@@ -2,18 +2,18 @@ import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { CompletionItem } from "vscode-languageserver-protocol";
 import { useCodeHighlighting } from "../hooks/use-code-highlighting";
-import { useEditorKeyboard } from "../hooks/use-editor-keyboard";
 import { useEditorScroll } from "../hooks/use-editor-scroll";
 import { useEditorSync } from "../hooks/use-editor-sync";
 import { useHover } from "../hooks/use-hover";
 import { useLspCompletion } from "../hooks/use-lsp-completion";
-import { getCursorPosition, setCursorPosition, useVim } from "../hooks/use-vim";
+import { getCursorPosition, useVim } from "../hooks/use-vim";
 import { useCodeEditorStore } from "../store/code-editor-store";
 import { requestCompletion } from "../utils/ai-completion";
 import { cn } from "../utils/cn";
 import { CompletionDropdown } from "./completion-dropdown";
 import { HoverTooltip } from "./editor/hover-tooltip";
 import { VimCursor } from "./editor/vim-cursor";
+import QuickEditInline from "./quick-edit-modal";
 import VimCommandLine, { type VimCommandLineRef } from "./vim-command-line";
 
 // Import language definitions
@@ -49,7 +49,6 @@ interface CodeEditorProps {
   filename?: string;
   vimEnabled?: boolean;
   vimMode?: "normal" | "insert" | "visual";
-  cursorPosition?: number;
   searchQuery?: string;
   searchMatches?: { start: number; end: number }[];
   currentMatchIndex?: number;
@@ -86,7 +85,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
       filename = "",
       vimEnabled = false,
       vimMode = "normal",
-      cursorPosition = 0,
       searchQuery = "",
       searchMatches = [],
       currentMatchIndex = -1,
@@ -116,6 +114,11 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     const [isVimCommandLineVisible, setIsVimCommandLineVisible] = useState(false);
     const [vimCommandLineInitialCommand, setVimCommandLineInitialCommand] = useState("");
 
+    // Inline assistant state
+    const [isInlineAssistantVisible, setIsInlineAssistantVisible] = useState(false);
+    const [selectedText, setSelectedText] = useState("");
+    const [assistantCursorPosition, setAssistantCursorPosition] = useState({ x: 0, y: 0 });
+
     // Store subscriptions - only what we need
     const language = useCodeEditorStore(state => state.language);
     const lspCompletions = useCodeEditorStore(state => state.lspCompletions);
@@ -123,7 +126,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     const isLspCompletionVisible = useCodeEditorStore(state => state.isLspCompletionVisible);
     const completionPosition = useCodeEditorStore(state => state.completionPosition);
     const hoverInfo = useCodeEditorStore(state => state.hoverInfo);
-    const _currentCompletion = useCodeEditorStore(state => state.currentCompletion);
 
     // Store actions for AI completion
     const setCurrentCompletion = useCodeEditorStore(state => state.setCurrentCompletion);
@@ -131,11 +133,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
     // Initialize hooks
     useCodeHighlighting(highlightRef);
-    const { handleKeyDown } = useEditorKeyboard(
-      editorRef as React.RefObject<HTMLTextAreaElement>,
-      onChange,
-      onKeyDown,
-    );
 
     // Sync props with store
     useEditorSync({
@@ -203,7 +200,19 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
         editorRef.current.textContent = value;
         requestAnimationFrame(() => {
           if (editorRef.current) {
-            setCursorPosition(editorRef.current, Math.min(cursorPos, value.length));
+            // Set cursor position using Selection API for contenteditable
+            const selection = window.getSelection();
+            if (selection) {
+              const range = document.createRange();
+              const textNode = editorRef.current.firstChild;
+              if (textNode) {
+                const safePos = Math.min(cursorPos, textNode.textContent?.length || 0);
+                range.setStart(textNode, safePos);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+              }
+            }
           }
         });
       }
@@ -314,6 +323,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
               background: transparent;
               border: none;
               outline: none;
+              color: transparent;
               caret-color: var(--text-color);
             }
             .code-editor-content.vim-normal-mode {
@@ -391,6 +401,25 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
 
           {/* Editor content area */}
           <div className="relative h-full flex-1 overflow-hidden">
+            {/* Syntax highlighting layer (behind contenteditable) */}
+            <pre
+              ref={highlightRef}
+              className="pointer-events-none absolute top-0 right-0 bottom-0 left-0 z-[1] m-0 overflow-auto rounded-none border-none bg-transparent p-4 font-mono shadow-none outline-none transition-none"
+              style={{
+                ...getEditorStyles,
+                paddingLeft: lineNumbers ? "16px" : "16px",
+                minHeight: "100%",
+                whiteSpace: wordWrap ? "pre-wrap" : "pre",
+                wordBreak: wordWrap ? "break-word" : "normal",
+                overflowWrap: wordWrap ? "break-word" : "normal",
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                MozUserSelect: "none",
+                msUserSelect: "none",
+              }}
+              aria-hidden="true"
+            />
+
             {/* Contenteditable div for input with syntax highlighting */}
             <div
               ref={editorRef}
@@ -406,6 +435,83 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
               }}
               onKeyDown={e => {
                 handleUserInteraction();
+
+                // Handle Cmd+K for inline assistant
+                if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                  e.preventDefault();
+                  const selection = window.getSelection();
+                  if (selection && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const selectedText = selection.toString();
+                    const rect = range.getBoundingClientRect();
+
+                    setSelectedText(selectedText);
+                    setAssistantCursorPosition({
+                      x: rect.left + rect.width / 2,
+                      y: rect.top,
+                    });
+                    setIsInlineAssistantVisible(true);
+                  } else {
+                    // No selection, get cursor position
+                    if (editorRef.current) {
+                      const selection = window.getSelection();
+                      if (selection && selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        setSelectedText("");
+                        setAssistantCursorPosition({
+                          x: rect.left,
+                          y: rect.top,
+                        });
+                        setIsInlineAssistantVisible(true);
+                      }
+                    }
+                  }
+                  return;
+                }
+
+                // Handle Enter key for new lines
+                if (e.key === "Enter" && !e.shiftKey && !vimEnabled) {
+                  e.preventDefault();
+                  const selection = window.getSelection();
+                  if (selection && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode("\n"));
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    // Trigger onChange
+                    const content = editorRef.current?.textContent || "";
+                    if (content !== value) {
+                      onChange(content);
+                    }
+                  }
+                  return;
+                }
+
+                // Handle Tab key for indentation
+                if (e.key === "Tab" && !vimEnabled) {
+                  e.preventDefault();
+                  const selection = window.getSelection();
+                  if (selection && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode("  ")); // 2 spaces
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    // Trigger onChange
+                    const content = editorRef.current?.textContent || "";
+                    if (content !== value) {
+                      onChange(content);
+                    }
+                  }
+                  return;
+                }
+
                 if (vimEnabled && vimEngine) {
                   const handled = vimEngine.handleKeyDown(
                     e as any,
@@ -416,7 +522,11 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                     return;
                   }
                 }
-                handleKeyDown(e as any);
+
+                // Call the onKeyDown prop if provided
+                if (onKeyDown) {
+                  onKeyDown(e as any);
+                }
               }}
               onKeyUp={() =>
                 handleCursorPositionChange(
@@ -458,8 +568,9 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
                 whiteSpace: wordWrap ? "pre-wrap" : "pre",
                 wordBreak: wordWrap ? "break-word" : "normal",
                 overflowWrap: wordWrap ? "break-word" : "normal",
-                color: "var(--text-color)",
+                color: "transparent",
                 background: "transparent",
+                caretColor: "var(--text-color)",
                 border: "none",
                 zIndex: 2,
                 maxWidth: "fit-content",
@@ -474,7 +585,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             {vimEnabled && vimMode === "normal" && (
               <VimCursor
                 editorRef={editorRef}
-                cursorPosition={cursorPosition}
+                cursorPosition={0}
                 visible={true}
                 fontSize={fontSize}
                 lineNumbers={lineNumbers}
@@ -527,6 +638,44 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
             }}
           />
         )}
+
+        {/* Inline Assistant */}
+        <QuickEditInline
+          isOpen={isInlineAssistantVisible}
+          onClose={() => {
+            setIsInlineAssistantVisible(false);
+            if (editorRef.current) {
+              editorRef.current.focus();
+            }
+          }}
+          onApplyEdit={(editedText: string) => {
+            if (selectedText) {
+              // Replace selected text
+              const newValue = value.replace(selectedText, editedText);
+              onChange(newValue);
+            } else {
+              // Insert at cursor position
+              const selection = window.getSelection();
+              if (selection && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(document.createTextNode(editedText));
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                // Trigger onChange
+                const content = editorRef.current?.textContent || "";
+                onChange(content);
+              }
+            }
+            setIsInlineAssistantVisible(false);
+          }}
+          selectedText={selectedText}
+          cursorPosition={assistantCursorPosition}
+          filename={filename}
+          language={language}
+        />
       </div>
     );
   },
