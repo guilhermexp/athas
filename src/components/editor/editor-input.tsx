@@ -6,10 +6,9 @@ import { cn } from "../../utils/cn";
 
 export function EditorInput() {
   const { fontSize, tabSize, wordWrap, vimEnabled, vimMode } = useEditorConfigStore();
-  const codeEditorValue = useCodeEditorStore(state => state.value);
+  const { value: codeEditorValue, setValue: setCodeEditorValue } = useCodeEditorStore();
   const {
     editorRef,
-    value: instanceValue,
     onChange,
     onKeyDown,
     placeholder,
@@ -41,13 +40,13 @@ export function EditorInput() {
       if (vimMode === "normal") {
         classes += " caret-transparent";
       } else {
-        classes += " caret-white";
+        classes += " caret-[var(--tw-text)]";
       }
       if (vimMode === "visual") {
         classes += " vim-visual-selection";
       }
     } else {
-      classes += " caret-white";
+      classes += " caret-[var(--tw-text)]";
     }
 
     return classes;
@@ -96,9 +95,8 @@ export function EditorInput() {
         selection.addRange(range);
 
         const content = editorRef?.current?.textContent || "";
-        if (content !== codeEditorValue) {
-          onChange(content);
-        }
+        setCodeEditorValue(content);
+        onChange?.(content);
       }
       return;
     }
@@ -116,15 +114,14 @@ export function EditorInput() {
         selection.addRange(range);
 
         const content = editorRef?.current?.textContent || "";
-        if (content !== codeEditorValue) {
-          onChange(content);
-        }
+        setCodeEditorValue(content);
+        onChange?.(content);
       }
       return;
     }
 
     if (vimEnabled && vimEngine) {
-      const handled = vimEngine.handleKeyDown(e as any, editorRef?.current as any, value);
+      const handled = vimEngine.handleKeyDown(e as any, editorRef?.current as any, codeEditorValue);
       if (handled) {
         return;
       }
@@ -167,9 +164,8 @@ export function EditorInput() {
       onInput={e => {
         handleUserInteraction();
         const content = e.currentTarget.textContent || "";
-        if (content !== value) {
-          onChange(content);
-        }
+        setCodeEditorValue(content);
+        onChange?.(content);
       }}
       onKeyDown={e => {
         handleUserInteraction();
@@ -199,7 +195,8 @@ export function EditorInput() {
         whiteSpace: wordWrap ? "pre-wrap" : "pre",
         wordBreak: wordWrap ? "break-word" : "normal",
         overflowWrap: wordWrap ? "break-word" : "normal",
-        color: "transparent",
+        color: "var(--tw-text)",
+        opacity: 0.3,
         background: "transparent",
         caretColor: "var(--tw-text)",
         border: "none",

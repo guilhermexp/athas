@@ -6,6 +6,21 @@ pre[class*="language-"] {
   color: var(--color-text);
 }
 
+/* Ensure better contrast for normal text in dark themes */
+@media (prefers-color-scheme: dark) {
+  code[class*="language-"],
+  pre[class*="language-"] {
+    color: #e5e5e5 !important;
+  }
+  
+  /* Override any plain text that might be too dark */
+  .token:not([class*="token"]),
+  code:not([class*="token"]),
+  pre:not([class*="token"]) {
+    color: #e5e5e5 !important;
+  }
+}
+
 /* Base styles */
 .token.comment,
 .token.prolog,

@@ -31,6 +31,7 @@ export function SyntaxHighlight() {
         msUserSelect: "none",
         maxWidth: "fit-content",
         minWidth: "100%",
+        color: "var(--tw-text)",
       }}
       aria-hidden="true"
     />

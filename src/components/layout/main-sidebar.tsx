@@ -2,7 +2,7 @@ import { FilePlus, FolderOpen, FolderPlus, Server } from "lucide-react";
 import type React from "react";
 import { forwardRef } from "react";
 import type { FileEntry } from "../../types/app";
-import FileTree from "../file-tree";
+import FileTree from "../file-tree/file-tree";
 import GitView from "../git/git-view";
 import RemoteConnectionView from "../remote/remote-connection-view";
 import SearchView, { type SearchViewRef } from "../search-view";
@@ -169,6 +169,7 @@ export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
             <FileTree
               files={files}
               activeBufferPath={activeBufferPath}
+              rootFolderPath={rootFolderPath}
               onFileSelect={onFileSelect}
               onCreateNewFileInDirectory={onCreateNewFileInDirectory}
               onCreateNewFolderInDirectory={onCreateNewFolderInDirectory}
