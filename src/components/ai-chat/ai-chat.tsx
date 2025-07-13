@@ -11,7 +11,9 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAIChatMentionStore } from "../../stores/ai-chat-mention-store";
 import { AI_PROVIDERS, getModelById, getProviderById } from "../../types/ai-provider";
+import type { FileEntry } from "../../types/app";
 import {
   getChatCompletionStream,
   getProviderApiToken,
@@ -25,7 +27,9 @@ import ModelProviderSelector from "../model-provider-selector";
 import Button from "../ui/button";
 import ChatHistoryModal from "./chat-history-modal";
 import ClaudeStatusIndicator from "./claude-status";
+import { FileMentionDropdown } from "./file-mention-dropdown";
 import MarkdownRenderer from "./markdown-renderer";
+import { parseMentionsAndLoadFiles } from "./mention-utils";
 import ToolCallDisplay from "./tool-call-display";
 import type { AIChatProps, Chat, ContextInfo, Message } from "./types";
 import { formatTime } from "./utils";
@@ -36,6 +40,7 @@ export default function AIChat({
   buffers = [],
   rootFolderPath,
   selectedFiles = [],
+  allProjectFiles = [],
   mode: _,
   onApplyCode,
 }: AIChatProps) {
@@ -62,16 +67,89 @@ export default function AIChat({
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [isSendAnimating, setIsSendAnimating] = useState(false);
 
+  // @ mention state from store
+  const {
+    mentionState,
+    showMention,
+    hideMention,
+    updatePosition,
+    selectNext,
+    selectPrevious,
+    getFilteredFiles,
+  } = useAIChatMentionStore();
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const contextDropdownRef = useRef<HTMLDivElement>(null);
+  const aiChatContainerRef = useRef<HTMLDivElement>(null);
 
   // Get current chat
   const currentChat = chats.find(chat => chat.id === currentChatId);
   const messages = useMemo(() => currentChat?.messages || [], [currentChat?.messages]);
 
   // Theme detection removed - was causing unnecessary re-renders
+
+  // Function to recalculate mention dropdown position
+  const recalculateMentionPosition = useCallback(() => {
+    if (!mentionState.active || !inputRef.current) return;
+
+    const textarea = inputRef.current;
+    const value = textarea.value;
+    const beforeCursor = value.slice(0, textarea.selectionStart);
+    const lastAtIndex = beforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex === -1) return;
+
+    const textBeforeAt = value.slice(0, lastAtIndex);
+
+    // Create a temporary element to measure text position
+    const mirror = document.createElement("div");
+    mirror.style.position = "absolute";
+    mirror.style.visibility = "hidden";
+    mirror.style.whiteSpace = "pre-wrap";
+    mirror.style.font = window.getComputedStyle(textarea).font;
+    mirror.style.padding = window.getComputedStyle(textarea).padding;
+    mirror.style.width = `${textarea.clientWidth}px`;
+    mirror.textContent = `${textBeforeAt}@`;
+
+    document.body.appendChild(mirror);
+    document.body.removeChild(mirror);
+
+    const textareaRect = textarea.getBoundingClientRect();
+    const aiChatContainer = textarea.closest(".ai-chat-container");
+    const containerRect = aiChatContainer?.getBoundingClientRect();
+
+    const position = {
+      top: textareaRect.top - 240, // Position above the input area (above Context button)
+      left: containerRect ? containerRect.left : textareaRect.left, // Position at the left edge of the sidebar
+    };
+
+    updatePosition(position);
+  }, [mentionState.active, updatePosition]);
+
+  // ResizeObserver to track container size changes
+  useEffect(() => {
+    if (!aiChatContainerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      recalculateMentionPosition();
+    });
+
+    resizeObserver.observe(aiChatContainerRef.current);
+
+    // Also observe the window resize
+    const handleWindowResize = () => {
+      recalculateMentionPosition();
+    };
+
+    window.addEventListener("resize", handleWindowResize);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [recalculateMentionPosition]);
 
   // Click outside handler for context dropdown
   useEffect(() => {
@@ -362,10 +440,13 @@ export default function AIChat({
       setCurrentChatId(chatId);
     }
 
+    // Parse @ mentions and load referenced files
+    const { processedMessage } = await parseMentionsAndLoadFiles(input.trim(), allProjectFiles);
+
     const context = buildContext;
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input.trim(),
+      content: input.trim(), // Show original message to user
       role: "user",
       timestamp: new Date(),
     };
@@ -405,7 +486,8 @@ export default function AIChat({
           content: msg.content,
         }));
 
-      const enhancedMessage = userMessage.content;
+      // Use the processed message with file contents for the AI
+      const enhancedMessage = processedMessage;
       let currentAssistantMessageId = assistantMessageId;
 
       await getChatCompletionStream(
@@ -583,7 +665,25 @@ export default function AIChat({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (mentionState.active) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        selectNext();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        selectPrevious();
+      } else if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        // Handle file selection
+        const filteredFiles = getFilteredFiles(allProjectFiles);
+        if (filteredFiles[mentionState.selectedIndex]) {
+          handleFileMentionSelect(filteredFiles[mentionState.selectedIndex]);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        hideMention();
+      }
+    } else if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -599,6 +699,74 @@ export default function AIChat({
       }
       return newSet;
     });
+  };
+
+  // Handle textarea change for @ mentions
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setInput(value);
+
+    // Check for @ mention
+    const beforeCursor = value.slice(0, cursorPos);
+    const lastAtIndex = beforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const afterAt = beforeCursor.slice(lastAtIndex + 1);
+      // Check if there's no space between @ and cursor
+      if (!afterAt.includes(" ")) {
+        // Get textarea position for dropdown
+        const textarea = e.target;
+        const textBeforeAt = value.slice(0, lastAtIndex);
+
+        // Create a temporary element to measure text position
+        const mirror = document.createElement("div");
+        mirror.style.position = "absolute";
+        mirror.style.visibility = "hidden";
+        mirror.style.whiteSpace = "pre-wrap";
+        mirror.style.font = window.getComputedStyle(textarea).font;
+        mirror.style.padding = window.getComputedStyle(textarea).padding;
+        mirror.style.width = `${textarea.clientWidth}px`;
+        mirror.textContent = `${textBeforeAt}@`;
+
+        document.body.appendChild(mirror);
+        document.body.removeChild(mirror);
+
+        const textareaRect = textarea.getBoundingClientRect();
+        // Get the AI chat container to position relative to it
+        const aiChatContainer = textarea.closest(".ai-chat-container");
+        const containerRect = aiChatContainer?.getBoundingClientRect();
+
+        const position = {
+          top: textareaRect.top - 240, // Position above the input area (above Context button)
+          left: containerRect ? containerRect.left : textareaRect.left, // Position at the left edge of the sidebar
+        };
+
+        showMention(position, afterAt, lastAtIndex);
+      } else {
+        hideMention();
+      }
+    } else {
+      hideMention();
+    }
+  };
+
+  // Handle file mention selection
+  const handleFileMentionSelect = (file: FileEntry) => {
+    const beforeMention = input.slice(0, mentionState.startIndex);
+    const afterMention = input.slice(mentionState.startIndex + mentionState.search.length + 1);
+    const newInput = `${beforeMention}@${file.name} ${afterMention}`;
+    setInput(newInput);
+    hideMention();
+
+    // Move cursor after the mention
+    setTimeout(() => {
+      if (inputRef.current) {
+        const newCursorPos = beforeMention.length + file.name.length + 2;
+        inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        inputRef.current.focus();
+      }
+    }, 0);
   };
 
   // Handle provider/model selection
@@ -650,7 +818,12 @@ export default function AIChat({
 
   return (
     <div
-      className={cn("flex h-full flex-col font-mono text-xs", "bg-primary-bg text-text", className)}
+      ref={aiChatContainerRef}
+      className={cn(
+        "ai-chat-container flex h-full flex-col font-mono text-xs",
+        "bg-primary-bg text-text",
+        className,
+      )}
       style={{
         background: "var(--primary-bg)",
         color: "var(--text-color)",
@@ -891,7 +1064,7 @@ export default function AIChat({
             <textarea
               ref={inputRef}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
               placeholder={
                 hasApiKey ? "Ask about your code..." : "Configure API key to enable AI chat..."
@@ -996,6 +1169,15 @@ export default function AIChat({
         onDeleteChat={deleteChat}
         formatTime={formatTime}
       />
+
+      {/* File Mention Dropdown */}
+      {mentionState.active && (
+        <FileMentionDropdown
+          files={allProjectFiles}
+          onSelect={handleFileMentionSelect}
+          rootFolderPath={rootFolderPath}
+        />
+      )}
     </div>
   );
 }

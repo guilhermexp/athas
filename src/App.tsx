@@ -1075,6 +1075,7 @@ function App() {
                       buffers={buffers}
                       rootFolderPath={rootFolderPath}
                       selectedFiles={[]}
+                      allProjectFiles={allProjectFiles}
                       mode="chat"
                       onApplyCode={handleApplyCodeFromChat}
                     />
@@ -1384,6 +1385,7 @@ function App() {
                       buffers={buffers}
                       rootFolderPath={rootFolderPath}
                       selectedFiles={[]}
+                      allProjectFiles={allProjectFiles}
                       mode="chat"
                       onApplyCode={handleApplyCodeFromChat}
                     />

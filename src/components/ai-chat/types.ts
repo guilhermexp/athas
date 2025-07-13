@@ -1,4 +1,5 @@
 import type React from "react";
+import type { FileEntry } from "../../types/app";
 import type { Buffer } from "../../types/buffer";
 
 export interface ToolCall {
@@ -45,6 +46,7 @@ export interface AIChatProps {
   buffers?: Buffer[];
   rootFolderPath?: string;
   selectedFiles?: string[];
+  allProjectFiles?: FileEntry[];
   mode: "chat";
   // Buffer update functions
   onApplyCode?: (code: string) => void;
