@@ -377,7 +377,7 @@ const CommandBar = ({
     <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-20">
       <div
         data-command-bar
-        className="pointer-events-auto max-h-96 w-[600px] overflow-hidden rounded-lg border border-[#333] bg-[#1a1a1a] shadow-2xl"
+        className="pointer-events-auto max-h-96 w-[600px] overflow-hidden rounded-lg border border-border bg-primary-bg shadow-2xl"
       >
         <div className="flex h-full w-full flex-col overflow-hidden">
           {/* Minimal Header */}
@@ -387,20 +387,20 @@ const CommandBar = ({
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Type to search files..."
-              className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-[#e0e0e0] text-sm placeholder-[#666] outline-none"
+              className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-sm text-text placeholder-text-lighter outline-none"
             />
             <button
               onClick={onClose}
-              className="flex-shrink-0 rounded p-1 transition-colors duration-150 hover:bg-[#333]"
+              className="flex-shrink-0 rounded p-1 transition-colors duration-150 hover:bg-hover"
             >
-              <X size={16} className="text-[#666]" />
+              <X size={16} className="text-text-lighter" />
             </button>
           </div>
 
           {/* Command List */}
           <div className="custom-scrollbar max-h-80 overflow-y-auto bg-transparent">
             {recentFilesInResults.length === 0 && otherFiles.length === 0 ? (
-              <div className="px-4 py-6 text-center font-mono text-[#666] text-sm">
+              <div className="px-4 py-6 text-center font-mono text-sm text-text-lighter">
                 {query ? "No matching files found" : "No files available"}
               </div>
             ) : (
@@ -416,22 +416,22 @@ const CommandBar = ({
                           key={`recent-${file.path}`}
                           onClick={() => handleFileSelect(file.path)}
                           className={`m-0 flex w-full cursor-pointer items-center gap-2 rounded-none border-none px-3 py-1.5 font-mono transition-colors duration-150 ${
-                            isSelected ? "bg-[#2a2a2a]" : "bg-transparent hover:bg-[#2a2a2a]"
+                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover"
                           }`}
                         >
-                          <File size={13} className="text-[#8ab4f8]" />
+                          <File size={13} className="text-accent" />
                           <div className="min-w-0 flex-1 text-left">
                             <div className="truncate text-sm">
-                              <span className="text-[#e0e0e0]">{file.name}</span>
+                              <span className="text-text">{file.name}</span>
                               {getDirectoryPath(file.path) && (
-                                <span className="ml-1 text-[#666]">
+                                <span className="ml-2 text-text-lighter text-xs opacity-60">
                                   {getDirectoryPath(file.path)}
                                 </span>
                               )}
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="rounded bg-[#8ab4f8]/10 px-1.5 py-0.5 font-medium text-[#8ab4f8] text-xs">
+                            <span className="rounded bg-accent/10 px-1.5 py-0.5 font-medium text-accent text-xs">
                               recent
                             </span>
                           </div>
@@ -452,15 +452,15 @@ const CommandBar = ({
                           key={`other-${file.path}`}
                           onClick={() => handleFileSelect(file.path)}
                           className={`m-0 flex w-full cursor-pointer items-center gap-2 rounded-none border-none px-3 py-1.5 font-mono transition-colors duration-150 ${
-                            isSelected ? "bg-[#2a2a2a]" : "bg-transparent hover:bg-[#2a2a2a]"
+                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover"
                           }`}
                         >
-                          <File size={13} className="text-[#666]" />
+                          <File size={13} className="text-text-lighter" />
                           <div className="min-w-0 flex-1 text-left">
                             <div className="truncate text-sm">
-                              <span className="text-[#e0e0e0]">{file.name}</span>
+                              <span className="text-text">{file.name}</span>
                               {getDirectoryPath(file.path) && (
-                                <span className="ml-1 text-[#666]">
+                                <span className="ml-2 text-text-lighter text-xs opacity-60">
                                   {getDirectoryPath(file.path)}
                                 </span>
                               )}
