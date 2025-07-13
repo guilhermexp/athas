@@ -30,11 +30,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Format frontend
-        run: bun run format
-
-      - name: Lint frontend
-        run: bun run lint
+      - name: Typecheck and run biome check (checks for formatting and linting)
+        run: bun check
 
       - name: Install Linux dependencies
         run: |
