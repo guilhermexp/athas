@@ -36,6 +36,7 @@ fn main() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             let menu = menu::create_menu(app.handle())?;
             app.set_menu(menu)?;

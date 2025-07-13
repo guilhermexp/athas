@@ -1,3 +1,4 @@
+import { exit } from "@tauri-apps/plugin-process";
 import { useEffect } from "react";
 import type { Buffer } from "../types/buffer";
 import type { CoreFeaturesState } from "../types/core-features";
@@ -297,10 +298,10 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+Q (Mac) to quit application (handled by menu, but ensure consistency)
+      // Cmd+Q (Mac) to quit application
       if (e.metaKey && e.key === "q" && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
         e.preventDefault();
-        // Let the menu system handle quit
+        exit(0);
         return;
       }
     };
