@@ -4,11 +4,13 @@ import { open as tauriOpen } from "@tauri-apps/plugin-dialog";
 
 // Detect if we're on macOS
 export const isMac = (): boolean => {
-  return (
-    /Mac|iPhone|iPod|iPad/.test(navigator.platform) ||
-    /Mac/.test(navigator.userAgent) ||
-    navigator.platform === "MacIntel"
-  );
+  // Try modern approach first
+  if ("userAgentData" in navigator && (navigator as any).userAgentData?.platform) {
+    return (navigator as any).userAgentData.platform === "macOS";
+  }
+
+  // Fallback to userAgent parsing
+  return /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
 };
 
 // Get the appropriate modifier key symbol for the platform

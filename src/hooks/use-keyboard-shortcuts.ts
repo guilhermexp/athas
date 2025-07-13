@@ -2,6 +2,7 @@ import { exit } from "@tauri-apps/plugin-process";
 import { useEffect } from "react";
 import type { Buffer } from "../types/buffer";
 import type { CoreFeaturesState } from "../types/core-features";
+import { isMac } from "../utils/platform";
 
 interface UseKeyboardShortcutsProps {
   setIsBottomPaneVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
@@ -56,12 +57,7 @@ export const useKeyboardShortcuts = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       // Terminal toggle is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === "j" &&
-        coreFeatures.terminal &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "j" && coreFeatures.terminal && !isMac()) {
         e.preventDefault();
         if (isBottomPaneVisible && bottomPaneActiveTab === "terminal") {
           setIsBottomPaneVisible(false);
@@ -110,25 +106,15 @@ export const useKeyboardShortcuts = ({
 
       // Find is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === "f" &&
-        !e.shiftKey &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f" && !e.shiftKey && !isMac()) {
         e.preventDefault();
         setIsFindVisible(prev => !prev);
         return;
       }
 
       // Cmd+Shift+F (Mac) or Ctrl+Shift+F (Windows/Linux) to open project search
-      // Check for Mac using multiple methods
-      const isMac =
-        /Mac|iPhone|iPod|iPad/.test(navigator.platform) ||
-        /Mac/.test(navigator.userAgent) ||
-        navigator.platform === "MacIntel";
-
-      const correctModifier = isMac ? e.metaKey : e.ctrlKey;
+      const isMacOS = isMac();
+      const correctModifier = isMacOS ? e.metaKey : e.ctrlKey;
 
       if (correctModifier && e.shiftKey && e.key === "F" && coreFeatures.search) {
         e.preventDefault();
@@ -143,7 +129,7 @@ export const useKeyboardShortcuts = ({
       }
 
       // Also handle if Mac users are somehow sending ctrlKey instead of metaKey
-      if (isMac && e.ctrlKey && e.shiftKey && e.key === "F" && coreFeatures.search) {
+      if (isMacOS && e.ctrlKey && e.shiftKey && e.key === "F" && coreFeatures.search) {
         e.preventDefault();
         e.stopPropagation();
         console.log("Mac detected but using ctrlKey - this is unusual");
@@ -170,12 +156,7 @@ export const useKeyboardShortcuts = ({
 
       // Sidebar toggle is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === "b" &&
-        !e.shiftKey &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "b" && !e.shiftKey && !isMac()) {
         e.preventDefault();
         setIsSidebarVisible(prev => !prev);
         return;
@@ -192,12 +173,7 @@ export const useKeyboardShortcuts = ({
 
       // AI Chat toggle is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === "r" &&
-        coreFeatures.aiChat &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "r" && coreFeatures.aiChat && !isMac()) {
         e.preventDefault();
         setIsRightPaneVisible(prev => !prev);
         return;
@@ -205,12 +181,7 @@ export const useKeyboardShortcuts = ({
 
       // Go to File is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === "p" &&
-        !e.shiftKey &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "p" && !e.shiftKey && !isMac()) {
         e.preventDefault();
         setIsCommandBarVisible(prev => !prev);
         return;
@@ -218,12 +189,7 @@ export const useKeyboardShortcuts = ({
 
       // Command Palette is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.shiftKey &&
-        e.key === "P" &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P" && !isMac()) {
         e.preventDefault();
         setIsCommandPaletteVisible(prev => !prev);
         // Focus the command palette after a short delay to ensure it's rendered
@@ -235,12 +201,7 @@ export const useKeyboardShortcuts = ({
 
       // Close Tab is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === "w" &&
-        !e.shiftKey &&
-        !/Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "w" && !e.shiftKey && !isMac()) {
         e.preventDefault();
         if (activeBuffer) {
           closeBuffer(activeBuffer.id);
@@ -273,33 +234,28 @@ export const useKeyboardShortcuts = ({
       }
 
       // Cmd+M (Mac) to minimize window (native macOS behavior)
-      if (e.metaKey && e.key === "m" && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
+      if (e.metaKey && e.key === "m" && isMac()) {
         e.preventDefault();
         // Let the system handle window minimization
         return;
       }
 
       // Cmd+H (Mac) to hide application (native macOS behavior)
-      if (e.metaKey && e.key === "h" && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
+      if (e.metaKey && e.key === "h" && isMac()) {
         e.preventDefault();
         // Let the system handle app hiding
         return;
       }
 
       // Cmd+Option+H (Mac) to hide other applications (native macOS behavior)
-      if (
-        e.metaKey &&
-        e.altKey &&
-        e.key === "h" &&
-        /Mac|iPhone|iPod|iPad/.test(navigator.platform)
-      ) {
+      if (e.metaKey && e.altKey && e.key === "h" && isMac()) {
         e.preventDefault();
         // Let the system handle hiding other apps
         return;
       }
 
       // Cmd+Q (Mac) to quit application
-      if (e.metaKey && e.key === "q" && /Mac|iPhone|iPod|iPad/.test(navigator.platform)) {
+      if (e.metaKey && e.key === "q" && isMac()) {
         e.preventDefault();
         exit(0);
         return;
