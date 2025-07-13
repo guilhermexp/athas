@@ -44,6 +44,7 @@ import {
   initializeFileWatcherListener,
   useFileWatcherStore,
 } from "./stores/file-watcher-store";
+import { usePersistentSettingsStore } from "./stores/persistent-settings-store";
 import { useUIState } from "./stores/ui-state";
 import type { FileEntry } from "./types/app";
 import { type CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
@@ -56,6 +57,8 @@ function App() {
   const uiState = useUIState();
   const { settings, updateSetting, updateSettingsFromJSON } = useSettings();
   const quickEdit = useQuickEdit();
+  const { aiChatWidth, setAIChatWidth, isAIChatVisible, setIsAIChatVisible } =
+    usePersistentSettingsStore();
 
   // Context menus hook
   const contextMenus = useContextMenus({
@@ -107,6 +110,18 @@ function App() {
       }
     };
   }, []);
+
+  // Initialize AI chat visibility from persistent store
+  useEffect(() => {
+    if (isAIChatVisible !== uiState.isRightPaneVisible) {
+      uiState.setIsRightPaneVisible(isAIChatVisible);
+    }
+  }, []); // Only run once on mount
+
+  // Save AI chat visibility when it changes
+  useEffect(() => {
+    setIsAIChatVisible(uiState.isRightPaneVisible);
+  }, [uiState.isRightPaneVisible, setIsAIChatVisible]);
 
   // Core features handling
   const coreFeaturesList = createCoreFeaturesList(coreFeatures);
@@ -1069,6 +1084,8 @@ function App() {
                     minWidth={280}
                     maxWidth={600}
                     position="left"
+                    width={aiChatWidth}
+                    onWidthChange={setAIChatWidth}
                   >
                     <AIChat
                       activeBuffer={activeBuffer}
@@ -1379,6 +1396,8 @@ function App() {
                     minWidth={280}
                     maxWidth={600}
                     position="right"
+                    width={aiChatWidth}
+                    onWidthChange={setAIChatWidth}
                   >
                     <AIChat
                       activeBuffer={activeBuffer}

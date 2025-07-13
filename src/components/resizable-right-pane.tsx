@@ -10,6 +10,8 @@ interface ResizableRightPaneProps {
   className?: string;
   isVisible?: boolean;
   position?: "left" | "right";
+  width?: number;
+  onWidthChange?: (width: number) => void;
 }
 
 const ResizableRightPane = ({
@@ -20,11 +22,22 @@ const ResizableRightPane = ({
   className,
   isVisible = true,
   position = "right",
+  width: controlledWidth,
+  onWidthChange,
 }: ResizableRightPaneProps) => {
-  const [width, setWidth] = useState(defaultWidth);
+  const [internalWidth, setInternalWidth] = useState(defaultWidth);
   const [isResizing, setIsResizing] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
+
+  const width = controlledWidth ?? internalWidth;
+  const setWidth = (newWidth: number) => {
+    if (onWidthChange) {
+      onWidthChange(newWidth);
+    } else {
+      setInternalWidth(newWidth);
+    }
+  };
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
