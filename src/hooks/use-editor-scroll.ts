@@ -1,6 +1,6 @@
 import type React from "react";
 import { useCallback } from "react";
-import { useCodeEditorStore } from "../store/code-editor-store";
+import { useCodeEditorStore } from "../stores/code-editor-store";
 import { getCursorPosition } from "./use-vim";
 
 export const useEditorScroll = (
@@ -32,7 +32,10 @@ export const useEditorScroll = (
       isLanguageSupported?: (filePath: string) => boolean,
       vimEnabled?: boolean,
       vimMode?: string,
-      handleLspCompletion?: (position: number) => void,
+      handleLspCompletion?: (
+        pos: number,
+        editorRef: React.RefObject<HTMLDivElement | null>,
+      ) => void,
     ) => {
       if (editorRef.current) {
         // Use the getCursorPosition utility for contenteditable
@@ -53,7 +56,7 @@ export const useEditorScroll = (
           isLanguageSupported?.(filePath || "") &&
           (!vimEnabled || vimMode === "insert")
         ) {
-          handleLspCompletion(position);
+          handleLspCompletion(position, editorRef);
         }
       }
     },

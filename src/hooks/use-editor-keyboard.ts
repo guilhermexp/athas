@@ -1,6 +1,6 @@
 import type React from "react";
 import { useCallback } from "react";
-import { useCodeEditorStore } from "../store/code-editor-store";
+import { useCodeEditorStore } from "../stores/code-editor-store";
 import { isMac } from "../utils/platform";
 
 export const useEditorKeyboard = (

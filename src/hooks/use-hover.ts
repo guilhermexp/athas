@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useCodeEditorStore } from "../store/code-editor-store";
+import { useCodeEditorStore } from "../stores/code-editor-store";
 
 interface UseHoverProps {
   getHover?: (filePath: string, line: number, character: number) => Promise<any>;

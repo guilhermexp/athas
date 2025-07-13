@@ -3,12 +3,12 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AIChat from "./components/ai-chat/ai-chat";
 import BottomPane from "./components/bottom-pane";
-import CodeEditor, { type CodeEditorRef } from "./components/code-editor";
 import CommandBar from "./components/command/command-bar";
 import CommandPalette, { type CommandPaletteRef } from "./components/command/command-palette";
 import type { Diagnostic } from "./components/diagnostics/diagnostics-pane";
 import DiffViewer from "./components/diff-viewer";
 import BreadcrumbContainer from "./components/editor/breadcrumbs/breadcrumb-container";
+import CodeEditor, { type CodeEditorRef } from "./components/editor/code-editor";
 import ExtensionsView from "./components/extensions-view";
 import FileReloadToast from "./components/file-reload-toast";
 import FindBar from "./components/find-bar";
@@ -42,8 +42,8 @@ import {
   cleanupFileWatcherListener,
   initializeFileWatcherListener,
   useFileWatcherStore,
-} from "./store/file-watcher-store";
-import { useUIState } from "./store/ui-state";
+} from "./stores/file-watcher-store";
+import { useUIState } from "./stores/ui-state";
 import type { FileEntry } from "./types/app";
 import { type CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
 import type { ThemeType } from "./types/theme";

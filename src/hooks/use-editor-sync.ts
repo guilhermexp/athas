@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useCodeEditorStore } from "../store/code-editor-store";
+import { useCodeEditorStore } from "../stores/code-editor-store";
 
 interface UseEditorSyncProps {
   value: string;

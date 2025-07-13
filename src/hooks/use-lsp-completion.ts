@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { CompletionItem } from "vscode-languageserver-protocol";
-import { useCodeEditorStore } from "../store/code-editor-store";
+import { useCodeEditorStore } from "../stores/code-editor-store";
 
 interface UseLspCompletionProps {
   getCompletions?: (filePath: string, line: number, character: number) => Promise<CompletionItem[]>;
