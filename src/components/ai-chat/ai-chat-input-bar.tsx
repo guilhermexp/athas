@@ -1,9 +1,8 @@
 import { ChevronDown, Database, FileText, Send, Square, X } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
-import { getModelById } from "../../types/ai-provider";
 import { cn } from "../../utils/cn";
 import ModelProviderSelector from "../model-provider-selector";
 import Button from "../ui/button";
@@ -47,32 +46,6 @@ export default function AIChatInputBar({
     selectPrevious,
     getFilteredFiles,
   } = useAIChatStore();
-
-  // Get selected buffers for context (memoized)
-  const getSelectedBuffers = useMemo(() => {
-    return buffers.filter(buffer => selectedBufferIds.has(buffer.id));
-  }, [buffers, selectedBufferIds]);
-
-  // Calculate approximate tokens (memoized)
-  const calculateTokens = useMemo(() => {
-    let totalChars = input.length;
-
-    // Add characters from selected buffers (approximate)
-    getSelectedBuffers.forEach(buffer => {
-      if (buffer.content && !buffer.isSQLite) {
-        totalChars += buffer.content.length;
-      }
-    });
-
-    // Rough approximation: 1 token ≈ 4 characters for English text
-    const estimatedTokens = Math.ceil(totalChars / 4);
-
-    // Get max tokens from current model
-    const currentModel = getModelById(aiProviderId, aiModelId);
-    const maxTokens = currentModel?.maxTokens || 4096; // Fallback to 4k tokens
-
-    return { estimatedTokens, maxTokens };
-  }, [input, getSelectedBuffers, aiProviderId, aiModelId]);
 
   // Function to recalculate mention dropdown position
   const recalculateMentionPosition = useCallback(() => {
@@ -255,8 +228,6 @@ export default function AIChatInputBar({
     await onSendMessage();
   };
 
-  const { estimatedTokens, maxTokens } = calculateTokens;
-
   return (
     <div
       ref={aiChatContainerRef}
@@ -381,19 +352,6 @@ export default function AIChatInputBar({
           />
         </div>
         <div className="mt-2 flex items-center justify-between">
-          <div className="hidden sm:block" style={{ color: "var(--text-lighter)" }}>
-            <span
-              className={
-                estimatedTokens > maxTokens * 0.8
-                  ? "text-orange-400"
-                  : estimatedTokens > maxTokens * 0.9
-                    ? "text-red-400"
-                    : ""
-              }
-            >
-              {estimatedTokens.toLocaleString()}/{(maxTokens / 1000).toFixed(0)}k tokens
-            </span>
-          </div>
           <div className="ml-auto flex items-center gap-2">
             <ClaudeStatusIndicator
               isActive={aiProviderId === "claude-code"}

@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { getCursorPosition } from "../../hooks/use-vim";
 import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config";
 import { useEditorInstanceStore } from "../../stores/editor-instance";
 import { cn } from "../../utils/cn";
-import { getCursorPosition } from "../hooks/use-vim";
 
 export function EditorInput() {
   const { fontSize, tabSize, wordWrap, vimEnabled, vimMode } = useEditorConfigStore();
@@ -138,7 +138,7 @@ export function EditorInput() {
     }
   }, [codeEditorValue, editorRef]);
 
-  const timeoutRef = useRef(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleCursorPositionChange = () => {
     if (editorRef?.current) {
       const position = getCursorPosition(editorRef.current);
@@ -146,13 +146,13 @@ export function EditorInput() {
     }
   };
   const triggerLsp = () => {
-    if (!editorRef.current) return;
+    if (!editorRef?.current) return;
     const position = getCursorPosition(editorRef.current);
     const lastChar = codeEditorValue.charAt(position - 1);
-    const delay = /[.::>\(\)<]/.test(lastChar) ? 50 : 300;
+    const delay = /[.::>()<]/.test(lastChar) ? 50 : 300;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      const currentPosition = getCursorPosition(editorRef.current);
+      const currentPosition = getCursorPosition(editorRef.current!);
       const isRemoteFile = filePath?.startsWith("remote://");
       if (
         !isRemoteFile &&
@@ -160,7 +160,7 @@ export function EditorInput() {
         isLanguageSupported?.(filePath || "") &&
         (!vimEnabled || vimMode === "insert")
       ) {
-        handleLspCompletion(currentPosition, editorRef);
+        handleLspCompletion(currentPosition, editorRef!);
       }
     }, delay);
   };

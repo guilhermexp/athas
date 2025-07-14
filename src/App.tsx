@@ -82,6 +82,7 @@ function App() {
     return DEFAULT_CORE_FEATURES;
   });
   const [maxOpenTabs, setMaxOpenTabs] = useState<number>(10);
+  const [isTerminalFullScreen, setIsTerminalFullScreen] = useState(false);
 
   // Recent folders management
   const { recentFolders, addToRecents } = useRecentFolders();
@@ -1417,7 +1418,10 @@ function App() {
           {/* Bottom Pane */}
           <BottomPane
             isVisible={uiState.isBottomPaneVisible}
-            onClose={() => uiState.setIsBottomPaneVisible(false)}
+            onClose={() => {
+              uiState.setIsBottomPaneVisible(false);
+              setIsTerminalFullScreen(false);
+            }}
             activeTab={uiState.bottomPaneActiveTab}
             onTabChange={tab => uiState.setBottomPaneActiveTab(tab)}
             diagnostics={diagnostics}
@@ -1425,6 +1429,8 @@ function App() {
             currentDirectory={rootFolderPath}
             showTerminal={coreFeatures.terminal}
             showDiagnostics={coreFeatures.diagnostics}
+            onFullScreen={() => setIsTerminalFullScreen(prev => !prev)}
+            isFullScreen={isTerminalFullScreen}
           />
 
           {/* Command Bar */}
