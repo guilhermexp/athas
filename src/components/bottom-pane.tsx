@@ -1,5 +1,5 @@
 import type React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DiagnosticsPane, { type Diagnostic } from "./diagnostics/diagnostics-pane";
 import TerminalContainer from "./terminal/terminal-container";
 
@@ -31,6 +31,15 @@ const BottomPane = ({
 }: BottomPaneProps) => {
   const [height, setHeight] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
+  const [isMacOS, setIsMacOS] = useState(false);
+
+  useEffect(() => {
+    const checkPlatform = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      setIsMacOS(userAgent.includes("mac"));
+    };
+    checkPlatform();
+  }, []);
 
   // Resize logic
   const handleMouseDown = useCallback(
@@ -63,12 +72,22 @@ const BottomPane = ({
     [height],
   );
 
+  const titleBarHeight = isMacOS ? 44 : 28; // h-11 for macOS, h-7 for Windows/Linux
+  const footerHeight = 40; // min-h-[40px]
+  const totalReservedHeight = titleBarHeight + footerHeight;
+
   return (
     <div
-      className={`${isFullScreen ? "fixed inset-0" : "relative"} z-50 flex flex-col border-border border-t bg-secondary-bg ${
+      className={`${isFullScreen ? "fixed inset-x-0" : "relative"} z-50 flex flex-col border-border border-t bg-secondary-bg ${
         !isVisible ? "hidden" : ""
       }`}
-      style={{ height: isFullScreen ? "100vh" : `${height}px` }}
+      style={{
+        height: isFullScreen ? `calc(100vh - ${totalReservedHeight}px)` : `${height}px`,
+        ...(isFullScreen && {
+          top: `${titleBarHeight}px`,
+          bottom: `${footerHeight}px`,
+        }),
+      }}
     >
       {/* Resize Handle */}
       <div
