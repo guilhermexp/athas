@@ -1,8 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun run lint:staged:*)",
       "Bash(bun run:*)",
+      "Bash(bun check:*)",
       "Bash(mv:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",

@@ -4,18 +4,30 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "__what_is_this": "this is a retarded way to add comments in json files that don't support comments",
+
+    "__tauri": "this will allow you to use 'bun tauri <whatever>' instead of 'bunx tauri <whatever>'",
     "tauri": "tauri",
-    "format": "biome format --write",
-    "format:check": "biome format",
+
+    "__typecheck": "this will only typecheck the typescript files",
     "typecheck": "tsc --noEmit",
-    "lint": "biome lint",
-    "lint:staged": "lint-staged",
-    "check": "bun typecheck && biome check",
-    "fix": "biome check --write --unsafe",
-    "clean": "rimraf dist build node_modules/.vite",
-    "clean:all": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
-    "commitlint": "commitlint --edit",
-    "prepare": "simple-git-hooks"
+
+    "__check": "this will check formatting and linting",
+    "check": "biome check",
+
+    "__check:all": "composite of 'tsc --noEmit' and 'biome check'",
+    "check:all": "bun typecheck && bun check",
+
+    "__check:fix": "wil fix formatting and linting if possible",
+    "check:fix": "biome check --write --unsafe",
+
+    "__clean": "this will clean and rebuild the project. both rust and js",
+    "clean": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
+
+    "__prepare": "this will install git hooks after you do 'bun install'",
+    "prepare": "simple-git-hooks",
+
+    "commitlint": "commitlint --edit"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -56,7 +68,7 @@
     "vite": "^6.3.5"
   },
   "simple-git-hooks": {
-    "pre-commit": "bunx concurrently --names \"rust,ts\" --prefix-colors \"yellow,cyan\" './scripts/format-staged-rust.sh' './scripts/format-staged-biome.sh && bun run lint:staged && bun typecheck'",
+    "pre-commit": "bunx concurrently --names \"rust,ts\" --prefix-colors \"yellow,cyan\" './scripts/format-staged-rust.sh' './scripts/format-staged-biome.sh && bun check:all'",
     "commit-msg": "bun commitlint --edit $1"
   },
   "lint-staged": {
