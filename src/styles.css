@@ -820,14 +820,6 @@ textarea::-webkit-scrollbar-thumb:hover {
     border-top: 1px solid var(--border-color);
 }
 
-.tab-bar {
-    position: relative;
-    z-index: 6;
-    background: var(--secondary-bg);
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
-}
-
 .sidebar {
     position: relative;
     z-index: 7;
@@ -879,24 +871,6 @@ textarea::-webkit-scrollbar-thumb:hover {
         0 0,
         0 0;
     pointer-events: none;
-}
-
-/* Tab styling */
-.tab {
-    background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    position: relative;
-    z-index: 6;
-    transition: all 0.2s ease;
-}
-
-.tab.active {
-    background: #ffffff;
-    border-bottom: 1px solid #ffffff;
-    margin-bottom: -1px;
-    z-index: 7;
 }
 
 /* Pane styling */

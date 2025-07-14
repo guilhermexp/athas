@@ -81,26 +81,6 @@
 }
 
 /* Vercel Dark Theme Component Enhancements */
-.force-vercel-dark .tab-bar {
-    background: var(--sidebar-bg);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.force-vercel-dark .tab.active {
-    background: var(--tab-active-bg);
-    border-bottom: 2px solid var(--accent-color);
-    color: var(--text-color);
-}
-
-.force-vercel-dark .tab:not(.active) {
-    background: var(--tab-inactive-bg);
-    color: var(--text-light);
-}
-
-.force-vercel-dark .tab:not(.active):hover {
-    background: var(--hover-color);
-    color: var(--text-color);
-}
 
 /* Enhanced sidebar styling for Vercel theme */
 .force-vercel-dark .sidebar {

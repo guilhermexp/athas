@@ -170,7 +170,7 @@ const CustomTitleBar = ({
     return (
       <div
         data-tauri-drag-region
-        className="relative z-50 flex h-11 select-none items-center justify-between bg-primary-bg"
+        className="relative z-50 flex h-8 select-none items-center justify-between bg-primary-bg"
       >
         {/* macOS traffic light controls */}
         <div className="flex items-center space-x-2 pl-4">
@@ -204,34 +204,36 @@ const CustomTitleBar = ({
         {/* Center - Project name for macOS */}
         <div className="-translate-x-1/2 pointer-events-none absolute left-1/2 flex transform items-center">
           {projectName && (
-            <span className="max-w-60 truncate text-center font-medium text-text text-xs">
+            <span className="max-w-60 truncate text-center font-medium text-[10px] text-text">
               {projectName}
             </span>
           )}
         </div>
 
         {/* Settings and AI Chat buttons */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-0.5">
           {onAIChatClick && (
             <button
               onClick={onAIChatClick}
-              className={`mr-2 flex h-6 w-6 items-center justify-center rounded transition-colors ${
+              className={`flex items-center justify-center rounded p-1 transition-colors ${
                 isAIChatVisible
-                  ? "bg-hover text-text"
+                  ? "bg-selected text-text"
                   : "text-text-lighter hover:bg-hover hover:text-text"
               }`}
+              style={{ minHeight: 0, minWidth: 0 }}
               title="Toggle AI Chat"
             >
-              <Bot className="h-3 w-3" />
+              <Bot size={14} />
             </button>
           )}
           {onSettingsClick && (
             <button
               onClick={onSettingsClick}
-              className="mr-4 flex h-6 w-6 items-center justify-center rounded text-text-lighter transition-colors hover:bg-hover hover:text-text"
+              className="mr-4 flex items-center justify-center rounded p-1 text-text-lighter transition-colors hover:bg-hover hover:text-text"
+              style={{ minHeight: 0, minWidth: 0 }}
               title="Settings"
             >
-              <Settings className="h-3 w-3" />
+              <Settings size={14} />
             </button>
           )}
         </div>
@@ -253,29 +255,31 @@ const CustomTitleBar = ({
       </div>
 
       {/* Right side */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-0.5">
         {/* AI Chat button */}
         {onAIChatClick && (
           <button
             onClick={onAIChatClick}
-            className={`mr-1 flex h-7 w-7 items-center justify-center rounded transition-colors ${
+            className={`flex items-center justify-center rounded px-1 py-0.5 transition-colors ${
               isAIChatVisible
-                ? "bg-hover text-text"
+                ? "bg-selected text-text"
                 : "text-text-lighter hover:bg-hover hover:text-text"
             }`}
+            style={{ minHeight: 0, minWidth: 0 }}
             title="Toggle AI Chat"
           >
-            <Bot className="h-3.5 w-3.5" />
+            <Bot size={12} />
           </button>
         )}
         {/* Settings button */}
         {onSettingsClick && (
           <button
             onClick={onSettingsClick}
-            className="mr-2 flex h-7 w-7 items-center justify-center rounded text-text-lighter transition-colors hover:bg-hover hover:text-text"
+            className="mr-2 flex items-center justify-center rounded px-1 py-0.5 text-text-lighter transition-colors hover:bg-hover hover:text-text"
+            style={{ minHeight: 0, minWidth: 0 }}
             title="Settings"
           >
-            <Settings className="h-3.5 w-3.5" />
+            <Settings size={12} />
           </button>
         )}
 

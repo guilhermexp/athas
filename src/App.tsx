@@ -1353,8 +1353,6 @@ function App() {
             diagnostics={diagnostics}
             uiState={uiState}
             settings={settings}
-            onToggleSidebarPosition={handleToggleSidebarPosition}
-            onOpenGitHubCopilotSettings={() => uiState.setIsGitHubCopilotSettingsVisible(true)}
           />
 
           {/* Command Bar */}

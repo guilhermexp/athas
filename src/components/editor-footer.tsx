@@ -1,5 +1,4 @@
-import { AlertCircle, ArrowLeftRight, Terminal as TerminalIcon } from "lucide-react";
-import type React from "react";
+import { AlertCircle, Terminal as TerminalIcon } from "lucide-react";
 import type { Settings } from "../hooks/use-settings";
 import type { UIState } from "../stores/ui-state";
 import type { Buffer } from "../types/buffer";
@@ -13,32 +12,12 @@ interface EditorFooterProps {
   diagnostics: Diagnostic[];
   uiState: UIState;
   settings: Settings;
-  onToggleSidebarPosition: () => void;
-  onOpenGitHubCopilotSettings: () => void;
 }
 
-const EditorFooter: React.FC<EditorFooterProps> = ({
-  activeBuffer,
-  coreFeatures,
-  diagnostics,
-  uiState,
-  settings,
-  onToggleSidebarPosition,
-  onOpenGitHubCopilotSettings,
-}) => {
+const EditorFooter = ({ activeBuffer, coreFeatures, diagnostics, uiState }: EditorFooterProps) => {
   return (
     <div className="flex min-h-[32px] items-center justify-between border-border border-t bg-secondary-bg px-2 py-1">
       <div className="flex items-center gap-0.5 font-mono text-text-lighter text-xs">
-        {activeBuffer && (
-          <>
-            <span className="px-1">{activeBuffer.content.split("\n").length} lines</span>
-            {(() => {
-              const language = getLanguageFromFilename(getFilenameFromPath(activeBuffer.path));
-              return language !== "Text" && <span className="px-1">{language}</span>;
-            })()}
-          </>
-        )}
-
         {/* Terminal indicator */}
         {coreFeatures.terminal && (
           <button
@@ -88,27 +67,15 @@ const EditorFooter: React.FC<EditorFooterProps> = ({
           </button>
         )}
       </div>
-      <div className="flex items-center gap-2 font-mono text-text-lighter text-xs">
-        {/* Sidebar Position Toggle */}
-        <button
-          onClick={onToggleSidebarPosition}
-          className="flex cursor-pointer items-center gap-0.5 rounded px-1 py-0.5 transition-colors hover:bg-hover"
-          style={{ minHeight: 0, minWidth: 0 }}
-          title={`Switch sidebar to ${settings.sidebarPosition === "left" ? "right" : "left"} (Cmd+Shift+B)`}
-        >
-          <ArrowLeftRight size={12} />
-        </button>
-
-        {activeBuffer && !activeBuffer.isSQLite && (
-          <button
-            onClick={onOpenGitHubCopilotSettings}
-            className="flex cursor-pointer items-center gap-0.5 px-1 py-0.5 transition-colors hover:bg-hover"
-            style={{ minHeight: 0, minWidth: 0 }}
-            title="AI Code Completion Settings"
-          >
-            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
-            <span>Autocomplete</span>
-          </button>
+      <div className="flex items-center gap-0.5 font-mono text-[10px] text-text-lighter">
+        {activeBuffer && (
+          <>
+            <span className="px-1">{activeBuffer.content.split("\n").length} lines</span>
+            {(() => {
+              const language = getLanguageFromFilename(getFilenameFromPath(activeBuffer.path));
+              return language !== "Text" && <span className="px-1">{language}</span>;
+            })()}
+          </>
         )}
       </div>
     </div>

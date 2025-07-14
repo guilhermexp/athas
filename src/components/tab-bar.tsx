@@ -397,10 +397,7 @@ const TabBar = ({
   return (
     <>
       <div className="relative">
-        <div
-          ref={tabBarRef}
-          className="scrollbar-hidden flex overflow-x-auto border-border border-b bg-secondary-bg"
-        >
+        <div ref={tabBarRef} className="scrollbar-hidden flex overflow-x-auto bg-secondary-bg">
           {sortedBuffers.map((buffer, index) => {
             const isActive = buffer.id === activeBufferId;
             const isExternallyModified = externallyModifiedPaths.has(buffer.path);
@@ -426,9 +423,9 @@ const TabBar = ({
                   draggable={true}
                   onDragStart={e => handleDragStart(e, index)}
                   onDragEnd={handleDragEnd}
-                  className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-border border-r px-2 py-0.5 ${
-                    isActive ? "border-b-2 border-b-accent bg-primary-bg" : "bg-secondary-bg"
-                  } ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""} `}
+                  className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-0.5 ${
+                    isActive ? "bg-primary-bg" : "bg-secondary-bg"
+                  } ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}`}
                   style={{ minWidth: "120px", maxWidth: "400px" }}
                   onMouseDown={e => handleMouseDown(e, index)}
                   onClick={() => {
@@ -438,6 +435,9 @@ const TabBar = ({
                   }}
                   onContextMenu={e => handleContextMenu(e, buffer)}
                 >
+                  {/* Active tab indicator */}
+                  {isActive && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent" />}
+
                   {/* File Icon */}
                   <div className="flex-shrink-0">
                     {buffer.path === "extensions://language-servers" ? (
@@ -478,7 +478,7 @@ const TabBar = ({
                         e.stopPropagation();
                         onTabClose(buffer.id, e);
                       }}
-                      className={`flex-shrink-0 cursor-pointer rounded p-0.5 opacity-0 transition-all duration-150 hover:bg-hover group-hover:opacity-100 ${isActive ? "text-text opacity-70" : "text-text-lighter"}hover:text-text hover:opacity-100 `}
+                      className="flex-shrink-0 cursor-pointer rounded p-0.5 text-text-lighter opacity-0 transition-all duration-150 hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100"
                       title={`Close ${buffer.name}`}
                     >
                       <X size={12} />
