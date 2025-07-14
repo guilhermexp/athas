@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat-store";
 import type { FileEntry } from "../../types/app";
+import FileIcon from "../file-icon";
 
 interface FileMentionDropdownProps {
   files: FileEntry[];
@@ -93,31 +94,6 @@ export const FileMentionDropdown = React.memo(function FileMentionDropdown({
     return null;
   }
 
-  const getFileIcon = (fileName: string): string => {
-    const ext = fileName.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "ts":
-      case "tsx":
-        return "📘";
-      case "js":
-      case "jsx":
-        return "📙";
-      case "json":
-        return "📋";
-      case "css":
-      case "scss":
-        return "🎨";
-      case "html":
-        return "📝";
-      case "md":
-        return "📄";
-      case "rs":
-        return "🦀";
-      default:
-        return "📄";
-    }
-  };
-
   const getRelativePath = (fullPath: string): string => {
     // Use rootFolderPath to calculate relative path
     let relativePath = fullPath;
@@ -172,9 +148,7 @@ export const FileMentionDropdown = React.memo(function FileMentionDropdown({
             onSelect(file);
           }}
         >
-          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-xs">
-            {getFileIcon(file.name)}
-          </div>
+          <FileIcon fileName={file.name} isDir={false} size={11} className="flex-shrink-0" />
           <div className="min-w-0 flex-1 overflow-hidden">
             <div className="truncate font-medium font-mono text-text text-xs">{file.name}</div>
             <div className="mt-0.5 truncate text-[10px] text-text-lighter opacity-75">

@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import type { ContextMenuState, FileEntry } from "../../types/app";
 import FileIcon from "../file-icon";
 import "./file-tree.css";
+import { cn } from "@/utils/cn";
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -228,11 +229,17 @@ const FileTree = ({
             }}
             onClick={() => onFileSelect(file.path, file.isDir)}
             onContextMenu={e => handleContextMenu(e, file.path, file.isDir)}
-            className={`flex min-h-[22px] w-full cursor-pointer select-none items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap border-none bg-transparent px-1.5 py-1 text-left font-mono text-text text-xs shadow-none outline-none transition-colors duration-150 hover:bg-hover focus:outline-none ${
-              activeBufferPath === file.path ? "bg-selected" : ""
-            }`}
+            className={cn(
+              "flex min-h-[22px] w-full cursor-pointer",
+              "select-none items-center gap-1.5 overflow-hidden",
+              "text-ellipsis whitespace-nowrap border-none bg-transparent",
+              "px-1.5 py-1 text-left font-mono text-text text-xs",
+              "shadow-none outline-none transition-colors duration-150",
+              "hover:bg-hover focus:outline-none",
+              activeBufferPath === file.path && "bg-selected",
+            )}
             style={{
-              paddingLeft: `${12 + depth * 16}px`,
+              paddingLeft: `${12 + depth * 20}px`,
               userSelect: "none",
               WebkitUserSelect: "none",
               MozUserSelect: "none",
@@ -258,9 +265,7 @@ const FileTree = ({
             </span>
           </button>
         )}
-        {file.expanded && file.children && (
-          <div className="ml-4">{renderFileTree(file.children, depth + 1)}</div>
-        )}
+        {file.expanded && file.children && <div>{renderFileTree(file.children, depth + 1)}</div>}
       </div>
     ));
   };
