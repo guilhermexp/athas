@@ -43,7 +43,6 @@ export const useFolderOperations = ({
     [
       isRemoteWindow,
       remoteConnectionId,
-      files,
       setFiles,
       localHandleFolderToggle,
       handleRemoteFolderToggle,

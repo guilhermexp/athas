@@ -17,7 +17,7 @@ import {
   Upload,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ContextMenuState, FileEntry } from "../../types/app";
 import FileIcon from "../file-icon";
 import "./file-tree.css";
@@ -182,6 +182,15 @@ const FileTree = ({
     };
   }, []);
 
+  const handleFileClick = useCallback(
+    (e: React.MouseEvent, path: string, isDir: boolean) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onFileSelect(path, isDir);
+    },
+    [onFileSelect],
+  );
+
   const renderFileTree = (items: FileEntry[], depth = 0) => {
     return items.map(file => (
       <div key={file.path}>
@@ -227,7 +236,7 @@ const FileTree = ({
                 e.dataTransfer.effectAllowed = "copy";
               }
             }}
-            onClick={() => onFileSelect(file.path, file.isDir)}
+            onClick={e => handleFileClick(e, file.path, file.isDir)}
             onContextMenu={e => handleContextMenu(e, file.path, file.isDir)}
             className={cn(
               "flex min-h-[22px] w-full cursor-pointer",

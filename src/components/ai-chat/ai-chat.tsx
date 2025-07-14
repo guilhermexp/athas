@@ -1,16 +1,10 @@
 import { Bot, MessageSquare, Plus } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
-import { AI_PROVIDERS, getProviderById } from "../../types/ai-provider";
-import {
-  getChatCompletionStream,
-  getProviderApiToken,
-  removeProviderApiToken,
-  storeProviderApiToken,
-  validateProviderApiKey,
-} from "../../utils/ai-chat";
+import { getProviderById } from "../../types/ai-provider";
+import { getChatCompletionStream } from "../../utils/ai-chat";
 import { cn } from "../../utils/cn";
 import ApiKeyModal from "../api-key-modal";
 import AIChatInputBar from "./ai-chat-input-bar";
@@ -18,7 +12,7 @@ import ChatHistoryModal from "./chat-history-modal";
 import MarkdownRenderer from "./markdown-renderer";
 import { parseMentionsAndLoadFiles } from "./mention-utils";
 import ToolCallDisplay from "./tool-call-display";
-import type { AIChatProps, Chat, ContextInfo, Message } from "./types";
+import type { AIChatProps, ContextInfo, Message } from "./types";
 import { formatTime } from "./utils";
 
 export default function AIChat({
@@ -31,224 +25,76 @@ export default function AIChat({
   mode: _,
   onApplyCode,
 }: AIChatProps) {
-  // Chat History State
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const [isChatHistoryVisible, setIsChatHistoryVisible] = useState(false);
-
   // Provider and Model State from persistent store
   const { aiProviderId, aiModelId, setAIProviderAndModel } = usePersistentSettingsStore();
-  const [providerApiKeys, setProviderApiKeys] = useState<Map<string, boolean>>(new Map());
-  const [apiKeyModalState, setApiKeyModalState] = useState<{
-    isOpen: boolean;
-    providerId: string | null;
-  }>({ isOpen: false, providerId: null });
 
-  // Get state and actions from AI chat store
-  const {
-    input,
-    selectedBufferIds,
-    hasApiKey,
-    setInput,
-    setIsTyping,
-    setStreamingMessageId,
-    setSelectedBufferIds,
-    setHasApiKey,
-  } = useAIChatStore();
+  // Get store state selectively to avoid re-renders
+  const input = useAIChatStore(state => state.input);
+  const selectedBufferIds = useAIChatStore(state => state.selectedBufferIds);
+  const hasApiKey = useAIChatStore(state => state.hasApiKey);
+  const chats = useAIChatStore(state => state.chats);
+  const currentChatId = useAIChatStore(state => state.currentChatId);
+  const isChatHistoryVisible = useAIChatStore(state => state.isChatHistoryVisible);
+  const apiKeyModalState = useAIChatStore(state => state.apiKeyModalState);
+
+  // Get store actions (these are stable references)
+  const autoSelectBuffer = useAIChatStore(state => state.autoSelectBuffer);
+  const checkApiKey = useAIChatStore(state => state.checkApiKey);
+  const checkAllProviderApiKeys = useAIChatStore(state => state.checkAllProviderApiKeys);
+  const setInput = useAIChatStore(state => state.setInput);
+  const setIsTyping = useAIChatStore(state => state.setIsTyping);
+  const setStreamingMessageId = useAIChatStore(state => state.setStreamingMessageId);
+  const createNewChat = useAIChatStore(state => state.createNewChat);
+  const deleteChat = useAIChatStore(state => state.deleteChat);
+  const updateChatTitle = useAIChatStore(state => state.updateChatTitle);
+  const addMessage = useAIChatStore(state => state.addMessage);
+  const updateMessage = useAIChatStore(state => state.updateMessage);
+  const setIsChatHistoryVisible = useAIChatStore(state => state.setIsChatHistoryVisible);
+  const setApiKeyModalState = useAIChatStore(state => state.setApiKeyModalState);
+  const saveApiKey = useAIChatStore(state => state.saveApiKey);
+  const removeApiKey = useAIChatStore(state => state.removeApiKey);
+  const hasProviderApiKey = useAIChatStore(state => state.hasProviderApiKey);
+  const getCurrentChat = useAIChatStore(state => state.getCurrentChat);
+  const getCurrentMessages = useAIChatStore(state => state.getCurrentMessages);
+  const switchToChat = useAIChatStore(state => state.switchToChat);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Get current chat
-  const currentChat = chats.find(chat => chat.id === currentChatId);
-  const messages = useMemo(() => currentChat?.messages || [], [currentChat?.messages]);
-
-  // Theme detection removed - was causing unnecessary re-renders
-
-  // Load chats from localStorage on mount
-  useEffect(() => {
-    const savedChats = localStorage.getItem("athas-code-ai-chats");
-    if (savedChats) {
-      try {
-        const parsedChats = JSON.parse(savedChats).map((chat: any) => ({
-          ...chat,
-          createdAt: new Date(chat.createdAt),
-          lastMessageAt: new Date(chat.lastMessageAt),
-          messages: chat.messages.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-            toolCalls: msg.toolCalls?.map((tc: any) => ({
-              ...tc,
-              timestamp: new Date(tc.timestamp),
-            })),
-          })),
-        }));
-        setChats(parsedChats);
-
-        // Set the most recent chat as current
-        if (parsedChats.length > 0) {
-          const mostRecent = parsedChats.sort(
-            (a: Chat, b: Chat) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime(),
-          )[0];
-          setCurrentChatId(mostRecent.id);
-        }
-      } catch (error) {
-        console.error("Error loading chat history:", error);
-      }
-    }
-  }, []);
-
-  // Save chats to localStorage whenever chats change (debounced)
-  useEffect(() => {
-    if (chats.length > 0) {
-      const timeoutId = setTimeout(() => {
-        localStorage.setItem("athas-code-ai-chats", JSON.stringify(chats));
-      }, 1000); // Debounce localStorage writes by 1 second
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [chats]);
-
-  // Create a new chat
-  const createNewChat = () => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      title: "New Chat",
-      messages: [],
-      createdAt: new Date(),
-      lastMessageAt: new Date(),
-    };
-
-    setChats(prev => [newChat, ...prev]);
-    setCurrentChatId(newChat.id);
-    setIsChatHistoryVisible(false);
-  };
-
-  // Switch to a different chat
-  const switchToChat = (chatId: string) => {
-    setCurrentChatId(chatId);
-    setIsChatHistoryVisible(false);
-    // Stop any current streaming
-    stopStreaming();
-  };
-
-  // Delete a chat
-  const deleteChat = (chatId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setChats(prev => prev.filter(chat => chat.id !== chatId));
-
-    // If we deleted the current chat, switch to the most recent one or create new
-    if (chatId === currentChatId) {
-      const remainingChats = chats.filter(chat => chat.id !== chatId);
-      if (remainingChats.length > 0) {
-        const mostRecent = remainingChats.sort(
-          (a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime(),
-        )[0];
-        setCurrentChatId(mostRecent.id);
-      } else {
-        setCurrentChatId(null);
-      }
-    }
-  };
-
-  // Update chat title based on first message
-  const updateChatTitle = (chatId: string, firstMessage: string) => {
-    const title = firstMessage.length > 50 ? `${firstMessage.substring(0, 50)}...` : firstMessage;
-
-    setChats(prev => prev.map(chat => (chat.id === chatId ? { ...chat, title } : chat)));
-  };
-
-  // Update messages in current chat
-  const updateMessages = (newMessages: Message[]) => {
-    if (!currentChatId) return;
-
-    setChats(prev =>
-      prev.map(chat =>
-        chat.id === currentChatId
-          ? {
-              ...chat,
-              messages: newMessages,
-              lastMessageAt: new Date(),
-            }
-          : chat,
-      ),
-    );
-  };
-
-  const checkApiKey = useCallback(async () => {
-    try {
-      // Claude Code doesn't require an API key in the frontend
-      if (aiProviderId === "claude-code") {
-        setHasApiKey(true);
-        return;
-      }
-
-      const token = await getProviderApiToken(aiProviderId);
-      setHasApiKey(!!token);
-    } catch (error) {
-      console.error("Error checking API key:", error);
-      setHasApiKey(false);
-    }
-  }, [aiProviderId]);
-
-  const checkAllProviderApiKeys = useCallback(async () => {
-    const newApiKeyMap = new Map<string, boolean>();
-
-    for (const provider of AI_PROVIDERS) {
-      try {
-        // Claude Code doesn't require an API key in the frontend
-        if (provider.id === "claude-code") {
-          newApiKeyMap.set(provider.id, true);
-          continue;
-        }
-
-        const token = await getProviderApiToken(provider.id);
-        newApiKeyMap.set(provider.id, !!token);
-      } catch (_error) {
-        newApiKeyMap.set(provider.id, false);
-      }
-    }
-
-    setProviderApiKeys(newApiKeyMap);
-  }, []);
-
-  // Check for API key on mount
-  useEffect(() => {
-    checkApiKey();
-  }, [checkApiKey]);
+  // Get current chat and messages directly from store
+  const currentChat = getCurrentChat();
+  const messages = getCurrentMessages();
 
   // Auto-select active buffer when it changes
   useEffect(() => {
     if (activeBuffer) {
-      setSelectedBufferIds(new Set([...selectedBufferIds, activeBuffer.id]));
+      autoSelectBuffer(activeBuffer.id);
     }
-  }, [activeBuffer, selectedBufferIds, setSelectedBufferIds]);
+  }, [activeBuffer, autoSelectBuffer]);
 
-  // Check for API key on mount and when provider changes
+  // Check API keys on mount and when provider changes
   useEffect(() => {
-    checkApiKey();
-  }, [checkApiKey]);
-
-  // Check all provider API keys on mount
-  useEffect(() => {
+    checkApiKey(aiProviderId);
     checkAllProviderApiKeys();
-  }, [checkAllProviderApiKeys]);
+  }, [aiProviderId, checkApiKey, checkAllProviderApiKeys]);
 
-  // Auto-scroll to bottom when new messages are added
-  useEffect(() => {
+  // Wrapper for deleteChat to handle event
+  const handleDeleteChat = (chatId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    deleteChat(chatId);
+  };
+
+  // Scroll to bottom helper
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, []);
 
-  // Get selected buffers for context (memoized)
-  const getSelectedBuffers = useMemo(() => {
-    return buffers.filter(buffer => selectedBufferIds.has(buffer.id));
-  }, [buffers, selectedBufferIds]);
-
-  // Build context information for the AI (memoized)
-  const buildContext = useMemo((): ContextInfo => {
+  // Build context information for the AI (simplified, no memoization needed)
+  const buildContext = (): ContextInfo => {
+    const selectedBuffers = buffers.filter(buffer => selectedBufferIds.has(buffer.id));
     const context: ContextInfo = {
       activeBuffer: activeBuffer || undefined,
-      openBuffers: getSelectedBuffers,
+      openBuffers: selectedBuffers,
       selectedFiles,
       projectRoot: rootFolderPath,
       providerId: aiProviderId,
@@ -282,7 +128,7 @@ export default function AIChat({
     }
 
     return context;
-  }, [activeBuffer, getSelectedBuffers, selectedFiles, rootFolderPath, aiProviderId]);
+  };
 
   // Stop streaming response
   const stopStreaming = () => {
@@ -300,22 +146,13 @@ export default function AIChat({
     // Create a new chat if we don't have one
     let chatId = currentChatId;
     if (!chatId) {
-      const newChat: Chat = {
-        id: Date.now().toString(),
-        title: "New Chat",
-        messages: [],
-        createdAt: new Date(),
-        lastMessageAt: new Date(),
-      };
-      setChats(prev => [newChat, ...prev]);
-      chatId = newChat.id;
-      setCurrentChatId(chatId);
+      chatId = createNewChat();
     }
 
     // Parse @ mentions and load referenced files
     const { processedMessage } = await parseMentionsAndLoadFiles(input.trim(), allProjectFiles);
 
-    const context = buildContext;
+    const context = buildContext();
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input.trim(), // Show original message to user
@@ -333,17 +170,25 @@ export default function AIChat({
       isStreaming: true,
     };
 
-    const newMessages = [...messages, userMessage, assistantMessage];
-    updateMessages(newMessages);
+    // Add messages to chat
+    addMessage(chatId, userMessage);
+    addMessage(chatId, assistantMessage);
 
     // Update chat title if this is the first message
     if (messages.length === 0) {
-      updateChatTitle(chatId, userMessage.content);
+      const title =
+        userMessage.content.length > 50
+          ? `${userMessage.content.substring(0, 50)}...`
+          : userMessage.content;
+      updateChatTitle(chatId, title);
     }
 
     setInput("");
     setIsTyping(true);
     setStreamingMessageId(assistantMessageId);
+
+    // Scroll to bottom after adding messages
+    requestAnimationFrame(scrollToBottom);
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController();
@@ -369,36 +214,17 @@ export default function AIChat({
         context,
         // onChunk - update the streaming message
         (chunk: string) => {
-          setChats(prev =>
-            prev.map(chat =>
-              chat.id === chatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map(msg =>
-                      msg.id === currentAssistantMessageId
-                        ? { ...msg, content: msg.content + chunk }
-                        : msg,
-                    ),
-                  }
-                : chat,
-            ),
-          );
+          const currentMessages = getCurrentMessages();
+          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          updateMessage(chatId, currentAssistantMessageId, {
+            content: (currentMsg?.content || "") + chunk,
+          });
+          // Scroll during streaming
+          requestAnimationFrame(scrollToBottom);
         },
         // onComplete - mark streaming as finished
         () => {
-          setChats(prev =>
-            prev.map(chat =>
-              chat.id === chatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map(msg =>
-                      msg.id === currentAssistantMessageId ? { ...msg, isStreaming: false } : msg,
-                    ),
-                    lastMessageAt: new Date(),
-                  }
-                : chat,
-            ),
-          );
+          updateMessage(chatId, currentAssistantMessageId, { isStreaming: false });
           setIsTyping(false);
           setStreamingMessageId(null);
           abortControllerRef.current = null;
@@ -406,24 +232,12 @@ export default function AIChat({
         // onError - handle errors
         (error: string) => {
           console.error("Streaming error:", error);
-          setChats(prev =>
-            prev.map(chat =>
-              chat.id === chatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map(msg =>
-                      msg.id === currentAssistantMessageId
-                        ? {
-                            ...msg,
-                            content: msg.content || `Error: ${error}`,
-                            isStreaming: false,
-                          }
-                        : msg,
-                    ),
-                  }
-                : chat,
-            ),
-          );
+          const currentMessages = getCurrentMessages();
+          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          updateMessage(chatId, currentAssistantMessageId, {
+            content: currentMsg?.content || `Error: ${error}`,
+            isStreaming: false,
+          });
           setIsTyping(false);
           setStreamingMessageId(null);
           abortControllerRef.current = null;
@@ -440,96 +254,47 @@ export default function AIChat({
             isStreaming: true,
           };
 
-          setChats(prev =>
-            prev.map(chat =>
-              chat.id === chatId
-                ? {
-                    ...chat,
-                    messages: [...chat.messages, newAssistantMessage],
-                  }
-                : chat,
-            ),
-          );
+          addMessage(chatId, newAssistantMessage);
 
           // Update the current message ID to append chunks to the new message
           currentAssistantMessageId = newMessageId;
           setStreamingMessageId(newMessageId);
+          requestAnimationFrame(scrollToBottom);
         },
         // onToolUse - mark the current message as tool use
         (toolName: string, toolInput?: any) => {
-          setChats(prev =>
-            prev.map(chat =>
-              chat.id === chatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map(msg =>
-                      msg.id === currentAssistantMessageId
-                        ? {
-                            ...msg,
-                            isToolUse: true,
-                            toolName,
-                            toolCalls: [
-                              ...(msg.toolCalls || []),
-                              {
-                                name: toolName,
-                                input: toolInput,
-                                timestamp: new Date(),
-                              },
-                            ],
-                          }
-                        : msg,
-                    ),
-                  }
-                : chat,
-            ),
-          );
+          const currentMessages = getCurrentMessages();
+          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          updateMessage(chatId, currentAssistantMessageId, {
+            isToolUse: true,
+            toolName,
+            toolCalls: [
+              ...(currentMsg?.toolCalls || []),
+              {
+                name: toolName,
+                input: toolInput,
+                timestamp: new Date(),
+              },
+            ],
+          });
         },
         // onToolComplete - mark tool as complete
         (toolName: string) => {
-          setChats(prev =>
-            prev.map(chat =>
-              chat.id === chatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map(msg =>
-                      msg.id === currentAssistantMessageId
-                        ? {
-                            ...msg,
-                            toolCalls: msg.toolCalls?.map(tc =>
-                              tc.name === toolName && !tc.isComplete
-                                ? { ...tc, isComplete: true }
-                                : tc,
-                            ),
-                          }
-                        : msg,
-                    ),
-                  }
-                : chat,
+          const currentMessages = getCurrentMessages();
+          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          updateMessage(chatId, currentAssistantMessageId, {
+            toolCalls: currentMsg?.toolCalls?.map(tc =>
+              tc.name === toolName && !tc.isComplete ? { ...tc, isComplete: true } : tc,
             ),
-          );
+          });
         },
       );
     } catch (error) {
       console.error("Failed to start streaming:", error);
-      setChats(prev =>
-        prev.map(chat =>
-          chat.id === chatId
-            ? {
-                ...chat,
-                messages: chat.messages.map(msg =>
-                  msg.id === assistantMessageId
-                    ? {
-                        ...msg,
-                        content:
-                          "Error: Failed to connect to AI service. Please check your API key and try again.",
-                        isStreaming: false,
-                      }
-                    : msg,
-                ),
-              }
-            : chat,
-        ),
-      );
+      updateMessage(chatId, assistantMessageId, {
+        content: "Error: Failed to connect to AI service. Please check your API key and try again.",
+        isStreaming: false,
+      });
       setIsTyping(false);
       setStreamingMessageId(null);
       abortControllerRef.current = null;
@@ -544,40 +309,6 @@ export default function AIChat({
   // Handle API key request
   const handleApiKeyRequest = (providerId: string) => {
     setApiKeyModalState({ isOpen: true, providerId });
-  };
-
-  // Check if provider has API key
-  const hasProviderApiKey = (providerId: string): boolean => {
-    return providerApiKeys.get(providerId) || false;
-  };
-
-  // Handle API key save
-  const handleApiKeySave = async (providerId: string, apiKey: string): Promise<boolean> => {
-    try {
-      const isValid = await validateProviderApiKey(providerId, apiKey);
-      if (isValid) {
-        await storeProviderApiToken(providerId, apiKey);
-        await checkAllProviderApiKeys(); // Refresh all keys
-        await checkApiKey(); // Refresh current provider key
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error saving API key:", error);
-      return false;
-    }
-  };
-
-  // Handle API key removal
-  const handleApiKeyRemove = async (providerId: string): Promise<void> => {
-    try {
-      await removeProviderApiToken(providerId);
-      await checkAllProviderApiKeys(); // Refresh all keys
-      await checkApiKey(); // Refresh current provider key
-    } catch (error) {
-      console.error("Error removing API key:", error);
-      throw error;
-    }
   };
 
   return (
@@ -611,7 +342,7 @@ export default function AIChat({
         <span className="font-medium">{currentChat ? currentChat.title : "New Chat"}</span>
         <div className="flex-1" />
         <button
-          onClick={createNewChat}
+          onClick={() => createNewChat()}
           className="flex items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-hover"
           style={{ color: "var(--text-lighter)" }}
           title="New chat"
@@ -738,8 +469,8 @@ export default function AIChat({
         isOpen={apiKeyModalState.isOpen}
         onClose={() => setApiKeyModalState({ isOpen: false, providerId: null })}
         providerId={apiKeyModalState.providerId || ""}
-        onSave={handleApiKeySave}
-        onRemove={handleApiKeyRemove}
+        onSave={saveApiKey}
+        onRemove={removeApiKey}
         hasExistingKey={
           apiKeyModalState.providerId ? hasProviderApiKey(apiKeyModalState.providerId) : false
         }
@@ -752,7 +483,7 @@ export default function AIChat({
         chats={chats}
         currentChatId={currentChatId}
         onSwitchToChat={switchToChat}
-        onDeleteChat={deleteChat}
+        onDeleteChat={handleDeleteChat}
         formatTime={formatTime}
       />
     </div>
