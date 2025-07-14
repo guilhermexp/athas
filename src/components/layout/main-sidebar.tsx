@@ -40,7 +40,7 @@ interface MainSidebarProps {
   onCreateNewFolderInDirectory: (path: string) => void;
   onFileSelect: (path: string, isDir: boolean, line?: number, column?: number) => void;
   onCreateNewFileInDirectory: (path: string) => void;
-  onDeletePath: (path: string) => void;
+  onDeletePath: (path: string, isDir: boolean) => void;
   onUpdateFiles: (files: FileEntry[]) => void;
   onProjectNameMenuOpen: (event: React.MouseEvent) => void;
 

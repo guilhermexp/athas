@@ -31,8 +31,8 @@ impl ParsedResponse {
                             json_str.push_str(partial_json);
                         }
                         Some(_) => {
-                            // Already parsed, shouldn't happen
-                            log::warn!("Unexpected: tool_use block already has parsed input");
+                            // this is being fired A LOT after every tool use and i don't know why (commenting it out for now)
+                            // log::warn!("Unexpected: tool_use block already has parsed input");
                         }
                         None => {
                             last_block.input =

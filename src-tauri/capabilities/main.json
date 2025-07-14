@@ -17,6 +17,7 @@
     "core:event:allow-emit",
     "dialog:allow-open",
     "dialog:allow-message",
+    "dialog:allow-confirm",
     "fs:allow-read-file",
     "fs:allow-write-file",
     "fs:allow-read-dir",

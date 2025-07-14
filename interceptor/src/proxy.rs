@@ -253,6 +253,7 @@ async fn process_non_streaming_response(
     mut intercepted: InterceptedRequest,
 ) -> Result<(String, StatusCode, HeaderMap)> {
     debug!("📦 Processing NON-STREAMING response for {}", request_id);
+
     let status = response.status();
     let response_headers = response.headers().clone();
     let response_text = response.text().await.context("Failed to read response")?;
@@ -329,7 +330,6 @@ pub async fn proxy_handler(
         ProxyError::RequestParseError(e.to_string())
     })?;
 
-    // Log user messages
     log_user_messages(&parsed_request.messages);
 
     // Create intercepted request

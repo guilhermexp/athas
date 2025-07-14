@@ -14,6 +14,7 @@
 
     "__check": "this will check formatting and linting",
     "check": "biome check",
+    "lint": "bun check",
 
     "__check:all": "composite of 'tsc --noEmit' and 'biome check'",
     "check:all": "bun typecheck && bun check",

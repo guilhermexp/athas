@@ -461,7 +461,20 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
         ? `Are you sure you want to delete the folder "${targetPath.split("/").pop()}" and all its contents? This action cannot be undone.`
         : `Are you sure you want to delete the file "${targetPath.split("/").pop()}"? This action cannot be undone.`;
 
-      if (!confirm(confirmMessage)) {
+      try {
+        const { confirm } = await import("@tauri-apps/plugin-dialog");
+        const confirmed = await confirm(confirmMessage, {
+          title: `Delete ${itemType}`,
+          okLabel: "Delete",
+          cancelLabel: "Cancel",
+          kind: "warning",
+        });
+
+        if (!confirmed) {
+          return;
+        }
+      } catch (error) {
+        console.error("Error showing confirm dialog:", error);
         return;
       }
 
