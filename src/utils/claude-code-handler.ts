@@ -161,14 +161,6 @@ export class ClaudeCodeStreamHandler {
       content_blocks: response.content?.length,
     });
 
-    if (response.content) {
-      for (const block of response.content) {
-        if (block.type === "text" && block.text) {
-          this.handlers.onChunk(block.text);
-        }
-      }
-    }
-
     if (response.stop_reason === "tool_use") {
       console.log("🔧 Tool use detected in response, expecting more messages...");
       this.expectingMoreMessages = true;

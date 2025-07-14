@@ -1,5 +1,5 @@
 use crate::types::{ContentBlock, MessageContent, Role};
-use thin_logger::log::info;
+use thin_logger::log::{debug, info};
 
 /// Extracts text content and tool results from message blocks
 pub fn extract_content_from_blocks(blocks: &[ContentBlock]) -> (Vec<String>, Vec<String>) {
@@ -76,8 +76,12 @@ pub fn log_user_messages(messages: &[crate::types::ParsedMessage]) {
             };
 
             if !content.is_empty() {
-                let display_content = truncate_for_display(&content, 2000);
-                info!("👤 User: {}", display_content);
+                let preview = truncate_for_display(&content, 30);
+                info!(
+                    "(👤 user -> 🌐 anthropic) content length: {}",
+                    content.len()
+                );
+                debug!("(👤 user -> 🌐 anthropic) content preview: {}", preview);
             }
         }
     }
