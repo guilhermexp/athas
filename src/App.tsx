@@ -276,12 +276,12 @@ function App() {
       if (buffer && changeType === "modified") {
         // Auto-reload all files regardless of dirty state
         readFile(path)
-          .then(content => {
+          .then((content: string) => {
             updateBufferContent(buffer.id, content, false);
             // Dispatch event for toast notification
             window.dispatchEvent(new CustomEvent("file-reloaded", { detail: { path } }));
           })
-          .catch(error => {
+          .catch((error: Error) => {
             console.error("❌ Failed to auto-reload file:", path, error);
           });
       }
@@ -446,8 +446,9 @@ function App() {
     if (success) {
       addToRecents(path);
     } else {
-      console.log("Failed to open recent folder, falling back to dialog");
-      await handleOpenFolder();
+      console.error("Failed to open recent folder:", path);
+      // Show an error message instead of opening the directory picker
+      alert(`Unable to open folder: ${path}\n\nThe folder may have been moved or deleted.`);
     }
   };
 
@@ -658,6 +659,29 @@ function App() {
     updateSetting("sidebarPosition", newPosition);
   };
 
+  // Handle file move complete (used by drag and drop)
+  const handleFileMoveComplete = useCallback(
+    (oldPath: string, newPath: string) => {
+      console.log("Updating buffers after file move:", oldPath, "->", newPath);
+
+      // Find any buffers with the old path
+      const affectedBuffer = buffers.find(b => b.path === oldPath);
+      if (affectedBuffer) {
+        const pathSep = newPath.includes("\\") ? "\\" : "/";
+        const fileName = newPath.split(pathSep).pop() || affectedBuffer.name;
+        console.log("Updating buffer:", affectedBuffer.id, "with new path:", newPath);
+
+        // Update the buffer with the new path and name
+        updateBuffer({
+          ...affectedBuffer,
+          path: newPath,
+          name: fileName,
+        });
+      }
+    },
+    [buffers, updateBuffer],
+  );
+
   const handleApplyCodeFromChat = (code: string) => {
     if (!activeBuffer || !codeEditorRef.current?.editor) return;
 
@@ -847,6 +871,56 @@ function App() {
     onToggleSidebarPosition: handleToggleSidebarPosition,
     coreFeatures,
   });
+
+  // Handle Tauri file drop events - TEMPORARILY DISABLED
+  // TODO: Find a way to support both Tauri file drops and HTML5 drag and drop
+  // The commented code below was preventing HTML5 drag and drop from working
+  /*
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+
+    const setupFileDrop = async () => {
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        
+        unlisten = await listen("tauri://file-drop", async event => {
+          console.log("Files dropped:", event.payload);
+          // The payload contains an array of file paths
+          const files = event.payload as string[];
+
+          if (files.length > 0 && rootFolderPath) {
+            // Copy files to the current root folder
+            for (const filePath of files) {
+              const fileName = filePath.split("/").pop() || filePath.split("\\").pop() || "unknown";
+              try {
+                const { copyExternalFile } = await import("./utils/platform");
+                await copyExternalFile(filePath, rootFolderPath, fileName);
+                console.log(`Copied ${fileName} to ${rootFolderPath}`);
+              } catch (error) {
+                console.error(`Failed to copy ${fileName}:`, error);
+              }
+            }
+
+            // Refresh the root directory to show new files
+            if (refreshDirectory) {
+              refreshDirectory(rootFolderPath);
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Failed to setup file drop listener:", error);
+      }
+    };
+
+    setupFileDrop();
+
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, [rootFolderPath, refreshDirectory]);
+  */
 
   useEffect(() => {
     const handleNavigateToLine = (event: CustomEvent) => {
@@ -1163,6 +1237,8 @@ function App() {
                       onDeletePath={handleDeletePath}
                       onUpdateFiles={setFilesCombined}
                       onProjectNameMenuOpen={contextMenus.handleProjectNameMenuOpen}
+                      onRefreshDirectory={refreshDirectory}
+                      onFileMove={handleFileMoveComplete}
                     />
                   </ResizableSidebar>
                 )}
@@ -1315,6 +1391,8 @@ function App() {
                       onDeletePath={handleDeletePath}
                       onUpdateFiles={setFilesCombined}
                       onProjectNameMenuOpen={contextMenus.handleProjectNameMenuOpen}
+                      onRefreshDirectory={refreshDirectory}
+                      onFileMove={handleFileMoveComplete}
                     />
                   </ResizableRightPane>
                 )

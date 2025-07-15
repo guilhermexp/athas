@@ -1,111 +1,165 @@
-// Platform detection and cross-platform API utilities
-import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import { open as tauriOpen } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
+import {
+  BaseDirectory,
+  mkdir,
+  readDir,
+  readTextFile,
+  remove,
+  writeTextFile,
+} from "@tauri-apps/plugin-fs";
+import { type } from "@tauri-apps/plugin-os";
 
-// Detect if we're on macOS
-export const isMac = (): boolean => {
-  // Try modern approach first
-  if ("userAgentData" in navigator && (navigator as any).userAgentData?.platform) {
-    return (navigator as any).userAgentData.platform === "macOS";
-  }
+/**
+ * Check if the current platform is macOS
+ */
+export const isMac = () => type() === "macos";
 
-  // Fallback to userAgent parsing
-  return /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-};
-
-// Get the appropriate modifier key symbol for the platform
-export const getModifierSymbol = (): string => {
-  return isMac() ? "⌘" : "Ctrl";
-};
-
-// Get keyboard shortcut text for display
-export const getShortcutText = (key: string, modifiers: string[] = []): string => {
-  const modSymbol = isMac() ? "⌘" : "Ctrl";
-  const shiftSymbol = isMac() ? "⇧" : "Shift";
-
-  let result = "";
-
-  if (modifiers.includes("ctrl") || modifiers.includes("cmd")) {
-    result += modSymbol;
-  }
-
-  if (modifiers.includes("shift")) {
-    result += shiftSymbol;
-  }
-
-  // Convert arrow keys to symbols
-  const keyMap: { [key: string]: string } = {
-    ArrowRight: "→",
-    ArrowLeft: "←",
-    ArrowUp: "↑",
-    ArrowDown: "↓",
-    "\\": "\\",
-    w: "W",
-  };
-
-  result += keyMap[key] || key.toUpperCase();
-
-  return result;
-};
-
-// File dialog
-export const openFolder = async (): Promise<string | null> => {
+/**
+ * Read a text file from the filesystem
+ * @param path The path to the file to read
+ */
+export async function readFile(path: string): Promise<string> {
   try {
-    const selected = await tauriOpen({
-      directory: true,
-      multiple: false,
-    });
-    return selected as string | null;
-  } catch (error) {
-    console.error("Error opening folder with Tauri:", error);
-    return null;
+    // Try to read as absolute path first
+    return await readTextFile(path);
+  } catch {
+    // Fallback to reading from app data directory
+    return await readTextFile(path, { baseDir: BaseDirectory.AppData });
   }
-};
+}
 
-// Directory reading
-export const readDirectory = async (path: string): Promise<any[]> => {
+/**
+ * Write content to a file
+ * @param path The path to the file to write
+ * @param content The content to write
+ */
+export async function writeFile(path: string, content: string): Promise<void> {
   try {
-    return await tauriInvoke("read_directory_custom", { path });
-  } catch (error) {
-    console.error("Error reading directory with Tauri:", error);
-    return [];
+    // Try to write as absolute path first
+    await writeTextFile(path, content);
+  } catch {
+    // Fallback to writing to app data directory
+    await writeTextFile(path, content, { baseDir: BaseDirectory.AppData });
   }
-};
+}
 
-// File reading
-export const readFile = async (path: string): Promise<string> => {
-  try {
-    return await tauriInvoke("read_file_custom", { path });
-  } catch (error) {
-    console.error("Error reading file with Tauri:", error);
-    return `Error reading file: ${error}`;
-  }
-};
+/**
+ * Create a directory
+ * @param path The path to the directory to create
+ */
+export async function createDirectory(path: string): Promise<void> {
+  await mkdir(path, { recursive: true });
+}
 
-// File writing
-export const writeFile = async (path: string, content: string): Promise<void> => {
+/**
+ * Delete a file or directory
+ * @param path The path to delete
+ */
+export async function deletePath(path: string): Promise<void> {
+  await remove(path, { recursive: true });
+}
+
+/**
+ * Open a folder selection dialog
+ */
+export async function openFolder(): Promise<string | null> {
+  const selected = await open({
+    directory: true,
+    multiple: false,
+  });
+
+  return selected as string | null;
+}
+
+/**
+ * Read the contents of a directory
+ * @param path The directory path to read
+ */
+export async function readDirectory(path: string): Promise<any[]> {
   try {
-    await tauriInvoke("write_file_custom", { path, content });
+    console.log("readDirectory: Attempting to read path:", path);
+
+    // Normalize the path - remove any trailing slashes
+    const normalizedPath = path.replace(/[/\\]+$/, "");
+    console.log("readDirectory: Normalized path:", normalizedPath);
+
+    const entries = await readDir(normalizedPath);
+    console.log("readDirectory: Successfully read", entries.length, "entries");
+
+    // Use the appropriate path separator based on the input path
+    const separator = normalizedPath.includes("\\") ? "\\" : "/";
+    return entries.map(entry => ({
+      name: entry.name,
+      path: `${normalizedPath}${separator}${entry.name}`,
+      is_dir: entry.isDirectory,
+    }));
   } catch (error) {
-    console.error("Error writing file with Tauri:", error);
+    console.error("readDirectory: Error reading directory:", path, error);
+    console.error("readDirectory: Error details:", JSON.stringify(error, null, 2));
     throw error;
   }
-};
+}
 
-export const createDirectory = async (path: string): Promise<void> => {
-  try {
-    await tauriInvoke("create_directory_custom", { path });
-  } catch (error) {
-    console.error("Error creating directory with Tauri:", error);
-    throw error;
-  }
-};
+/**
+ * Get platform-specific keyboard shortcut text
+ * @param key The key (e.g., "w", "s", "a")
+ * @param modifiers Array of modifiers (e.g., ["cmd"], ["ctrl", "shift"])
+ */
+export function getShortcutText(key: string, modifiers: string[] = []): string {
+  if (isMac()) {
+    // Map modifiers to Mac symbols
+    const modifierMap: Record<string, string> = {
+      cmd: "⌘",
+      ctrl: "⌃",
+      alt: "⌥",
+      shift: "⇧",
+    };
 
-export const deletePath = async (path: string): Promise<void> => {
-  try {
-    await tauriInvoke("delete_path_custom", { path });
-  } catch (error) {
-    console.error("Error deleting path with Tauri:", error);
-    throw error;
+    // Convert modifiers to symbols
+    const modifierSymbols = modifiers.map(mod => modifierMap[mod.toLowerCase()] || mod).join("");
+
+    // Return combined shortcut
+    return modifierSymbols + key.toUpperCase();
+  } else {
+    // Windows/Linux style
+    const modifierMap: Record<string, string> = {
+      cmd: "Ctrl",
+      ctrl: "Ctrl",
+      alt: "Alt",
+      shift: "Shift",
+    };
+
+    // Convert modifiers
+    const modifierTexts = modifiers.map(mod => modifierMap[mod.toLowerCase()] || mod);
+
+    // Join with + and add the key
+    if (modifierTexts.length > 0) {
+      return `${modifierTexts.join("+")}+${key.toUpperCase()}`;
+    }
+    return key.toUpperCase();
   }
-};
+}
+
+/**
+ * Cross-platform file move utility
+ * @param sourcePath The path of the file to move
+ * @param targetPath The destination path where the file should be moved
+ */
+export async function moveFile(sourcePath: string, targetPath: string): Promise<void> {
+  await invoke("move_file", { sourcePath, targetPath });
+}
+
+/**
+ * Copy an external file to a directory
+ * @param sourcePath The path of the external file to copy
+ * @param targetDir The directory where the file should be copied
+ * @param fileName The name for the copied file
+ */
+export async function copyExternalFile(
+  sourcePath: string,
+  targetDir: string,
+  fileName: string,
+): Promise<void> {
+  await invoke("copy_external_file", { sourcePath, targetDir, fileName });
+}

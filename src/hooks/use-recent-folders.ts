@@ -29,7 +29,9 @@ export const useRecentFolders = () => {
   // Add a folder to recents
   const addToRecents = useCallback(
     (folderPath: string) => {
-      const folderName = folderPath.split("/").pop() || folderPath;
+      // Handle both forward and backslashes for folder name extraction
+      const pathSeparator = folderPath.includes("\\") ? "\\" : "/";
+      const folderName = folderPath.split(pathSeparator).pop() || folderPath;
       const now = new Date();
       const timeString = now.toLocaleString();
 

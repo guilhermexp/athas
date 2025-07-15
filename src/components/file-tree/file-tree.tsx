@@ -22,6 +22,8 @@ import type { ContextMenuState, FileEntry } from "../../types/app";
 import FileIcon from "../file-icon";
 import "./file-tree.css";
 import { cn } from "@/utils/cn";
+import { moveFile } from "../../utils/platform";
+import { useCustomDragDrop } from "./file-tree-custom-dnd";
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -40,6 +42,7 @@ interface FileTreeProps {
   onRefreshDirectory?: (path: string) => void;
   onRevealInFinder?: (path: string) => void;
   onUploadFile?: (directoryPath: string) => void;
+  onFileMove?: (oldPath: string, newPath: string) => void;
 }
 
 const FileTree = ({
@@ -58,9 +61,23 @@ const FileTree = ({
   onRefreshDirectory,
   onRevealInFinder,
   onUploadFile,
+  onFileMove,
 }: FileTreeProps) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
+
+  // Use custom drag and drop
+  const { dragState, startCustomDrag } = useCustomDragDrop(
+    rootFolderPath,
+    onFileMove,
+    onRefreshDirectory,
+  );
+
+  const [draggedItem, setDraggedItem] = useState<{
+    path: string;
+    name: string;
+    isDir: boolean;
+  } | null>(null);
 
   // Log when files prop changes
   useEffect(() => {
@@ -179,11 +196,18 @@ const FileTree = ({
       }
     };
 
+    // Prevent default drag behavior at document level
+    const handleDocumentDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("dragover", handleDocumentDragOver);
     return () => {
       document.removeEventListener("click", handleDocumentClick);
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("dragover", handleDocumentDragOver);
     };
   }, []);
 
@@ -195,6 +219,8 @@ const FileTree = ({
     },
     [onFileSelect],
   );
+
+  // Native HTML5 drag-and-drop handlers removed - using custom drag-and-drop instead
 
   const renderFileTree = (items: FileEntry[], depth = 0) => {
     return items.map(file => (
@@ -237,11 +263,13 @@ const FileTree = ({
           </div>
         ) : (
           <button
-            draggable={!file.isDir}
-            onDragStart={e => {
-              if (!file.isDir) {
-                e.dataTransfer.setData("application/file-path", file.path);
-                e.dataTransfer.effectAllowed = "copy";
+            type="button"
+            data-file-path={file.path}
+            data-is-dir={file.isDir}
+            onMouseDown={e => {
+              // Use custom drag for both files and folders
+              if (e.button === 0) {
+                startCustomDrag(e, file);
               }
             }}
             onClick={e => handleFileClick(e, file.path, file.isDir)}
@@ -254,13 +282,12 @@ const FileTree = ({
               "shadow-none outline-none transition-colors duration-150",
               "hover:bg-hover focus:outline-none",
               activeBufferPath === file.path && "bg-selected",
+              dragState.dragOverPath === file.path &&
+                "!bg-accent !bg-opacity-20 !border-2 !border-accent !border-dashed",
+              dragState.isDragging && "cursor-move",
             )}
             style={{
               paddingLeft: `${12 + depth * 20}px`,
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              MozUserSelect: "none",
-              msUserSelect: "none",
             }}
           >
             <FileIcon
@@ -290,16 +317,102 @@ const FileTree = ({
     ));
   };
 
+  const handleRootDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Handle internal drag-and-drop to root
+    if (draggedItem) {
+      const { path: sourcePath, name: sourceName } = draggedItem;
+
+      // Get root path from rootFolderPath or derive from files
+      let targetPath = rootFolderPath;
+      if (!targetPath && files.length > 0) {
+        const firstFilePath = files[0].path;
+        const pathSep = firstFilePath.includes("\\") ? "\\" : "/";
+        targetPath = firstFilePath.split(pathSep).slice(0, -1).join(pathSep);
+      }
+
+      if (!targetPath) {
+        console.error("Could not determine root folder path");
+        setDraggedItem(null);
+        return;
+      }
+
+      console.log("Drop to root - source:", sourcePath, "target:", targetPath);
+
+      // Check if file is already at root level
+      const pathSeparator = sourcePath.includes("\\") ? "\\" : "/";
+      const sourceParentPath =
+        sourcePath.split(pathSeparator).slice(0, -1).join(pathSeparator) || rootFolderPath || "";
+
+      if (targetPath === sourceParentPath) {
+        console.log("File is already at root level");
+        setDraggedItem(null);
+        return;
+      }
+
+      try {
+        const newPath = targetPath + pathSeparator + sourceName;
+        console.log("Moving file to root:", sourcePath, "->", newPath);
+        await moveFile(sourcePath, newPath);
+
+        if (onFileMove) {
+          onFileMove(sourcePath, newPath);
+        }
+
+        if (onRefreshDirectory) {
+          // Small delay to ensure file system operation is complete
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          await onRefreshDirectory(targetPath);
+          if (targetPath !== sourceParentPath) {
+            await onRefreshDirectory(sourceParentPath);
+          }
+        }
+
+        setDraggedItem(null);
+      } catch (error) {
+        console.error("Failed to move file:", error);
+        alert(`Failed to move ${sourceName}: ${error}`);
+        setDraggedItem(null);
+      }
+    }
+    // Handle external file drops to root
+    else if (e.dataTransfer.files.length > 0) {
+      // Get root path - handle both forward and backslashes
+      const firstFilePath = files[0]?.path || "";
+      const pathSep = firstFilePath.includes("\\") ? "\\" : "/";
+      const rootPath = firstFilePath.split(pathSep).slice(0, -1).join(pathSep) || ".";
+      console.log("External files dropped to root:", rootPath);
+
+      for (let i = 0; i < e.dataTransfer.files.length; i++) {
+        const file = e.dataTransfer.files[i];
+        console.log("File to upload:", file.name);
+        // TODO: Implement file upload
+      }
+    }
+  };
+
   return (
     <>
       <div
-        className={cn("file-tree-container flex flex-1 select-none", "flex-col gap-0 p-2")}
-        style={{
-          userSelect: "none",
-          WebkitUserSelect: "none",
-          MozUserSelect: "none",
-          msUserSelect: "none",
+        className={cn(
+          "file-tree-container flex flex-1 select-none",
+          "flex-col gap-0 p-2",
+          "min-h-full", // Ensure container takes full height
+          dragState.dragOverPath === "__ROOT__" &&
+            "!bg-accent !bg-opacity-10 !border-2 !border-accent !border-dashed",
+        )}
+        onDragOver={e => {
+          e.preventDefault();
+          if (draggedItem) {
+            e.dataTransfer.dropEffect = "move";
+          } else {
+            e.dataTransfer.dropEffect = "copy";
+          }
         }}
+        onDrop={handleRootDrop}
       >
         {renderFileTree(files)}
       </div>

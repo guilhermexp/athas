@@ -156,6 +156,8 @@ fn main() {
             write_file_custom,
             create_directory_custom,
             delete_path_custom,
+            move_file,
+            copy_external_file,
             // Database commands
             get_sqlite_tables,
             query_sqlite,

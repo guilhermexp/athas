@@ -24,6 +24,7 @@ interface UseFileOperationsProps {
 export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [rootFolderPath, setRootFolderPath] = useState<string>("");
+  const [filesVersion, setFilesVersion] = useState<number>(0);
 
   // Cache for project files to avoid unnecessary re-scanning
   const [projectFilesCache, setProjectFilesCache] = useState<{
@@ -258,6 +259,9 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
       const selected = await openFolder();
 
       if (selected) {
+        console.log("handleOpenFolder: Selected path from dialog:", selected);
+        console.log("handleOpenFolder: Path type:", typeof selected);
+
         // Store the root folder path
         setRootFolderPath(selected);
 
@@ -333,6 +337,7 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
   const refreshDirectory = useCallback(
     async (directoryPath: string) => {
       console.log(`🔄 Refreshing directory: ${directoryPath}`);
+      console.log(`📊 Current files before refresh:`, files.length, files);
 
       const updateFiles = async (items: FileEntry[]): Promise<FileEntry[]> => {
         return Promise.all(
@@ -341,17 +346,31 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
               // Refresh this directory
               try {
                 const entries = await readDirectory(item.path);
+
+                // Create a map of existing children to preserve their expanded states
+                const existingChildrenMap = new Map<string, FileEntry>();
+                if (item.children) {
+                  item.children.forEach(child => {
+                    existingChildrenMap.set(child.path, child);
+                  });
+                }
+
                 const children = (entries as any[]).map((entry: any) => {
+                  const existingChild = existingChildrenMap.get(entry.path);
                   return {
                     name: entry.name || "Unknown",
                     path: entry.path,
                     isDir: entry.is_dir || false,
-                    expanded: false,
-                    children: undefined,
+                    expanded: existingChild?.expanded || false,
+                    children: existingChild?.children || undefined,
                   };
                 });
                 // Keep the expanded state if it was already expanded
-                return { ...item, children, expanded: item.expanded || true };
+                return {
+                  ...item,
+                  children,
+                  expanded: item.expanded !== undefined ? item.expanded : true,
+                };
               } catch (error) {
                 console.error("Error refreshing directory:", error);
                 return item;
@@ -406,7 +425,9 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
       }
 
       console.log(`✅ Setting ${updatedFiles.length} files after refresh`);
+      console.log(`📊 Updated files after refresh:`, updatedFiles);
       setFiles(updatedFiles);
+      setFilesVersion(v => v + 1);
       invalidateProjectFilesCache();
     },
     [files, rootFolderPath, invalidateProjectFilesCache],
@@ -593,10 +614,16 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
   // Function to open a folder directly by path (for recent folders)
   const handleOpenFolderByPath = useCallback(async (folderPath: string) => {
     try {
+      console.log("Attempting to open folder:", folderPath);
+
+      // First, try to read the directory to verify it exists and we have access
+      const entries = await readDirectory(folderPath);
+      console.log("Successfully read directory, found", entries.length, "entries");
+
+      // If successful, update the state
       setRootFolderPath(folderPath);
       setProjectFilesCache(null);
 
-      const entries = await readDirectory(folderPath);
       const fileTree = (entries as any[]).map((entry: any) => ({
         name: entry.name || "Unknown",
         path: entry.path || `${folderPath}/${entry.name}`,
@@ -605,15 +632,17 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
         children: undefined,
       }));
       setFiles(fileTree);
+      setFilesVersion(v => v + 1);
       return true;
     } catch (error) {
-      console.error("Error opening folder by path:", error);
+      console.error("Error opening folder by path:", folderPath, error);
       return false;
     }
   }, []);
 
   return {
     files,
+    filesVersion,
     setFiles,
     rootFolderPath,
     getAllProjectFiles,
