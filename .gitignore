@@ -54,3 +54,6 @@ pids
 .idea
 debug.log
 TODO.md
+
+# claude local settings
+.claude/settings.local.json

@@ -14,5 +14,18 @@
       "Bash(bun remove:*)"
     ],
     "deny": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/intercept-build.sh"
+          }
+        ]
+      }
+    ]
   }
 }
