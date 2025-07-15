@@ -1,6 +1,9 @@
 import { FilePlus, FolderOpen, FolderPlus, Server } from "lucide-react";
 import type React from "react";
 import { forwardRef } from "react";
+import { useProjectStore } from "../../stores/project-store";
+import { useSidebarStore } from "../../stores/sidebar-store";
+import { useUIState } from "../../stores/ui-state-store";
 import type { FileEntry } from "../../types/app";
 import FileTree from "../file-tree/file-tree";
 import GitView from "../git/git-view";
@@ -10,30 +13,7 @@ import Button from "../ui/button";
 import { SidebarPaneSelector } from "./sidebar-pane-selector";
 
 interface MainSidebarProps {
-  // View states
-  isGitViewActive: boolean;
-  isSearchViewActive: boolean;
-  isRemoteViewActive: boolean;
-
-  // Remote connection
-  isRemoteWindow: boolean;
-  remoteConnectionName?: string;
-
-  // Core features
-  coreFeatures: {
-    search: boolean;
-    git: boolean;
-    remote: boolean;
-  };
-
-  // Files and project
-  files: FileEntry[];
-  rootFolderPath?: string;
-  allProjectFiles: FileEntry[];
-  activeBufferPath?: string;
-
-  // Handlers
-  onViewChange: (view: "files" | "git" | "search" | "remote") => void;
+  // Handlers that still need to be passed as props
   onOpenExtensions: () => void;
   onOpenFolder: () => void;
   onCreateNewFile: () => void;
@@ -43,25 +23,11 @@ interface MainSidebarProps {
   onDeletePath: (path: string, isDir: boolean) => void;
   onUpdateFiles: (files: FileEntry[]) => void;
   onProjectNameMenuOpen: (event: React.MouseEvent) => void;
-
-  // Project name
-  projectName: string;
 }
 
 export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
   (
     {
-      isGitViewActive,
-      isSearchViewActive,
-      isRemoteViewActive,
-      isRemoteWindow,
-      remoteConnectionName,
-      coreFeatures,
-      files,
-      rootFolderPath,
-      allProjectFiles,
-      activeBufferPath,
-      onViewChange,
       onOpenExtensions,
       onOpenFolder,
       onCreateNewFile,
@@ -71,12 +37,17 @@ export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
       onDeletePath,
       onUpdateFiles,
       onProjectNameMenuOpen,
-      projectName,
     },
     ref,
   ) => {
+    // Get state from stores
+    const { isGitViewActive, isSearchViewActive, isRemoteViewActive, setActiveView } = useUIState();
+    const { files, rootFolderPath, allProjectFiles, getProjectName, setFiles } = useProjectStore();
+    const { activeBufferPath, coreFeatures, isRemoteWindow, remoteConnectionName } =
+      useSidebarStore();
     const showFileTreeHeader =
       !isGitViewActive && !isSearchViewActive && !isRemoteViewActive && !isRemoteWindow;
+    const projectName = getProjectName();
 
     return (
       <div className="flex h-full flex-col">
@@ -86,7 +57,7 @@ export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
           isSearchViewActive={isSearchViewActive}
           isRemoteViewActive={isRemoteViewActive}
           coreFeatures={coreFeatures}
-          onViewChange={onViewChange}
+          onViewChange={setActiveView}
           onOpenExtensions={onOpenExtensions}
         />
 
@@ -174,7 +145,10 @@ export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
               onCreateNewFileInDirectory={onCreateNewFileInDirectory}
               onCreateNewFolderInDirectory={onCreateNewFolderInDirectory}
               onDeletePath={onDeletePath}
-              onUpdateFiles={onUpdateFiles}
+              onUpdateFiles={files => {
+                setFiles(files);
+                onUpdateFiles(files);
+              }}
             />
           )}
         </div>

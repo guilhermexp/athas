@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useEditorConfigStore } from "../../stores/editor-config";
-import { useEditorInstanceStore } from "../../stores/editor-instance";
+import { useEditorConfigStore } from "../../stores/editor-config-store";
+import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function VimCommandLine() {
   const vimEnabled = useEditorConfigStore(state => state.vimEnabled);

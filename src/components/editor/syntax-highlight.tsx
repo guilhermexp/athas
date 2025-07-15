@@ -1,6 +1,6 @@
 import { useCodeHighlighting } from "../../hooks/use-code-highlighting";
-import { useEditorConfigStore } from "../../stores/editor-config";
-import { useEditorInstanceStore } from "../../stores/editor-instance";
+import { useEditorConfigStore } from "../../stores/editor-config-store";
+import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function SyntaxHighlight() {
   const { fontSize, tabSize, wordWrap } = useEditorConfigStore();

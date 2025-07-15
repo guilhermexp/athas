@@ -45,7 +45,9 @@ import {
   useFileWatcherStore,
 } from "./stores/file-watcher-store";
 import { usePersistentSettingsStore } from "./stores/persistent-settings-store";
-import { useUIState } from "./stores/ui-state";
+import { useProjectStore } from "./stores/project-store";
+import { useSidebarStore } from "./stores/sidebar-store";
+import { useUIState } from "./stores/ui-state-store";
 import type { FileEntry } from "./types/app";
 import { type CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
 import type { ThemeType } from "./types/theme";
@@ -208,13 +210,15 @@ function App() {
     }
   }, [settings.vimMode, vimEnabled, setVimEnabled, setVimMode]);
 
-  const [allProjectFiles, setAllProjectFiles] = useState<FileEntry[]>([]);
+  const projectStore = useProjectStore();
+  const sidebarStore = useSidebarStore();
+  const { allProjectFiles, setAllProjectFiles } = projectStore;
   const [_isDraggingTab, setIsDraggingTab] = useState(false);
 
   // File operations with proper callback
   const {
-    files,
-    setFiles,
+    files: localFiles,
+    setFiles: localSetFiles,
     rootFolderPath,
     getAllProjectFiles,
     handleOpenFolder,
@@ -227,6 +231,21 @@ function App() {
     handleCollapseAllFolders,
     refreshDirectory,
   } = useFileOperations({ openBuffer });
+
+  // Sync files from useFileOperations to project store
+  const { files } = projectStore;
+  useEffect(() => {
+    projectStore.setFiles(localFiles);
+  }, [localFiles]);
+
+  // Create setFiles function that updates both local and store
+  const setFilesCombined = useCallback(
+    (newFiles: FileEntry[]) => {
+      localSetFiles(newFiles);
+      projectStore.setFiles(newFiles);
+    },
+    [localSetFiles],
+  );
 
   // File watcher store - get external changes as array
   const startWatching = useFileWatcherStore(state => state.startWatching);
@@ -314,7 +333,7 @@ function App() {
     handleRemoteFileSelect: remoteFileSelect,
     handleRemoteFolderToggle,
     handleRemoteCollapseAllFolders,
-  } = useRemoteConnection(files, setFiles);
+  } = useRemoteConnection(files, setFilesCombined);
 
   // Unified folder operations (handles both local and remote)
   const { handleFolderToggle, handleCollapseAllFolders: handleCollapseAllFoldersComplete } =
@@ -322,7 +341,7 @@ function App() {
       isRemoteWindow,
       remoteConnectionId,
       files,
-      setFiles,
+      setFiles: setFilesCombined,
       localHandleFolderToggle,
       localHandleCollapseAllFolders: handleCollapseAllFolders,
       handleRemoteFolderToggle,
@@ -368,34 +387,26 @@ function App() {
     refreshAllProjectFilesComplete();
   }, [refreshAllProjectFilesComplete]);
 
-  // Get the project folder name from the root folder path
-  const getProjectName = (): string => {
-    if (isRemoteWindow && remoteConnectionName) {
-      return remoteConnectionName;
-    }
+  // Sync rootFolderPath to project store
+  useEffect(() => {
+    projectStore.setRootFolderPath(rootFolderPath);
+  }, [rootFolderPath]);
 
-    if (uiState.isGitViewActive) {
-      return "Source Control";
-    }
+  // Update sidebar store with active buffer path
+  useEffect(() => {
+    sidebarStore.setActiveBufferPath(activeBuffer?.path);
+  }, [activeBuffer?.path]);
 
-    if (uiState.isSearchViewActive) {
-      return "Search";
-    }
+  // Update sidebar store with remote info
+  useEffect(() => {
+    sidebarStore.setIsRemoteWindow(isRemoteWindow);
+    sidebarStore.setRemoteConnectionName(remoteConnectionName || undefined);
+  }, [isRemoteWindow, remoteConnectionName]);
 
-    if (uiState.isRemoteViewActive) {
-      return "Remote";
-    }
-
-    if (rootFolderPath) {
-      // Extract the folder name from the full path
-
-      const normalizedPath = rootFolderPath.replace(/\\/g, "/");
-      const folderName = normalizedPath.split("/").pop();
-      return folderName || "Folder";
-    }
-
-    return "Explorer";
-  };
+  // Update core features in sidebar store
+  useEffect(() => {
+    sidebarStore.setCoreFeatures(coreFeatures);
+  }, [coreFeatures]);
 
   // Handle opening Extensions as a buffer
   const handleOpenExtensions = () => {
@@ -1046,7 +1057,9 @@ function App() {
       >
         {/* Custom Titlebar */}
         <CustomTitleBar
-          projectName={getProjectName() !== "Explorer" ? getProjectName() : undefined}
+          projectName={
+            projectStore.getProjectName() !== "Explorer" ? projectStore.getProjectName() : undefined
+          }
           onAIChatClick={() => uiState.toggleRightPane()}
           isAIChatVisible={uiState.isRightPaneVisible}
           onSettingsClick={() => {
@@ -1106,17 +1119,6 @@ function App() {
                   <ResizableSidebar defaultWidth={220} minWidth={200} maxWidth={400}>
                     <MainSidebar
                       ref={searchViewRef}
-                      isGitViewActive={uiState.isGitViewActive}
-                      isSearchViewActive={uiState.isSearchViewActive}
-                      isRemoteViewActive={uiState.isRemoteViewActive}
-                      isRemoteWindow={isRemoteWindow}
-                      remoteConnectionName={remoteConnectionName || undefined}
-                      coreFeatures={coreFeatures}
-                      files={files}
-                      rootFolderPath={rootFolderPath}
-                      allProjectFiles={allProjectFiles}
-                      activeBufferPath={activeBuffer?.path}
-                      onViewChange={uiState.setActiveView}
                       onOpenExtensions={handleOpenExtensions}
                       onOpenFolder={handleOpenFolder}
                       onCreateNewFile={handleCreateNewFile}
@@ -1134,9 +1136,8 @@ function App() {
                       }
                       onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
                       onDeletePath={handleDeletePath}
-                      onUpdateFiles={setFiles}
+                      onUpdateFiles={setFilesCombined}
                       onProjectNameMenuOpen={contextMenus.handleProjectNameMenuOpen}
-                      projectName={getProjectName()}
                     />
                   </ResizableSidebar>
                 )}
@@ -1270,17 +1271,6 @@ function App() {
                   >
                     <MainSidebar
                       ref={searchViewRef}
-                      isGitViewActive={uiState.isGitViewActive}
-                      isSearchViewActive={uiState.isSearchViewActive}
-                      isRemoteViewActive={uiState.isRemoteViewActive}
-                      isRemoteWindow={isRemoteWindow}
-                      remoteConnectionName={remoteConnectionName || undefined}
-                      coreFeatures={coreFeatures}
-                      files={files}
-                      rootFolderPath={rootFolderPath}
-                      allProjectFiles={allProjectFiles}
-                      activeBufferPath={activeBuffer?.path}
-                      onViewChange={uiState.setActiveView}
                       onOpenExtensions={handleOpenExtensions}
                       onOpenFolder={handleOpenFolder}
                       onCreateNewFile={handleCreateNewFile}
@@ -1298,9 +1288,8 @@ function App() {
                       }
                       onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
                       onDeletePath={handleDeletePath}
-                      onUpdateFiles={setFiles}
+                      onUpdateFiles={setFilesCombined}
                       onProjectNameMenuOpen={contextMenus.handleProjectNameMenuOpen}
-                      projectName={getProjectName()}
                     />
                   </ResizableRightPane>
                 )

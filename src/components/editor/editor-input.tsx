@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { getCursorPosition } from "../../hooks/use-vim";
 import { useCodeEditorStore } from "../../stores/code-editor-store";
-import { useEditorConfigStore } from "../../stores/editor-config";
-import { useEditorInstanceStore } from "../../stores/editor-instance";
+import { useEditorConfigStore } from "../../stores/editor-config-store";
+import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 import { cn } from "../../utils/cn";
 
 export function EditorInput() {

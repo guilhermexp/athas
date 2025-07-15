@@ -1,6 +1,6 @@
 import { AlertCircle, Terminal as TerminalIcon } from "lucide-react";
 import type { Settings } from "../hooks/use-settings";
-import type { UIState } from "../stores/ui-state";
+import type { UIState } from "../stores/ui-state-store";
 import type { Buffer } from "../types/buffer";
 import type { CoreFeaturesState } from "../types/core-features";
 import { getFilenameFromPath, getLanguageFromFilename } from "../utils/file-utils";

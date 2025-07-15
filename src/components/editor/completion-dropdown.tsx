@@ -1,4 +1,4 @@
-import { useEditorInstanceStore } from "../../stores/editor-instance";
+import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function CompletionDropdown() {
   const {

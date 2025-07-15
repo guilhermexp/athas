@@ -508,15 +508,26 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
     [files, refreshDirectory, invalidateProjectFilesCache],
   );
 
-  const handleCreateNewFile = useCallback(async () => {
+  const handleCreateNewFile = useCallback(() => {
     if (files.length === 0) {
       alert("Please open a folder first");
       return;
     }
 
     const rootPath = getRootPath(files);
-    await handleCreateNewFileInDirectory(rootPath);
-  }, [files, handleCreateNewFileInDirectory]);
+
+    // Create a temporary new file item for inline editing
+    const newItem: FileEntry = {
+      name: "",
+      path: `${rootPath}/`,
+      isDir: false,
+      isEditing: true,
+      isNewItem: true,
+    };
+
+    // Add the new item to the root level of the file tree
+    setFiles([...files, newItem]);
+  }, [files]);
 
   const handleCollapseAllFolders = useCallback(() => {
     const collapseFiles = (items: FileEntry[]): FileEntry[] => {

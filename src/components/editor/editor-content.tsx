@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useEditorConfigStore } from "../../stores/editor-config";
+import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { EditorInput } from "./editor-input";
 import { SyntaxHighlight } from "./syntax-highlight";
 import { VimCursor } from "./vim-cursor";
