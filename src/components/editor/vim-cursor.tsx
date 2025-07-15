@@ -42,11 +42,11 @@ export const VimCursor = ({
       left: `${left}px`,
       width: `${charWidth}px`,
       height: `${lineHeight}px`,
-      backgroundColor: "var(--text-color)",
+      backgroundColor: "var(--color-text)",
       opacity: 0.7,
       pointerEvents: "none" as const,
       zIndex: 3,
-      border: "1px solid var(--text-color)",
+      border: "1px solid var(--color-text)",
       boxSizing: "border-box" as const,
     };
   }, [editorRef, cursorPosition, visible, fontSize, lineNumbers]);

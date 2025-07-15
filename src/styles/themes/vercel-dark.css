@@ -85,13 +85,13 @@
 /* Enhanced sidebar styling for Vercel theme */
 .force-vercel-dark .sidebar {
     background: var(--sidebar-bg);
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid var(--color-border);
 }
 
 /* Terminal styling with Vercel feel */
 .force-vercel-dark .terminal {
     background: var(--terminal-bg);
-    color: var(--text-color);
+    color: var(--color-text);
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
 }
 
@@ -102,12 +102,12 @@
 
 /* File tree styling */
 .force-vercel-dark .file-tree-item:hover {
-    background: var(--hover-color);
+    background: var(--color-hover);
 }
 
 .force-vercel-dark .file-tree-item.selected {
-    background: var(--selected-color);
-    color: var(--text-color);
+    background: var(--color-selected);
+    color: var(--color-text);
 }
 
 /* Button styling with Vercel design language */
@@ -128,15 +128,15 @@
 
 .force-vercel-dark .button-secondary {
     background: transparent;
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     transition: all 0.2s ease;
 }
 
 .force-vercel-dark .button-secondary:hover {
-    background: var(--hover-color);
-    border-color: var(--text-lighter);
+    background: var(--color-hover);
+    border-color: var(--color-text-lighter);
 }
 
 /* Status indicators */
@@ -173,23 +173,23 @@
 /* Command palette styling */
 .force-vercel-dark .command-palette {
     background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
 }
 
 .force-vercel-dark .command-palette-item:hover {
-    background: var(--hover-color);
+    background: var(--color-hover);
 }
 
 .force-vercel-dark .command-palette-item.selected {
-    background: var(--selected-color);
+    background: var(--color-selected);
 }
 
 /* Modal and dialog styling */
 .force-vercel-dark .modal {
     background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9);
 }
@@ -198,8 +198,8 @@
 .force-vercel-dark input:not([class*="editor"]),
 .force-vercel-dark select {
     background: var(--primary-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     transition: border-color 0.2s ease;
 }
@@ -215,8 +215,8 @@
 .force-vercel-dark .form-textarea,
 .force-vercel-dark .input-textarea {
     background: var(--primary-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     transition: border-color 0.2s ease;
 }
@@ -230,21 +230,21 @@
 
 /* Breadcrumb styling */
 .force-vercel-dark .breadcrumb {
-    color: var(--text-light);
+    color: var(--color-text-light);
 }
 
 .force-vercel-dark .breadcrumb-separator {
-    color: var(--text-lighter);
+    color: var(--color-text-lighter);
 }
 
 .force-vercel-dark .breadcrumb-item:hover {
-    color: var(--text-color);
+    color: var(--color-text);
 }
 
 /* Find bar styling */
 .force-vercel-dark .find-bar {
     background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
 }
 

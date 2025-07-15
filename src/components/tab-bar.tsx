@@ -515,7 +515,7 @@ const TabBar = ({
               minWidth: 60,
               maxWidth: 220,
               whiteSpace: "nowrap",
-              color: "var(--text-color)",
+              color: "var(--color-text)",
             }}
           >
             {/* File Icon */}

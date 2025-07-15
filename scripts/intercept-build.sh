@@ -13,7 +13,8 @@ if [[ "$command" =~ ^(bun|npm)[[:space:]]+run[[:space:]]+build$ ]] || \
     echo "Build commands are blocked. Use 'bun check:all' or 'cargo clippy' instead" >&2
     exit 2
 elif [[ "$command" =~ ^(bun|npm)[[:space:]]+run[[:space:]]+dev$ ]] || \
-     [[ "$command" =~ ^(bun|npm)[[:space:]]+tauri[[:space:]]+dev$ ]]; then
+     [[ "$command" =~ ^(bun|npm)[[:space:]]+tauri[[:space:]]+dev$ ]] || \
+     [[ "$command" =~ ^(bun|npm)[[:space:]]dev$ ]]; then
     # Block dev commands
     echo "Dev commands are blocked. Use 'bun check:all' or 'cargo clippy' instead" >&2
     exit 2

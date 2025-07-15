@@ -213,13 +213,13 @@ export default function ToolCallDisplay({
         !isStreaming && !error && output && "tool-success",
       )}
       style={{
-        background: "var(--secondary-bg)",
-        borderColor: error ? undefined : "var(--border-color)",
+        background: "var(--color-secondary-bg)",
+        borderColor: error ? undefined : "var(--color-border)",
       }}
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[var(--hover-color)]"
+        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[var(--color-hover)]"
       >
         <div className="flex flex-1 items-center gap-2">
           <Icon
@@ -255,8 +255,8 @@ export default function ToolCallDisplay({
             <pre
               className="overflow-x-auto rounded p-2 text-xs"
               style={{
-                background: "var(--primary-bg)",
-                border: "1px solid var(--border-color)",
+                background: "var(--color-primary-bg)",
+                border: "1px solid var(--color-border)",
               }}
             >
               {JSON.stringify(input, null, 2)}
@@ -270,8 +270,8 @@ export default function ToolCallDisplay({
               <pre
                 className="max-h-48 overflow-x-auto rounded p-2 text-xs"
                 style={{
-                  background: "var(--primary-bg)",
-                  border: "1px solid var(--border-color)",
+                  background: "var(--color-primary-bg)",
+                  border: "1px solid var(--color-border)",
                 }}
               >
                 {formatOutput(output)}

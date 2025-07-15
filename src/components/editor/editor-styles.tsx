@@ -8,13 +8,13 @@ export function EditorStyles() {
           border: none;
           outline: none;
           color: transparent;
-          caret-color: var(--text-color);
+          caret-color: var(--color-text);
         }
         .code-editor-content.vim-normal-mode {
           caret-color: transparent;
         }
         .code-editor-content.vim-insert-mode {
-          caret-color: var(--text-color);
+          caret-color: var(--color-text);
         }
         .code-editor-content:focus {
           outline: none;
@@ -27,7 +27,7 @@ export function EditorStyles() {
         }
         .code-editor-content:empty:before {
           content: attr(data-placeholder);
-          color: var(--text-lighter);
+          color: var(--color-text-lighter);
           pointer-events: none;
         }
         .vim-cursor-blink {

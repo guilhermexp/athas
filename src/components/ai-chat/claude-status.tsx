@@ -117,7 +117,7 @@ export default function ClaudeStatusIndicator({
             isRunning && isConnected ? "bg-green-500" : isRunning ? "bg-yellow-500" : "bg-gray-500",
           )}
         />
-        <span className="text-[--text-lighter]">
+        <span className="text-[--color-text-lighter]">
           {isRunning ? (isConnected ? "Connected" : "Starting...") : "Offline"}
         </span>
       </div>
@@ -151,7 +151,7 @@ export default function ClaudeStatusIndicator({
       {/* Detailed status on hover */}
       {status && (
         <div className="group relative">
-          <Activity size={12} className="cursor-help text-[--text-lighter]" />
+          <Activity size={12} className="cursor-help text-[--color-text-lighter]" />
           <div className="absolute right-0 bottom-full z-50 mb-1 hidden whitespace-nowrap rounded border border-[--border] bg-[--bg-secondary] px-2 py-1 text-xs group-hover:block">
             <div>Claude: {isRunning ? "Running" : "Stopped"}</div>
             <div>Interceptor: {isInterceptorRunning ? "Running" : "Stopped"}</div>

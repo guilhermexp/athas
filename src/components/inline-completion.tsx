@@ -88,7 +88,7 @@ const InlineCompletion = ({
       position: "absolute",
       top: `${position.top}px`,
       left: `${position.left}px`,
-      color: "var(--text-lighter)",
+      color: "var(--color-text-lighter)",
       backgroundColor: "transparent",
       padding: "0",
       borderRadius: "0",

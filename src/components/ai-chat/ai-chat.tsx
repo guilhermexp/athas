@@ -319,22 +319,22 @@ export default function AIChat({
         className,
       )}
       style={{
-        background: "var(--primary-bg)",
-        color: "var(--text-color)",
+        background: "var(--color-primary-bg)",
+        color: "var(--color-text)",
       }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-2"
         style={{
-          background: "var(--secondary-bg)",
-          borderBottom: "1px solid var(--border-color)",
+          background: "var(--color-secondary-bg)",
+          borderBottom: "1px solid var(--color-border)",
         }}
       >
         <button
           onClick={() => setIsChatHistoryVisible(!isChatHistoryVisible)}
           className="rounded p-1 transition-colors hover:bg-hover"
-          style={{ color: "var(--text-lighter)" }}
+          style={{ color: "var(--color-text-lighter)" }}
           title="Toggle chat history"
         >
           <MessageSquare size={14} />
@@ -344,7 +344,7 @@ export default function AIChat({
         <button
           onClick={() => createNewChat()}
           className="flex items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-hover"
-          style={{ color: "var(--text-lighter)" }}
+          style={{ color: "var(--color-text-lighter)" }}
           title="New chat"
         >
           <Plus size={10} />
@@ -358,7 +358,7 @@ export default function AIChat({
             <div>
               <Bot size={24} className="mx-auto mb-2 opacity-50" />
               <div className="text-sm">AI Assistant</div>
-              <div className="mt-1" style={{ color: "var(--text-lighter)" }}>
+              <div className="mt-1" style={{ color: "var(--color-text-lighter)" }}>
                 Ask me anything about your code
               </div>
             </div>
@@ -382,8 +382,8 @@ export default function AIChat({
                   <div
                     className="rounded-lg rounded-br-none px-3 py-2"
                     style={{
-                      background: "var(--secondary-bg)",
-                      border: "1px solid var(--border-color)",
+                      background: "var(--color-secondary-bg)",
+                      border: "1px solid var(--color-border)",
                     }}
                   >
                     <div className="whitespace-pre-wrap break-words">{message.content}</div>
@@ -397,7 +397,7 @@ export default function AIChat({
                     <div className="mb-2 flex items-center gap-2">
                       <div
                         className="flex items-center gap-1"
-                        style={{ color: "var(--text-lighter)" }}
+                        style={{ color: "var(--color-text-lighter)" }}
                       >
                         <span>{getProviderById(aiProviderId)?.name || aiProviderId}</span>
                         {message.isStreaming && (
@@ -439,7 +439,7 @@ export default function AIChat({
                       <MarkdownRenderer content={message.content} onApplyCode={onApplyCode} />
 
                       {message.isStreaming && (
-                        <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[var(--text-lighter)]" />
+                        <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[var(--color-text-lighter)]" />
                       )}
                     </div>
                   )}

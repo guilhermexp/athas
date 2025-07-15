@@ -1,7 +1,29 @@
 @import "tailwindcss";
 
+/* Define layer order */
+@layer base, utilities, themes;
+
 /* utils like animations */
 @import "./styles/utils.css";
+
+/* Theme imports - must come after base layer for proper cascade */
+@import "./styles/themes/dark.css" layer(themes);
+@import "./styles/themes/midnight.css" layer(themes);
+@import "./styles/themes/tokyo-night.css" layer(themes);
+@import "./styles/themes/monokai.css" layer(themes);
+@import "./styles/themes/dracula.css" layer(themes);
+@import "./styles/themes/nord.css" layer(themes);
+@import "./styles/themes/github.css" layer(themes);
+@import "./styles/themes/one-dark.css" layer(themes);
+@import "./styles/themes/material.css" layer(themes);
+@import "./styles/themes/ayu.css" layer(themes);
+@import "./styles/themes/vesper.css" layer(themes);
+@import "./styles/themes/catppuccin.css" layer(themes);
+@import "./styles/themes/gruvbox.css" layer(themes);
+@import "./styles/themes/solarized.css" layer(themes);
+@import "./styles/themes/synthwave-84.css" layer(themes);
+@import "./styles/themes/aura.css" layer(themes);
+@import "./styles/themes/vercel-dark.css" layer(themes);
 
 /* Define custom Tailwind theme variables using @theme directive */
 @theme inline {
@@ -91,6 +113,7 @@ button {
 }
 
 /* CSS variables that themes can override */
+@layer base {
 :root {
     /* Default light theme colors */
     --tw-primary-bg: #ffffff;
@@ -136,42 +159,6 @@ button {
     --tw-syntax-attribute: #6f42c1;
     --tw-syntax-punctuation: #24292e;
 
-    /* Map legacy variables to new Tailwind theme colors */
-    --primary-bg: var(--color-primary-bg);
-    --secondary-bg: var(--color-secondary-bg);
-    --text-color: var(--color-text);
-    --text-light: var(--color-text-light);
-    --text-lighter: var(--color-text-lighter);
-    --border-color: var(--color-border);
-    --hover-color: var(--color-hover);
-    --selected-color: var(--color-selected);
-    --accent-color: var(--color-accent);
-
-    /* Map paper variables */
-    --paper-bg: var(--color-paper-bg);
-    --paper-button-bg: var(--color-paper-button-bg);
-    --paper-button-border: var(--color-paper-button-border);
-    --paper-button-hover-bg: var(--color-paper-button-hover-bg);
-    --paper-button-hover-border: var(--color-paper-button-hover-border);
-    --paper-recent-bg: var(--color-paper-recent-bg);
-    --paper-recent-border: var(--color-paper-recent-border);
-    --paper-recent-hover-bg: var(--color-paper-recent-hover-bg);
-    --paper-recent-hover-border: var(--color-paper-recent-hover-border);
-    --paper-text-primary: var(--color-paper-text-primary);
-    --paper-text-secondary: var(--color-paper-text-secondary);
-    --paper-text-light: var(--color-paper-text-light);
-    --paper-texture-overlay: var(--color-paper-texture-overlay);
-
-    /* Map syntax highlighting variables */
-    --syntax-comment: var(--color-syntax-comment);
-    --syntax-keyword: var(--color-syntax-keyword);
-    --syntax-string: var(--color-syntax-string);
-    --syntax-number: var(--color-syntax-number);
-    --syntax-function: var(--color-syntax-function);
-    --syntax-variable: var(--color-syntax-variable);
-    --syntax-tag: var(--color-syntax-tag);
-    --syntax-attribute: var(--color-syntax-attribute);
-    --syntax-punctuation: var(--color-syntax-punctuation);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -219,27 +206,28 @@ button {
         --tw-syntax-tag: #7ee787;
         --tw-syntax-attribute: #d2a8ff;
         --tw-syntax-punctuation: #b3b3b3;
+
     }
+}
 }
 
 /* Syntax highlighting styles */
 /* Ensure all tokens have transparent background by default */
 .token {
-    background: transparent !important;
+    background: transparent;
 }
 
 .token.comment,
 .token.prolog,
 .token.doctype,
 .token.cdata {
-    color: var(--syntax-comment) !important;
+    color: var(--syntax-comment);
     font-style: italic;
 }
 
 .token.punctuation {
-    color: var(--syntax-punctuation) !important;
-    background: transparent !important;
-    background-color: transparent !important;
+    color: var(--syntax-punctuation);
+    background: transparent;
 }
 
 .token.property,
@@ -247,12 +235,12 @@ button {
 .token.constant,
 .token.symbol,
 .token.deleted {
-    color: var(--syntax-tag) !important;
+    color: var(--syntax-tag);
 }
 
 .token.boolean,
 .token.number {
-    color: var(--syntax-number) !important;
+    color: var(--syntax-number);
 }
 
 .token.selector,
@@ -261,7 +249,7 @@ button {
 .token.char,
 .token.builtin,
 .token.inserted {
-    color: var(--syntax-string) !important;
+    color: var(--syntax-string);
 }
 
 .token.operator,
@@ -270,24 +258,24 @@ button {
 .language-css .token.string,
 .style .token.string,
 .token.variable {
-    color: var(--syntax-variable) !important;
+    color: var(--syntax-variable);
 }
 
 .token.atrule,
 .token.attr-value,
 .token.function,
 .token.class-name {
-    color: var(--syntax-function) !important;
+    color: var(--syntax-function);
 }
 
 .token.keyword {
-    color: var(--syntax-keyword) !important;
+    color: var(--syntax-keyword);
     font-weight: 600;
 }
 
 .token.regex,
 .token.important {
-    color: var(--syntax-variable) !important;
+    color: var(--syntax-variable);
 }
 
 .token.important,
@@ -305,12 +293,12 @@ button {
 
 /* Ruby specific tokens */
 .token.symbol {
-    color: var(--syntax-function) !important;
+    color: var(--syntax-function);
 }
 
 .token.instance-variable,
 .token.class-variable {
-    color: var(--syntax-variable) !important;
+    color: var(--syntax-variable);
 }
 
 /* ERB specific tokens */
@@ -322,22 +310,22 @@ button {
 }
 
 .token.erb-delimiter {
-    color: #d73a49 !important;
+    color: #d73a49;
     font-weight: bold;
 }
 
 .token.erb-output-delimiter {
-    color: #22863a !important;
+    color: #22863a;
     font-weight: bold;
 }
 
 .token.erb-comment-delimiter {
-    color: #6a737d !important;
+    color: #6a737d;
     font-weight: bold;
 }
 
 .token.erb-scriptlet-delimiter {
-    color: #6f42c1 !important;
+    color: #6f42c1;
     font-weight: bold;
 }
 
@@ -355,19 +343,19 @@ button {
     }
 
     .token.erb-delimiter {
-        color: #ff7b72 !important;
+        color: #ff7b72;
     }
 
     .token.erb-output-delimiter {
-        color: #7ee787 !important;
+        color: #7ee787;
     }
 
     .token.erb-comment-delimiter {
-        color: #8b949e !important;
+        color: #8b949e;
     }
 
     .token.erb-scriptlet-delimiter {
-        color: #d2a8ff !important;
+        color: #d2a8ff;
     }
 
     .token.erb-output,
@@ -377,19 +365,19 @@ button {
 }
 
 /* Custom utility classes */
-.vim-cursor-blink {
+@utility vim-cursor-blink {
     animation: vim-cursor-blink 1s infinite;
 }
 
 /* Visual mode selection styling */
 .vim-visual-selection::selection {
     background: rgba(59, 130, 246, 0.3) !important;
-    color: var(--text-color);
+    color: var(--color-text);
 }
 
 .vim-visual-selection::-moz-selection {
     background: rgba(59, 130, 246, 0.3) !important;
-    color: var(--text-color);
+    color: var(--color-text);
 }
 
 /* Tab bar scrollbar hiding */
@@ -408,7 +396,7 @@ button {
 /* Custom scrollbar styles */
 .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-color) var(--secondary-bg);
+    scrollbar-color: var(--color-border) var(--color-secondary-bg);
     overflow: auto;
 }
 
@@ -418,28 +406,28 @@ button {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: var(--secondary-bg);
+    background: var(--color-secondary-bg);
     border-radius: 0;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--color-border);
     border-radius: 0;
     border: none;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--text-lighter);
+    background: var(--color-text-lighter);
 }
 
 .custom-scrollbar::-webkit-scrollbar-corner {
-    background: var(--secondary-bg);
+    background: var(--color-secondary-bg);
 }
 
 /* Thin scrollbar for compact areas */
 .custom-scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
+    scrollbar-color: var(--color-border) transparent;
     overflow: auto;
 }
 
@@ -453,18 +441,18 @@ button {
 }
 
 .custom-scrollbar-thin::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--color-border);
     border-radius: 3px;
 }
 
 .custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: var(--text-lighter);
+    background: var(--color-text-lighter);
 }
 
 /* Auto-hide scrollbar for editors */
 .custom-scrollbar-auto {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
+    scrollbar-color: var(--color-border) transparent;
     overflow: auto;
 }
 
@@ -484,11 +472,11 @@ button {
 }
 
 .custom-scrollbar-auto:hover::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--color-border);
 }
 
 .custom-scrollbar-auto::-webkit-scrollbar-thumb:hover {
-    background: var(--text-lighter);
+    background: var(--color-text-lighter);
 }
 
 .custom-scrollbar-auto::-webkit-scrollbar-corner {
@@ -518,7 +506,7 @@ button {
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
+    scrollbar-color: var(--color-border) transparent;
     overscroll-behavior-x: contain; /* Prevent elastic scroll on tabs only */
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
@@ -533,18 +521,18 @@ button {
 }
 
 .tab-scroll-container::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--color-border);
     border-radius: 3px;
     transition: background-color 0.2s ease;
 }
 
 .tab-scroll-container::-webkit-scrollbar-thumb:hover {
-    background: var(--text-lighter);
+    background: var(--color-text-lighter);
 }
 
 /* Enhance tab scrolling behavior */
 .tab-scroll-container:hover::-webkit-scrollbar-thumb {
-    background: rgba(var(--border-color-rgb, 224, 224, 224), 0.8);
+    background: rgba(224, 224, 224, 0.8);
 }
 
 /* Ensure tabs maintain consistent spacing */
@@ -619,7 +607,7 @@ textarea::-webkit-scrollbar-thumb:hover {
 
 /* Paper texture and theme-aware colors for welcome screen */
 .paper-texture {
-    background: var(--paper-bg);
+    background: var(--color-paper-bg);
     position: relative;
 }
 
@@ -644,15 +632,15 @@ textarea::-webkit-scrollbar-thumb:hover {
     background:
         linear-gradient(90deg,
             transparent 0%,
-            var(--paper-texture-overlay) 45%,
-            calc(var(--paper-texture-overlay) * 2) 50%,
-            var(--paper-texture-overlay) 55%,
+            var(--color-paper-texture-overlay) 45%,
+            calc(var(--color-paper-texture-overlay) * 2) 50%,
+            var(--color-paper-texture-overlay) 55%,
             transparent 100%),
         linear-gradient(0deg,
             transparent 0%,
-            var(--paper-texture-overlay) 48%,
-            calc(var(--paper-texture-overlay) * 2) 50%,
-            var(--paper-texture-overlay) 52%,
+            var(--color-paper-texture-overlay) 48%,
+            calc(var(--color-paper-texture-overlay) * 2) 50%,
+            var(--color-paper-texture-overlay) 52%,
             transparent 100%);
     background-size:
         300px 1px,
@@ -675,9 +663,9 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 .paper-button {
-    background: var(--paper-button-bg);
-    border: 1px solid var(--paper-button-border);
-    color: var(--paper-text-primary);
+    background: var(--color-paper-button-bg);
+    border: 1px solid var(--color-paper-button-border);
+    color: var(--color-paper-text-primary);
     position: relative;
     overflow: hidden;
 }
@@ -692,15 +680,15 @@ textarea::-webkit-scrollbar-thumb:hover {
     background:
         linear-gradient(90deg,
             transparent 0%,
-            var(--paper-texture-overlay) 45%,
-            calc(var(--paper-texture-overlay) * 2) 50%,
-            var(--paper-texture-overlay) 55%,
+            var(--color-paper-texture-overlay) 45%,
+            calc(var(--color-paper-texture-overlay) * 2) 50%,
+            var(--color-paper-texture-overlay) 55%,
             transparent 100%),
         linear-gradient(0deg,
             transparent 0%,
-            var(--paper-texture-overlay) 48%,
-            calc(var(--paper-texture-overlay) * 2) 50%,
-            var(--paper-texture-overlay) 52%,
+            var(--color-paper-texture-overlay) 48%,
+            calc(var(--color-paper-texture-overlay) * 2) 50%,
+            var(--color-paper-texture-overlay) 52%,
             transparent 100%);
     background-size:
         200px 1px,
@@ -712,14 +700,14 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 .paper-button:hover {
-    background: var(--paper-button-hover-bg);
-    border-color: var(--paper-button-hover-border);
+    background: var(--color-paper-button-hover-bg);
+    border-color: var(--color-paper-button-hover-border);
 }
 
 .paper-recent-item {
-    background: var(--paper-recent-bg);
-    border: 1px solid var(--paper-recent-border);
-    color: var(--paper-text-primary);
+    background: var(--color-paper-recent-bg);
+    border: 1px solid var(--color-paper-recent-border);
+    color: var(--color-paper-text-primary);
     position: relative;
     overflow: hidden;
 }
@@ -734,15 +722,15 @@ textarea::-webkit-scrollbar-thumb:hover {
     background:
         linear-gradient(90deg,
             transparent 0%,
-            var(--paper-texture-overlay) 45%,
-            calc(var(--paper-texture-overlay) * 2) 50%,
-            var(--paper-texture-overlay) 55%,
+            var(--color-paper-texture-overlay) 45%,
+            calc(var(--color-paper-texture-overlay) * 2) 50%,
+            var(--color-paper-texture-overlay) 55%,
             transparent 100%),
         linear-gradient(0deg,
             transparent 0%,
-            var(--paper-texture-overlay) 48%,
-            calc(var(--paper-texture-overlay) * 2) 50%,
-            var(--paper-texture-overlay) 52%,
+            var(--color-paper-texture-overlay) 48%,
+            calc(var(--color-paper-texture-overlay) * 2) 50%,
+            var(--color-paper-texture-overlay) 52%,
             transparent 100%);
     background-size:
         200px 1px,
@@ -754,20 +742,20 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 .paper-recent-item:hover {
-    background: var(--paper-recent-hover-bg);
-    border-color: var(--paper-recent-hover-border);
+    background: var(--color-paper-recent-hover-bg);
+    border-color: var(--color-paper-recent-hover-border);
 }
 
 .paper-text-primary {
-    color: var(--paper-text-primary);
+    color: var(--color-paper-text-primary);
 }
 
 .paper-text-secondary {
-    color: var(--paper-text-secondary);
+    color: var(--color-paper-text-secondary);
 }
 
 .paper-text-light {
-    color: var(--paper-text-light);
+    color: var(--color-paper-text-light);
 }
 
 .logo-blue {
@@ -816,23 +804,23 @@ textarea::-webkit-scrollbar-thumb:hover {
 .ui-layer {
     position: relative;
     z-index: 5;
-    background: var(--secondary-bg);
-    border-top: 1px solid var(--border-color);
+    background: var(--color-secondary-bg);
+    border-top: 1px solid var(--color-border);
 }
 
 .sidebar {
     position: relative;
     z-index: 7;
-    background: var(--secondary-bg);
-    border-right: 1px solid var(--border-color);
+    background: var(--color-secondary-bg);
+    border-right: 1px solid var(--color-border);
     box-shadow: 1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .status-bar {
     position: relative;
     z-index: 8;
-    background: var(--secondary-bg);
-    border-top: 1px solid var(--border-color);
+    background: var(--color-secondary-bg);
+    border-top: 1px solid var(--color-border);
     box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.05);
 }
 
@@ -875,8 +863,8 @@ textarea::-webkit-scrollbar-thumb:hover {
 
 /* Pane styling */
 .pane {
-    background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
+    background: var(--color-secondary-bg);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     position: relative;
     z-index: 5;
@@ -884,20 +872,20 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 .pane-header {
-    background: var(--secondary-bg);
-    border-bottom: 1px solid var(--border-color);
+    background: var(--color-secondary-bg);
+    border-bottom: 1px solid var(--color-border);
     border-radius: 6px 6px 0 0;
     padding: 8px 12px;
     font-size: 12px;
-    color: var(--text-light);
+    color: var(--color-text-light);
 }
 
 /* Command bar styling */
 .command-bar {
     position: relative;
     z-index: 9;
-    background: var(--secondary-bg);
-    border-bottom: 1px solid var(--border-color);
+    background: var(--color-secondary-bg);
+    border-bottom: 1px solid var(--color-border);
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
 }
 
@@ -928,7 +916,7 @@ textarea::-webkit-scrollbar-thumb:hover {
     grid-area: main;
     z-index: 6;
     padding: 16px;
-    background: var(--secondary-bg);
+    background: var(--color-secondary-bg);
     overflow: auto;
 }
 
@@ -1018,21 +1006,3 @@ textarea::-webkit-scrollbar-thumb:hover {
     padding: 0 2px;
 }
 
-/* if i put them at the top it wont work */
-@import "./styles/themes/dark.css";
-@import "./styles/themes/midnight.css";
-@import "./styles/themes/tokyo-night.css";
-@import "./styles/themes/monokai.css";
-@import "./styles/themes/dracula.css";
-@import "./styles/themes/nord.css";
-@import "./styles/themes/github.css";
-@import "./styles/themes/one-dark.css";
-@import "./styles/themes/material.css";
-@import "./styles/themes/ayu.css";
-@import "./styles/themes/vesper.css";
-@import "./styles/themes/catppuccin.css";
-@import "./styles/themes/gruvbox.css";
-@import "./styles/themes/solarized.css";
-@import "./styles/themes/synthwave-84.css";
-@import "./styles/themes/aura.css";
-@import "./styles/themes/vercel-dark.css";
