@@ -7,6 +7,8 @@ const initialState = {
   aiModelId: "gpt-4o-mini",
   aiChatWidth: 400,
   isAIChatVisible: false,
+  // Extensions Settings
+  extensionsActiveTab: "all" as "all" | "core" | "language-server" | "theme",
 };
 
 const storeCreator = combine(initialState, set => ({
@@ -17,6 +19,8 @@ const storeCreator = combine(initialState, set => ({
     set({ aiProviderId: providerId, aiModelId: modelId }),
   setAIChatWidth: (width: number) => set({ aiChatWidth: width }),
   setIsAIChatVisible: (visible: boolean) => set({ isAIChatVisible: visible }),
+  setExtensionsActiveTab: (tab: "all" | "core" | "language-server" | "theme") =>
+    set({ extensionsActiveTab: tab }),
 }));
 
 export const usePersistentSettingsStore = create<ReturnType<typeof storeCreator>>()(

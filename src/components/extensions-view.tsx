@@ -1,6 +1,7 @@
 import { Code, Package, Palette, Search, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
+import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
 import type { CoreFeature } from "../types/core-features";
 import type { ThemeType } from "../types/theme";
 import Button from "./ui/button";
@@ -381,8 +382,8 @@ export default function ExtensionsView({
   coreFeatures,
   onCoreFeatureToggle,
 }: ExtensionsViewProps) {
+  const { extensionsActiveTab, setExtensionsActiveTab } = usePersistentSettingsStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "core" | "language-server" | "theme">("all");
   const [extensions, setExtensions] = useState<Extension[]>(() => {
     // Initialize extensions with the current theme state
     return AVAILABLE_EXTENSIONS.map(ext => ({
@@ -421,7 +422,7 @@ export default function ExtensionsView({
     const matchesSearch =
       extension.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       extension.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === "all" || extension.category === activeTab;
+    const matchesTab = extensionsActiveTab === "all" || extension.category === extensionsActiveTab;
     return matchesSearch && matchesTab;
   });
 
@@ -458,43 +459,60 @@ export default function ExtensionsView({
 
       <div className="flex gap-2 p-4 ">
         <Button
-          onClick={() => setActiveTab("all")}
+          onClick={() => setExtensionsActiveTab("all")}
           variant="ghost"
           size="sm"
-          data-active={activeTab === "all"}
-          className={cn("text-xs", activeTab === "all" && "bg-hover")}
+          data-active={extensionsActiveTab === "all"}
+          className={cn(
+            "text-xs",
+            extensionsActiveTab === "all"
+              ? "bg-selected text-text"
+              : "bg-transparent text-text-lighter hover:bg-hover",
+          )}
         >
           All
         </Button>
         <Button
-          onClick={() => setActiveTab("core")}
+          onClick={() => setExtensionsActiveTab("core")}
           variant="ghost"
           size="sm"
-          data-active={activeTab === "core"}
-          className={cn("flex items-center gap-1 text-xs", activeTab === "core" && "bg-hover")}
+          data-active={extensionsActiveTab === "core"}
+          className={cn(
+            "flex items-center gap-1 text-xs",
+            extensionsActiveTab === "core"
+              ? "bg-selected text-text"
+              : "bg-transparent text-text-lighter hover:bg-hover",
+          )}
         >
           <Settings size={14} />
           Core
         </Button>
         <Button
-          onClick={() => setActiveTab("language-server")}
+          onClick={() => setExtensionsActiveTab("language-server")}
           variant="ghost"
           size="sm"
-          data-active={activeTab === "language-server"}
+          data-active={extensionsActiveTab === "language-server"}
           className={cn(
             "flex items-center gap-1 text-xs",
-            activeTab === "language-server" && "bg-hover",
+            extensionsActiveTab === "language-server"
+              ? "bg-selected text-text"
+              : "bg-transparent text-text-lighter hover:bg-hover",
           )}
         >
           <Code size={14} />
           Language Servers
         </Button>
         <Button
-          onClick={() => setActiveTab("theme")}
+          onClick={() => setExtensionsActiveTab("theme")}
           variant="ghost"
           size="sm"
-          data-active={activeTab === "theme"}
-          className={cn("flex items-center gap-1 text-xs", activeTab === "theme" && "bg-hover")}
+          data-active={extensionsActiveTab === "theme"}
+          className={cn(
+            "flex items-center gap-1 text-xs",
+            extensionsActiveTab === "theme"
+              ? "bg-selected text-text"
+              : "bg-transparent text-text-lighter hover:bg-hover",
+          )}
         >
           <Palette size={14} />
           Themes
@@ -503,11 +521,11 @@ export default function ExtensionsView({
 
       <div className="flex-1 overflow-auto p-4">
         {/* Core Features */}
-        {(activeTab === "all" || activeTab === "core") &&
+        {(extensionsActiveTab === "all" || extensionsActiveTab === "core") &&
           coreFeatures &&
           coreFeatures.length > 0 && (
             <div className="mb-6">
-              {activeTab === "all" && (
+              {extensionsActiveTab === "all" && (
                 <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">
                   <Settings size={16} />
                   Core Features
@@ -526,9 +544,9 @@ export default function ExtensionsView({
           )}
 
         {/* Extensions */}
-        {activeTab !== "core" && (
+        {extensionsActiveTab !== "core" && (
           <div>
-            {activeTab === "all" && filteredExtensions.length > 0 && (
+            {extensionsActiveTab === "all" && filteredExtensions.length > 0 && (
               <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">
                 <Package size={16} />
                 Extensions
@@ -548,9 +566,11 @@ export default function ExtensionsView({
         )}
 
         {/* No results */}
-        {((activeTab === "core" && filteredCoreFeatures.length === 0) ||
-          (activeTab !== "core" && activeTab !== "all" && filteredExtensions.length === 0) ||
-          (activeTab === "all" &&
+        {((extensionsActiveTab === "core" && filteredCoreFeatures.length === 0) ||
+          (extensionsActiveTab !== "core" &&
+            extensionsActiveTab !== "all" &&
+            filteredExtensions.length === 0) ||
+          (extensionsActiveTab === "all" &&
             filteredCoreFeatures.length === 0 &&
             filteredExtensions.length === 0)) && (
           <div className="py-8 text-center text-text-lighter">
