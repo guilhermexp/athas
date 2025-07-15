@@ -1,6 +1,7 @@
 import { FilePlus, FolderOpen, FolderPlus, Server } from "lucide-react";
 import type React from "react";
 import { forwardRef } from "react";
+import { cn } from "@/utils/cn";
 import { useProjectStore } from "../../stores/project-store";
 import { useSidebarStore } from "../../stores/sidebar-store";
 import { useUIState } from "../../stores/ui-state-store";
@@ -92,7 +93,10 @@ export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
                 onClick={onOpenFolder}
                 variant="ghost"
                 size="sm"
-                className="flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter hover:bg-hover hover:text-text"
+                className={cn(
+                  "flex h-5 w-5 items-center justify-center rounded p-0",
+                  "text-text-lighter hover:bg-hover hover:text-text",
+                )}
                 title="Open Folder"
               >
                 <FolderOpen size={12} />
@@ -101,7 +105,10 @@ export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
                 onClick={onCreateNewFile}
                 variant="ghost"
                 size="sm"
-                className="flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter hover:bg-hover hover:text-text"
+                className={cn(
+                  "flex h-5 w-5 items-center justify-center rounded p-0",
+                  "text-text-lighter hover:bg-hover hover:text-text",
+                )}
                 title="New File"
               >
                 <FilePlus size={12} />
@@ -114,7 +121,10 @@ export const MainSidebar = forwardRef<SearchViewRef, MainSidebarProps>(
                 }}
                 variant="ghost"
                 size="sm"
-                className="flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter hover:bg-hover hover:text-text"
+                className={cn(
+                  "flex h-5 w-5 items-center justify-center rounded p-0",
+                  "text-text-lighter hover:bg-hover hover:text-text",
+                )}
                 title="New Folder"
               >
                 <FolderPlus size={12} />

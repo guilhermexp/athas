@@ -1,5 +1,6 @@
 import { Check, ChevronDown, GitBranch, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 import { checkoutBranch, createBranch, deleteBranch, getBranches } from "../../utils/git";
 
 interface GitBranchManagerProps {
@@ -99,7 +100,10 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
       <button
         onClick={() => setShowModal(true)}
         disabled={isLoading}
-        className="flex items-center gap-1 rounded px-2 py-1 font-medium text-text text-xs hover:bg-hover disabled:opacity-50"
+        className={cn(
+          "flex items-center gap-1 rounded px-2 py-1",
+          "font-medium text-text text-xs hover:bg-hover disabled:opacity-50",
+        )}
       >
         <GitBranch size={12} className="text-text-lighter" />
         <span className="max-w-32 truncate">{currentBranch}</span>
@@ -108,22 +112,30 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
 
       {showModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50"
+          className={cn("fixed inset-0 z-50 flex items-center justify-center", "bg-opacity-50")}
           onClick={() => setShowModal(false)}
         >
           <div
-            className="flex max-h-[60vh] w-120 flex-col rounded-lg border border-border bg-primary-bg shadow-xl"
+            className={cn(
+              "flex max-h-[60vh] w-120 flex-col rounded-lg",
+              "border border-border bg-primary-bg shadow-xl",
+            )}
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-border border-b px-3 py-2">
+            <div
+              className={cn(
+                "flex items-center justify-between border-border border-b",
+                "px-3 py-2",
+              )}
+            >
               <h3 className="flex items-center gap-1.5 font-medium text-text text-xs">
                 <GitBranch size={12} />
                 Branch Manager
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="rounded p-0.5 text-text-lighter hover:bg-hover hover:text-text"
+                className={cn("rounded p-0.5 text-text-lighter", "hover:bg-hover hover:text-text")}
               >
                 <X size={12} />
               </button>
@@ -145,7 +157,11 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
                     placeholder="Enter branch name..."
                     value={newBranchName}
                     onChange={e => setNewBranchName(e.target.value)}
-                    className="flex-1 rounded border border-border bg-secondary-bg px-2 py-1.5 text-text text-xs focus:border-blue-500 focus:outline-none"
+                    className={cn(
+                      "flex-1 rounded border border-border bg-secondary-bg",
+                      "px-2 py-1.5 text-text text-xs",
+                      "focus:border-blue-500 focus:outline-none",
+                    )}
                     onKeyDown={e => {
                       if (e.key === "Enter" && newBranchName.trim()) {
                         e.preventDefault();
@@ -157,7 +173,11 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
                   <button
                     onClick={handleCreateBranch}
                     disabled={!newBranchName.trim() || isLoading}
-                    className="flex items-center gap-1 rounded border border-blue-600 bg-blue-600 px-2 py-1.5 text-white text-xs hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={cn(
+                      "flex items-center gap-1 rounded border border-blue-600",
+                      "bg-blue-600 px-2 py-1.5 text-white text-xs",
+                      "hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50",
+                    )}
                   >
                     <Plus size={10} />
                     Create
@@ -187,16 +207,20 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
                     {branches.map(branch => (
                       <div
                         key={branch}
-                        className="group flex items-center justify-between rounded px-2 py-1.5 hover:bg-hover"
+                        className={cn(
+                          "group flex items-center justify-between rounded",
+                          "px-2 py-1.5 hover:bg-hover",
+                        )}
                       >
                         <button
                           onClick={() => handleBranchChange(branch)}
                           disabled={isLoading || branch === currentBranch}
-                          className={`flex flex-1 items-center gap-1.5 text-left text-xs disabled:opacity-50 ${
+                          className={cn(
+                            "flex flex-1 items-center gap-1.5 text-left text-xs disabled:opacity-50",
                             branch === currentBranch
                               ? "font-medium text-text"
-                              : "text-text-lighter hover:text-text"
-                          }`}
+                              : "text-text-lighter hover:text-text",
+                          )}
                         >
                           {branch === currentBranch && (
                             <Check size={10} className="text-green-400" />
@@ -211,7 +235,11 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
                           <button
                             onClick={() => handleDeleteBranch(branch)}
                             disabled={isLoading}
-                            className="rounded p-0.5 text-red-400 opacity-0 hover:bg-red-400/10 hover:text-red-300 disabled:opacity-50 group-hover:opacity-100"
+                            className={cn(
+                              "rounded p-0.5 text-red-400 opacity-0",
+                              "hover:bg-red-400/10 hover:text-red-300",
+                              "disabled:opacity-50 group-hover:opacity-100",
+                            )}
                             title="Delete branch"
                           >
                             <Trash2 size={10} />
@@ -225,7 +253,7 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
             </div>
 
             {/* Modal Footer */}
-            <div className="rounded-b-lg border-border border-t bg-secondary-bg px-3 py-2">
+            <div className={cn("rounded-b-lg border-border border-t bg-secondary-bg", "px-3 py-2")}>
               <div className="flex items-center justify-between text-[10px] text-text-lighter">
                 <span>
                   Current: <span className="font-mono text-text">{currentBranch}</span>

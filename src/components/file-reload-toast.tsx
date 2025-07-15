@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 
 interface ToastItem {
   id: string;
@@ -47,7 +48,11 @@ const FileReloadToast = () => {
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className="flex animate-slide-in-right items-center gap-2 rounded-lg border border-border bg-secondary-bg px-4 py-2 text-sm text-text shadow-lg backdrop-blur-sm"
+          className={cn(
+            "flex animate-slide-in-right items-center gap-2 rounded-lg",
+            "border border-border bg-secondary-bg px-4 py-2",
+            "text-sm text-text shadow-lg backdrop-blur-sm",
+          )}
         >
           <RefreshCw className="h-3.5 w-3.5 text-info" />
           <span>

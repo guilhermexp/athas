@@ -61,7 +61,10 @@ const ConnectionList = ({
           onClick={onAddNew}
           variant="ghost"
           size="sm"
-          className="flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text"
+          className={cn(
+            "flex h-5 w-5 items-center justify-center rounded p-0",
+            "text-text-lighter transition-colors hover:bg-hover hover:text-text",
+          )}
           title="Add Remote Connection"
         >
           <Plus size={12} />
@@ -210,7 +213,10 @@ const ConnectionList = ({
               onDelete(connectionMenu.connectionId);
               setConnectionMenu(null);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-red-400 text-xs hover:bg-red-500/10"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5 text-left",
+              "font-mono text-red-400 text-xs hover:bg-red-500/10",
+            )}
           >
             <Trash2 size={12} />
             Delete

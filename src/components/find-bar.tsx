@@ -104,7 +104,10 @@ const FindBar = ({
         </button>
         <button
           onClick={onClose}
-          className="flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text"
+          className={cn(
+            "flex h-5 w-5 items-center justify-center rounded p-0",
+            "text-text-lighter transition-colors hover:bg-hover hover:text-text",
+          )}
           title="Close (Escape)"
         >
           <X size={12} />

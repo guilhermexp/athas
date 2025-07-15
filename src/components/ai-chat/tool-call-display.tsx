@@ -219,7 +219,10 @@ export default function ToolCallDisplay({
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[var(--color-hover)]"
+        className={cn(
+          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left",
+          "transition-colors hover:bg-[var(--color-hover)]",
+        )}
       >
         <div className="flex flex-1 items-center gap-2">
           <Icon

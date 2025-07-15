@@ -1,5 +1,6 @@
 import Prism from "prismjs";
 import type React from "react";
+import { cn } from "@/utils/cn";
 import type { MarkdownRendererProps } from "./types";
 import { mapLanguage } from "./utils";
 
@@ -62,7 +63,11 @@ export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRende
                 {onApplyCode && code.trim() && (
                   <button
                     onClick={() => onApplyCode(code)}
-                    className="whitespace-nowrap rounded border border-border bg-primary-bg px-2 py-1 font-mono text-text text-xs opacity-0 transition-colors hover:bg-hover group-hover:opacity-100"
+                    className={cn(
+                      "whitespace-nowrap rounded border border-border bg-primary-bg",
+                      "px-2 py-1 font-mono text-text text-xs",
+                      "opacity-0 transition-colors hover:bg-hover group-hover:opacity-100",
+                    )}
                     title="Apply this code to current buffer"
                   >
                     Apply

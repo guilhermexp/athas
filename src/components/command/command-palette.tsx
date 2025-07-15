@@ -1,6 +1,7 @@
 import { Bot, Palette, Settings, Terminal, X } from "lucide-react";
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { cn } from "@/utils/cn";
 import type { ThemeType } from "../../types/theme";
 import ThemeSelector from "./theme-selector";
 
@@ -205,7 +206,11 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Type a command..."
-                className="flex-1 border-none bg-transparent text-sm text-text placeholder-text-lighter outline-none focus:border-none focus:shadow-none focus:outline-none focus:ring-0"
+                className={cn(
+                  "flex-1 border-none bg-transparent text-sm text-text",
+                  "placeholder-text-lighter outline-none",
+                  "focus:border-none focus:shadow-none focus:outline-none focus:ring-0",
+                )}
                 style={{
                   outline: "none !important",
                   boxShadow: "none !important",
@@ -231,9 +236,12 @@ const CommandPalette = forwardRef<CommandPaletteRef, CommandPaletteProps>(
                       e.stopPropagation();
                       action.action();
                     }}
-                    className={`flex w-full cursor-pointer items-center px-4 py-1.5 text-left transition-colors ${
-                      index === selectedIndex ? "bg-selected text-text" : "text-text hover:bg-hover"
-                    }`}
+                    className={cn(
+                      "flex w-full cursor-pointer items-center px-4 py-1.5 text-left transition-colors",
+                      index === selectedIndex
+                        ? "bg-selected text-text"
+                        : "text-text hover:bg-hover",
+                    )}
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm">{action.label}</div>

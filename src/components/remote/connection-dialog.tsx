@@ -261,7 +261,10 @@ const ConnectionDialog = ({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="-translate-y-1/2 absolute top-1/2 right-3 transform text-text-lighter transition-colors hover:text-text"
+                  className={cn(
+                    "-translate-y-1/2 absolute top-1/2 right-3 transform",
+                    "text-text-lighter transition-colors hover:text-text",
+                  )}
                 >
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>

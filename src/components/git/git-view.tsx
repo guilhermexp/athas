@@ -12,6 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 import {
   type GitCommit,
   type GitFile,
@@ -381,7 +382,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         setShowGitActionsMenu(!showGitActionsMenu);
         setShowBranchDropdown(false);
       }}
-      className="flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 font-medium text-text text-xs hover:bg-hover"
+      className={cn(
+        "flex cursor-pointer items-center gap-1 rounded px-2 py-1.5",
+        "font-medium text-text text-xs hover:bg-hover",
+      )}
       title="Git Actions"
     >
       <GitBranch size={12} className="text-text-lighter" />
@@ -393,7 +397,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     showGitActionsMenu &&
     gitActionsMenuPosition && (
       <div
-        className="fixed z-50 min-w-[180px] rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
+        className={cn(
+          "fixed z-50 min-w-[180px] rounded-md border border-border",
+          "bg-secondary-bg py-1 shadow-lg",
+        )}
         style={{
           left: gitActionsMenuPosition.x,
           top: gitActionsMenuPosition.y,
@@ -411,7 +418,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
                 handlePush();
                 setShowGitActionsMenu(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
+                "font-mono text-text text-xs hover:bg-hover",
+              )}
             >
               <Upload size={12} />
               Push Changes
@@ -424,7 +434,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
                 handlePull();
                 setShowGitActionsMenu(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
+                "font-mono text-text text-xs hover:bg-hover",
+              )}
             >
               <Download size={12} />
               Pull Changes
@@ -437,7 +450,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
                 handleFetch();
                 setShowGitActionsMenu(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
+                "font-mono text-text text-xs hover:bg-hover",
+              )}
             >
               <GitPullRequest size={12} />
               Fetch
@@ -452,7 +468,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
                 handleDiscardAllChanges();
                 setShowGitActionsMenu(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-red-400 text-xs hover:bg-hover"
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
+                "font-mono text-red-400 text-xs hover:bg-hover",
+              )}
             >
               <RotateCcw size={12} />
               Discard All Changes
@@ -468,7 +487,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
               handleInitRepository();
               setShowGitActionsMenu(false);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5 text-left",
+              "font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Settings size={12} />
             Initialize Repository
@@ -481,7 +503,12 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     return (
       <>
         <div className="flex h-full flex-col bg-secondary-bg">
-          <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-2 py-1.5">
+          <div
+            className={cn(
+              "flex items-center justify-between border-border border-b",
+              "bg-secondary-bg px-2 py-1.5",
+            )}
+          >
             <div className="flex items-center gap-2">{renderGitButton()}</div>
           </div>
           <div className="flex flex-1 items-center justify-center p-4">
@@ -500,7 +527,12 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     return (
       <>
         <div className="flex h-full flex-col bg-secondary-bg">
-          <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-2 py-1.5">
+          <div
+            className={cn(
+              "flex items-center justify-between border-border border-b",
+              "bg-secondary-bg px-2 py-1.5",
+            )}
+          >
             <div className="flex items-center gap-2">{renderGitButton()}</div>
           </div>
           <div className="flex flex-1 items-center justify-center p-4">
@@ -518,7 +550,12 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     return (
       <>
         <div className="flex h-full flex-col bg-secondary-bg">
-          <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-2 py-1.5">
+          <div
+            className={cn(
+              "flex items-center justify-between border-border border-b",
+              "bg-secondary-bg px-2 py-1.5",
+            )}
+          >
             <div className="flex items-center gap-2">{renderGitButton()}</div>
           </div>
           <div className="flex flex-1 items-center justify-center p-4">
@@ -539,7 +576,12 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     <>
       <div className="flex h-full flex-col bg-secondary-bg font-mono text-xs">
         {/* Header */}
-        <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-2 py-1.5">
+        <div
+          className={cn(
+            "flex items-center justify-between border-border border-b",
+            "bg-secondary-bg px-2 py-1.5",
+          )}
+        >
           <div className="flex items-center gap-2">
             {renderGitButton()}
 
@@ -562,7 +604,11 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
             <button
               onClick={loadGitData}
               disabled={isLoading}
-              className="flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text disabled:opacity-50"
+              className={cn(
+                "flex h-5 w-5 items-center justify-center rounded p-0",
+                "text-text-lighter transition-colors hover:bg-hover hover:text-text",
+                "disabled:opacity-50",
+              )}
               title="Refresh"
             >
               <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} />

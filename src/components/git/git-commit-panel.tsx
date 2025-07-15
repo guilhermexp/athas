@@ -1,6 +1,7 @@
 import { AlertCircle, GitCommit as GitCommitIcon, Send } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { cn } from "../../utils/cn";
 import { commitChanges } from "../../utils/git";
 
 interface GitCommitPanelProps {
@@ -59,7 +60,12 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
         </div>
 
         {error && (
-          <div className="mb-2 flex items-center gap-2 rounded border border-red-500 border-opacity-30 bg-red-900 bg-opacity-20 p-2 text-red-400 text-xs">
+          <div
+            className={cn(
+              "mb-2 flex items-center gap-2 rounded border border-red-500 border-opacity-30",
+              "bg-red-900 bg-opacity-20 p-2 text-red-400 text-xs",
+            )}
+          >
             <AlertCircle size={12} />
             {error}
           </div>
@@ -71,7 +77,10 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
             onChange={e => setCommitMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter commit message..."
-            className="w-full resize-none border border-border bg-primary-bg px-2 py-1.5 font-mono text-text text-xs focus:border-blue-500 focus:outline-none"
+            className={cn(
+              "w-full resize-none border border-border bg-primary-bg px-2 py-1.5",
+              "font-mono text-text text-xs focus:border-blue-500 focus:outline-none",
+            )}
             rows={3}
             disabled={isCommitting}
           />
@@ -82,11 +91,13 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
             <button
               onClick={handleCommit}
               disabled={isCommitDisabled}
-              className={`flex items-center gap-1 rounded border px-3 py-1.5 font-mono text-xs transition-colors duration-150 ${
+              className={cn(
+                "flex items-center gap-1 rounded border px-3 py-1.5",
+                "font-mono text-xs transition-colors duration-150",
                 isCommitDisabled
                   ? "cursor-not-allowed border-border bg-secondary-bg text-text-lighter"
-                  : "border-blue-500 bg-blue-600 text-white hover:bg-blue-700"
-              }`}
+                  : "border-blue-500 bg-blue-600 text-white hover:bg-blue-700",
+              )}
             >
               {isCommitting ? (
                 <>

@@ -1,5 +1,6 @@
 import { Archive, Clock, Download, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 import {
   applyStash,
   createStash,
@@ -135,8 +136,13 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50">
-      <div className="flex max-h-[80vh] w-96 flex-col rounded-lg border border-border bg-secondary-bg shadow-xl">
+    <div className={cn("fixed inset-0 z-50 flex items-center justify-center", "bg-opacity-50")}>
+      <div
+        className={cn(
+          "flex max-h-[80vh] w-96 flex-col rounded-lg",
+          "border border-border bg-secondary-bg shadow-xl",
+        )}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-border border-b p-4">
           <div className="flex items-center gap-2">
@@ -161,7 +167,11 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
               placeholder="Stash message (optional)..."
               value={newStashMessage}
               onChange={e => setNewStashMessage(e.target.value)}
-              className="w-full rounded border border-border bg-primary-bg px-2 py-1 text-text text-xs focus:border-blue-500 focus:outline-none"
+              className={cn(
+                "w-full rounded border border-border bg-primary-bg",
+                "px-2 py-1 text-text text-xs",
+                "focus:border-blue-500 focus:outline-none",
+              )}
               onKeyDown={e => {
                 if (e.key === "Enter") {
                   handleCreateStash();
@@ -184,7 +194,11 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
             <button
               onClick={handleCreateStash}
               disabled={isLoading}
-              className="w-full rounded border border-border bg-primary-bg py-1.5 text-text text-xs transition-colors hover:bg-hover disabled:opacity-50"
+              className={cn(
+                "w-full rounded border border-border bg-primary-bg",
+                "py-1.5 text-text text-xs transition-colors",
+                "hover:bg-hover disabled:opacity-50",
+              )}
             >
               {isLoading ? "Creating..." : "Create Stash"}
             </button>
@@ -205,7 +219,7 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
                 return (
                   <div
                     key={stash.index}
-                    className="border-border border-b p-3 last:border-b-0 hover:bg-hover"
+                    className={cn("border-border border-b p-3", "last:border-b-0 hover:bg-hover")}
                   >
                     <div className="mb-2 flex items-start justify-between">
                       <div className="min-w-0 flex-1">
@@ -231,7 +245,11 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
                       <button
                         onClick={() => handleApplyStash(stash.index)}
                         disabled={isActionLoading}
-                        className="flex items-center gap-1 rounded border border-border bg-primary-bg px-2 py-1 text-[9px] text-text transition-colors hover:bg-secondary-bg disabled:opacity-50"
+                        className={cn(
+                          "flex items-center gap-1 rounded border border-border",
+                          "bg-primary-bg px-2 py-1 text-[9px] text-text",
+                          "transition-colors hover:bg-secondary-bg disabled:opacity-50",
+                        )}
                         title="Apply stash (keep in stash list)"
                       >
                         <Download size={8} />
@@ -241,7 +259,11 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
                       <button
                         onClick={() => handlePopStash(stash.index)}
                         disabled={isActionLoading}
-                        className="flex items-center gap-1 rounded border border-border bg-primary-bg px-2 py-1 text-[9px] text-text transition-colors hover:bg-secondary-bg disabled:opacity-50"
+                        className={cn(
+                          "flex items-center gap-1 rounded border border-border",
+                          "bg-primary-bg px-2 py-1 text-[9px] text-text",
+                          "transition-colors hover:bg-secondary-bg disabled:opacity-50",
+                        )}
                         title="Pop stash (apply and remove from stash list)"
                       >
                         <Upload size={8} />
@@ -251,7 +273,11 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
                       <button
                         onClick={() => handleDropStash(stash.index)}
                         disabled={isActionLoading}
-                        className="flex items-center gap-1 rounded border border-red-500 bg-red-600 px-2 py-1 text-[9px] text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                        className={cn(
+                          "flex items-center gap-1 rounded border border-red-500",
+                          "bg-red-600 px-2 py-1 text-[9px] text-white",
+                          "transition-colors hover:bg-red-700 disabled:opacity-50",
+                        )}
                         title="Drop stash (delete permanently)"
                       >
                         <Trash2 size={8} />
@@ -266,7 +292,9 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
         </div>
 
         {/* Footer */}
-        <div className="border-border border-t bg-primary-bg p-3 text-[9px] text-text-lighter">
+        <div
+          className={cn("border-border border-t bg-primary-bg p-3", "text-[9px] text-text-lighter")}
+        >
           {stashes.length} stash{stashes.length !== 1 ? "es" : ""} total
         </div>
       </div>

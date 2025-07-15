@@ -1,5 +1,6 @@
 import { Database, Package, Pin, PinOff, X } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/utils/cn";
 import type { Buffer } from "../types/buffer";
 import { getShortcutText } from "../utils/platform";
 import FileIcon from "./file-icon";
@@ -478,7 +479,11 @@ const TabBar = ({
                         e.stopPropagation();
                         onTabClose(buffer.id, e);
                       }}
-                      className="flex-shrink-0 cursor-pointer rounded p-0.5 text-text-lighter opacity-0 transition-all duration-150 hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100"
+                      className={cn(
+                        "flex-shrink-0 cursor-pointer rounded p-0.5",
+                        "text-text-lighter opacity-0 transition-all duration-150",
+                        "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
+                      )}
                       title={`Close ${buffer.name}`}
                     >
                       <X size={12} />

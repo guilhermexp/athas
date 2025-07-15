@@ -1,6 +1,7 @@
 import { Monitor, Moon, Sun, X } from "lucide-react";
 import type React from "react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { cn } from "@/utils/cn";
 import type { ThemeType } from "../../types/theme";
 
 interface ThemeInfo {
@@ -351,7 +352,12 @@ const ThemeSelector = forwardRef<ThemeSelectorRef, ThemeSelectorProps>(
 
     return (
       <div className="-translate-x-1/2 fixed top-12 left-1/2 z-[9999] transform">
-        <div className="flex max-h-[500px] w-[600px] flex-col overflow-hidden rounded-lg border border-border bg-primary-bg shadow-lg">
+        <div
+          className={cn(
+            "flex max-h-[500px] w-[600px] flex-col overflow-hidden",
+            "rounded-lg border border-border bg-primary-bg shadow-lg",
+          )}
+        >
           {/* Header */}
           <div className="flex items-center gap-2 border-border border-b px-4 py-3">
             <input
@@ -395,9 +401,11 @@ const ThemeSelector = forwardRef<ThemeSelectorRef, ThemeSelectorProps>(
                             setSelectedIndex(globalIndex);
                             onThemeChange(theme.id);
                           }}
-                          className={`flex w-full cursor-pointer items-center gap-3 rounded px-3 py-1.5 text-left transition-colors ${
-                            isSelected ? "bg-selected text-text" : "text-text hover:bg-hover"
-                          }`}
+                          className={cn(
+                            "flex w-full cursor-pointer items-center gap-3 rounded",
+                            "px-3 py-1.5 text-left transition-colors",
+                            isSelected ? "bg-selected text-text" : "text-text hover:bg-hover",
+                          )}
                         >
                           <div className="flex-shrink-0 text-text-lighter">
                             {theme.icon || <Moon size={16} />}

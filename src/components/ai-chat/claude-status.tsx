@@ -152,7 +152,13 @@ export default function ClaudeStatusIndicator({
       {status && (
         <div className="group relative">
           <Activity size={12} className="cursor-help text-[--color-text-lighter]" />
-          <div className="absolute right-0 bottom-full z-50 mb-1 hidden whitespace-nowrap rounded border border-[--border] bg-[--bg-secondary] px-2 py-1 text-xs group-hover:block">
+          <div
+            className={cn(
+              "absolute right-0 bottom-full z-50 mb-1 hidden whitespace-nowrap",
+              "rounded border border-[--border] bg-[--bg-secondary]",
+              "px-2 py-1 text-xs group-hover:block",
+            )}
+          >
             <div>Claude: {isRunning ? "Running" : "Stopped"}</div>
             <div>Interceptor: {isInterceptorRunning ? "Running" : "Stopped"}</div>
             <div>WebSocket: {isConnected ? "Connected" : "Disconnected"}</div>

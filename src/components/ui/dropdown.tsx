@@ -51,7 +51,12 @@ const Dropdown = ({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-primary-bg shadow-lg">
+        <div
+          className={cn(
+            "absolute z-50 mt-1 max-h-60 w-full overflow-auto",
+            "rounded-md border border-border bg-primary-bg shadow-lg",
+          )}
+        >
           {options.map(option => (
             <button
               key={option.value}

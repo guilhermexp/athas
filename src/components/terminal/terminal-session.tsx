@@ -5,6 +5,7 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Terminal as TerminalType } from "../../types/terminal";
 import "../../styles/prism-terminal.css";
+import { cn } from "@/utils/cn";
 
 interface TerminalSessionProps {
   terminal: TerminalType;
@@ -537,7 +538,10 @@ const TerminalSession = ({
     });
 
     return (
-      <div key={lineIndex} className="h-[14px] whitespace-pre font-mono text-xs leading-[14px]">
+      <div
+        key={lineIndex}
+        className={cn("h-[14px] whitespace-pre font-mono text-xs leading-[14px]")}
+      >
         {enhancedLine}
       </div>
     );
@@ -553,7 +557,10 @@ const TerminalSession = ({
         {/* Terminal content */}
         <div
           ref={terminalRef}
-          className="terminal-content relative flex-1 cursor-text overflow-hidden bg-primary-bg p-3 font-mono text-text text-xs"
+          className={cn(
+            "terminal-content relative flex-1 cursor-text overflow-hidden",
+            "bg-primary-bg p-3 font-mono text-text text-xs",
+          )}
           onClick={() => {
             // Focus the hidden input when terminal is clicked
             const hiddenInput = document.getElementById(`terminal-input-${terminal.id}`);

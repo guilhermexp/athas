@@ -239,7 +239,11 @@ export default function AIChatInputBar({
               <div className="relative" ref={contextDropdownRef}>
                 <button
                   onClick={() => setIsContextDropdownOpen(!isContextDropdownOpen)}
-                  className="flex items-center gap-1 rounded px-2 py-1 text-text-lighter text-xs transition-colors hover:bg-hover hover:text-text"
+                  className={cn(
+                    "flex items-center gap-1 rounded px-2 py-1",
+                    "text-text-lighter text-xs transition-colors",
+                    "hover:bg-hover hover:text-text",
+                  )}
                   title="Add context files"
                 >
                   <FileText size={12} />
@@ -248,7 +252,13 @@ export default function AIChatInputBar({
                 </button>
 
                 {isContextDropdownOpen && (
-                  <div className="absolute top-full left-0 z-50 mt-1 max-h-64 w-64 overflow-y-auto rounded border border-border bg-primary-bg shadow-lg">
+                  <div
+                    className={cn(
+                      "absolute top-full left-0 z-50 mt-1",
+                      "max-h-64 w-64 overflow-y-auto rounded",
+                      "border border-border bg-primary-bg shadow-lg",
+                    )}
+                  >
                     <div className="p-2">
                       <div className="mb-2 text-text-lighter text-xs">
                         Select files to include as context:
@@ -323,7 +333,11 @@ export default function AIChatInputBar({
               hasApiKey ? "Ask about your code..." : "Configure API key to enable AI chat..."
             }
             disabled={isTyping || !hasApiKey}
-            className="min-h-[60px] flex-1 resize-none border-none bg-transparent px-3 py-2 text-text text-xs focus:outline-none disabled:opacity-50"
+            className={cn(
+              "min-h-[60px] flex-1 resize-none border-none bg-transparent",
+              "px-3 py-2 text-text text-xs",
+              "focus:outline-none disabled:opacity-50",
+            )}
           />
         </div>
         <div className="mt-2 flex items-center justify-between">

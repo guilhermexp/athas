@@ -59,7 +59,10 @@ const TerminalContextMenu = ({
 
   return (
     <div
-      className="fixed z-50 min-w-[160px] rounded-md border border-border bg-secondary-bg py-1 text-text shadow-lg"
+      className={cn(
+        "fixed z-50 min-w-[160px] rounded-md",
+        "border border-border bg-secondary-bg py-1 text-text shadow-lg",
+      )}
       style={{ left: position.x, top: position.y }}
       onClick={e => e.stopPropagation()}
     >
@@ -272,7 +275,12 @@ const TerminalTabBar = ({
 
   if (terminals.length === 0) {
     return (
-      <div className="flex min-h-[28px] items-center justify-between border-border border-b bg-secondary-bg px-2 py-1">
+      <div
+        className={cn(
+          "flex min-h-[28px] items-center justify-between",
+          "border-border border-b bg-secondary-bg px-2 py-1",
+        )}
+      >
         <div className="flex items-center gap-1.5">
           <TerminalIcon size={10} className="text-text-lighter" />
           <span className="font-mono text-text-lighter text-xs">No terminals</span>
@@ -280,7 +288,10 @@ const TerminalTabBar = ({
         {onNewTerminal && (
           <button
             onClick={onNewTerminal}
-            className="flex items-center gap-0.5 rounded px-1.5 py-1 text-text-lighter text-xs transition-colors hover:bg-hover"
+            className={cn(
+              "flex items-center gap-0.5 rounded px-1.5 py-1",
+              "text-text-lighter text-xs transition-colors hover:bg-hover",
+            )}
             title="New Terminal (Cmd+T)"
           >
             <Plus size={9} />
@@ -335,7 +346,11 @@ const TerminalTabBar = ({
                     e.stopPropagation();
                     onTabClose(terminal.id, e);
                   }}
-                  className="flex-shrink-0 cursor-pointer rounded p-0.5 opacity-60 transition-colors hover:bg-border hover:text-red-400 hover:opacity-100"
+                  className={cn(
+                    "flex-shrink-0 cursor-pointer rounded p-0.5",
+                    "opacity-60 transition-colors",
+                    "hover:bg-border hover:text-red-400 hover:opacity-100",
+                  )}
                   title="Close Terminal"
                 >
                   <X size={10} />
@@ -351,7 +366,10 @@ const TerminalTabBar = ({
           {onNewTerminal && (
             <button
               onClick={onNewTerminal}
-              className="flex flex-shrink-0 cursor-pointer items-center rounded p-1 text-text-lighter transition-colors hover:bg-hover"
+              className={cn(
+                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "text-text-lighter transition-colors hover:bg-hover",
+              )}
               title="New Terminal (Cmd+T)"
             >
               <Plus size={12} />
@@ -362,7 +380,10 @@ const TerminalTabBar = ({
           {onSplitView && (
             <button
               onClick={onSplitView}
-              className="flex flex-shrink-0 cursor-pointer items-center rounded p-1 text-text-lighter transition-colors hover:bg-hover"
+              className={cn(
+                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "text-text-lighter transition-colors hover:bg-hover",
+              )}
               title="Split Terminal View"
             >
               <SplitSquareHorizontal size={12} />
@@ -373,7 +394,10 @@ const TerminalTabBar = ({
           {onFullScreen && (
             <button
               onClick={onFullScreen}
-              className="flex flex-shrink-0 cursor-pointer items-center rounded p-1 text-text-lighter transition-colors hover:bg-hover"
+              className={cn(
+                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "text-text-lighter transition-colors hover:bg-hover",
+              )}
               title={isFullScreen ? "Exit Full Screen" : "Full Screen Terminal"}
             >
               {isFullScreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
@@ -384,7 +408,10 @@ const TerminalTabBar = ({
           {onClosePanel && (
             <button
               onClick={onClosePanel}
-              className="flex flex-shrink-0 cursor-pointer items-center rounded p-1 text-text-lighter transition-colors hover:bg-hover"
+              className={cn(
+                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "text-text-lighter transition-colors hover:bg-hover",
+              )}
               title="Close Panel"
             >
               <X size={12} />
