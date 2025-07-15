@@ -17,9 +17,9 @@
     "lint": "bun check",
 
     "__check:all": "composite of 'tsc --noEmit' and 'biome check'",
-    "check:all": "bun typecheck && bun check",
+    "check:all": "bun typecheck && bun check:fix",
 
-    "__check:fix": "wil fix formatting and linting if possible",
+    "__check:fix": "will fix formatting and linting if possible",
     "check:fix": "biome check --write --unsafe",
 
     "__clean": "this will clean and rebuild the project. both rust and js",

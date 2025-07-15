@@ -1,6 +1,6 @@
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use notify::RecursiveMode;
-use notify_debouncer_mini::{DebounceEventResult, DebouncedEvent, Debouncer, new_debouncer};
+use notify_debouncer_mini::{DebounceEventResult, Debouncer, new_debouncer};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -16,6 +16,7 @@ pub struct FileChangeEvent {
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FileChangeType {
+    Created,
     Modified,
     Deleted,
 }
@@ -24,6 +25,8 @@ pub struct FileWatcher {
     app_handle: AppHandle,
     debouncer: Arc<Mutex<Option<Debouncer<notify::RecommendedWatcher>>>>,
     watched_paths: Arc<Mutex<HashSet<PathBuf>>>,
+    watched_directories: Arc<Mutex<HashSet<PathBuf>>>,
+    known_files: Arc<Mutex<HashSet<PathBuf>>>,
 }
 
 impl FileWatcher {
@@ -32,6 +35,8 @@ impl FileWatcher {
             app_handle,
             debouncer: Arc::new(Mutex::new(None)),
             watched_paths: Arc::new(Mutex::new(HashSet::new())),
+            watched_directories: Arc::new(Mutex::new(HashSet::new())),
+            known_files: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 
@@ -43,65 +48,147 @@ impl FileWatcher {
         }
 
         let mut watched_paths = self.watched_paths.lock().unwrap();
-
-        // Already watching this path
         if watched_paths.contains(&path_buf) {
             return Ok(());
         }
 
-        // Initialize debouncer if not already done
+        self.ensure_debouncer_initialized()?;
+        self.setup_path_watching(&path_buf, &mut watched_paths)?;
+
+        Ok(())
+    }
+
+    fn ensure_debouncer_initialized(&self) -> Result<()> {
         let mut debouncer_guard = self.debouncer.lock().unwrap();
-        if debouncer_guard.is_none() {
-            let app_handle = self.app_handle.clone();
-            let watched_paths_clone = self.watched_paths.clone();
-
-            let debouncer = new_debouncer(
-                Duration::from_millis(300),
-                move |result: DebounceEventResult| {
-                    if let Ok(events) = result {
-                        let watched = watched_paths_clone.lock().unwrap();
-
-                        for DebouncedEvent { path, kind: _ } in events {
-                            // Check if file was deleted
-                            let exists = path.exists();
-                            let is_watched = watched.contains(&path);
-
-                            if is_watched {
-                                let event_type = if exists {
-                                    FileChangeType::Modified
-                                } else {
-                                    FileChangeType::Deleted
-                                };
-
-                                let change_event = FileChangeEvent {
-                                    path: path.to_string_lossy().to_string(),
-                                    event_type,
-                                };
-                                log::debug!(
-                                    "[FileWatcher] Emitting file-changed event for: {}",
-                                    change_event.path
-                                );
-                                let _ = app_handle.emit("file-changed", &change_event);
-                            }
-                        }
-                    }
-                },
-            )?;
-
-            *debouncer_guard = Some(debouncer);
+        if debouncer_guard.is_some() {
+            return Ok(());
         }
 
-        // Watch the path
-        if let Some(ref mut debouncer) = *debouncer_guard {
-            let recursive_mode = if path_buf.is_dir() {
-                RecursiveMode::Recursive
-            } else {
-                RecursiveMode::NonRecursive
+        let debouncer = self.create_debouncer()?;
+        *debouncer_guard = Some(debouncer);
+        Ok(())
+    }
+
+    fn create_debouncer(&self) -> Result<Debouncer<notify::RecommendedWatcher>> {
+        let app_handle = self.app_handle.clone();
+        let watched_paths = self.watched_paths.clone();
+        let watched_directories = self.watched_directories.clone();
+        let known_files = self.known_files.clone();
+
+        Ok(new_debouncer(
+            Duration::from_millis(300),
+            move |result: DebounceEventResult| {
+                if let Ok(events) = result {
+                    Self::handle_events(
+                        events,
+                        &app_handle,
+                        &watched_paths,
+                        &watched_directories,
+                        &known_files,
+                    );
+                }
+            },
+        )?)
+    }
+
+    fn handle_events(
+        events: Vec<notify_debouncer_mini::DebouncedEvent>,
+        app_handle: &AppHandle,
+        watched_paths: &Arc<Mutex<HashSet<PathBuf>>>,
+        watched_directories: &Arc<Mutex<HashSet<PathBuf>>>,
+        known_files: &Arc<Mutex<HashSet<PathBuf>>>,
+    ) {
+        let watched_paths = watched_paths.lock().unwrap();
+        let watched_dirs = watched_directories.lock().unwrap();
+
+        for event in events {
+            if !Self::is_path_watched(&event.path, &watched_paths, &watched_dirs) {
+                continue;
+            }
+
+            let event_type = Self::determine_event_type(&event.path, known_files);
+            let change_event = FileChangeEvent {
+                path: event.path.to_string_lossy().to_string(),
+                event_type,
             };
 
-            debouncer.watcher().watch(&path_buf, recursive_mode)?;
-            watched_paths.insert(path_buf);
+            log::debug!(
+                "[FileWatcher] Emitting file-changed event for: {} ({:?})",
+                change_event.path,
+                change_event.event_type
+            );
+            let _ = app_handle.emit("file-changed", &change_event);
         }
+    }
+
+    fn is_path_watched(
+        path: &PathBuf,
+        watched_paths: &HashSet<PathBuf>,
+        watched_dirs: &HashSet<PathBuf>,
+    ) -> bool {
+        watched_paths.contains(path) || watched_dirs.iter().any(|dir| path.starts_with(dir))
+    }
+
+    fn determine_event_type(
+        path: &PathBuf,
+        known_files: &Arc<Mutex<HashSet<PathBuf>>>,
+    ) -> FileChangeType {
+        let mut known_files = known_files.lock().unwrap();
+
+        if !path.exists() {
+            known_files.remove(path);
+            FileChangeType::Deleted
+        } else if known_files.insert(path.clone()) {
+            FileChangeType::Created
+        } else {
+            FileChangeType::Modified
+        }
+    }
+
+    fn setup_path_watching(
+        &self,
+        path_buf: &PathBuf,
+        watched_paths: &mut HashSet<PathBuf>,
+    ) -> Result<()> {
+        let mut debouncer_guard = self.debouncer.lock().unwrap();
+        let debouncer = debouncer_guard
+            .as_mut()
+            .context("Debouncer should be initialized")?;
+
+        let recursive_mode = if path_buf.is_dir() {
+            RecursiveMode::Recursive
+        } else {
+            RecursiveMode::NonRecursive
+        };
+
+        debouncer.watcher().watch(path_buf, recursive_mode)?;
+
+        if path_buf.is_dir() {
+            self.setup_directory_watching(path_buf)?;
+        } else {
+            self.known_files.lock().unwrap().insert(path_buf.clone());
+        }
+
+        watched_paths.insert(path_buf.clone());
+        Ok(())
+    }
+
+    fn setup_directory_watching(&self, path_buf: &PathBuf) -> Result<()> {
+        self.watched_directories
+            .lock()
+            .unwrap()
+            .insert(path_buf.clone());
+
+        let entries = std::fs::read_dir(path_buf)?;
+        let mut known_files = self.known_files.lock().unwrap();
+
+        entries
+            .flatten()
+            .map(|entry| entry.path())
+            .filter(|path| path.is_file())
+            .for_each(|path| {
+                known_files.insert(path);
+            });
 
         Ok(())
     }
@@ -112,6 +199,12 @@ impl FileWatcher {
 
         if !watched_paths.remove(&path_buf) {
             bail!("Path was not being watched");
+        }
+
+        // Remove from watched directories if it's a directory
+        if path_buf.is_dir() {
+            let mut watched_dirs = self.watched_directories.lock().unwrap();
+            watched_dirs.remove(&path_buf);
         }
 
         // Unwatch the path

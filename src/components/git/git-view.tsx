@@ -78,6 +78,37 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     loadGitData();
   }, [repoPath]);
 
+  // Listen for file changes and refresh git status
+  useEffect(() => {
+    let refreshTimeout: NodeJS.Timeout | null = null;
+
+    const handleFileChange = (event: CustomEvent) => {
+      const { path } = event.detail;
+
+      // Only refresh if the changed file is within the repo
+      if (repoPath && path.startsWith(repoPath)) {
+        // Clear any existing timeout
+        if (refreshTimeout) {
+          clearTimeout(refreshTimeout);
+        }
+
+        // Debounce the refresh to avoid too many calls
+        refreshTimeout = setTimeout(() => {
+          loadGitData();
+        }, 300);
+      }
+    };
+
+    window.addEventListener("file-external-change", handleFileChange as any);
+
+    return () => {
+      window.removeEventListener("file-external-change", handleFileChange as any);
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+    };
+  }, [repoPath]);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {

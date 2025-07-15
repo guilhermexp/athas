@@ -332,6 +332,8 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
 
   const refreshDirectory = useCallback(
     async (directoryPath: string) => {
+      console.log(`🔄 Refreshing directory: ${directoryPath}`);
+
       const updateFiles = async (items: FileEntry[]): Promise<FileEntry[]> => {
         return Promise.all(
           items.map(async item => {
@@ -348,7 +350,8 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
                     children: undefined,
                   };
                 });
-                return { ...item, children, expanded: true };
+                // Keep the expanded state if it was already expanded
+                return { ...item, children, expanded: item.expanded || true };
               } catch (error) {
                 console.error("Error refreshing directory:", error);
                 return item;
@@ -364,9 +367,49 @@ export const useFileOperations = ({ openBuffer }: UseFileOperationsProps) => {
       };
 
       const updatedFiles = await updateFiles(files);
+
+      // Check if the directory was found and updated
+      let directoryFound = false;
+      const checkIfDirectoryFound = (items: FileEntry[]): boolean => {
+        for (const item of items) {
+          if (item.path === directoryPath && item.isDir) {
+            return true;
+          }
+          if (item.children && checkIfDirectoryFound(item.children)) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      directoryFound = checkIfDirectoryFound(updatedFiles);
+
+      // If directory wasn't found in the tree, it might be because parent directories aren't expanded
+      // In this case, refresh from the root
+      if (!directoryFound && rootFolderPath) {
+        console.log(`📁 Directory ${directoryPath} not found in tree, refreshing from root`);
+        try {
+          const entries = await readDirectory(rootFolderPath);
+          const fileTree = (entries as any[]).map((entry: any) => ({
+            name: entry.name || "Unknown",
+            path: entry.path || `${rootFolderPath}/${entry.name}`,
+            isDir: entry.is_dir || false,
+            expanded: false,
+            children: undefined,
+          }));
+          setFiles(fileTree);
+          invalidateProjectFilesCache();
+          return;
+        } catch (error) {
+          console.error("Error refreshing root directory:", error);
+        }
+      }
+
+      console.log(`✅ Setting ${updatedFiles.length} files after refresh`);
       setFiles(updatedFiles);
+      invalidateProjectFilesCache();
     },
-    [files],
+    [files, rootFolderPath, invalidateProjectFilesCache],
   );
 
   const handleCreateNewFileInDirectory = useCallback(

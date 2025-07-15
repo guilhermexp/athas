@@ -235,6 +235,7 @@ function App() {
   // Sync files from useFileOperations to project store
   const { files } = projectStore;
   useEffect(() => {
+    console.log(`🔄 Syncing ${localFiles.length} files to project store`);
     projectStore.setFiles(localFiles);
   }, [localFiles]);
 
@@ -250,6 +251,7 @@ function App() {
   // File watcher store - get external changes as array
   const startWatching = useFileWatcherStore(state => state.startWatching);
   const markPendingSave = useFileWatcherStore(state => state.markPendingSave);
+  const setProjectRoot = useFileWatcherStore(state => state.setProjectRoot);
   // const clearPendingSave = useFileWatcherStore(state => state.clearPendingSave); // Reserved for future use
   // const stopWatching = useFileWatcherStore((state) => state.stopWatching); // Reserved for future use
 
@@ -283,10 +285,21 @@ function App() {
           });
       }
 
-      // If it's a directory change, refresh the file tree
-      if (changeType === "modified" && rootFolderPath && path.startsWith(rootFolderPath)) {
+      // Handle file tree updates for all change types
+      if (rootFolderPath && path.startsWith(rootFolderPath)) {
         const dirPath = path.substring(0, path.lastIndexOf("/"));
+
+        console.log(`📂 File system change detected: ${changeType} on ${path}`);
+        console.log(`📁 Will refresh directory: ${dirPath}`);
+
+        // Refresh the directory containing the changed file
+        // This will handle created, modified, and deleted files
         refreshDirectory(dirPath);
+
+        // For deleted files that are open, close the buffer
+        if (changeType === "deleted" && buffer) {
+          closeBuffer(buffer.id);
+        }
       }
     };
 
@@ -295,7 +308,7 @@ function App() {
     return () => {
       window.removeEventListener("file-external-change", handleFileExternalChange as any);
     };
-  }, [buffers, updateBufferContent, rootFolderPath, refreshDirectory]);
+  }, [buffers, updateBufferContent, rootFolderPath, refreshDirectory, closeBuffer]);
 
   // Watch individual files based on open buffers
   useEffect(() => {
@@ -387,10 +400,15 @@ function App() {
     refreshAllProjectFilesComplete();
   }, [refreshAllProjectFilesComplete]);
 
-  // Sync rootFolderPath to project store
+  // Sync rootFolderPath to project store and start watching it
   useEffect(() => {
     projectStore.setRootFolderPath(rootFolderPath);
-  }, [rootFolderPath]);
+
+    // Start watching the root folder for changes
+    if (rootFolderPath) {
+      setProjectRoot(rootFolderPath);
+    }
+  }, [rootFolderPath, setProjectRoot]);
 
   // Update sidebar store with active buffer path
   useEffect(() => {

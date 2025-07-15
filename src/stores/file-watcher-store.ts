@@ -5,7 +5,7 @@ import { combine } from "zustand/middleware";
 
 interface FileChangeEvent {
   path: string;
-  event_type: "modified" | "deleted";
+  event_type: "created" | "modified" | "deleted";
 }
 
 // Store the unlisten function outside of the store to prevent re-renders
@@ -18,6 +18,16 @@ const initialState = {
 
 export const useFileWatcherStore = create(
   combine(initialState, (set, get) => ({
+    // Set the project root and start watching it
+    setProjectRoot: async (path: string) => {
+      try {
+        await invoke("set_project_root", { path });
+        console.log(`✅ Started watching project root: ${path}`);
+      } catch (error) {
+        console.error("❌ Failed to set project root:", path, error);
+      }
+    },
+
     // Start watching a path (file or directory)
     startWatching: async (path: string) => {
       const { watchedPaths } = get();

@@ -418,7 +418,7 @@ pub struct TerminalState {
 impl TerminalState {
     pub fn new(rows: u16, cols: u16) -> Self {
         Self {
-            parser: Parser::new(rows.into(), cols.into(), 10000), // 10k lines of scrollback
+            parser: Parser::new(rows, cols, 10000), // 10k lines of scrollback
             rows,
             cols,
         }
@@ -444,7 +444,7 @@ impl TerminalState {
 
     fn build_screen_events(&self) -> Vec<TerminalEvent> {
         let screen = self.parser.screen();
-        let (cursor_line, cursor_col) = screen.cursor_position().into();
+        let (cursor_line, cursor_col) = screen.cursor_position();
 
         let mut lines = Vec::with_capacity(self.rows as usize);
         for row in 0..self.rows {
@@ -461,13 +461,13 @@ impl TerminalState {
 
         vec![TerminalEvent::ScreenUpdate {
             screen: lines,
-            cursor_line: cursor_line as u16,
-            cursor_col: cursor_col as u16,
+            cursor_line,
+            cursor_col,
         }]
     }
 
     pub fn resize(&mut self, rows: u16, cols: u16) {
-        self.parser.set_size(rows.into(), cols.into());
+        self.parser.set_size(rows, cols);
         self.rows = rows;
         self.cols = cols;
     }

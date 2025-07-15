@@ -182,6 +182,7 @@ fn main() {
             // File watcher commands
             start_watching,
             stop_watching,
+            set_project_root,
             // LSP commands
             start_lsp_server,
             stop_lsp_server,

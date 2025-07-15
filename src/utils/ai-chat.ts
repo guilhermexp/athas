@@ -8,13 +8,6 @@ import { getProviderApiToken } from "./token-manager";
 import type { ContextInfo } from "./types";
 
 export {
-  analyzeCurrentFile,
-  explainCode,
-  getDebuggingHelp,
-  getOpenAIChatCompletion,
-  getOpenAIChatCompletionStream,
-} from "./ai-chat-legacy";
-export {
   getOpenAIToken,
   getProviderApiToken,
   removeProviderApiToken,

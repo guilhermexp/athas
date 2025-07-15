@@ -10,12 +10,12 @@ command=$(echo "$input" | jq -r '.tool_input.command // ""')
 if [[ "$command" =~ ^(bun|npm)[[:space:]]+run[[:space:]]+build$ ]] || \
    [[ "$command" =~ ^(bun|npm)[[:space:]]+tauri[[:space:]]+build$ ]]; then
     # Block build commands and provide feedback to run bun check:all instead
-    echo "Use 'bun check:all' instead of '$command'" >&2
+    echo "Build commands are blocked. Use 'bun check:all' or 'cargo clippy' instead" >&2
     exit 2
 elif [[ "$command" =~ ^(bun|npm)[[:space:]]+run[[:space:]]+dev$ ]] || \
      [[ "$command" =~ ^(bun|npm)[[:space:]]+tauri[[:space:]]+dev$ ]]; then
     # Block dev commands
-    echo "Dev commands are blocked. Use 'bun check:all' instead" >&2
+    echo "Dev commands are blocked. Use 'bun check:all' or 'cargo clippy' instead" >&2
     exit 2
 fi
 

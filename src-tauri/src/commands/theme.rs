@@ -133,7 +133,7 @@ fn get_system_theme_sync() -> String {
     {
         // For macOS, try to detect dark mode
         if let Ok(output) = Command::new("defaults")
-            .args(&["read", "-g", "AppleInterfaceStyle"])
+            .args(["read", "-g", "AppleInterfaceStyle"])
             .output()
         {
             if output.status.success() {

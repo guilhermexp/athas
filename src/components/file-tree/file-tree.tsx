@@ -62,6 +62,11 @@ const FileTree = ({
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
 
+  // Log when files prop changes
+  useEffect(() => {
+    console.log(`🌳 FileTree received ${files.length} files`, files);
+  }, [files]);
+
   const startInlineEditing = (parentPath: string, isFolder: boolean) => {
     if (!onUpdateFiles) return;
 
@@ -196,7 +201,7 @@ const FileTree = ({
       <div key={file.path}>
         {file.isEditing ? (
           <div
-            className="flex min-h-[22px] w-full items-center gap-1.5 px-1.5 py-1"
+            className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
             style={{ paddingLeft: `${12 + depth * 16}px` }}
           >
             <FileIcon
@@ -223,7 +228,10 @@ const FileTree = ({
                   cancelInlineEditing();
                 }
               }}
-              className="flex-1 border-text border-b border-none bg-transparent font-mono text-text text-xs outline-none focus:border-text-lighter"
+              className={cn(
+                "flex-1 border-text border-b border-none bg-transparent",
+                "font-mono text-text text-xs outline-none focus:border-text-lighter",
+              )}
               placeholder={file.isDir ? "folder name" : "file name"}
             />
           </div>
@@ -262,7 +270,10 @@ const FileTree = ({
               className="flex-shrink-0 text-text-lighter"
             />
             <span
-              className="flex-1 select-none overflow-hidden text-ellipsis whitespace-nowrap"
+              className={cn(
+                "flex-1 select-none overflow-hidden",
+                "text-ellipsis whitespace-nowrap",
+              )}
               style={{
                 userSelect: "none",
                 WebkitUserSelect: "none",
@@ -282,7 +293,7 @@ const FileTree = ({
   return (
     <>
       <div
-        className="file-tree-container flex flex-1 select-none flex-col gap-0 p-2"
+        className={cn("file-tree-container flex flex-1 select-none", "flex-col gap-0 p-2")}
         style={{
           userSelect: "none",
           WebkitUserSelect: "none",
@@ -295,7 +306,10 @@ const FileTree = ({
 
       {contextMenu && (
         <div
-          className="context-menu fixed z-50 rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
+          className={cn(
+            "context-menu fixed z-50 rounded-md border",
+            "border-border bg-secondary-bg py-1 shadow-lg",
+          )}
           style={{
             left: contextMenu.x,
             top: contextMenu.y,
@@ -312,7 +326,10 @@ const FileTree = ({
                   startInlineEditing(contextMenu.path, false);
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <FilePlus size={12} />
                 New File
@@ -329,7 +346,10 @@ const FileTree = ({
                   }
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <FolderPlus size={12} />
                 New Folder
@@ -346,7 +366,10 @@ const FileTree = ({
                   }
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <Upload size={12} />
                 Upload Files
@@ -363,7 +386,10 @@ const FileTree = ({
                   }
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <RefreshCw size={12} />
                 Refresh
@@ -381,7 +407,10 @@ const FileTree = ({
                   }
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <Terminal size={12} />
                 Open in Terminal
@@ -394,7 +423,10 @@ const FileTree = ({
                   console.log("Find in folder:", contextMenu.path);
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <Search size={12} />
                 Find in Folder
@@ -408,7 +440,10 @@ const FileTree = ({
                     onGenerateImage(contextMenu.path);
                     setContextMenu(null);
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                  className={cn(
+                    "flex w-full items-center gap-2 px-3 py-1.5",
+                    "text-left font-mono text-text text-xs hover:bg-hover",
+                  )}
                 >
                   <ImageIcon size={12} />
                   Generate Image
@@ -429,7 +464,10 @@ const FileTree = ({
                   onFileSelect(contextMenu.path, false);
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <FolderOpen size={12} />
                 Open
@@ -449,7 +487,10 @@ const FileTree = ({
                   }
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <Copy size={12} />
                 Copy Content
@@ -466,7 +507,10 @@ const FileTree = ({
                   }
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <FileText size={12} />
                 Duplicate
@@ -492,7 +536,10 @@ const FileTree = ({
                   }
                   setContextMenu(null);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5",
+                  "text-left font-mono text-text text-xs hover:bg-hover",
+                )}
               >
                 <Info size={12} />
                 Properties
@@ -514,7 +561,10 @@ const FileTree = ({
               }
               setContextMenu(null);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Link size={12} />
             Copy Path
@@ -537,7 +587,10 @@ const FileTree = ({
               }
               setContextMenu(null);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <FileText size={12} />
             Copy Relative Path
@@ -555,7 +608,10 @@ const FileTree = ({
               }
               setContextMenu(null);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Scissors size={12} />
             Cut
@@ -576,7 +632,10 @@ const FileTree = ({
               }
               setContextMenu(null);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Edit size={12} />
             Rename
@@ -598,7 +657,10 @@ const FileTree = ({
               }
               setContextMenu(null);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Eye size={12} />
             Reveal in Finder
@@ -617,7 +679,10 @@ const FileTree = ({
               }
               setContextMenu(null);
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover hover:text-red-500"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover hover:text-red-500",
+            )}
           >
             <Trash size={12} />
             Delete
