@@ -10,6 +10,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/utils/cn";
 import {
   discardAllChanges,
   fetchChanges,
@@ -119,7 +120,10 @@ const GitActionsMenu = ({
 
   return (
     <div
-      className="fixed z-50 min-w-[180px] rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
+      className={cn(
+        "fixed z-50 min-w-[180px] rounded-md",
+        "border border-border bg-secondary-bg py-1 shadow-lg",
+      )}
       style={{
         left: position.x,
         top: position.y,
@@ -138,7 +142,10 @@ const GitActionsMenu = ({
               handlePush();
             }}
             disabled={isLoading}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
+            )}
           >
             <Upload size={12} />
             Push Changes
@@ -151,7 +158,10 @@ const GitActionsMenu = ({
               handlePull();
             }}
             disabled={isLoading}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
+            )}
           >
             <Download size={12} />
             Pull Changes
@@ -164,7 +174,10 @@ const GitActionsMenu = ({
               handleFetch();
             }}
             disabled={isLoading}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
+            )}
           >
             <GitPullRequest size={12} />
             Fetch
@@ -179,7 +192,10 @@ const GitActionsMenu = ({
               e.stopPropagation();
               handleStashManager();
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Archive size={12} />
             Manage Stashes
@@ -191,7 +207,10 @@ const GitActionsMenu = ({
               e.stopPropagation();
               handleRemoteManager();
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Server size={12} />
             Manage Remotes
@@ -203,7 +222,10 @@ const GitActionsMenu = ({
               e.stopPropagation();
               handleTagManager();
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <Tag size={12} />
             Manage Tags
@@ -218,7 +240,10 @@ const GitActionsMenu = ({
               e.stopPropagation();
               handleRefresh();
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <RefreshCw size={12} />
             Refresh Status
@@ -234,7 +259,10 @@ const GitActionsMenu = ({
               handleDiscardAllChanges();
             }}
             disabled={isLoading}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-red-400 text-xs hover:bg-hover disabled:opacity-50"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-red-400 text-xs hover:bg-hover disabled:opacity-50",
+            )}
           >
             <RotateCcw size={12} />
             Discard All Changes
@@ -250,7 +278,10 @@ const GitActionsMenu = ({
               handleInitRepository();
             }}
             disabled={isLoading}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
+            )}
           >
             <Settings size={12} />
             Initialize Repository
@@ -264,7 +295,10 @@ const GitActionsMenu = ({
               e.stopPropagation();
               handleRefresh();
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+            className={cn(
+              "flex w-full items-center gap-2 px-3 py-1.5",
+              "text-left font-mono text-text text-xs hover:bg-hover",
+            )}
           >
             <RefreshCw size={12} />
             Refresh Status

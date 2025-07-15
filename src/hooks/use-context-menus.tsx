@@ -1,6 +1,7 @@
 import { ClockIcon } from "lucide-react";
 import type React from "react";
 import { useEffect } from "react";
+import { cn } from "@/utils/cn";
 import type { RecentFolder } from "../types/recent-folders";
 
 interface UseContextMenusProps {
@@ -86,7 +87,10 @@ export const ProjectNameMenu = ({
           onOpenFolder();
           onCloseMenu();
         }}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className={cn(
+          "flex w-full items-center gap-2 px-3 py-1.5",
+          "text-left font-mono text-text text-xs hover:bg-hover",
+        )}
       >
         Add Folder to Workspace
       </button>
@@ -98,7 +102,10 @@ export const ProjectNameMenu = ({
           onCollapseAllFolders();
           onCloseMenu();
         }}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className={cn(
+          "flex w-full items-center gap-2 px-3 py-1.5",
+          "text-left font-mono text-text text-xs hover:bg-hover",
+        )}
       >
         Collapse All Folders
       </button>
@@ -119,7 +126,10 @@ export const ProjectNameMenu = ({
                 onOpenRecentFolder(folder.path);
                 onCloseMenu();
               }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-1.5",
+                "text-left font-mono text-text text-xs hover:bg-hover",
+              )}
             >
               <div className="flex min-w-0 flex-1 flex-col items-start">
                 <span className="truncate font-medium">{folder.name}</span>

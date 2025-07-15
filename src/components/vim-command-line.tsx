@@ -1,5 +1,6 @@
 import { Terminal, X } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { cn } from "@/utils/cn";
 
 export interface VimCommand {
   command: string;
@@ -335,7 +336,11 @@ const VimCommandLine = forwardRef<VimCommandLineRef, VimCommandLineProps>(
               value={command}
               onChange={e => setCommand(e.target.value)}
               placeholder=":command"
-              className="flex-1 border-none bg-transparent text-sm text-text placeholder-text-lighter outline-none focus:border-none focus:shadow-none focus:outline-none focus:ring-0"
+              className={cn(
+                "flex-1 border-none bg-transparent text-sm text-text",
+                "placeholder-text-lighter outline-none",
+                "focus:border-none focus:shadow-none focus:outline-none focus:ring-0",
+              )}
               style={{
                 outline: "none !important",
                 boxShadow: "none !important",
@@ -367,9 +372,11 @@ const VimCommandLine = forwardRef<VimCommandLineRef, VimCommandLineProps>(
                       inputRef.current.focus();
                     }
                   }}
-                  className={`flex cursor-pointer items-center justify-between px-4 py-2 transition-colors ${
-                    index === selectedIndex ? "bg-selected text-text" : "text-text hover:bg-hover"
-                  }`}
+                  className={cn(
+                    "flex cursor-pointer items-center justify-between",
+                    "px-4 py-2 transition-colors",
+                    index === selectedIndex ? "bg-selected text-text" : "text-text hover:bg-hover",
+                  )}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

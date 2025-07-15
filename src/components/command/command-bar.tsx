@@ -1,5 +1,6 @@
 import { File, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/utils/cn";
 
 interface CommandBarProps {
   isVisible: boolean;
@@ -415,9 +416,12 @@ const CommandBar = ({
                         <button
                           key={`recent-${file.path}`}
                           onClick={() => handleFileSelect(file.path)}
-                          className={`m-0 flex w-full cursor-pointer items-center gap-2 rounded-none border-none px-3 py-1.5 font-mono transition-colors duration-150 ${
-                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover"
-                          }`}
+                          className={cn(
+                            "m-0 flex w-full cursor-pointer items-center gap-2",
+                            "rounded-none border-none px-3 py-1.5 font-mono",
+                            "transition-colors duration-150",
+                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover",
+                          )}
                         >
                           <File size={13} className="text-accent" />
                           <div className="min-w-0 flex-1 text-left">
@@ -451,9 +455,12 @@ const CommandBar = ({
                         <button
                           key={`other-${file.path}`}
                           onClick={() => handleFileSelect(file.path)}
-                          className={`m-0 flex w-full cursor-pointer items-center gap-2 rounded-none border-none px-3 py-1.5 font-mono transition-colors duration-150 ${
-                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover"
-                          }`}
+                          className={cn(
+                            "m-0 flex w-full cursor-pointer items-center gap-2",
+                            "rounded-none border-none px-3 py-1.5 font-mono",
+                            "transition-colors duration-150",
+                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover",
+                          )}
                         >
                           <File size={13} className="text-text-lighter" />
                           <div className="min-w-0 flex-1 text-left">

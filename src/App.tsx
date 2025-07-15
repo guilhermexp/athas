@@ -51,6 +51,7 @@ import { useUIState } from "./stores/ui-state-store";
 import type { FileEntry } from "./types/app";
 import { type CoreFeaturesState, DEFAULT_CORE_FEATURES } from "./types/core-features";
 import type { ThemeType } from "./types/theme";
+import { cn } from "./utils/cn";
 import { getFilenameFromPath, getLanguageFromFilename } from "./utils/file-utils";
 import type { GitDiff } from "./utils/git";
 import { isMac, readFile, writeFile } from "./utils/platform";
@@ -1053,9 +1054,12 @@ function App() {
 
   if (shouldShowWelcome) {
     return (
-      <div className="flex h-screen w-screen flex-col overflow-hidden bg-transparent">
+      <div className={cn("flex h-screen w-screen flex-col overflow-hidden bg-transparent")}>
         <div
-          className={`window-container flex h-full w-full flex-col overflow-hidden bg-white ${isMac() && "rounded-xl"}`}
+          className={cn(
+            "window-container flex h-full w-full flex-col overflow-hidden bg-white",
+            isMac() && "rounded-xl",
+          )}
         >
           <CustomTitleBar showMinimal={true} isWelcomeScreen={true} />
           <WelcomeScreen
@@ -1069,9 +1073,12 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-transparent">
+    <div className={cn("flex h-screen w-screen flex-col overflow-hidden bg-transparent")}>
       <div
-        className={`window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg ${isMac() && "rounded-xl"}`}
+        className={cn(
+          "window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg",
+          isMac() && "rounded-xl",
+        )}
       >
         {/* Custom Titlebar */}
         <CustomTitleBar

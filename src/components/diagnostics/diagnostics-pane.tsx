@@ -1,4 +1,5 @@
 import { AlertCircle, AlertTriangle, Info, X } from "lucide-react";
+import { cn } from "@/utils/cn";
 
 export interface Diagnostic {
   severity: "error" | "warning" | "info";
@@ -107,7 +108,10 @@ const DiagnosticsPane = ({
                           )}
                         </div>
                         <div
-                          className={`text-xs leading-tight ${getSeverityColor(diagnostic.severity)} pr-1`}
+                          className={cn(
+                            "pr-1 text-xs leading-tight",
+                            getSeverityColor(diagnostic.severity),
+                          )}
                         >
                           {diagnostic.message}
                         </div>

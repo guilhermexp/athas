@@ -374,7 +374,7 @@ export default function AIChat({
           return (
             <div
               key={message.id}
-              className={`${message.role === "user" ? "flex justify-end p-3" : "p-3"}`}
+              className={cn("p-3", message.role === "user" && "flex justify-end")}
             >
               {message.role === "user" ? (
                 /* User Message - Subtle Chat Bubble */

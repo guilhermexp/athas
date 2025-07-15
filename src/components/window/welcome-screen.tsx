@@ -1,4 +1,5 @@
 import { Clock, Folder, FolderOpen } from "lucide-react";
+import { cn } from "@/utils/cn";
 
 interface RecentFolder {
   name: string;
@@ -26,7 +27,12 @@ const WelcomeScreen = ({
   };
 
   return (
-    <div className="paper-texture paper-noise flex h-screen w-screen flex-col items-center justify-center">
+    <div
+      className={cn(
+        "paper-texture paper-noise",
+        "flex h-screen w-screen flex-col items-center justify-center",
+      )}
+    >
       {/* Logo Section */}
       <div className="mb-6 flex flex-col items-center">
         <div className="mb-1 flex justify-center">

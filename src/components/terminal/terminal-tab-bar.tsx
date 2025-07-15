@@ -294,7 +294,11 @@ const TerminalTabBar = ({
     <>
       <div
         ref={tabBarRef}
-        className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border flex min-h-[24px] items-center justify-between overflow-x-auto border-border border-b bg-secondary-bg px-1"
+        className={cn(
+          "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border",
+          "flex min-h-[24px] items-center justify-between overflow-x-auto",
+          "border-border border-b bg-secondary-bg px-1",
+        )}
         style={{
           scrollbarWidth: "thin",
           scrollbarGutter: "stable",

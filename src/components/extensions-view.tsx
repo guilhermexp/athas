@@ -1,5 +1,6 @@
 import { Code, Package, Palette, Search, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 import type { CoreFeature } from "../types/core-features";
 import type { ThemeType } from "../types/theme";
 import Button from "./ui/button";
@@ -446,7 +447,11 @@ export default function ExtensionsView({
             placeholder="Search extensions..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full rounded border border-border bg-secondary-bg py-1.5 pr-4 pl-8 text-text text-xs placeholder-text-lighter focus:border-accent focus:outline-none"
+            className={cn(
+              "w-full rounded border border-border bg-secondary-bg",
+              "py-1.5 pr-4 pl-8 text-text text-xs placeholder-text-lighter",
+              "focus:border-accent focus:outline-none",
+            )}
           />
         </div>
       </div>
@@ -457,7 +462,7 @@ export default function ExtensionsView({
           variant="ghost"
           size="sm"
           data-active={activeTab === "all"}
-          className={`text-xs ${activeTab === "all" ? "bg-hover" : ""}`}
+          className={cn("text-xs", activeTab === "all" && "bg-hover")}
         >
           All
         </Button>
@@ -466,7 +471,7 @@ export default function ExtensionsView({
           variant="ghost"
           size="sm"
           data-active={activeTab === "core"}
-          className={`flex items-center gap-1 text-xs ${activeTab === "core" ? "bg-hover" : ""}`}
+          className={cn("flex items-center gap-1 text-xs", activeTab === "core" && "bg-hover")}
         >
           <Settings size={14} />
           Core
@@ -476,7 +481,10 @@ export default function ExtensionsView({
           variant="ghost"
           size="sm"
           data-active={activeTab === "language-server"}
-          className={`flex items-center gap-1 text-xs ${activeTab === "language-server" ? "bg-hover" : ""}`}
+          className={cn(
+            "flex items-center gap-1 text-xs",
+            activeTab === "language-server" && "bg-hover",
+          )}
         >
           <Code size={14} />
           Language Servers
@@ -486,7 +494,7 @@ export default function ExtensionsView({
           variant="ghost"
           size="sm"
           data-active={activeTab === "theme"}
-          className={`flex items-center gap-1 text-xs ${activeTab === "theme" ? "bg-hover" : ""}`}
+          className={cn("flex items-center gap-1 text-xs", activeTab === "theme" && "bg-hover")}
         >
           <Palette size={14} />
           Themes

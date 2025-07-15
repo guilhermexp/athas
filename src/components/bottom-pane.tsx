@@ -1,5 +1,6 @@
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 import DiagnosticsPane, { type Diagnostic } from "./diagnostics/diagnostics-pane";
 import TerminalContainer from "./terminal/terminal-container";
 
@@ -78,9 +79,11 @@ const BottomPane = ({
 
   return (
     <div
-      className={`${isFullScreen ? "fixed inset-x-0" : "relative"} z-50 flex flex-col border-border border-t bg-secondary-bg ${
-        !isVisible ? "hidden" : ""
-      }`}
+      className={cn(
+        "z-50 flex flex-col border-border border-t bg-secondary-bg",
+        isFullScreen ? "fixed inset-x-0" : "relative",
+        !isVisible && "hidden",
+      )}
       style={{
         height: isFullScreen ? `calc(100vh - ${totalReservedHeight}px)` : `${height}px`,
         ...(isFullScreen && {
@@ -92,11 +95,18 @@ const BottomPane = ({
       {/* Resize Handle */}
       <div
         onMouseDown={handleMouseDown}
-        className={`group absolute top-0 right-0 left-0 h-1 cursor-ns-resize transition-colors duration-150 hover:bg-blue-500/30 ${
-          isResizing ? "bg-blue-500/50" : ""
-        }`}
+        className={cn(
+          "group absolute top-0 right-0 left-0 h-1",
+          "cursor-ns-resize transition-colors duration-150 hover:bg-blue-500/30",
+          isResizing && "bg-blue-500/50",
+        )}
       >
-        <div className="-translate-y-[1px] absolute top-0 right-0 left-0 h-[3px] bg-blue-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
+        <div
+          className={cn(
+            "-translate-y-[1px] absolute top-0 right-0 left-0 h-[3px]",
+            "bg-blue-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100",
+          )}
+        />
       </div>
 
       {/* Content Area */}
@@ -105,7 +115,7 @@ const BottomPane = ({
         {showTerminal && (
           <TerminalContainer
             currentDirectory={currentDirectory}
-            className={`h-full ${activeTab === "terminal" ? "block" : "hidden"}`}
+            className={cn("h-full", activeTab === "terminal" ? "block" : "hidden")}
             onClosePanel={onClose}
             onFullScreen={onFullScreen}
             isFullScreen={isFullScreen}

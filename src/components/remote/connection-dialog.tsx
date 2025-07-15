@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, Eye, EyeOff, Save, Server, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 import Button from "../ui/button";
 import Dropdown from "../ui/dropdown";
 import type { RemoteConnection, RemoteConnectionFormData } from "./types";
@@ -156,7 +157,11 @@ const ConnectionDialog = ({
                 value={formData.name}
                 onChange={e => updateFormData({ name: e.target.value })}
                 placeholder="My Server"
-                className="w-full rounded border border-border bg-secondary-bg px-3 py-2 text-text text-xs placeholder-text-lighter focus:border-blue-500 focus:outline-none"
+                className={cn(
+                  "w-full rounded border border-border bg-secondary-bg",
+                  "px-3 py-2 text-text text-xs placeholder-text-lighter",
+                  "focus:border-blue-500 focus:outline-none",
+                )}
                 disabled={isValidating}
               />
             </div>
@@ -173,7 +178,11 @@ const ConnectionDialog = ({
                   value={formData.host}
                   onChange={e => updateFormData({ host: e.target.value })}
                   placeholder="192.168.1.100"
-                  className="w-full rounded border border-border bg-secondary-bg px-3 py-2 text-text text-xs placeholder-text-lighter focus:border-blue-500 focus:outline-none"
+                  className={cn(
+                    "w-full rounded border border-border bg-secondary-bg",
+                    "px-3 py-2 text-text text-xs placeholder-text-lighter",
+                    "focus:border-blue-500 focus:outline-none",
+                  )}
                   disabled={isValidating}
                 />
               </div>
@@ -189,7 +198,11 @@ const ConnectionDialog = ({
                   placeholder="22"
                   min="1"
                   max="65535"
-                  className="w-full rounded border border-border bg-secondary-bg px-3 py-2 text-text text-xs placeholder-text-lighter focus:border-blue-500 focus:outline-none"
+                  className={cn(
+                    "w-full rounded border border-border bg-secondary-bg",
+                    "px-3 py-2 text-text text-xs placeholder-text-lighter",
+                    "focus:border-blue-500 focus:outline-none",
+                  )}
                   disabled={isValidating}
                 />
               </div>
@@ -217,7 +230,11 @@ const ConnectionDialog = ({
                 value={formData.username}
                 onChange={e => updateFormData({ username: e.target.value })}
                 placeholder="root"
-                className="w-full rounded border border-border bg-secondary-bg px-3 py-2 text-text text-xs placeholder-text-lighter focus:border-blue-500 focus:outline-none"
+                className={cn(
+                  "w-full rounded border border-border bg-secondary-bg",
+                  "px-3 py-2 text-text text-xs placeholder-text-lighter",
+                  "focus:border-blue-500 focus:outline-none",
+                )}
                 disabled={isValidating}
               />
             </div>
@@ -234,7 +251,11 @@ const ConnectionDialog = ({
                   value={formData.password}
                   onChange={e => updateFormData({ password: e.target.value })}
                   placeholder="Leave empty to use key authentication"
-                  className="w-full rounded border border-border bg-secondary-bg px-3 py-2 pr-10 text-text text-xs placeholder-text-lighter focus:border-blue-500 focus:outline-none"
+                  className={cn(
+                    "w-full rounded border border-border bg-secondary-bg",
+                    "px-3 py-2 pr-10 text-text text-xs placeholder-text-lighter",
+                    "focus:border-blue-500 focus:outline-none",
+                  )}
                   disabled={isValidating}
                 />
                 <button
@@ -258,7 +279,11 @@ const ConnectionDialog = ({
                 value={formData.keyPath}
                 onChange={e => updateFormData({ keyPath: e.target.value })}
                 placeholder="~/.ssh/id_rsa"
-                className="w-full rounded border border-border bg-secondary-bg px-3 py-2 text-text text-xs placeholder-text-lighter focus:border-blue-500 focus:outline-none"
+                className={cn(
+                  "w-full rounded border border-border bg-secondary-bg",
+                  "px-3 py-2 text-text text-xs placeholder-text-lighter",
+                  "focus:border-blue-500 focus:outline-none",
+                )}
                 disabled={isValidating}
               />
             </div>

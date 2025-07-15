@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { cn } from "@/utils/cn";
 import type { FileEntry } from "../types/app";
 import { readFile } from "../utils/platform";
 import FileIcon from "./file-icon";
@@ -332,7 +333,12 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
                 variant="ghost"
                 size="sm"
                 onClick={() => setCaseSensitive(!caseSensitive)}
-                className={`h-5 w-5 px-0.5 py-0.5 text-xs ${caseSensitive ? "bg-selected text-text" : "text-text-lighter hover:bg-hover hover:text-text"}`}
+                className={cn(
+                  "h-5 w-5 px-0.5 py-0.5 text-xs",
+                  caseSensitive
+                    ? "bg-selected text-text"
+                    : "text-text-lighter hover:bg-hover hover:text-text",
+                )}
                 title="Match Case"
                 tabIndex={0}
                 style={{ minWidth: "unset" }}
@@ -343,7 +349,12 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
                 variant="ghost"
                 size="sm"
                 onClick={() => setWholeWord(!wholeWord)}
-                className={`h-5 w-5 px-0.5 py-0.5 text-xs ${wholeWord ? "bg-selected text-text" : "text-text-lighter hover:bg-hover hover:text-text"}`}
+                className={cn(
+                  "h-5 w-5 px-0.5 py-0.5 text-xs",
+                  wholeWord
+                    ? "bg-selected text-text"
+                    : "text-text-lighter hover:bg-hover hover:text-text",
+                )}
                 title="Match Whole Word"
                 tabIndex={0}
                 style={{ minWidth: "unset" }}
@@ -354,7 +365,12 @@ const SearchView = forwardRef<SearchViewRef, SearchViewProps>(
                 variant="ghost"
                 size="sm"
                 onClick={() => setUseRegex(!useRegex)}
-                className={`h-5 w-5 px-0.5 py-0.5 text-xs ${useRegex ? "bg-selected text-text" : "text-text-lighter hover:bg-hover hover:text-text"}`}
+                className={cn(
+                  "h-5 w-5 px-0.5 py-0.5 text-xs",
+                  useRegex
+                    ? "bg-selected text-text"
+                    : "text-text-lighter hover:bg-hover hover:text-text",
+                )}
                 title="Use Regular Expression"
                 tabIndex={0}
                 style={{ minWidth: "unset" }}

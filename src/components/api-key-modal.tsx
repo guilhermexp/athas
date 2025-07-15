@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, ExternalLink, Key, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/utils/cn";
 import { getProviderById } from "../types/ai-provider";
 import Button from "./ui/button";
 
@@ -181,7 +182,11 @@ const ApiKeyModal = ({
               value={apiKey}
               onChange={e => handleKeyChange(e.target.value)}
               placeholder={getApiKeyPlaceholder()}
-              className="w-full rounded border border-border bg-secondary-bg px-3 py-2 font-mono text-text text-xs focus:border-blue-500 focus:outline-none"
+              className={cn(
+                "w-full rounded border border-border bg-secondary-bg",
+                "px-3 py-2 font-mono text-text text-xs",
+                "focus:border-blue-500 focus:outline-none",
+              )}
               disabled={isValidating}
             />
 

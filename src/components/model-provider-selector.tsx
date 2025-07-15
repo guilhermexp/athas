@@ -76,7 +76,13 @@ const ModelProviderSelector = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-[9999] max-h-[80vh] min-w-[480px] transform overflow-y-auto rounded-lg border border-border bg-primary-bg shadow-xl">
+        <div
+          className={cn(
+            "-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-[9999]",
+            "max-h-[80vh] min-w-[480px] transform overflow-y-auto",
+            "rounded-lg border border-border bg-primary-bg shadow-xl",
+          )}
+        >
           {AI_PROVIDERS.map(provider => (
             <div key={provider.id} className="border-border border-b last:border-b-0">
               {/* Provider Header */}

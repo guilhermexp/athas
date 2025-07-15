@@ -93,7 +93,12 @@ const ResizableSidebar = ({
             isResizing && "bg-blue-500/50",
           )}
         >
-          <div className="-translate-x-[1px] absolute top-0 right-0 h-full w-[3px] bg-blue-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
+          <div
+            className={cn(
+              "-translate-x-[1px] absolute top-0 right-0 h-full w-[3px]",
+              "bg-blue-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100",
+            )}
+          />
         </div>
       </div>
     </div>
