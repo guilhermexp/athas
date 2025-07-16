@@ -6,7 +6,6 @@ import { usePersistentSettingsStore } from "../../stores/persistent-settings-sto
 import { cn } from "../../utils/cn";
 import ModelProviderSelector from "../model-provider-selector";
 import Button from "../ui/button";
-import ClaudeStatusIndicator from "./claude-status";
 import { FileMentionDropdown } from "./file-mention-dropdown";
 import type { AIChatInputBarProps } from "./types";
 
@@ -330,7 +329,7 @@ export default function AIChatInputBar({
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
             placeholder={
-              hasApiKey ? "Ask about your code..." : "Configure API key to enable AI chat..."
+              hasApiKey ? "input ('@' tag files)" : "Configure API key to enable AI chat..."
             }
             disabled={isTyping || !hasApiKey}
             className={cn(
@@ -342,10 +341,6 @@ export default function AIChatInputBar({
         </div>
         <div className="mt-2 flex items-center justify-between">
           <div className="ml-auto flex items-center gap-0.5">
-            <ClaudeStatusIndicator
-              isActive={aiProviderId === "claude-code"}
-              workspacePath={rootFolderPath}
-            />
             <ModelProviderSelector
               currentProviderId={aiProviderId}
               currentModelId={aiModelId}

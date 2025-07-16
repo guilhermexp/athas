@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { Bot, MessageSquare, Plus } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
@@ -84,6 +85,27 @@ export default function AIChat({
     deleteChat(chatId);
   };
 
+  // Handle new chat creation with claude-code restart
+  const handleNewChat = async () => {
+    const newChatId = createNewChat();
+
+    // Restart claude-code for new context
+    if (aiProviderId === "claude-code") {
+      try {
+        // First stop the existing claude process
+        await invoke("stop_claude_code");
+        // Then start fresh
+        await invoke("start_claude_code", {
+          workspacePath: rootFolderPath || null,
+        });
+      } catch (error) {
+        console.error("Failed to restart claude-code for new chat:", error);
+      }
+    }
+
+    return newChatId;
+  };
+
   // Scroll to bottom helper
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -142,6 +164,18 @@ export default function AIChat({
 
   const sendMessage = async () => {
     if (!input.trim() || !hasApiKey) return;
+
+    // Auto-start claude-code if needed
+    if (aiProviderId === "claude-code") {
+      try {
+        await invoke("start_claude_code", {
+          workspacePath: rootFolderPath || null,
+        });
+      } catch (error) {
+        console.error("Failed to start claude-code:", error);
+        // Continue anyway - the user might have claude running already
+      }
+    }
 
     // Create a new chat if we don't have one
     let chatId = currentChatId;
@@ -342,7 +376,7 @@ export default function AIChat({
         <span className="font-medium">{currentChat ? currentChat.title : "New Chat"}</span>
         <div className="flex-1" />
         <button
-          onClick={() => createNewChat()}
+          onClick={handleNewChat}
           className="flex items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-hover"
           style={{ color: "var(--color-text-lighter)" }}
           title="New chat"

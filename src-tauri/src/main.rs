@@ -3,6 +3,7 @@
 
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
+use tokio::sync::Mutex;
 
 mod claude_bridge;
 mod commands;
@@ -12,7 +13,7 @@ mod lsp;
 mod menu;
 mod ssh;
 mod terminal;
-use claude_bridge::init_claude_bridge;
+use claude_bridge::ClaudeCodeBridge;
 use commands::*;
 use file_watcher::FileWatcher;
 use lsp::{
@@ -47,7 +48,23 @@ fn main() {
             app.manage(Arc::new(FileWatcher::new(app.handle().clone())));
 
             // Set up Claude bridge
-            app.manage(init_claude_bridge(app.handle()));
+            let claude_bridge = Arc::new(Mutex::new(ClaudeCodeBridge::new(app.handle().clone())));
+            app.manage(claude_bridge.clone());
+
+            // Auto-start interceptor on app launch
+            {
+                let claude_bridge_clone = claude_bridge.clone();
+                tauri::async_runtime::spawn(async move {
+                    // Small delay to ensure app is fully initialized
+                    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+                    let mut bridge = claude_bridge_clone.lock().await;
+                    match bridge.start_interceptor().await {
+                        Ok(_) => log::info!("Interceptor auto-started successfully"),
+                        Err(e) => log::error!("Failed to auto-start interceptor: {}", e),
+                    }
+                });
+            }
 
             #[cfg(target_os = "macos")]
             {

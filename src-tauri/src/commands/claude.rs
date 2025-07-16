@@ -33,7 +33,10 @@ pub async fn stop_claude_code(
     bridge: State<'_, Arc<Mutex<ClaudeCodeBridge>>>,
 ) -> Result<ClaudeStatus, String> {
     let mut bridge = bridge.lock().await;
-    bridge.stop().await.map_err(|e| e.to_string())?;
+    bridge
+        .stop_claude_process_only()
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(bridge.get_status())
 }
 

@@ -4,10 +4,9 @@ use interceptor::{
 };
 use serde::Serialize;
 use std::process::Stdio;
-use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 use tokio::process::{Child, Command};
-use tokio::sync::{Mutex, mpsc};
+use tokio::sync::mpsc;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaudeStatus {
@@ -138,27 +137,13 @@ impl ClaudeCodeBridge {
         Ok(())
     }
 
-    pub async fn stop(&mut self) -> Result<()> {
-        // Stop Claude Code
+    pub async fn stop_claude_process_only(&mut self) -> Result<()> {
+        // Stop Claude Code process only, keep interceptor running
         if let Some(mut child) = self.claude_process.take() {
             let _ = child.kill().await;
         }
 
-        // Drop stdin handle
         self.claude_stdin = None;
-
-        // WebSocket will close automatically when process stops
-        self.ws_connected = false;
-
-        // Stop interceptor
-        if let Some(handle) = self.interceptor_handle.take() {
-            handle.abort();
-        }
-
-        // Stop the server
-        if let Some(handle) = self.server_handle.take() {
-            handle.abort();
-        }
 
         Ok(())
     }
@@ -170,9 +155,4 @@ impl ClaudeCodeBridge {
             interceptor_running: self.interceptor_handle.is_some(),
         }
     }
-}
-
-pub fn init_claude_bridge(app: &AppHandle) -> Arc<Mutex<ClaudeCodeBridge>> {
-    let bridge = ClaudeCodeBridge::new(app.clone());
-    Arc::new(Mutex::new(bridge))
 }
