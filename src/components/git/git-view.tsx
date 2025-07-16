@@ -647,14 +647,12 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         hasGitRepo={!!gitStatus}
         repoPath={repoPath}
         onRefresh={loadGitData}
-        onOpenStashManager={() => setShowStashManager(true)}
       />
 
       <GitStashManager
         isOpen={showStashManager}
         onClose={() => setShowStashManager(false)}
         repoPath={repoPath}
-        onRefresh={loadGitData}
       />
     </>
   );

@@ -1,28 +1,20 @@
 import { Archive, Clock, Download, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
-import {
-  applyStash,
-  createStash,
-  dropStash,
-  type GitStash,
-  getStashes,
-  popStash,
-} from "../../utils/git";
+import type { GitStash } from "../../utils/git";
 
 interface GitStashManagerProps {
   isOpen: boolean;
   onClose: () => void;
   repoPath?: string;
-  onRefresh?: () => void;
 }
 
-const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManagerProps) => {
+const GitStashManager = ({ isOpen, onClose, repoPath }: GitStashManagerProps) => {
   const [stashes, setStashes] = useState<GitStash[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [newStashMessage, setNewStashMessage] = useState("");
   const [includeUntracked, setIncludeUntracked] = useState(false);
-  const [actionLoading, setActionLoading] = useState<Set<number>>(new Set());
+  const [actionLoading] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (isOpen) {
@@ -35,8 +27,11 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
 
     setIsLoading(true);
     try {
-      const stashList = await getStashes(repoPath);
-      setStashes(stashList);
+      // TODO: implement git_get_stashes in src-tauri/src/commands/git.rs
+      alert("Get stashes functionality is not yet implemented");
+      // const stashList = await getStashes(repoPath);
+      // setStashes(stashList);
+      setStashes([]);
     } catch (error) {
       console.error("Failed to load stashes:", error);
     } finally {
@@ -49,60 +44,42 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
 
     setIsLoading(true);
     try {
-      const success = await createStash(
-        repoPath,
-        newStashMessage.trim() || undefined,
-        includeUntracked,
-      );
-      if (success) {
-        setNewStashMessage("");
-        await loadStashes();
-        onRefresh?.();
-      }
+      // TODO: implement git_create_stash in src-tauri/src/commands/git.rs
+      alert("Create stash functionality is not yet implemented");
+      // const success = await createStash(
+      //   repoPath,
+      //   newStashMessage.trim() || undefined,
+      //   includeUntracked,
+      // );
+      // if (success) {
+      //   setNewStashMessage("");
+      //   await loadStashes();
+      //   onRefresh?.();
+      // }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleStashAction = async (
-    action: () => Promise<boolean>,
-    stashIndex: number,
-    actionName: string,
-  ) => {
-    if (!repoPath) return;
-
-    setActionLoading(prev => new Set(prev).add(stashIndex));
-    try {
-      const success = await action();
-      if (success) {
-        await loadStashes();
-        onRefresh?.();
-        console.log(`${actionName} completed successfully`);
-      }
-    } catch (error) {
-      console.error(`${actionName} failed:`, error);
-    } finally {
-      setActionLoading(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(stashIndex);
-        return newSet;
-      });
-    }
+  const handleApplyStash = (_stashIndex: number) => {
+    // TODO: implement git_apply_stash in src-tauri/src/commands/git.rs
+    alert("Apply stash functionality is not yet implemented");
+    // handleStashAction(() => applyStash(repoPath!, stashIndex), stashIndex, "Apply stash");
   };
 
-  const handleApplyStash = (stashIndex: number) => {
-    handleStashAction(() => applyStash(repoPath!, stashIndex), stashIndex, "Apply stash");
+  const handlePopStash = (_stashIndex: number) => {
+    // TODO: implement git_pop_stash in src-tauri/src/commands/git.rs
+    alert("Pop stash functionality is not yet implemented");
+    // handleStashAction(() => popStash(repoPath!, stashIndex), stashIndex, "Pop stash");
   };
 
-  const handlePopStash = (stashIndex: number) => {
-    handleStashAction(() => popStash(repoPath!, stashIndex), stashIndex, "Pop stash");
-  };
-
-  const handleDropStash = (stashIndex: number) => {
-    const confirmed = confirm("Are you sure you want to drop this stash? This cannot be undone.");
-    if (!confirmed) return;
-
-    handleStashAction(() => dropStash(repoPath!, stashIndex), stashIndex, "Drop stash");
+  const handleDropStash = (_stashIndex: number) => {
+    // TODO: implement git_drop_stash in src-tauri/src/commands/git.rs
+    alert("Drop stash functionality is not yet implemented");
+    // const confirmed = confirm("Are you sure you want to drop this stash? This cannot be undone.");
+    // if (!confirmed) return;
+    //
+    // handleStashAction(() => dropStash(repoPath!, stashIndex), stashIndex, "Drop stash");
   };
 
   const formatDate = (dateString: string) => {
