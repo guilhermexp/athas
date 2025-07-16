@@ -61,7 +61,7 @@ pub async fn start_proxy_server_with_ws(
 
     let listener = TcpListener::bind(format!("127.0.0.1:{proxy_port}"))
         .await
-        .context("Failed to bind proxy server")?;
+        .with_context(|| format!("Failed to bind `TcpListener` to port {proxy_port}"))?;
 
     info!(
         "Claude Code Proxy with WebSocket running on http://localhost:{}",

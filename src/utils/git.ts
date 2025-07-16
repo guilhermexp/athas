@@ -113,7 +113,7 @@ export const getGitLog = async (repoPath: string, limit?: number): Promise<GitCo
 
 export const getBranches = async (repoPath: string): Promise<string[]> => {
   try {
-    const branches = await tauriInvoke<string[]>("git_get_branches", { repoPath });
+    const branches = await tauriInvoke<string[]>("git_branches", { repoPath });
     return branches;
   } catch (error) {
     console.error("Failed to get branches:", error);
