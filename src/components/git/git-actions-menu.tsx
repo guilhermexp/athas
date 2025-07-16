@@ -79,14 +79,6 @@ const GitActionsMenu = ({
   const handleDiscardAllChanges = async () => {
     if (!repoPath) return;
 
-    const confirmed = confirm(
-      "Are you sure you want to discard all changes? This cannot be undone.",
-    );
-    if (!confirmed) {
-      onClose();
-      return;
-    }
-
     handleAction(() => discardAllChanges(repoPath!), "Discard all changes");
   };
 

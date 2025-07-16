@@ -161,7 +161,7 @@ export const getFileDiff = async (
   staged: boolean = false,
 ): Promise<GitDiff | null> => {
   try {
-    const diff = await tauriInvoke<GitDiff>("git_get_file_diff", { repoPath, filePath, staged });
+    const diff = await tauriInvoke<GitDiff>("git_diff_file", { repoPath, filePath, staged });
     return diff;
   } catch (error) {
     console.error("Failed to get file diff:", error);
@@ -174,7 +174,7 @@ export const getCommitDiff = async (
   commitHash: string,
 ): Promise<GitDiff[] | null> => {
   try {
-    const diffs = await tauriInvoke<GitDiff[]>("git_get_commit_diff", {
+    const diffs = await tauriInvoke<GitDiff[]>("git_commit_diff", {
       repoPath,
       commitHash,
     });

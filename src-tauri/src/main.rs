@@ -192,6 +192,8 @@ fn main() {
             git_checkout,
             git_create_branch,
             git_delete_branch,
+            git_discard_file_changes,
+            git_discard_all_changes,
             // GitHub commands
             store_github_token,
             get_github_token,

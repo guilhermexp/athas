@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import {
+  discardAllChanges,
   type GitCommit,
   type GitFile,
   type GitStatus,
@@ -167,15 +168,9 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
   const handleDiscardAllChanges = async () => {
     if (!repoPath) return;
-    const confirmed = confirm(
-      "Are you sure you want to discard all changes? This cannot be undone.",
-    );
-    if (!confirmed) return;
 
     try {
-      // Implement discard all functionality
-      console.log("Discarding all changes...");
-      // await discardAllChanges(repoPath);
+      await discardAllChanges(repoPath);
       await loadGitData();
     } catch (error) {
       console.error("Failed to discard changes:", error);

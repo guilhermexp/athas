@@ -838,3 +838,37 @@ pub fn git_delete_branch(repo_path: String, branch_name: String) -> Result<(), S
         Err(String::from_utf8_lossy(&output.stderr).to_string())
     }
 }
+
+#[command]
+pub fn git_discard_file_changes(repo_path: String, file_path: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["checkout", "--", &file_path])
+        .output()
+        .map_err(|e| format!("Failed to discard file changes: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_discard_all_changes(repo_path: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["reset", "--hard"])
+        .output()
+        .map_err(|e| format!("Failed to discard all changes: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}

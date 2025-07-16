@@ -129,10 +129,6 @@ const GitStatusPanel = ({
 
   const handleDiscardFile = async (filePath: string) => {
     if (!repoPath) return;
-    const confirmed = confirm(
-      `Are you sure you want to discard changes to ${filePath}? This cannot be undone.`,
-    );
-    if (!confirmed) return;
 
     setIsLoading(true);
     try {
