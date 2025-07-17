@@ -1,23 +1,9 @@
-import {
-  Download,
-  Edit3,
-  FileIcon,
-  FilePlus,
-  FileX,
-  GitBranch,
-  GitPullRequest,
-  RefreshCw,
-  RotateCcw,
-  Settings,
-  Upload,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { Edit3, FileIcon, FilePlus, FileX, GitBranch, RefreshCw, RotateCcw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
+import { useGitStore } from "../../stores/git-store";
 import {
-  discardAllChanges,
-  type GitCommit,
   type GitFile,
-  type GitStatus,
   getBranches,
   getCommitDiff,
   getFileDiff,
@@ -31,8 +17,10 @@ import GitActionsMenu from "./git-actions-menu";
 import GitBranchManager from "./git-branch-manager";
 import GitCommitHistory from "./git-commit-history";
 import GitCommitPanel from "./git-commit-panel";
+import GitRemoteManager from "./git-remote-manager";
 import GitStashManager from "./git-stash-manager";
 import GitStatusPanel from "./git-status-panel";
+import GitTagManager from "./git-tag-manager";
 
 interface GitViewProps {
   repoPath?: string;
@@ -40,10 +28,15 @@ interface GitViewProps {
 }
 
 const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
-  const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
-  const [commits, setCommits] = useState<GitCommit[]>([]);
-  const [_branches, setBranches] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    gitStatus,
+    commits,
+    isLoadingGitData,
+    isRefreshing,
+    setIsLoadingGitData,
+    setIsRefreshing,
+    updateGitData,
+  } = useGitStore();
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [showGitActionsMenu, setShowGitActionsMenu] = useState(false);
   const [gitActionsMenuPosition, setGitActionsMenuPosition] = useState<{
@@ -53,32 +46,45 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
   // Modal states
   const [showStashManager, setShowStashManager] = useState(false);
+  const [showRemoteManager, setShowRemoteManager] = useState(false);
+  const [showTagManager, setShowTagManager] = useState(false);
 
   // Load Git status, commits, and branches
-  const loadGitData = async () => {
+  const loadGitData = useCallback(async () => {
     if (!repoPath) return;
 
-    setIsLoading(true);
+    setIsLoadingGitData(true);
     try {
       const [status, commits, branches] = await Promise.all([
         getGitStatus(repoPath),
         getGitLog(repoPath, 50), // Limit to 50 recent commits
         getBranches(repoPath),
       ]);
-      setGitStatus(status);
-      setCommits(commits);
-      setBranches(branches);
+      updateGitData({ gitStatus: status, commits, branches });
     } catch (error) {
       console.error("Failed to load git data:", error);
     } finally {
-      setIsLoading(false);
+      setIsLoadingGitData(false);
     }
-  };
+  }, [repoPath, setIsLoadingGitData, updateGitData]);
+
+  // Handler for manual refresh with minimum display time
+  const handleManualRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        loadGitData(),
+        new Promise(resolve => setTimeout(resolve, 500)), // Minimum display time
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [loadGitData, setIsRefreshing]);
 
   // Load git status on mount and when repo path changes
   useEffect(() => {
     loadGitData();
-  }, [repoPath]);
+  }, [loadGitData]);
 
   // Listen for file changes and refresh git status
   useEffect(() => {
@@ -109,7 +115,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         clearTimeout(refreshTimeout);
       }
     };
-  }, [repoPath]);
+  }, [repoPath, loadGitData]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -128,66 +134,6 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showBranchDropdown, showGitActionsMenu]);
-
-  // Additional Git Actions
-  const handlePush = async () => {
-    if (!repoPath) return;
-    try {
-      // Implement push functionality
-      console.log("Pushing changes...");
-      // await pushChanges(repoPath);
-      await loadGitData();
-    } catch (error) {
-      console.error("Failed to push:", error);
-    }
-  };
-
-  const handlePull = async () => {
-    if (!repoPath) return;
-    try {
-      // Implement pull functionality
-      console.log("Pulling changes...");
-      // await pullChanges(repoPath);
-      await loadGitData();
-    } catch (error) {
-      console.error("Failed to pull:", error);
-    }
-  };
-
-  const handleFetch = async () => {
-    if (!repoPath) return;
-    try {
-      // Implement fetch functionality
-      console.log("Fetching changes...");
-      // await fetchChanges(repoPath);
-      await loadGitData();
-    } catch (error) {
-      console.error("Failed to fetch:", error);
-    }
-  };
-
-  const handleDiscardAllChanges = async () => {
-    if (!repoPath) return;
-
-    try {
-      await discardAllChanges(repoPath);
-      await loadGitData();
-    } catch (error) {
-      console.error("Failed to discard changes:", error);
-    }
-  };
-
-  const handleInitRepository = async () => {
-    if (!repoPath) return;
-    try {
-      // Implement git init functionality
-      console.log("Initializing repository...");
-      // await initRepository(repoPath);
-      await loadGitData();
-    } catch (error) {
-      console.error("Failed to initialize repository:", error);
-    }
-  };
 
   const handleOpenOriginalFile = async (filePath: string) => {
     if (!repoPath || !onFileSelect) return;
@@ -388,180 +334,65 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     </button>
   );
 
-  const renderGitActionsMenu = () =>
-    showGitActionsMenu &&
-    gitActionsMenuPosition && (
-      <div
-        className={cn(
-          "fixed z-50 min-w-[180px] rounded-md border border-border",
-          "bg-secondary-bg py-1 shadow-lg",
-        )}
-        style={{
-          left: gitActionsMenuPosition.x,
-          top: gitActionsMenuPosition.y,
-        }}
-        onMouseDown={e => {
-          e.stopPropagation();
-        }}
-      >
-        {gitStatus && (
-          <>
-            <button
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handlePush();
-                setShowGitActionsMenu(false);
-              }}
-              className={cn(
-                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
-                "font-mono text-text text-xs hover:bg-hover",
-              )}
-            >
-              <Upload size={12} />
-              Push Changes
-            </button>
-
-            <button
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handlePull();
-                setShowGitActionsMenu(false);
-              }}
-              className={cn(
-                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
-                "font-mono text-text text-xs hover:bg-hover",
-              )}
-            >
-              <Download size={12} />
-              Pull Changes
-            </button>
-
-            <button
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleFetch();
-                setShowGitActionsMenu(false);
-              }}
-              className={cn(
-                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
-                "font-mono text-text text-xs hover:bg-hover",
-              )}
-            >
-              <GitPullRequest size={12} />
-              Fetch
-            </button>
-
-            <div className="my-1 border-border border-t"></div>
-
-            <button
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleDiscardAllChanges();
-                setShowGitActionsMenu(false);
-              }}
-              className={cn(
-                "flex w-full items-center gap-2 px-3 py-1.5 text-left",
-                "font-mono text-red-400 text-xs hover:bg-hover",
-              )}
-            >
-              <RotateCcw size={12} />
-              Discard All Changes
-            </button>
-          </>
-        )}
-
-        {!gitStatus && (
-          <button
-            onMouseDown={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleInitRepository();
-              setShowGitActionsMenu(false);
-            }}
-            className={cn(
-              "flex w-full items-center gap-2 px-3 py-1.5 text-left",
-              "font-mono text-text text-xs hover:bg-hover",
-            )}
-          >
-            <Settings size={12} />
-            Initialize Repository
-          </button>
-        )}
-      </div>
-    );
-
   if (!repoPath) {
     return (
-      <>
-        <div className="flex h-full flex-col bg-secondary-bg">
-          <div
-            className={cn(
-              "flex items-center justify-between border-border border-b",
-              "bg-secondary-bg px-2 py-1.5",
-            )}
-          >
-            <div className="flex items-center gap-2">{renderGitButton()}</div>
-          </div>
-          <div className="flex flex-1 items-center justify-center p-4">
-            <div className="text-center font-mono text-text-lighter text-xs">
-              <div className="mb-1">No Git repository detected</div>
-              <div className="text-[10px] opacity-75">Open a Git project folder</div>
-            </div>
+      <div className="flex h-full flex-col bg-secondary-bg">
+        <div
+          className={cn(
+            "flex items-center justify-between border-border border-b",
+            "bg-secondary-bg px-2 py-1.5",
+          )}
+        >
+          <div className="flex items-center gap-2">{renderGitButton()}</div>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="text-center font-mono text-text-lighter text-xs">
+            <div className="mb-1">No Git repository detected</div>
+            <div className="text-[10px] opacity-75">Open a Git project folder</div>
           </div>
         </div>
-        {renderGitActionsMenu()}
-      </>
+      </div>
     );
   }
 
-  if (isLoading && !gitStatus) {
+  if (isLoadingGitData && !gitStatus) {
     return (
-      <>
-        <div className="flex h-full flex-col bg-secondary-bg">
-          <div
-            className={cn(
-              "flex items-center justify-between border-border border-b",
-              "bg-secondary-bg px-2 py-1.5",
-            )}
-          >
-            <div className="flex items-center gap-2">{renderGitButton()}</div>
-          </div>
-          <div className="flex flex-1 items-center justify-center p-4">
-            <div className="text-center font-mono text-text-lighter text-xs">
-              Loading Git status...
-            </div>
+      <div className="flex h-full flex-col bg-secondary-bg">
+        <div
+          className={cn(
+            "flex items-center justify-between border-border border-b",
+            "bg-secondary-bg px-2 py-1.5",
+          )}
+        >
+          <div className="flex items-center gap-2">{renderGitButton()}</div>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="text-center font-mono text-text-lighter text-xs">
+            Loading Git status...
           </div>
         </div>
-        {renderGitActionsMenu()}
-      </>
+      </div>
     );
   }
 
   if (!gitStatus) {
     return (
-      <>
-        <div className="flex h-full flex-col bg-secondary-bg">
-          <div
-            className={cn(
-              "flex items-center justify-between border-border border-b",
-              "bg-secondary-bg px-2 py-1.5",
-            )}
-          >
-            <div className="flex items-center gap-2">{renderGitButton()}</div>
-          </div>
-          <div className="flex flex-1 items-center justify-center p-4">
-            <div className="text-center font-mono text-text-lighter text-xs">
-              <div className="mb-1">Not a Git repository</div>
-              <div className="text-[10px] opacity-75">Initialize with: git init</div>
-            </div>
+      <div className="flex h-full flex-col bg-secondary-bg">
+        <div
+          className={cn(
+            "flex items-center justify-between border-border border-b",
+            "bg-secondary-bg px-2 py-1.5",
+          )}
+        >
+          <div className="flex items-center gap-2">{renderGitButton()}</div>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="text-center font-mono text-text-lighter text-xs">
+            <div className="mb-1">Not a Git repository</div>
+            <div className="text-[10px] opacity-75">Initialize with: git init</div>
           </div>
         </div>
-        {renderGitActionsMenu()}
-      </>
+      </div>
     );
   }
 
@@ -597,8 +428,8 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
           <div className="flex items-center gap-0.5">
             <button
-              onClick={loadGitData}
-              disabled={isLoading}
+              onClick={handleManualRefresh}
+              disabled={isLoadingGitData || isRefreshing}
               className={cn(
                 "flex h-5 w-5 items-center justify-center rounded p-0",
                 "text-text-lighter transition-colors hover:bg-hover hover:text-text",
@@ -606,7 +437,10 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
               )}
               title="Refresh"
             >
-              <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} />
+              <RefreshCw
+                size={12}
+                className={isLoadingGitData || isRefreshing ? "animate-spin" : ""}
+              />
             </button>
           </div>
         </div>
@@ -617,7 +451,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
             files={gitStatus.files}
             onFileSelect={handleViewFileDiff}
             onOpenFile={handleOpenOriginalFile}
-            onRefresh={loadGitData}
+            onRefresh={handleManualRefresh}
             repoPath={repoPath}
           />
 
@@ -646,13 +480,31 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         }}
         hasGitRepo={!!gitStatus}
         repoPath={repoPath}
-        onRefresh={loadGitData}
+        onRefresh={handleManualRefresh}
+        onOpenStashManager={() => setShowStashManager(true)}
+        onOpenRemoteManager={() => setShowRemoteManager(true)}
+        onOpenTagManager={() => setShowTagManager(true)}
       />
 
       <GitStashManager
         isOpen={showStashManager}
         onClose={() => setShowStashManager(false)}
         repoPath={repoPath}
+        onRefresh={handleManualRefresh}
+      />
+
+      <GitRemoteManager
+        isOpen={showRemoteManager}
+        onClose={() => setShowRemoteManager(false)}
+        repoPath={repoPath}
+        onRefresh={handleManualRefresh}
+      />
+
+      <GitTagManager
+        isOpen={showTagManager}
+        onClose={() => setShowTagManager(false)}
+        repoPath={repoPath}
+        onRefresh={handleManualRefresh}
       />
     </>
   );

@@ -11,7 +11,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
-import { discardAllChanges } from "../../utils/git";
+import { useGitStore } from "../../stores/git-store";
+import {
+  discardAllChanges,
+  fetchChanges,
+  initRepository,
+  pullChanges,
+  pushChanges,
+} from "../../utils/git";
 
 interface GitActionsMenuProps {
   isOpen: boolean;
@@ -20,6 +27,9 @@ interface GitActionsMenuProps {
   hasGitRepo: boolean;
   repoPath?: string;
   onRefresh?: () => void;
+  onOpenStashManager?: () => void;
+  onOpenRemoteManager?: () => void;
+  onOpenTagManager?: () => void;
 }
 
 const GitActionsMenu = ({
@@ -29,8 +39,12 @@ const GitActionsMenu = ({
   hasGitRepo,
   repoPath,
   onRefresh,
+  onOpenStashManager,
+  onOpenRemoteManager,
+  onOpenTagManager,
 }: GitActionsMenuProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { isRefreshing } = useGitStore();
 
   const handleAction = async (action: () => Promise<boolean>, actionName: string) => {
     if (!repoPath) return;
@@ -53,21 +67,15 @@ const GitActionsMenu = ({
   };
 
   const handlePush = () => {
-    // TODO: implement git_push in src-tauri/src/commands/git.rs
-    alert("Push functionality is not yet implemented");
-    // handleAction(() => pushChanges(repoPath!), "Push");
+    handleAction(() => pushChanges(repoPath!), "Push");
   };
 
   const handlePull = () => {
-    // TODO: implement git_pull in src-tauri/src/commands/git.rs
-    alert("Pull functionality is not yet implemented");
-    // handleAction(() => pullChanges(repoPath!), "Pull");
+    handleAction(() => pullChanges(repoPath!), "Pull");
   };
 
   const handleFetch = () => {
-    // TODO: implement git_fetch in src-tauri/src/commands/git.rs
-    alert("Fetch functionality is not yet implemented");
-    // handleAction(() => fetchChanges(repoPath!), "Fetch");
+    handleAction(() => fetchChanges(repoPath!), "Fetch");
   };
 
   const handleDiscardAllChanges = async () => {
@@ -77,35 +85,27 @@ const GitActionsMenu = ({
   };
 
   const handleInitRepository = () => {
-    // TODO: implement git_init in src-tauri/src/commands/git.rs
-    alert("Initialize repository functionality is not yet implemented");
-    // handleAction(() => initRepository(repoPath!), "Initialize repository");
+    handleAction(() => initRepository(repoPath!), "Initialize repository");
   };
 
-  const handleRefresh = () => {
-    onRefresh?.();
-    onClose();
+  const handleRefresh = async () => {
+    // The parent component (git-view) will handle the refreshing state through the store
+    await onRefresh?.();
   };
 
   const handleStashManager = () => {
-    // TODO: implement git_get_stashes, git_create_stash, git_apply_stash, git_pop_stash, git_drop_stash in src-tauri/src/commands/git.rs
-    alert("Stash functionality is not yet implemented");
-    // onOpenStashManager?.();
-    // onClose();
+    onOpenStashManager?.();
+    onClose();
   };
 
   const handleRemoteManager = () => {
-    // TODO: implement git_get_remotes, git_add_remote, git_remove_remote in src-tauri/src/commands/git.rs
-    alert("Remote management functionality is not yet implemented");
-    // onOpenRemoteManager?.();
-    // onClose();
+    onOpenRemoteManager?.();
+    onClose();
   };
 
   const handleTagManager = () => {
-    // TODO: implement git_get_tags, git_create_tag, git_delete_tag in src-tauri/src/commands/git.rs
-    alert("Tag management functionality is not yet implemented");
-    // onOpenTagManager?.();
-    // onClose();
+    onOpenTagManager?.();
+    onClose();
   };
 
   if (!isOpen || !position) {
@@ -234,12 +234,13 @@ const GitActionsMenu = ({
               e.stopPropagation();
               handleRefresh();
             }}
+            disabled={isRefreshing}
             className={cn(
               "flex w-full items-center gap-2 px-3 py-1.5",
-              "text-left font-mono text-text text-xs hover:bg-hover",
+              "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
             )}
           >
-            <RefreshCw size={12} />
+            <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
             Refresh Status
           </button>
 
@@ -289,12 +290,13 @@ const GitActionsMenu = ({
               e.stopPropagation();
               handleRefresh();
             }}
+            disabled={isRefreshing}
             className={cn(
               "flex w-full items-center gap-2 px-3 py-1.5",
-              "text-left font-mono text-text text-xs hover:bg-hover",
+              "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
             )}
           >
-            <RefreshCw size={12} />
+            <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
             Refresh Status
           </button>
         </>

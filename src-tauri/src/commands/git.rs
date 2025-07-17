@@ -50,6 +50,27 @@ pub struct GitDiff {
     pub lines: Vec<GitDiffLine>,
 }
 
+#[derive(serde::Serialize)]
+pub struct GitRemote {
+    pub name: String,
+    pub url: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct GitStash {
+    pub index: usize,
+    pub message: String,
+    pub date: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct GitTag {
+    pub name: String,
+    pub commit: String,
+    pub message: Option<String>,
+    pub date: String,
+}
+
 fn is_image_file(path: &str) -> bool {
     let lower = path.to_lowercase();
     lower.ends_with(".png")
@@ -865,6 +886,395 @@ pub fn git_discard_all_changes(repo_path: String) -> Result<(), String> {
         .args(["reset", "--hard"])
         .output()
         .map_err(|e| format!("Failed to discard all changes: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_push(repo_path: String, branch: Option<String>, remote: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let mut args = vec!["push", &remote];
+    let branch_str;
+    if let Some(b) = branch {
+        branch_str = b;
+        args.push(&branch_str);
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to push: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_pull(repo_path: String, branch: Option<String>, remote: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let mut args = vec!["pull", &remote];
+    let branch_str;
+    if let Some(b) = branch {
+        branch_str = b;
+        args.push(&branch_str);
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to pull: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_fetch(repo_path: String, remote: Option<String>) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let mut args = vec!["fetch"];
+    let remote_str;
+    if let Some(r) = remote {
+        remote_str = r;
+        args.push(&remote_str);
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to fetch: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_init(repo_path: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["init"])
+        .output()
+        .map_err(|e| format!("Failed to initialize repository: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_get_remotes(repo_path: String) -> Result<Vec<GitRemote>, String> {
+    let repo_dir = Path::new(&repo_path);
+
+    if !repo_dir.join(".git").exists() {
+        return Err("Not a git repository".to_string());
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["remote", "-v"])
+        .output()
+        .map_err(|e| format!("Failed to get remotes: {e}"))?;
+
+    let mut remotes = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    if output.status.success() {
+        let remote_text = String::from_utf8_lossy(&output.stdout);
+        for line in remote_text.lines() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 2 {
+                let name = parts[0].to_string();
+                let url = parts[1].to_string();
+                if seen.insert(name.clone()) {
+                    remotes.push(GitRemote { name, url });
+                }
+            }
+        }
+    }
+
+    Ok(remotes)
+}
+
+#[command]
+pub fn git_add_remote(repo_path: String, name: String, url: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["remote", "add", &name, &url])
+        .output()
+        .map_err(|e| format!("Failed to add remote: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_remove_remote(repo_path: String, name: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["remote", "remove", &name])
+        .output()
+        .map_err(|e| format!("Failed to remove remote: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_get_stashes(repo_path: String) -> Result<Vec<GitStash>, String> {
+    let repo_dir = Path::new(&repo_path);
+
+    if !repo_dir.join(".git").exists() {
+        return Err("Not a git repository".to_string());
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["stash", "list", "--format=%gd|%s|%ai"])
+        .output()
+        .map_err(|e| format!("Failed to get stashes: {e}"))?;
+
+    let mut stashes = Vec::new();
+    if output.status.success() {
+        let stash_text = String::from_utf8_lossy(&output.stdout);
+        for (index, line) in stash_text.lines().enumerate() {
+            let parts: Vec<&str> = line.split('|').collect();
+            if parts.len() >= 3 {
+                let message = if parts[1].starts_with("On ") && parts[1].contains(": ") {
+                    parts[1].split(": ").nth(1).unwrap_or(parts[1]).to_string()
+                } else {
+                    parts[1].to_string()
+                };
+                stashes.push(GitStash {
+                    index,
+                    message,
+                    date: parts[2].to_string(),
+                });
+            }
+        }
+    }
+
+    Ok(stashes)
+}
+
+#[command]
+pub fn git_create_stash(
+    repo_path: String,
+    message: Option<String>,
+    include_untracked: bool,
+) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let mut args = vec!["stash", "push"];
+    if include_untracked {
+        args.push("-u");
+    }
+    if let Some(msg) = &message {
+        args.push("-m");
+        args.push(msg);
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to create stash: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_apply_stash(repo_path: String, stash_index: usize) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["stash", "apply", &format!("stash@{{{stash_index}}}")])
+        .output()
+        .map_err(|e| format!("Failed to apply stash: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_pop_stash(repo_path: String, stash_index: Option<usize>) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let mut args = vec!["stash", "pop"];
+    let index_str;
+    if let Some(idx) = stash_index {
+        index_str = format!("stash@{{{idx}}}");
+        args.push(&index_str);
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to pop stash: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_drop_stash(repo_path: String, stash_index: usize) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["stash", "drop", &format!("stash@{{{stash_index}}}")])
+        .output()
+        .map_err(|e| format!("Failed to drop stash: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_get_tags(repo_path: String) -> Result<Vec<GitTag>, String> {
+    let repo =
+        Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {e}"))?;
+
+    let mut tags = Vec::new();
+    repo.tag_foreach(|oid, name| {
+        if let Ok(name_str) = std::str::from_utf8(name) {
+            let tag_name = name_str
+                .strip_prefix("refs/tags/")
+                .unwrap_or(name_str)
+                .to_string();
+
+            if let Ok(obj) = repo.find_object(oid, None) {
+                let (commit_id, message, date) = if let Some(tag) = obj.as_tag() {
+                    let target_id = tag.target_id().to_string();
+                    let msg = tag.message().map(|m| m.to_string());
+                    let tagger = tag.tagger();
+                    let date = tagger
+                        .map(|t| {
+                            let time = t.when();
+                            let datetime =
+                                chrono::DateTime::<chrono::Utc>::from_timestamp(time.seconds(), 0)
+                                    .unwrap_or_default();
+                            datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+                        })
+                        .unwrap_or_default();
+                    (target_id, msg, date)
+                } else if let Ok(commit) = repo.find_commit(oid) {
+                    let time = commit.time();
+                    let datetime =
+                        chrono::DateTime::<chrono::Utc>::from_timestamp(time.seconds(), 0)
+                            .unwrap_or_default();
+                    let date = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+                    (oid.to_string(), None, date)
+                } else {
+                    (oid.to_string(), None, String::new())
+                };
+
+                tags.push(GitTag {
+                    name: tag_name,
+                    commit: commit_id,
+                    message,
+                    date,
+                });
+            }
+        }
+        true
+    })
+    .map_err(|e| format!("Failed to iterate tags: {e}"))?;
+
+    tags.sort_by(|a, b| b.date.cmp(&a.date));
+    Ok(tags)
+}
+
+#[command]
+pub fn git_create_tag(
+    repo_path: String,
+    name: String,
+    message: Option<String>,
+    commit: Option<String>,
+) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let mut args = vec!["tag"];
+    if let Some(msg) = &message {
+        args.push("-a");
+        args.push(&name);
+        args.push("-m");
+        args.push(msg);
+    } else {
+        args.push(&name);
+    }
+    if let Some(c) = &commit {
+        args.push(c);
+    }
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to create tag: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[command]
+pub fn git_delete_tag(repo_path: String, name: String) -> Result<(), String> {
+    let repo_dir = Path::new(&repo_path);
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args(["tag", "-d", &name])
+        .output()
+        .map_err(|e| format!("Failed to delete tag: {e}"))?;
 
     if output.status.success() {
         Ok(())
