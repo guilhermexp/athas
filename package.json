@@ -5,29 +5,21 @@
   "type": "module",
   "scripts": {
     "__what_is_this": "this is a retarded way to add comments in json files that don't support comments",
-
     "__tauri": "this will allow you to use 'bun tauri <whatever>' instead of 'bunx tauri <whatever>'",
     "tauri": "tauri",
-
     "__typecheck": "this will only typecheck the typescript files",
     "typecheck": "tsc --noEmit",
-
     "__check": "this will check formatting and linting",
     "check": "biome check",
     "lint": "bun check",
-
     "__check:all": "composite of 'tsc --noEmit' and 'biome check'",
     "check:all": "bun typecheck && bun check:fix",
-
     "__check:fix": "will fix formatting and linting if possible",
     "check:fix": "biome check --write --unsafe",
-
     "__clean": "this will clean and rebuild the project. both rust and js",
     "clean": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
-
     "__prepare": "this will install git hooks after you do 'bun install'",
     "prepare": "simple-git-hooks",
-
     "commitlint": "commitlint --edit"
   },
   "dependencies": {
@@ -43,6 +35,7 @@
     "@types/prismjs": "^1.26.5",
     "ansi-to-html": "^0.7.2",
     "clsx": "^2.1.1",
+    "immer": "^10.1.1",
     "lucide-react": "^0.511.0",
     "material-file-icons": "^2.4.0",
     "prismjs": "^1.30.0",

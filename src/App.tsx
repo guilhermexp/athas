@@ -1,3 +1,4 @@
+import { enableMapSet } from "immer";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AIChat from "./components/ai-chat/ai-chat";
@@ -57,6 +58,8 @@ import type { GitDiff } from "./utils/git";
 import { isMac, readFile, writeFile } from "./utils/platform";
 
 function App() {
+  enableMapSet();
+
   const uiState = useUIState();
   const { settings, updateSetting, updateSettingsFromJSON } = useSettings();
   const quickEdit = useQuickEdit();
@@ -882,7 +885,7 @@ function App() {
     const setupFileDrop = async () => {
       try {
         const { listen } = await import("@tauri-apps/api/event");
-        
+
         unlisten = await listen("tauri://file-drop", async event => {
           console.log("Files dropped:", event.payload);
           // The payload contains an array of file paths

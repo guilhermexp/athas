@@ -1,7 +1,7 @@
 import { ChevronDown, Database, FileText, Send, Square, X } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
-import { useAIChatStore } from "../../stores/ai-chat-store";
+import { useAIChatStore } from "../../stores/ai-chat/store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import { cn } from "../../utils/cn";
 import ModelProviderSelector from "../model-provider-selector";

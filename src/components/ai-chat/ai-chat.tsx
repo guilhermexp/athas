@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Bot, MessageSquare, Plus } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
-import { useAIChatStore } from "../../stores/ai-chat-store";
+import { useAIChatStore } from "../../stores/ai-chat/store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import { getProviderById } from "../../types/ai-provider";
 import { getChatCompletionStream } from "../../utils/ai-chat";

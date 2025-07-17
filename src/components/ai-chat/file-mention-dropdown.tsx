@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { useAIChatStore } from "../../stores/ai-chat-store";
+import { useAIChatStore } from "../../stores/ai-chat/store";
 import type { FileEntry } from "../../types/app";
 import FileIcon from "../file-icon";
 
