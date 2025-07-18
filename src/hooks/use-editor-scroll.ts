@@ -13,16 +13,20 @@ export const useEditorScroll = (
   const setIsTyping = useCodeEditorStore(state => state.setIsTyping);
 
   // Sync scroll between contenteditable, highlight layer, and line numbers
-  const handleScroll = useCallback(() => {
-    if (editorRef.current && highlightRef.current && lineNumbersRef.current) {
-      const scrollTop = editorRef.current.scrollTop;
-      const scrollLeft = editorRef.current.scrollLeft;
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const scrollingElement = e.currentTarget;
+      if (highlightRef.current && lineNumbersRef.current) {
+        const scrollTop = scrollingElement.scrollTop;
+        const scrollLeft = scrollingElement.scrollLeft;
 
-      highlightRef.current.scrollTop = scrollTop;
-      highlightRef.current.scrollLeft = scrollLeft;
-      lineNumbersRef.current.scrollTop = scrollTop;
-    }
-  }, [editorRef, highlightRef, lineNumbersRef]);
+        highlightRef.current.scrollTop = scrollTop;
+        highlightRef.current.scrollLeft = scrollLeft;
+        lineNumbersRef.current.scrollTop = scrollTop;
+      }
+    },
+    [highlightRef, lineNumbersRef],
+  );
 
   // Handle cursor position changes
   const handleCursorPositionChange = useCallback(

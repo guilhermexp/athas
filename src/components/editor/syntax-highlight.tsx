@@ -19,8 +19,8 @@ export function SyntaxHighlight() {
     <pre
       ref={highlightRef}
       className={cn(
-        "pointer-events-none absolute top-0 right-0 bottom-0 left-0 z-[1]",
-        "m-0 overflow-auto rounded-none border-none bg-transparent",
+        "pointer-events-none absolute inset-0 z-[1]",
+        "m-0 overflow-visible rounded-none border-none bg-transparent",
         "font-mono shadow-none outline-none transition-none",
       )}
       style={{

@@ -9,7 +9,7 @@ export function EditorContent() {
   const editorRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <div className="relative h-full flex-1 overflow-hidden bg-primary-bg">
+    <div className="relative h-full flex-1 bg-primary-bg">
       {/* Syntax highlighting layer (behind contenteditable) */}
       <SyntaxHighlight />
 

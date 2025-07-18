@@ -35,7 +35,7 @@ export function EditorInput() {
   };
 
   const getEditorClasses = () => {
-    let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 font-mono border-none outline-none overflow-auto z-[2] shadow-none rounded-none transition-none`;
+    let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 font-mono border-none outline-none overflow-visible z-[2] shadow-none rounded-none transition-none`;
 
     if (vimEnabled) {
       if (vimMode === "normal") {

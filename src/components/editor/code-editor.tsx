@@ -209,7 +209,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
       <div
         ref={editorRef}
         className={`editor-container relative h-full overflow-hidden ${className || ""}`}
-        onScroll={handleScroll}
       >
         {/* Hover Tooltip */}
         <HoverTooltip />
@@ -220,7 +219,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
           {lineNumbers && <LineNumbers />}
 
           {/* Editor content area */}
-          <div className="editor-wrapper relative flex-1 overflow-auto">
+          <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
             <EditorContent />
 
             {/* Vim command line - positioned absolutely at bottom */}
