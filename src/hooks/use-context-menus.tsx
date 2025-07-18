@@ -16,7 +16,7 @@ interface UseContextMenusProps {
 
 export const useContextMenus = ({
   folderHeaderContextMenu,
-  projectNameMenu,
+  projectNameMenu: _projectNameMenu,
   setFolderHeaderContextMenu,
   setProjectNameMenu,
 }: UseContextMenusProps) => {
@@ -24,16 +24,15 @@ export const useContextMenus = ({
   useEffect(() => {
     const handleClickOutside = () => {
       setFolderHeaderContextMenu(null);
-      setProjectNameMenu(null);
     };
 
-    if (folderHeaderContextMenu || projectNameMenu) {
+    if (folderHeaderContextMenu) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }
-  }, [folderHeaderContextMenu, projectNameMenu, setFolderHeaderContextMenu, setProjectNameMenu]);
+  }, [folderHeaderContextMenu, setFolderHeaderContextMenu]);
 
   const handleProjectNameMenuOpen = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -65,16 +64,40 @@ export const ProjectNameMenu = () => {
   const onOpenFolder = handleOpenFolder;
   const onCollapseAllFolders = handleCollapseAllFolders;
   const onOpenRecentFolder = openRecentFolder;
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!projectNameMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const menuEl = document.getElementById("project-name-menu");
+      if (menuEl && !menuEl.contains(target)) {
+        setProjectNameMenu(null);
+      }
+    };
+
+    // Small delay to avoid closing immediately on menu open
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [projectNameMenu, setProjectNameMenu]);
+
   if (!projectNameMenu) return null;
 
   return (
     <div
+      id="project-name-menu"
       className="fixed z-50 min-w-[200px] rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
       style={{
         left: projectNameMenu.x,
         top: projectNameMenu.y,
       }}
-      onMouseDown={e => e.stopPropagation()}
     >
       <button
         onMouseDown={e => {
