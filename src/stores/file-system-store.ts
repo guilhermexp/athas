@@ -162,13 +162,15 @@ export const useFileSystemStore = create(
 
             if (selected) {
               const entries = await readDirectory(selected);
-              const fileTree = (entries as any[]).map((entry: any) => ({
-                name: entry.name || "Unknown",
-                path: entry.path || `${selected}/${entry.name}`,
-                isDir: entry.is_dir || false,
-                expanded: false,
-                children: undefined,
-              }));
+              const fileTree = sortFileEntries(
+                (entries as any[]).map((entry: any) => ({
+                  name: entry.name || "Unknown",
+                  path: entry.path || `${selected}/${entry.name}`,
+                  isDir: entry.is_dir || false,
+                  expanded: false,
+                  children: undefined,
+                })),
+              );
 
               set(state => {
                 state.rootFolderPath = selected;
@@ -207,13 +209,15 @@ export const useFileSystemStore = create(
         handleOpenFolderByPath: async (path: string) => {
           try {
             const entries = await readDirectory(path);
-            const fileTree = (entries as any[]).map((entry: any) => ({
-              name: entry.name || "Unknown",
-              path: entry.path || `${path}/${entry.name}`,
-              isDir: entry.is_dir || false,
-              expanded: false,
-              children: undefined,
-            }));
+            const fileTree = sortFileEntries(
+              (entries as any[]).map((entry: any) => ({
+                name: entry.name || "Unknown",
+                path: entry.path || `${path}/${entry.name}`,
+                isDir: entry.is_dir || false,
+                expanded: false,
+                children: undefined,
+              })),
+            );
 
             set(state => {
               state.rootFolderPath = path;
@@ -251,13 +255,15 @@ export const useFileSystemStore = create(
         loadFolderContents: async (path: string) => {
           try {
             const entries = await readDirectory(path);
-            const fileTree = (entries as any[]).map((entry: any) => ({
-              name: entry.name || "Unknown",
-              path: entry.path || `${path}/${entry.name}`,
-              isDir: entry.is_dir || false,
-              expanded: false,
-              children: undefined,
-            }));
+            const fileTree = sortFileEntries(
+              (entries as any[]).map((entry: any) => ({
+                name: entry.name || "Unknown",
+                path: entry.path || `${path}/${entry.name}`,
+                isDir: entry.is_dir || false,
+                expanded: false,
+                children: undefined,
+              })),
+            );
 
             set(state => {
               state.rootFolderPath = path;
@@ -322,15 +328,17 @@ export const useFileSystemStore = create(
                         // Expand folder - load children
                         try {
                           const entries = await readDirectory(item.path);
-                          const children = (entries as any[]).map((entry: any) => {
-                            return {
-                              name: entry.name || "Unknown",
-                              path: entry.path,
-                              isDir: entry.is_dir || false,
-                              expanded: false,
-                              children: undefined,
-                            };
-                          });
+                          const children = sortFileEntries(
+                            (entries as any[]).map((entry: any) => {
+                              return {
+                                name: entry.name || "Unknown",
+                                path: entry.path,
+                                isDir: entry.is_dir || false,
+                                expanded: false,
+                                children: undefined,
+                              };
+                            }),
+                          );
                           // Also track in expandedPaths
                           set(state => {
                             state.expandedPaths.add(item.path);
@@ -608,13 +616,15 @@ export const useFileSystemStore = create(
 
             // Refresh directory inline
             const entries = await readDirectory(get().rootFolderPath || ".");
-            const fileTree = (entries as any[]).map((entry: any) => ({
-              name: entry.name || "Unknown",
-              path: entry.path || `${get().rootFolderPath}/${entry.name}`,
-              isDir: entry.is_dir || false,
-              expanded: false,
-              children: undefined,
-            }));
+            const fileTree = sortFileEntries(
+              (entries as any[]).map((entry: any) => ({
+                name: entry.name || "Unknown",
+                path: entry.path || `${get().rootFolderPath}/${entry.name}`,
+                isDir: entry.is_dir || false,
+                expanded: false,
+                children: undefined,
+              })),
+            );
 
             set(state => {
               state.files = fileTree;
@@ -655,13 +665,15 @@ export const useFileSystemStore = create(
 
             // Refresh directory inline
             const entries = await readDirectory(get().rootFolderPath || ".");
-            const fileTree = (entries as any[]).map((entry: any) => ({
-              name: entry.name || "Unknown",
-              path: entry.path || `${get().rootFolderPath}/${entry.name}`,
-              isDir: entry.is_dir || false,
-              expanded: false,
-              children: undefined,
-            }));
+            const fileTree = sortFileEntries(
+              (entries as any[]).map((entry: any) => ({
+                name: entry.name || "Unknown",
+                path: entry.path || `${get().rootFolderPath}/${entry.name}`,
+                isDir: entry.is_dir || false,
+                expanded: false,
+                children: undefined,
+              })),
+            );
 
             set(state => {
               state.files = fileTree;
@@ -709,13 +721,15 @@ export const useFileSystemStore = create(
             // Refresh parent directory
             const refreshPath = parentPath || get().rootFolderPath || ".";
             const entries = await readDirectory(refreshPath);
-            const fileTree = (entries as any[]).map((entry: any) => ({
-              name: entry.name || "Unknown",
-              path: entry.path || `${refreshPath}/${entry.name}`,
-              isDir: entry.is_dir || false,
-              expanded: false,
-              children: undefined,
-            }));
+            const fileTree = sortFileEntries(
+              (entries as any[]).map((entry: any) => ({
+                name: entry.name || "Unknown",
+                path: entry.path || `${refreshPath}/${entry.name}`,
+                isDir: entry.is_dir || false,
+                expanded: false,
+                children: undefined,
+              })),
+            );
 
             set(state => {
               state.files = fileTree;
@@ -888,15 +902,9 @@ export const useFileSystemStore = create(
                   entry.path = newPath;
                   entry.name = newName;
 
-                  // Add to children, maintaining sort order
+                  // Add to children and sort
                   item.children.push(entry);
-                  item.children.sort((a, b) => {
-                    // Directories first, then files
-                    if (a.isDir && !b.isDir) return -1;
-                    if (!a.isDir && b.isDir) return 1;
-                    // Then alphabetical
-                    return a.name.localeCompare(b.name);
-                  });
+                  item.children = sortFileEntries(item.children);
 
                   // Make sure the directory is marked as expanded if it has children
                   if (!item.expanded && item.children.length > 0) {
@@ -935,11 +943,7 @@ export const useFileSystemStore = create(
               movedEntry.path = newPath;
               movedEntry.name = newPath.split("/").pop() || movedEntry.name;
               state.files.push(movedEntry);
-              state.files.sort((a, b) => {
-                if (a.isDir && !b.isDir) return -1;
-                if (!a.isDir && b.isDir) return 1;
-                return a.name.localeCompare(b.name);
-              });
+              state.files = sortFileEntries(state.files);
             }
 
             // Increment version to trigger re-render
@@ -1220,6 +1224,16 @@ export const useFileSystemStore = create(
 );
 
 // Helper functions for tree operations
+function sortFileEntries(entries: FileEntry[]): FileEntry[] {
+  return entries.sort((a, b) => {
+    // Directories first, then files
+    if (a.isDir && !b.isDir) return -1;
+    if (!a.isDir && b.isDir) return 1;
+    // Then alphabetical by name (case-insensitive)
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  });
+}
+
 function findFileEntry(files: FileEntry[], path: string): FileEntry | null {
   for (const file of files) {
     if (file.path === path) return file;
@@ -1248,17 +1262,19 @@ function updateDirectoryContents(
         });
       }
 
-      // Update children with new entries
-      item.children = newEntries.map((entry: any) => {
-        const existingChild = preserveStates ? existingChildrenMap.get(entry.path) : null;
-        return {
-          name: entry.name || "Unknown",
-          path: entry.path,
-          isDir: entry.is_dir || false,
-          expanded: existingChild?.expanded || false,
-          children: existingChild?.children || undefined,
-        };
-      });
+      // Update children with new entries and sort them
+      item.children = sortFileEntries(
+        newEntries.map((entry: any) => {
+          const existingChild = preserveStates ? existingChildrenMap.get(entry.path) : null;
+          return {
+            name: entry.name || "Unknown",
+            path: entry.path,
+            isDir: entry.is_dir || false,
+            expanded: existingChild?.expanded || false,
+            children: existingChild?.children || undefined,
+          };
+        }),
+      );
 
       return true; // Directory was found and updated
     }
