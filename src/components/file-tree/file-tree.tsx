@@ -81,6 +81,13 @@ const FileTree = ({
     isDir: boolean;
   } | null>(null);
 
+  // Mouse tracking for drag threshold
+  const [mouseDownInfo, setMouseDownInfo] = useState<{
+    x: number;
+    y: number;
+    file: FileEntry;
+  } | null>(null);
+
   // Log when files prop changes
   useEffect(() => {
     console.log(`🌳 FileTree received ${files.length} files`, files);
@@ -284,10 +291,36 @@ const FileTree = ({
             data-file-path={file.path}
             data-is-dir={file.isDir}
             onMouseDown={e => {
-              // Use custom drag for both files and folders
+              // Track initial mouse position for drag threshold
               if (e.button === 0) {
-                startCustomDrag(e, file);
+                setMouseDownInfo({
+                  x: e.clientX,
+                  y: e.clientY,
+                  file: file,
+                });
               }
+            }}
+            onMouseMove={e => {
+              // Check if we should start dragging based on movement threshold
+              if (mouseDownInfo && !dragState.isDragging) {
+                const deltaX = e.clientX - mouseDownInfo.x;
+                const deltaY = e.clientY - mouseDownInfo.y;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                // Start drag if moved more than 5 pixels
+                if (distance > 5) {
+                  startCustomDrag(e, mouseDownInfo.file);
+                  setMouseDownInfo(null);
+                }
+              }
+            }}
+            onMouseUp={() => {
+              // Clear mouse down info if no drag was started
+              setMouseDownInfo(null);
+            }}
+            onMouseLeave={() => {
+              // Clear mouse down info if mouse leaves the button
+              setMouseDownInfo(null);
             }}
             onClick={e => handleFileClick(e, file.path, file.isDir)}
             onContextMenu={e => handleContextMenu(e, file.path, file.isDir)}

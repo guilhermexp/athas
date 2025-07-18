@@ -34,6 +34,9 @@ interface FileSystemState {
     files: FileEntry[];
     timestamp: number;
   } | null;
+
+  // Track expanded paths separately for persistence
+  expandedPaths: Set<string>;
 }
 
 // Parse raw diff content into GitDiff format
@@ -149,6 +152,7 @@ export const useFileSystemStore = create(
         remoteConnectionId: null,
         remoteConnectionName: null,
         projectFilesCache: null,
+        expandedPaths: new Set<string>(),
       } as FileSystemState,
       (set, get) => ({
         // Folder operations
@@ -327,6 +331,10 @@ export const useFileSystemStore = create(
                               children: undefined,
                             };
                           });
+                          // Also track in expandedPaths
+                          set(state => {
+                            state.expandedPaths.add(item.path);
+                          });
                           return { ...item, expanded: true, children };
                         } catch (error) {
                           console.error("Error reading directory:", error);
@@ -334,6 +342,9 @@ export const useFileSystemStore = create(
                         }
                       } else {
                         // Collapse folder
+                        set(state => {
+                          state.expandedPaths.delete(item.path);
+                        });
                         return { ...item, expanded: false };
                       }
                     } else if (item.children) {
@@ -500,6 +511,10 @@ export const useFileSystemStore = create(
                             children: undefined,
                           };
                         });
+                        // Also track in expandedPaths
+                        set(state => {
+                          state.expandedPaths.add(item.path);
+                        });
                         return { ...item, expanded: true, children };
                       } catch (error) {
                         console.error("Error reading directory:", error);
@@ -507,6 +522,9 @@ export const useFileSystemStore = create(
                       }
                     } else {
                       // Collapse folder
+                      set(state => {
+                        state.expandedPaths.delete(item.path);
+                      });
                       return { ...item, expanded: false };
                     }
                   } else if (item.children) {
@@ -723,100 +741,43 @@ export const useFileSystemStore = create(
         refreshDirectory: async (directoryPath: string) => {
           console.log(`🔄 Refreshing directory: ${directoryPath}`);
 
-          const updateFiles = async (items: FileEntry[]): Promise<FileEntry[]> => {
-            return Promise.all(
-              items.map(async item => {
-                if (item.path === directoryPath && item.isDir) {
-                  // Refresh this directory
-                  try {
-                    const entries = await readDirectory(item.path);
+          // Don't refresh if the directory path is not in the tree
+          // This prevents unnecessary refreshes and state corruption
+          const { files } = get();
+          const dirNode = findFileEntry(files, directoryPath);
 
-                    // Create a map of existing children to preserve their expanded states
-                    const existingChildrenMap = new Map<string, FileEntry>();
-                    if (item.children) {
-                      item.children.forEach(child => {
-                        existingChildrenMap.set(child.path, child);
-                      });
-                    }
-
-                    const children = (entries as any[]).map((entry: any) => {
-                      const existingChild = existingChildrenMap.get(entry.path);
-                      return {
-                        name: entry.name || "Unknown",
-                        path: entry.path,
-                        isDir: entry.is_dir || false,
-                        expanded: existingChild?.expanded || false,
-                        children: existingChild?.children || undefined,
-                      };
-                    });
-                    // Keep the expanded state if it was already expanded
-                    return {
-                      ...item,
-                      children,
-                      expanded: item.expanded !== undefined ? item.expanded : true,
-                    };
-                  } catch (error) {
-                    console.error("Error refreshing directory:", error);
-                    return item;
-                  }
-                } else if (item.children) {
-                  // Recursively update children
-                  const updatedChildren = await updateFiles(item.children);
-                  return { ...item, children: updatedChildren };
-                }
-                return item;
-              }),
+          // If directory is not in the tree or not expanded, skip refresh
+          if (!dirNode || !dirNode.isDir) {
+            console.log(
+              `📁 Directory ${directoryPath} not found or not a directory, skipping refresh`,
             );
-          };
-
-          const { files, rootFolderPath } = get();
-          const updatedFiles = await updateFiles(files);
-
-          // Check if the directory was found and updated
-          let directoryFound = false;
-          const checkIfDirectoryFound = (items: FileEntry[]): boolean => {
-            for (const item of items) {
-              if (item.path === directoryPath && item.isDir) {
-                return true;
-              }
-              if (item.children && checkIfDirectoryFound(item.children)) {
-                return true;
-              }
-            }
-            return false;
-          };
-
-          directoryFound = checkIfDirectoryFound(updatedFiles);
-
-          // If directory wasn't found in the tree, it might be because parent directories aren't expanded
-          // In this case, refresh from the root
-          if (!directoryFound && rootFolderPath) {
-            console.log(`📁 Directory ${directoryPath} not found in tree, refreshing from root`);
-            try {
-              const entries = await readDirectory(rootFolderPath);
-              const fileTree = (entries as any[]).map((entry: any) => ({
-                name: entry.name || "Unknown",
-                path: entry.path || `${rootFolderPath}/${entry.name}`,
-                isDir: entry.is_dir || false,
-                expanded: false,
-                children: undefined,
-              }));
-
-              set(state => {
-                state.files = fileTree;
-                state.filesVersion = state.filesVersion + 1;
-                state.projectFilesCache = null;
-              });
-              return;
-            } catch (error) {
-              console.error("Error refreshing root directory:", error);
-            }
+            return;
           }
 
-          set(state => {
-            state.files = updatedFiles;
-            state.filesVersion = state.filesVersion + 1;
-          });
+          // Only refresh if the directory is expanded (visible in the tree)
+          if (!dirNode.expanded) {
+            console.log(`📁 Directory ${directoryPath} is collapsed, skipping refresh`);
+            return;
+          }
+
+          try {
+            // Read the directory contents
+            const entries = await readDirectory(directoryPath);
+
+            set(state => {
+              // Update the directory contents while preserving all states
+              const updated = updateDirectoryContents(state.files, directoryPath, entries as any[]);
+
+              if (updated) {
+                // Successfully updated
+                state.filesVersion = state.filesVersion + 1;
+              } else {
+                console.error(`Failed to update directory ${directoryPath} in tree`);
+              }
+            });
+          } catch (error) {
+            console.error("Error reading directory:", error);
+          }
         },
 
         handleCollapseAllFolders: () => {
@@ -890,46 +851,115 @@ export const useFileSystemStore = create(
           }
         },
 
-        // File move/rename
+        // File move/rename - updates the tree structure directly
         handleFileMove: async (oldPath: string, newPath: string) => {
-          try {
-            // Update file system
-            // TODO: Implement moveFile utility
-            // await moveFile(oldPath, newPath);
+          console.log(`📁 Moving file from ${oldPath} to ${newPath}`);
 
-            // Refresh directories
-            // Refresh old directory
-            const entries = await readDirectory(get().rootFolderPath || ".");
-            const fileTree = (entries as any[]).map((entry: any) => ({
-              name: entry.name || "Unknown",
-              path: entry.path || `${get().rootFolderPath}/${entry.name}`,
-              isDir: entry.is_dir || false,
-              expanded: false,
-              children: undefined,
-            }));
+          set(state => {
+            // Helper to remove a file/folder from the tree
+            const removeFromTree = (items: FileEntry[], pathToRemove: string): FileEntry | null => {
+              for (let i = 0; i < items.length; i++) {
+                if (items[i].path === pathToRemove) {
+                  // Found it - remove and return
+                  const [removed] = items.splice(i, 1);
+                  return removed;
+                }
+                if (items[i].children) {
+                  const removed = removeFromTree(items[i].children!, pathToRemove);
+                  if (removed) return removed;
+                }
+              }
+              return null;
+            };
 
-            set(state => {
-              state.files = fileTree;
-              state.filesVersion = state.filesVersion + 1;
-              state.projectFilesCache = null;
-            });
+            // Helper to add a file/folder to a specific directory
+            const addToDirectory = (
+              items: FileEntry[],
+              targetDirPath: string,
+              entry: FileEntry,
+            ): boolean => {
+              for (const item of items) {
+                if (item.path === targetDirPath && item.isDir) {
+                  // Found target directory
+                  if (!item.children) item.children = [];
 
-            // Import stores dynamically to avoid circular dependencies
-            const { useBufferStore } = await import("./buffer-store");
+                  // Update the entry's path
+                  const newName = oldPath.split("/").pop() || entry.name;
+                  entry.path = newPath;
+                  entry.name = newName;
 
-            // Update open buffers
-            const { buffers, updateBuffer } = useBufferStore.getState();
-            const buffer = buffers.find(b => b.path === oldPath);
-            if (buffer) {
-              const fileName = newPath.split("/").pop() || buffer.name;
-              updateBuffer({
-                ...buffer,
-                path: newPath,
-                name: fileName,
+                  // Add to children, maintaining sort order
+                  item.children.push(entry);
+                  item.children.sort((a, b) => {
+                    // Directories first, then files
+                    if (a.isDir && !b.isDir) return -1;
+                    if (!a.isDir && b.isDir) return 1;
+                    // Then alphabetical
+                    return a.name.localeCompare(b.name);
+                  });
+
+                  // Make sure the directory is marked as expanded if it has children
+                  if (!item.expanded && item.children.length > 0) {
+                    item.expanded = true;
+                    state.expandedPaths.add(item.path);
+                  }
+
+                  return true;
+                }
+                if (item.children && addToDirectory(item.children, targetDirPath, entry)) {
+                  return true;
+                }
+              }
+              return false;
+            };
+
+            // First, find and remove the file/folder from its current location
+            const movedEntry = removeFromTree(state.files, oldPath);
+
+            if (!movedEntry) {
+              console.error(`Could not find ${oldPath} in file tree`);
+              return;
+            }
+
+            // Determine target directory from the new path
+            const targetDir =
+              newPath.substring(0, newPath.lastIndexOf("/")) || state.rootFolderPath || "/";
+
+            // Add to the new location
+            const added = addToDirectory(state.files, targetDir, movedEntry);
+
+            if (!added) {
+              // If we couldn't add to the target, it might be because the target directory isn't loaded
+              // Try to add to root as fallback
+              console.warn(`Could not add to ${targetDir}, adding to root`);
+              movedEntry.path = newPath;
+              movedEntry.name = newPath.split("/").pop() || movedEntry.name;
+              state.files.push(movedEntry);
+              state.files.sort((a, b) => {
+                if (a.isDir && !b.isDir) return -1;
+                if (!a.isDir && b.isDir) return 1;
+                return a.name.localeCompare(b.name);
               });
             }
-          } catch (error) {
-            console.error("Error moving file:", error);
+
+            // Increment version to trigger re-render
+            state.filesVersion = state.filesVersion + 1;
+            state.projectFilesCache = null;
+          });
+
+          // Import stores dynamically to avoid circular dependencies
+          const { useBufferStore } = await import("./buffer-store");
+
+          // Update open buffers
+          const { buffers, updateBuffer } = useBufferStore.getState();
+          const buffer = buffers.find(b => b.path === oldPath);
+          if (buffer) {
+            const fileName = newPath.split("/").pop() || buffer.name;
+            updateBuffer({
+              ...buffer,
+              path: newPath,
+              name: fileName,
+            });
           }
         },
 
@@ -1180,7 +1210,7 @@ export const useFileSystemStore = create(
           if (folder?.isDir && !folder.children) {
             const contents = await readDirectory(path);
             set(state => {
-              updateFileTree(state.files, path, contents);
+              updateDirectoryContents(state.files, path, contents as any[]);
             });
           }
         },
@@ -1189,23 +1219,7 @@ export const useFileSystemStore = create(
   ),
 );
 
-// Helper functions
-function updateFileTree(files: FileEntry[], dirPath: string, newContents: FileEntry[]): void {
-  const updateRecursive = (items: FileEntry[]): boolean => {
-    for (const item of items) {
-      if (item.path === dirPath) {
-        item.children = newContents;
-        return true;
-      }
-      if (item.children && updateRecursive(item.children)) {
-        return true;
-      }
-    }
-    return false;
-  };
-  updateRecursive(files);
-}
-
+// Helper functions for tree operations
 function findFileEntry(files: FileEntry[], path: string): FileEntry | null {
   for (const file of files) {
     if (file.path === path) return file;
@@ -1215,4 +1229,47 @@ function findFileEntry(files: FileEntry[], path: string): FileEntry | null {
     }
   }
   return null;
+}
+
+// Find a directory and update its contents (used with Immer)
+function updateDirectoryContents(
+  files: FileEntry[],
+  dirPath: string,
+  newEntries: any[],
+  preserveStates: boolean = true,
+): boolean {
+  for (const item of files) {
+    if (item.path === dirPath && item.isDir) {
+      // Create a map of existing children to preserve their states
+      const existingChildrenMap = new Map<string, FileEntry>();
+      if (preserveStates && item.children) {
+        item.children.forEach(child => {
+          existingChildrenMap.set(child.path, child);
+        });
+      }
+
+      // Update children with new entries
+      item.children = newEntries.map((entry: any) => {
+        const existingChild = preserveStates ? existingChildrenMap.get(entry.path) : null;
+        return {
+          name: entry.name || "Unknown",
+          path: entry.path,
+          isDir: entry.is_dir || false,
+          expanded: existingChild?.expanded || false,
+          children: existingChild?.children || undefined,
+        };
+      });
+
+      return true; // Directory was found and updated
+    }
+
+    // Recursively search in children
+    if (
+      item.children &&
+      updateDirectoryContents(item.children, dirPath, newEntries, preserveStates)
+    ) {
+      return true;
+    }
+  }
+  return false; // Directory not found
 }
