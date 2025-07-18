@@ -27,6 +27,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/check-ts-files.sh"
+          }
+        ]
+      }
     ]
   }
 }
