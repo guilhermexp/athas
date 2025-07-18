@@ -36,6 +36,7 @@
     "@types/uuid": "^10.0.0",
     "ansi-to-html": "^0.7.2",
     "clsx": "^2.1.1",
+    "ignore": "^7.0.5",
     "immer": "^10.1.1",
     "lucide-react": "^0.511.0",
     "material-file-icons": "^2.4.0",
