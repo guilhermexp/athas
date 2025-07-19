@@ -22,6 +22,7 @@ interface FileSystemState {
   expandedFolders: Set<string>;
   selectedFiles: Set<string>;
   filesVersion: number;
+  isFileTreeLoading: boolean;
 
   // Remote connection state
   isRemoteWindow: boolean;
@@ -148,6 +149,7 @@ export const useFileSystemStore = create(
         expandedFolders: new Set<string>(),
         selectedFiles: new Set<string>(),
         filesVersion: 0,
+        isFileTreeLoading: false,
         isRemoteWindow: false,
         remoteConnectionId: null,
         remoteConnectionName: null,
@@ -158,6 +160,10 @@ export const useFileSystemStore = create(
         // Folder operations
         handleOpenFolder: async () => {
           try {
+            set(state => {
+              state.isFileTreeLoading = true;
+            });
+
             const selected = await openFolder();
 
             if (selected) {
@@ -178,6 +184,7 @@ export const useFileSystemStore = create(
                 state.expandedFolders = new Set<string>();
                 state.projectFilesCache = null;
                 state.filesVersion = state.filesVersion + 1;
+                state.isFileTreeLoading = false;
               });
 
               // Import stores dynamically to avoid circular dependencies
@@ -198,16 +205,27 @@ export const useFileSystemStore = create(
               const { setProjectRoot } = useFileWatcherStore.getState();
               await setProjectRoot(selected);
               return true;
+            } else {
+              set(state => {
+                state.isFileTreeLoading = false;
+              });
+              return false;
             }
-            return false;
           } catch (error) {
             console.error("Error opening folder:", error);
+            set(state => {
+              state.isFileTreeLoading = false;
+            });
             return false;
           }
         },
 
         handleOpenFolderByPath: async (path: string) => {
           try {
+            set(state => {
+              state.isFileTreeLoading = true;
+            });
+
             const entries = await readDirectory(path);
             const fileTree = sortFileEntries(
               (entries as any[]).map((entry: any) => ({
@@ -225,6 +243,7 @@ export const useFileSystemStore = create(
               state.expandedFolders = new Set<string>();
               state.projectFilesCache = null;
               state.filesVersion = state.filesVersion + 1;
+              state.isFileTreeLoading = false;
             });
 
             // Import stores dynamically to avoid circular dependencies
@@ -248,12 +267,19 @@ export const useFileSystemStore = create(
             return true;
           } catch (error) {
             console.error("Error opening folder by path:", error);
+            set(state => {
+              state.isFileTreeLoading = false;
+            });
             return false;
           }
         },
 
         loadFolderContents: async (path: string) => {
           try {
+            set(state => {
+              state.isFileTreeLoading = true;
+            });
+
             const entries = await readDirectory(path);
             const fileTree = sortFileEntries(
               (entries as any[]).map((entry: any) => ({
@@ -271,6 +297,7 @@ export const useFileSystemStore = create(
               state.expandedFolders = new Set<string>();
               state.projectFilesCache = null;
               state.filesVersion = state.filesVersion + 1;
+              state.isFileTreeLoading = false;
             });
 
             // Import stores dynamically to avoid circular dependencies
@@ -287,6 +314,9 @@ export const useFileSystemStore = create(
             await setProjectRoot(path);
           } catch (error) {
             console.error("Error loading folder contents:", error);
+            set(state => {
+              state.isFileTreeLoading = false;
+            });
             throw error;
           }
         },

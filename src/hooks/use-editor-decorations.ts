@@ -11,44 +11,70 @@ interface DecoratedSegment {
 
 export function useEditorDecorations() {
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [isHighlightingReady, setIsHighlightingReady] = useState<boolean>(false);
   const decorationTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const currentFilePathRef = useRef<string | undefined>(undefined);
+  const tokenCacheRef = useRef<Map<string, Token[]>>(new Map());
 
   const fetchTokens = async (_content: string, filePath?: string) => {
     if (!filePath) return;
+
+    setIsHighlightingReady(false);
+
+    // Check cache first
+    const cachedTokens = tokenCacheRef.current.get(filePath);
+    if (cachedTokens && filePath === currentFilePathRef.current) {
+      setTokens(cachedTokens);
+      setIsHighlightingReady(true);
+      return;
+    }
 
     try {
       const newTokens = await getTokensFromPath(filePath);
       // Only set tokens if we're still on the same file
       if (filePath === currentFilePathRef.current) {
         setTokens(newTokens);
+        setIsHighlightingReady(true);
+        // Cache the tokens
+        tokenCacheRef.current.set(filePath, newTokens);
       }
     } catch (_error) {
       // File is not supported or couldn't be parsed
       if (filePath === currentFilePathRef.current) {
         setTokens([]);
+        setIsHighlightingReady(true);
+        // Cache empty tokens to avoid repeated failed attempts
+        tokenCacheRef.current.set(filePath, []);
       }
     }
   };
 
   const clearTokens = () => {
     setTokens([]);
+    setIsHighlightingReady(false);
   };
 
-  const debouncedFetchTokens = (content: string, filePath?: string) => {
-    if (decorationTimeoutRef.current) {
-      clearTimeout(decorationTimeoutRef.current);
-    }
-
-    // If file path changed, clear tokens immediately
+  const handleTokenFetch = (content: string, filePath?: string) => {
+    // If file path changed, check cache immediately
     if (filePath !== currentFilePathRef.current) {
-      clearTokens();
       currentFilePathRef.current = filePath;
+
+      // Check if we have cached tokens for this file
+      const cachedTokens = filePath ? tokenCacheRef.current.get(filePath) : undefined;
+      if (cachedTokens) {
+        // Apply cached tokens immediately
+        setTokens(cachedTokens);
+        return; // No need to fetch again
+      } else {
+        // Clear tokens and fetch immediately for new files
+        clearTokens();
+        fetchTokens(content, filePath);
+        return;
+      }
     }
 
-    decorationTimeoutRef.current = setTimeout(() => {
-      fetchTokens(content, filePath);
-    }, 100);
+    // For content changes on the same file, fetch immediately for better performance
+    fetchTokens(content, filePath);
   };
 
   const applyDecorations = (
@@ -105,12 +131,23 @@ export function useEditorDecorations() {
     // Render segments
     segments.forEach(segment => {
       if (segment.text) {
-        const span = document.createElement("span");
-        span.textContent = segment.text;
-        if (segment.className) {
-          span.className = segment.className;
-        }
-        editorRef.current!.appendChild(span);
+        // Handle line breaks properly by splitting text and creating line elements
+        const lines = segment.text.split("\n");
+        lines.forEach((line, lineIndex) => {
+          if (lineIndex > 0) {
+            // Add line break
+            editorRef.current!.appendChild(document.createTextNode("\n"));
+          }
+
+          if (line) {
+            const span = document.createElement("span");
+            span.textContent = line;
+            if (segment.className) {
+              span.className = segment.className;
+            }
+            editorRef.current!.appendChild(span);
+          }
+        });
       }
     });
 
@@ -128,7 +165,8 @@ export function useEditorDecorations() {
 
   return {
     tokens,
-    debouncedFetchTokens,
+    isHighlightingReady,
+    debouncedFetchTokens: handleTokenFetch,
     applyDecorations,
     clearTokens,
   };

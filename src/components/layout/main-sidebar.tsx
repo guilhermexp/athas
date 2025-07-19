@@ -26,6 +26,7 @@ export const MainSidebar = forwardRef<SearchViewRef>((_, ref) => {
   const {
     files,
     rootFolderPath,
+    isFileTreeLoading,
     setFiles,
     handleOpenFolder,
     handleCreateNewFile,
@@ -152,6 +153,10 @@ export const MainSidebar = forwardRef<SearchViewRef>((_, ref) => {
           />
         ) : isRemoteViewActive && coreFeatures.remote ? (
           <RemoteConnectionView onFileSelect={handleFileSelect} />
+        ) : isFileTreeLoading ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="paper-text-secondary text-sm">Loading file tree...</div>
+          </div>
         ) : (
           <FileTree
             files={files}

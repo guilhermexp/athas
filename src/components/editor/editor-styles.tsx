@@ -19,11 +19,30 @@ export function EditorStyles() {
         .code-editor-content:focus {
           outline: none;
         }
-        .code-editor-content::selection {
+        .code-editor-content:not(.vim-visual-selection)::selection {
           background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
         }
-        .code-editor-content::-moz-selection {
+        .code-editor-content:not(.vim-visual-selection)::-moz-selection {
           background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
+        }
+        .code-editor-content {
+          white-space: pre;
+          overflow-wrap: normal;
+          word-break: normal;
+        }
+        /* Disable default div selection, keep span selection */
+        div.code-editor-content::selection {
+          background: transparent !important;
+        }
+        div.code-editor-content::-moz-selection {
+          background: transparent !important;
+        }
+        /* Ensure spans show proper selection */
+        .code-editor-content:not(.vim-visual-selection) span::selection {
+          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3)) !important;
+        }
+        .code-editor-content:not(.vim-visual-selection) span::-moz-selection {
+          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3)) !important;
         }
         .code-editor-content:empty:before {
           content: attr(data-placeholder);
@@ -42,6 +61,9 @@ export function EditorStyles() {
         .line-numbers-container {
           scrollbar-width: none;
           -ms-overflow-style: none;
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
         }
         .line-numbers-container::-webkit-scrollbar {
           display: none;
@@ -52,6 +74,16 @@ export function EditorStyles() {
           font-variant-numeric: tabular-nums;
           -webkit-font-feature-settings: "tnum";
           font-feature-settings: "tnum";
+        }
+        
+        /* Disable selection on breadcrumbs */
+        .breadcrumb,
+        .breadcrumb-container,
+        .breadcrumb-item,
+        .breadcrumb-separator {
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
         }
       `}
     </style>

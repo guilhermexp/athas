@@ -10,6 +10,7 @@ import { useBufferStore } from "../../stores/buffer-store";
 import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
+import { useFileSystemStore } from "../../stores/file-system-store";
 import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
 import { CompletionDropdown } from "./completion-dropdown";
 import { EditorContent } from "./editor-content";
@@ -53,6 +54,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   const searchQuery = useCodeEditorStore(state => state.searchQuery);
   const searchMatches = useCodeEditorStore(state => state.searchMatches);
   const currentMatchIndex = useCodeEditorStore(state => state.currentMatchIndex);
+  const isFileTreeLoading = useFileSystemStore(state => state.isFileTreeLoading);
 
   // Extract values from active buffer or use defaults
   const value = activeBuffer?.content || "";
@@ -168,8 +170,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
     [],
   );
 
-  // Early return if no active buffer - must be after all hooks
-  if (!activeBuffer) {
+  // Early return if no active buffer or file tree is loading - must be after all hooks
+  if (!activeBuffer || isFileTreeLoading) {
     return <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>;
   }
 

@@ -513,33 +513,6 @@ const FileTree = ({
     }
   };
 
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (!containerRef.current) return;
-
-    e.preventDefault();
-
-    // Calculate smooth scroll delta
-    const delta = e.deltaY * 0.5; // Reduce scroll speed for smoother feel
-
-    // Use requestAnimationFrame for smooth scrolling
-    requestAnimationFrame(() => {
-      if (containerRef.current) {
-        containerRef.current.scrollTop += delta;
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    container.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      container.removeEventListener("wheel", handleWheel);
-    };
-  }, [handleWheel]);
-
   return (
     <div
       className={cn(

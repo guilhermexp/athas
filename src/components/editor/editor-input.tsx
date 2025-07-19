@@ -249,8 +249,6 @@ export function EditorInput() {
         background: "transparent",
         caretColor: vimEnabled && vimMode === "normal" ? "transparent" : "var(--tw-text)",
         border: "none",
-        maxWidth: "fit-content",
-        minWidth: "100%",
         resize: "none",
       }}
       spellCheck={false}
