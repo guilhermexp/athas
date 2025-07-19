@@ -31,6 +31,68 @@ const defaultSettings: Settings = {
   sidebarPosition: "left",
 };
 
+// Theme class constants
+const ALL_THEME_CLASSES = [
+  "force-light",
+  "force-dark",
+  "force-midnight",
+  "force-tokyo-night",
+  "force-tokyonight",
+  "force-dracula",
+  "force-nord",
+  "force-github",
+  "force-github-dark",
+  "force-github-light",
+  "force-one-dark",
+  "force-one-dark-pro",
+  "force-material",
+  "force-material-deep-ocean",
+  "force-ayu-dark",
+  "force-vesper",
+  "force-catppuccin",
+  "force-catppuccin-mocha",
+  "force-catppuccin-macchiato",
+  "force-catppuccin-frappe",
+  "force-catppuccin-latte",
+  "force-tokyo-night-storm",
+  "force-tokyo-night-light",
+  "force-dracula-soft",
+  "force-nord-light",
+  "force-github-dark-dimmed",
+  "force-one-light-pro",
+  "force-material-palenight",
+  "force-material-lighter",
+  "force-gruvbox",
+  "force-gruvbox-light",
+  "force-solarized-dark",
+  "force-solarized-light",
+  "force-synthwave-84",
+  "force-monokai",
+  "force-monokai-pro",
+  "force-ayu",
+  "force-ayu-mirage",
+  "force-ayu-light",
+  "force-vercel-dark",
+  "force-aura",
+];
+
+// Apply theme to document
+const applyTheme = (theme: ThemeType) => {
+  if (typeof window === "undefined") return;
+
+  // Remove all existing theme classes
+  ALL_THEME_CLASSES.forEach(cls => document.documentElement.classList.remove(cls));
+
+  // Apply new theme if not auto
+  if (theme && theme !== "auto") {
+    let themeClass = `force-${theme}`;
+    if (theme === "gruvbox-dark") {
+      themeClass = "force-gruvbox";
+    }
+    document.documentElement.classList.add(themeClass);
+  }
+};
+
 // Initialize settings from localStorage
 const getInitialSettings = (): Settings => {
   if (typeof window === "undefined") return defaultSettings;
@@ -46,6 +108,13 @@ const getInitialSettings = (): Settings => {
   }
   return defaultSettings;
 };
+
+// Apply initial theme
+const initialSettings = getInitialSettings();
+if (typeof window !== "undefined") {
+  // Apply theme immediately on module load
+  applyTheme(initialSettings.theme);
+}
 
 export const useSettingsStore = create(
   immer(
@@ -103,6 +172,9 @@ export const useSettingsStore = create(
             state.settings.theme = theme;
           });
           localStorage.setItem("athas-code-settings", JSON.stringify(get().settings, null, 2));
+
+          // Apply theme to document immediately
+          applyTheme(theme);
         },
       }),
     ),

@@ -22,9 +22,18 @@
     --tw-syntax-number: #bd93f9;
     --tw-syntax-function: #8be9fd;
     --tw-syntax-variable: #ffb86c;
+    --tw-syntax-type: #ff79c6;
+    --tw-syntax-constant: #bd93f9;
+    --tw-syntax-property: #8be9fd;
+    --tw-syntax-operator: #ff79c6;
+    --tw-syntax-punctuation: #f8f8f2;
+    --tw-syntax-boolean: #bd93f9;
+    --tw-syntax-null: #bd93f9;
+    --tw-syntax-regex: #f1fa8c;
+    --tw-syntax-jsx: #50fa7b;
+    --tw-syntax-jsx-attribute: #8be9fd;
     --tw-syntax-tag: #50fa7b;
     --tw-syntax-attribute: #8be9fd;
-    --tw-syntax-punctuation: #f8f8f2;
 }
 
 /* Dracula Soft */
@@ -51,7 +60,16 @@
     --tw-syntax-number: #bd93f9;
     --tw-syntax-function: #50fa7b;
     --tw-syntax-variable: #f8f8f2;
+    --tw-syntax-type: #ff79c6;
+    --tw-syntax-constant: #bd93f9;
+    --tw-syntax-property: #50fa7b;
+    --tw-syntax-operator: #ff79c6;
+    --tw-syntax-punctuation: #f8f8f2;
+    --tw-syntax-boolean: #bd93f9;
+    --tw-syntax-null: #bd93f9;
+    --tw-syntax-regex: #f1fa8c;
+    --tw-syntax-jsx: #8be9fd;
+    --tw-syntax-jsx-attribute: #ffb86c;
     --tw-syntax-tag: #8be9fd;
     --tw-syntax-attribute: #ffb86c;
-    --tw-syntax-punctuation: #f8f8f2;
 }

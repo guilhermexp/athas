@@ -10,15 +10,24 @@
     --tw-accent: #7aa2f7;
 
     /* Syntax highlighting */
-    --comment: #565f89;
-    --keyword: #bb9af7;
-    --string: #9ece6a;
-    --number: #ff9e64;
-    --function: #7aa2f7;
-    --variable: #c0caf5;
-    --tag: #7dcfff;
-    --attribute: #ff9e64;
-    --punctuation: #89ddff;
+    --tw-syntax-comment: #565f89;
+    --tw-syntax-keyword: #bb9af7;
+    --tw-syntax-string: #9ece6a;
+    --tw-syntax-number: #ff9e64;
+    --tw-syntax-function: #7aa2f7;
+    --tw-syntax-variable: #c0caf5;
+    --tw-syntax-type: #bb9af7;
+    --tw-syntax-constant: #ff9e64;
+    --tw-syntax-property: #7aa2f7;
+    --tw-syntax-operator: #89ddff;
+    --tw-syntax-punctuation: #89ddff;
+    --tw-syntax-boolean: #ff9e64;
+    --tw-syntax-null: #ff9e64;
+    --tw-syntax-regex: #89ddff;
+    --tw-syntax-jsx: #7dcfff;
+    --tw-syntax-jsx-attribute: #bb9af7;
+    --tw-syntax-tag: #7dcfff;
+    --tw-syntax-attribute: #ff9e64;
 }
 
 /* Tokyo Night Storm */
@@ -33,15 +42,24 @@
     --tw-accent: #7aa2f7;
 
     /* Syntax highlighting */
-    --comment: #565f89;
-    --keyword: #bb9af7;
-    --string: #9ece6a;
-    --number: #ff9e64;
-    --function: #7aa2f7;
-    --variable: #c0caf5;
-    --tag: #7dcfff;
-    --attribute: #ff9e64;
-    --punctuation: #89ddff;
+    --tw-syntax-comment: #565f89;
+    --tw-syntax-keyword: #bb9af7;
+    --tw-syntax-string: #9ece6a;
+    --tw-syntax-number: #ff9e64;
+    --tw-syntax-function: #7aa2f7;
+    --tw-syntax-variable: #c0caf5;
+    --tw-syntax-type: #bb9af7;
+    --tw-syntax-constant: #ff9e64;
+    --tw-syntax-property: #7aa2f7;
+    --tw-syntax-operator: #89ddff;
+    --tw-syntax-punctuation: #89ddff;
+    --tw-syntax-boolean: #ff9e64;
+    --tw-syntax-null: #ff9e64;
+    --tw-syntax-regex: #89ddff;
+    --tw-syntax-jsx: #7dcfff;
+    --tw-syntax-jsx-attribute: #bb9af7;
+    --tw-syntax-tag: #7dcfff;
+    --tw-syntax-attribute: #ff9e64;
 }
 
 /* Tokyo Night Light */
@@ -56,13 +74,22 @@
     --tw-accent: #34548a;
 
     /* Syntax highlighting */
-    --comment: #5c6370;
-    --keyword: #5a4a78;
-    --string: #485e30;
-    --number: #8f5535;
-    --function: #34548a;
-    --variable: #343b58;
-    --tag: #2b5d63;
-    --attribute: #8f5535;
-    --punctuation: #2b5d63;
+    --tw-syntax-comment: #5c6370;
+    --tw-syntax-keyword: #5a4a78;
+    --tw-syntax-string: #485e30;
+    --tw-syntax-number: #8f5535;
+    --tw-syntax-function: #34548a;
+    --tw-syntax-variable: #343b58;
+    --tw-syntax-type: #5a4a78;
+    --tw-syntax-constant: #8f5535;
+    --tw-syntax-property: #34548a;
+    --tw-syntax-operator: #2b5d63;
+    --tw-syntax-punctuation: #2b5d63;
+    --tw-syntax-boolean: #8f5535;
+    --tw-syntax-null: #8f5535;
+    --tw-syntax-regex: #2b5d63;
+    --tw-syntax-jsx: #2b5d63;
+    --tw-syntax-jsx-attribute: #5a4a78;
+    --tw-syntax-tag: #2b5d63;
+    --tw-syntax-attribute: #8f5535;
 }
