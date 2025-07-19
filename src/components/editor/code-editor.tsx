@@ -10,6 +10,7 @@ import { useBufferStore } from "../../stores/buffer-store";
 import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
+import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
 import { CompletionDropdown } from "./completion-dropdown";
 import { EditorContent } from "./editor-content";
 import { EditorStyles } from "./editor-styles";
@@ -179,30 +180,35 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   return (
     <>
       <EditorStyles />
-      <div
-        ref={editorRef}
-        className={`editor-container relative h-full overflow-hidden ${className || ""}`}
-      >
-        {/* Hover Tooltip */}
-        <HoverTooltip />
+      <div className="flex h-full flex-col">
+        {/* Breadcrumbs */}
+        <BreadcrumbContainer />
 
-        {/* Main editor layout */}
-        <div className="flex h-full">
-          {/* Line numbers */}
-          {lineNumbers && <LineNumbers />}
+        <div
+          ref={editorRef}
+          className={`editor-container relative flex-1 overflow-hidden ${className || ""}`}
+        >
+          {/* Hover Tooltip */}
+          <HoverTooltip />
 
-          {/* Editor content area */}
-          <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
-            <EditorContent />
+          {/* Main editor layout */}
+          <div className="flex h-full">
+            {/* Line numbers */}
+            {lineNumbers && <LineNumbers />}
 
-            {/* Vim command line - positioned absolutely at bottom */}
-            {vimEnabled && vimMode === "command" && vimEngine && <VimCommandLine />}
+            {/* Editor content area */}
+            <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
+              <EditorContent />
 
-            {/* LSP Completion Dropdown - temporarily disabled */}
-            <CompletionDropdown />
+              {/* Vim command line - positioned absolutely at bottom */}
+              {vimEnabled && vimMode === "command" && vimEngine && <VimCommandLine />}
 
-            {/* Quick Edit Inline */}
-            <QuickEditInline />
+              {/* LSP Completion Dropdown - temporarily disabled */}
+              <CompletionDropdown />
+
+              {/* Quick Edit Inline */}
+              <QuickEditInline />
+            </div>
           </div>
         </div>
       </div>
