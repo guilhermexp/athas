@@ -5,6 +5,7 @@
 
 /* utils like animations */
 @import "./styles/utils.css";
+@import "./styles/token-theme.css";
 
 /* Theme imports - must come after base layer for proper cascade */
 @import "./styles/themes/dark.css" layer(themes);
@@ -70,6 +71,15 @@
     --color-syntax-tag: var(--tw-syntax-tag);
     --color-syntax-attribute: var(--tw-syntax-attribute);
     --color-syntax-punctuation: var(--tw-syntax-punctuation);
+    --color-syntax-constant: var(--tw-syntax-constant);
+    --color-syntax-property: var(--tw-syntax-property);
+    --color-syntax-type: var(--tw-syntax-type);
+    --color-syntax-operator: var(--tw-syntax-operator);
+    --color-syntax-boolean: var(--tw-syntax-boolean);
+    --color-syntax-null: var(--tw-syntax-null);
+    --color-syntax-regex: var(--tw-syntax-regex);
+    --color-syntax-jsx: var(--tw-syntax-jsx);
+    --color-syntax-jsx-attribute: var(--tw-syntax-jsx-attribute);
 }
 
 

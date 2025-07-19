@@ -39,6 +39,9 @@ export const getLanguageFromFilename = (filename: string): string => {
     php5: "PHP",
     php7: "PHP",
     csharp: "C#",
+    go: "Go",
+    rs: "Rust",
+    toml: "TOML",
   };
   return languageMap[ext || ""] || "Text";
 };

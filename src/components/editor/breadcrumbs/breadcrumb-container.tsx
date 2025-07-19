@@ -1,20 +1,14 @@
-import type { Buffer } from "../../../types/buffer";
+import { useBufferStore } from "../../../stores/buffer-store";
+import { useFileSystemStore } from "../../../stores/file-system-store";
 import Breadcrumb from "./breadcrumb";
 
-interface BreadcrumbContainerProps {
-  activeBuffer: Buffer | null;
-  rootFolderPath: string | null;
-  onFileSelect: (path: string, isDirectory: boolean) => Promise<void>;
-}
+export default function BreadcrumbContainer() {
+  const activeBuffer = useBufferStore(state => state.getActiveBuffer());
+  const { rootFolderPath, handleFileSelect } = useFileSystemStore();
 
-export default function BreadcrumbContainer({
-  activeBuffer,
-  rootFolderPath,
-  onFileSelect,
-}: BreadcrumbContainerProps) {
   const handleNavigate = async (path: string) => {
     try {
-      await onFileSelect(path, false);
+      await handleFileSelect(path, false);
     } catch (error) {
       console.error("Failed to navigate to path:", path, error);
     }

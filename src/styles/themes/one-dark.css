@@ -38,15 +38,24 @@
     --tw-info: #61afef;
 
     /* Syntax highlighting */
-    --comment: #5c6370;
-    --keyword: #c678dd;
-    --string: #98c379;
-    --number: #d19a66;
-    --function: #61afef;
-    --variable: #e06c75;
-    --tag: #e06c75;
-    --attribute: #d19a66;
-    --punctuation: #abb2bf;
+    --tw-syntax-comment: #5c6370;
+    --tw-syntax-keyword: #c678dd;
+    --tw-syntax-string: #98c379;
+    --tw-syntax-number: #d19a66;
+    --tw-syntax-function: #61afef;
+    --tw-syntax-variable: #e06c75;
+    --tw-syntax-type: #c678dd;
+    --tw-syntax-constant: #d19a66;
+    --tw-syntax-property: #61afef;
+    --tw-syntax-operator: #abb2bf;
+    --tw-syntax-punctuation: #abb2bf;
+    --tw-syntax-boolean: #d19a66;
+    --tw-syntax-null: #d19a66;
+    --tw-syntax-regex: #98c379;
+    --tw-syntax-jsx: #e06c75;
+    --tw-syntax-jsx-attribute: #d19a66;
+    --tw-syntax-tag: #e06c75;
+    --tw-syntax-attribute: #d19a66;
 }
 
 /* One Light Pro */
@@ -61,13 +70,22 @@
     --tw-accent: #4078f2;
 
     /* Syntax highlighting */
-    --comment: #a0a1a7;
-    --keyword: #a626a4;
-    --string: #50a14f;
-    --number: #986801;
-    --function: #4078f2;
-    --variable: #e45649;
-    --tag: #e45649;
-    --attribute: #986801;
-    --punctuation: #383a42;
+    --tw-syntax-comment: #a0a1a7;
+    --tw-syntax-keyword: #a626a4;
+    --tw-syntax-string: #50a14f;
+    --tw-syntax-number: #986801;
+    --tw-syntax-function: #4078f2;
+    --tw-syntax-variable: #e45649;
+    --tw-syntax-type: #a626a4;
+    --tw-syntax-constant: #986801;
+    --tw-syntax-property: #4078f2;
+    --tw-syntax-operator: #383a42;
+    --tw-syntax-punctuation: #383a42;
+    --tw-syntax-boolean: #986801;
+    --tw-syntax-null: #986801;
+    --tw-syntax-regex: #50a14f;
+    --tw-syntax-jsx: #e45649;
+    --tw-syntax-jsx-attribute: #986801;
+    --tw-syntax-tag: #e45649;
+    --tw-syntax-attribute: #986801;
 }

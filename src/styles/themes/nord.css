@@ -21,9 +21,18 @@
     --tw-syntax-number: #b48ead;
     --tw-syntax-function: #88c0d0;
     --tw-syntax-variable: #ebcb8b;
+    --tw-syntax-type: #81a1c1;
+    --tw-syntax-constant: #b48ead;
+    --tw-syntax-property: #88c0d0;
+    --tw-syntax-operator: #81a1c1;
+    --tw-syntax-punctuation: #eceff4;
+    --tw-syntax-boolean: #b48ead;
+    --tw-syntax-null: #b48ead;
+    --tw-syntax-regex: #a3be8c;
+    --tw-syntax-jsx: #8fbcbb;
+    --tw-syntax-jsx-attribute: #88c0d0;
     --tw-syntax-tag: #8fbcbb;
     --tw-syntax-attribute: #88c0d0;
-    --tw-syntax-punctuation: #eceff4;
 }
 
 /* Theme: Nord (duplicate for consistency) */
@@ -38,15 +47,24 @@
     --tw-accent: #88c0d0;
 
     /* Syntax highlighting */
-    --comment: #4c566a;
-    --keyword: #81a1c1;
-    --string: #a3be8c;
-    --number: #b48ead;
-    --function: #88c0d0;
-    --variable: #d8dee9;
-    --tag: #8fbcbb;
-    --attribute: #d08770;
-    --punctuation: #eceff4;
+    --tw-syntax-comment: #4c566a;
+    --tw-syntax-keyword: #81a1c1;
+    --tw-syntax-string: #a3be8c;
+    --tw-syntax-number: #b48ead;
+    --tw-syntax-function: #88c0d0;
+    --tw-syntax-variable: #d8dee9;
+    --tw-syntax-type: #81a1c1;
+    --tw-syntax-constant: #b48ead;
+    --tw-syntax-property: #88c0d0;
+    --tw-syntax-operator: #81a1c1;
+    --tw-syntax-punctuation: #eceff4;
+    --tw-syntax-boolean: #b48ead;
+    --tw-syntax-null: #b48ead;
+    --tw-syntax-regex: #a3be8c;
+    --tw-syntax-jsx: #8fbcbb;
+    --tw-syntax-jsx-attribute: #d08770;
+    --tw-syntax-tag: #8fbcbb;
+    --tw-syntax-attribute: #d08770;
 }
 
 /* Nord Light */

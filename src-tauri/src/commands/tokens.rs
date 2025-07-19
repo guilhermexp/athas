@@ -1,0 +1,348 @@
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::path::Path;
+use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent, Highlighter};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Token {
+    pub start: usize,
+    pub end: usize,
+    pub token_type: String,
+    pub class_name: String,
+}
+
+// Standard highlight names used by Tree-sitter
+const HIGHLIGHT_NAMES: &[&str] = &[
+    "attribute",
+    "comment",
+    "constant",
+    "constant.builtin",
+    "constructor",
+    "embedded",
+    "error",
+    "function",
+    "function.builtin",
+    "function.method",
+    "keyword",
+    "keyword.control",
+    "keyword.function",
+    "keyword.operator",
+    "keyword.return",
+    "module",
+    "number",
+    "operator",
+    "property",
+    "property.builtin",
+    "punctuation",
+    "punctuation.bracket",
+    "punctuation.delimiter",
+    "punctuation.special",
+    "string",
+    "string.escape",
+    "string.special",
+    "tag",
+    "type",
+    "type.builtin",
+    "variable",
+    "variable.builtin",
+    "variable.parameter",
+];
+
+fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
+    match language_name {
+        "javascript" | "js" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_javascript::LANGUAGE.into(),
+                language_name,
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::INJECTIONS_QUERY,
+                tree_sitter_javascript::LOCALS_QUERY,
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "typescript" | "ts" => {
+            // TypeScript inherits JavaScript highlights, so we use JavaScript's query
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+                language_name,
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::INJECTIONS_QUERY,
+                tree_sitter_javascript::LOCALS_QUERY,
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "tsx" => {
+            // TSX also inherits JavaScript highlights
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_typescript::LANGUAGE_TSX.into(),
+                language_name,
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::INJECTIONS_QUERY,
+                tree_sitter_javascript::LOCALS_QUERY,
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "json" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_json::LANGUAGE.into(),
+                language_name,
+                tree_sitter_json::HIGHLIGHTS_QUERY,
+                "", // JSON doesn't have injections/locals
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "yaml" | "yml" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_yaml::LANGUAGE.into(),
+                language_name,
+                tree_sitter_yaml::HIGHLIGHTS_QUERY,
+                "", // YAML doesn't have injections/locals
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "go" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_go::LANGUAGE.into(),
+                language_name,
+                tree_sitter_go::HIGHLIGHTS_QUERY,
+                "", // Go doesn't have injections/locals in the current version
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "rust" | "rs" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_rust::LANGUAGE.into(),
+                language_name,
+                tree_sitter_rust::HIGHLIGHTS_QUERY,
+                tree_sitter_rust::INJECTIONS_QUERY,
+                "", // Rust doesn't have LOCALS_QUERY in this version
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        _ => anyhow::bail!("Unsupported language: {}", language_name),
+    }
+}
+
+fn get_language_from_path(path: &Path) -> Option<&'static str> {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .and_then(|ext| match ext {
+            "js" | "jsx" => Some("javascript"),
+            "ts" => Some("typescript"),
+            "tsx" => Some("tsx"),
+            "json" => Some("json"),
+            "yml" | "yaml" => Some("yaml"),
+            "go" => Some("go"),
+            "rs" => Some("rust"),
+            _ => None,
+        })
+}
+
+fn map_highlight_to_class(highlight_name: &str) -> (&str, &str) {
+    match highlight_name {
+        "keyword" | "keyword.control" | "keyword.function" | "keyword.operator"
+        | "keyword.return" => ("keyword", "token-keyword"),
+        "string" | "string.escape" | "string.special" => ("string", "token-string"),
+        "number" => ("number", "token-number"),
+        "constant" | "constant.builtin" => ("constant", "token-constant"),
+        "comment" => ("comment", "token-comment"),
+        "function" | "function.builtin" | "function.method" => ("function", "token-function"),
+        "type" | "type.builtin" => ("type", "token-type"),
+        "variable" | "variable.builtin" | "variable.parameter" => {
+            ("identifier", "token-identifier")
+        }
+        "property" | "property.builtin" => ("property", "token-property"),
+        "operator" => ("operator", "token-operator"),
+        "punctuation" | "punctuation.bracket" | "punctuation.delimiter" | "punctuation.special" => {
+            ("punctuation", "token-punctuation")
+        }
+        "tag" => ("jsx", "token-jsx"),
+        "attribute" => ("jsx-attribute", "token-jsx-attribute"),
+        _ => ("text", "token-text"),
+    }
+}
+
+#[tauri::command]
+pub async fn get_tokens(content: String, language: String) -> Result<Vec<Token>, String> {
+    tokenize_content(&content, &language).map_err(|e| format!("Failed to tokenize: {e}"))
+}
+
+#[tauri::command]
+pub async fn get_tokens_from_path(file_path: String) -> Result<Vec<Token>, String> {
+    let path = Path::new(&file_path);
+
+    // Read the file content asynchronously with tokio
+    let content = tokio::fs::read_to_string(&path)
+        .await
+        .map_err(|e| format!("Failed to read file: {e}"))?;
+
+    // Determine the language from the file extension
+    let language = get_language_from_path(path)
+        .ok_or_else(|| format!("Unsupported file type: {:?}", path.extension()))?;
+
+    tokenize_content(&content, language).map_err(|e| format!("Failed to tokenize: {e}"))
+}
+
+pub fn tokenize_content(content: &str, language: &str) -> Result<Vec<Token>> {
+    let config = get_language_config(language)?;
+    let mut highlighter = Highlighter::new();
+
+    let highlights = highlighter
+        .highlight(&config, content.as_bytes(), None, |_| None)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let mut tokens = Vec::new();
+    let mut current_highlight: Option<usize> = None;
+
+    for event in highlights {
+        match event {
+            HighlightEvent::Source { start, end } => {
+                if let Some(highlight_idx) = current_highlight {
+                    let highlight_name = HIGHLIGHT_NAMES.get(highlight_idx).unwrap_or(&"text");
+                    let (token_type, class_name) = map_highlight_to_class(highlight_name);
+
+                    // Skip whitespace-only tokens
+                    let text = &content[start..end];
+                    if !text.trim().is_empty() {
+                        tokens.push(Token {
+                            start,
+                            end,
+                            token_type: token_type.to_string(),
+                            class_name: class_name.to_string(),
+                        });
+                    }
+                }
+            }
+            HighlightEvent::HighlightStart(highlight) => {
+                current_highlight = Some(highlight.0);
+            }
+            HighlightEvent::HighlightEnd => {
+                current_highlight = None;
+            }
+        }
+    }
+
+    Ok(tokens)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tokenize_javascript() {
+        let code = r#"const greeting = "Hello, world!";
+function sayHello(name) {
+    console.log(`Hello, ${name}!`);
+}
+const numbers = [1, 2, 3];
+const result = numbers.map(n => n * 2);"#;
+
+        let tokens = tokenize_content(code, "javascript").unwrap();
+        println!("Found {} tokens", tokens.len());
+
+        // Print all tokens for debugging
+        for (i, token) in tokens.iter().enumerate() {
+            let text = &code[token.start..token.end];
+            println!("Token {}: {:?} = '{}'", i, token, text);
+        }
+
+        // Check for various token types
+        let token_types: Vec<&str> = tokens.iter().map(|t| t.token_type.as_str()).collect();
+        let unique_types: std::collections::HashSet<&str> =
+            tokens.iter().map(|t| t.token_type.as_str()).collect();
+
+        println!("Unique token types: {:?}", unique_types);
+
+        assert!(!tokens.is_empty(), "Should have tokens");
+        assert!(
+            token_types.contains(&"keyword"),
+            "Should have keyword tokens"
+        );
+        assert!(token_types.contains(&"string"), "Should have string tokens");
+        assert!(
+            token_types.contains(&"identifier"),
+            "Should have identifier tokens"
+        );
+        assert!(
+            token_types.contains(&"function"),
+            "Should have function tokens"
+        );
+        assert!(token_types.contains(&"number"), "Should have number tokens");
+        assert!(
+            token_types.contains(&"punctuation"),
+            "Should have punctuation tokens"
+        );
+        assert!(
+            token_types.contains(&"operator"),
+            "Should have operator tokens"
+        );
+    }
+
+    #[test]
+    fn test_get_language_from_path() {
+        use std::path::Path;
+
+        assert_eq!(
+            get_language_from_path(Path::new("test.js")),
+            Some("javascript")
+        );
+        assert_eq!(
+            get_language_from_path(Path::new("test.jsx")),
+            Some("javascript")
+        );
+        assert_eq!(
+            get_language_from_path(Path::new("test.ts")),
+            Some("typescript")
+        );
+        assert_eq!(get_language_from_path(Path::new("test.tsx")), Some("tsx"));
+        assert_eq!(get_language_from_path(Path::new("test.json")), Some("json"));
+        assert_eq!(get_language_from_path(Path::new("test.yaml")), Some("yaml"));
+        assert_eq!(get_language_from_path(Path::new("test.yml")), Some("yaml"));
+        assert_eq!(get_language_from_path(Path::new("test.go")), Some("go"));
+        assert_eq!(get_language_from_path(Path::new("test.rs")), Some("rust"));
+        assert_eq!(get_language_from_path(Path::new("test.txt")), None);
+        assert_eq!(get_language_from_path(Path::new("test")), None);
+    }
+
+    #[test]
+    fn test_tokenize_go() {
+        let code = r#"package main
+
+import "fmt"
+
+func main() {
+    greeting := "Hello, Go!"
+    numbers := []int{1, 2, 3}
+    for _, n := range numbers {
+        fmt.Printf("Number: %d\n", n)
+    }
+}"#;
+
+        let tokens = tokenize_content(code, "go").unwrap();
+        println!("Found {} tokens", tokens.len());
+
+        // Check for Go-specific token types
+        let token_types: Vec<&str> = tokens.iter().map(|t| t.token_type.as_str()).collect();
+        assert!(
+            token_types.contains(&"keyword"),
+            "Should have keyword tokens"
+        );
+        assert!(token_types.contains(&"string"), "Should have string tokens");
+        assert!(
+            token_types.contains(&"identifier"),
+            "Should have identifier tokens"
+        );
+        assert!(token_types.contains(&"number"), "Should have number tokens");
+    }
+}

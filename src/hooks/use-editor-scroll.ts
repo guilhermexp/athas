@@ -5,27 +5,23 @@ import { getCursorPosition } from "./use-vim";
 
 export const useEditorScroll = (
   editorRef: React.RefObject<HTMLDivElement | null>,
-  highlightRef: React.RefObject<HTMLPreElement | null>,
+  _highlightRef: React.RefObject<HTMLPreElement | null> | null,
   lineNumbersRef: React.RefObject<HTMLDivElement | null>,
 ) => {
   // Store subscriptions
   const setCursorPosition = useCodeEditorStore(state => state.setCursorPosition);
   const setIsTyping = useCodeEditorStore(state => state.setIsTyping);
 
-  // Sync scroll between contenteditable, highlight layer, and line numbers
+  // Sync scroll between contenteditable and line numbers
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const scrollingElement = e.currentTarget;
-      if (highlightRef.current && lineNumbersRef.current) {
+      if (lineNumbersRef.current) {
         const scrollTop = scrollingElement.scrollTop;
-        const scrollLeft = scrollingElement.scrollLeft;
-
-        highlightRef.current.scrollTop = scrollTop;
-        highlightRef.current.scrollLeft = scrollLeft;
         lineNumbersRef.current.scrollTop = scrollTop;
       }
     },
-    [highlightRef, lineNumbersRef],
+    [lineNumbersRef],
   );
 
   // Handle cursor position changes
