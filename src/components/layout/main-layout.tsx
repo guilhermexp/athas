@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ProjectNameMenu } from "../../hooks/use-context-menus";
 import { useKeyboardShortcutsWrapper } from "../../hooks/use-keyboard-shortcuts-wrapper";
 import { useMenuEventsWrapper } from "../../hooks/use-menu-events-wrapper";
@@ -8,7 +9,9 @@ import AIChat from "../ai-chat/ai-chat";
 import BottomPane from "../bottom-pane";
 import CommandBar from "../command/command-bar";
 import CommandPalette from "../command/command-palette";
+import type { Diagnostic } from "../diagnostics/diagnostics-pane";
 import CodeEditor from "../editor/code-editor";
+import EditorFooter from "../editor-footer";
 import FileReloadToast from "../file-reload-toast";
 import FindBar from "../find-bar";
 import GitHubCopilotSettings from "../github-copilot-settings";
@@ -25,6 +28,9 @@ export function MainLayout() {
 
   const { isSidebarVisible } = useUIState();
   const { isAIChatVisible } = usePersistentSettingsStore();
+
+  // TODO: Replace with actual diagnostics from language server or linter
+  const [diagnostics] = useState<Diagnostic[]>([]);
 
   // TODO: Get sidebar position from settings
   const sidebarPosition = "left" as "left" | "right"; // Default to left for now
@@ -62,6 +68,7 @@ export function MainLayout() {
               Select a file to edit...
             </div>
           )}
+          <EditorFooter />
         </div>
 
         {/* Right sidebar or AI chat based on settings */}
@@ -78,7 +85,7 @@ export function MainLayout() {
         )}
       </div>
 
-      <BottomPane isVisible={false} onClose={() => {}} diagnostics={[]} />
+      <BottomPane diagnostics={diagnostics} />
 
       {/* Global modals and overlays */}
       <CommandBar />
