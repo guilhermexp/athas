@@ -51,6 +51,12 @@ export const setCursorPosition = (element: HTMLDivElement, position: number): vo
   const selection = window.getSelection();
   if (!selection) return;
 
+  // Only restore cursor if the element already has focus
+  // This prevents stealing focus from other inputs like the AI chat
+  const isElementFocused =
+    document.activeElement === element || element.contains(document.activeElement);
+  if (!isElementFocused) return;
+
   const range = document.createRange();
   let currentPos = 0;
   let found = false;

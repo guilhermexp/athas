@@ -1,6 +1,5 @@
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import { useCodeHighlighting } from "../../hooks/use-code-highlighting";
 import { useEditorScroll } from "../../hooks/use-editor-scroll";
 import { useEditorSync } from "../../hooks/use-editor-sync";
 import { useHover } from "../../hooks/use-hover";
@@ -18,29 +17,8 @@ import { HoverTooltip } from "./hover-tooltip";
 import { LineNumbers } from "./line-numbers";
 import { QuickEditInline } from "./quick-edit-inline";
 import { VimCommandLine } from "./vim-command-line";
+
 // import type { VimCommandLineRef } from "../vim-command-line"; // Unused for now
-
-// Import language definitions
-import "prismjs/components/prism-bash";
-import "prismjs/components/prism-css";
-import "prismjs/components/prism-java";
-import "prismjs/components/prism-javascript";
-import "prismjs/components/prism-json";
-import "prismjs/components/prism-markdown";
-import "prismjs/components/prism-markup";
-import "prismjs/components/prism-markup-templating";
-import "prismjs/components/prism-php";
-import "prismjs/components/prism-python";
-import "prismjs/components/prism-ruby";
-import "prismjs/components/prism-rust";
-import "prismjs/components/prism-sql";
-import "prismjs/components/prism-toml";
-import "prismjs/components/prism-typescript";
-import "prismjs/components/prism-yaml";
-import "prismjs/components/prism-csharp";
-
-// Import custom theme CSS that adapts to app themes
-import "../../styles/prism-theme.css";
 
 interface CodeEditorProps {
   // All props are now optional as we get most data from stores
@@ -60,7 +38,6 @@ export interface CodeEditorRef {
 const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, ref) => {
   // Refs - must be called unconditionally
   const editorRef = useRef<HTMLDivElement>(null as any);
-  const highlightRef = useRef<HTMLPreElement | null>(null);
   const lineNumbersRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
 
@@ -86,7 +63,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   useEffect(() => {
     setRefs({
       editorRef,
-      highlightRef,
       lineNumbersRef,
     });
   }, [setRefs]);
@@ -99,9 +75,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   useEffect(() => {
     setFileInfo(filePath, filename);
   }, [filePath, filename, setFileInfo]);
-
-  // Initialize hooks - must be called unconditionally
-  useCodeHighlighting(highlightRef);
 
   // Sync props with store
   useEditorSync({
@@ -155,7 +128,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   );
 
   // Scroll management
-  const { handleScroll } = useEditorScroll(editorRef, highlightRef, lineNumbersRef);
+  const { handleScroll } = useEditorScroll(editorRef, null, lineNumbersRef);
 
   // Effect to handle search navigation
   useEffect(() => {

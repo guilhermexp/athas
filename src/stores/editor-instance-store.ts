@@ -13,7 +13,6 @@ const initialState = {
 
   // Refs - these are set per editor instance
   editorRef: null as RefObject<HTMLDivElement | null> | null,
-  highlightRef: null as RefObject<HTMLPreElement | null> | null,
   lineNumbersRef: null as RefObject<HTMLDivElement | null> | null,
 
   // LSP completion state
@@ -70,7 +69,6 @@ export const useEditorInstanceStore = create(
     // Actions
     setRefs: (refs: {
       editorRef: RefObject<HTMLDivElement | null>;
-      highlightRef: RefObject<HTMLPreElement | null>;
       lineNumbersRef: RefObject<HTMLDivElement | null>;
     }) => set(refs),
     setContent: (value: string, onChange: (value: string) => void) => set({ value, onChange }),
