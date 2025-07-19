@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getTokens, type Token } from "../lib/rust-api/tokens";
-import { getLanguageFromFilename } from "../utils/file-utils";
+import { getTokensFromPath, type Token } from "../lib/rust-api/tokens";
 import { getCursorPosition, setCursorPosition } from "./use-vim";
 
 interface DecoratedSegment {
@@ -13,34 +12,27 @@ interface DecoratedSegment {
 export function useEditorDecorations() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const decorationTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const currentFilePathRef = useRef<string | undefined>(undefined);
 
-  const fetchTokens = async (content: string, filePath?: string) => {
+  const fetchTokens = async (_content: string, filePath?: string) => {
     if (!filePath) return;
 
-    const language = getLanguageFromFilename(filePath).toLowerCase();
-    const supportedLanguages = ["javascript", "typescript"];
-    if (!supportedLanguages.includes(language)) {
-      setTokens([]);
-      return;
-    }
-
-    // Map to tree-sitter language keys
-    let tsLanguage = language;
-    if (filePath.endsWith(".tsx")) {
-      tsLanguage = "tsx";
-    } else if (filePath.endsWith(".ts")) {
-      tsLanguage = "typescript";
-    } else if (filePath.endsWith(".js") || filePath.endsWith(".jsx")) {
-      tsLanguage = "javascript";
-    }
-
     try {
-      const newTokens = await getTokens(content, tsLanguage);
-      setTokens(newTokens);
-    } catch (error) {
-      console.error("Failed to fetch tokens:", error);
-      setTokens([]);
+      const newTokens = await getTokensFromPath(filePath);
+      // Only set tokens if we're still on the same file
+      if (filePath === currentFilePathRef.current) {
+        setTokens(newTokens);
+      }
+    } catch (_error) {
+      // File is not supported or couldn't be parsed
+      if (filePath === currentFilePathRef.current) {
+        setTokens([]);
+      }
     }
+  };
+
+  const clearTokens = () => {
+    setTokens([]);
   };
 
   const debouncedFetchTokens = (content: string, filePath?: string) => {
@@ -48,9 +40,15 @@ export function useEditorDecorations() {
       clearTimeout(decorationTimeoutRef.current);
     }
 
+    // If file path changed, clear tokens immediately
+    if (filePath !== currentFilePathRef.current) {
+      clearTokens();
+      currentFilePathRef.current = filePath;
+    }
+
     decorationTimeoutRef.current = setTimeout(() => {
       fetchTokens(content, filePath);
-    }, 300);
+    }, 100);
   };
 
   const applyDecorations = (
@@ -132,5 +130,6 @@ export function useEditorDecorations() {
     tokens,
     debouncedFetchTokens,
     applyDecorations,
+    clearTokens,
   };
 }

@@ -68,7 +68,6 @@ export function MainLayout() {
               Select a file to edit...
             </div>
           )}
-          <EditorFooter />
         </div>
 
         {/* Right sidebar or AI chat based on settings */}
@@ -86,6 +85,7 @@ export function MainLayout() {
       </div>
 
       <BottomPane diagnostics={diagnostics} />
+      <EditorFooter />
 
       {/* Global modals and overlays */}
       <CommandBar />

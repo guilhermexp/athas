@@ -9,7 +9,8 @@ import { cn } from "../../utils/cn";
 export function EditorInput() {
   const { fontSize, tabSize, wordWrap, vimEnabled, vimMode } = useEditorConfigStore();
   const { value: codeEditorValue, setValue: setCodeEditorValue } = useCodeEditorStore();
-  const { tokens, debouncedFetchTokens, applyDecorations } = useEditorDecorations();
+  const { tokens, debouncedFetchTokens, applyDecorations, clearTokens } = useEditorDecorations();
+  const previousFilePathRef = useRef<string | undefined>(undefined);
   const {
     editorRef,
     onChange,
@@ -135,18 +136,32 @@ export function EditorInput() {
 
   // Apply syntax highlighting decorations
   useEffect(() => {
-    if (editorRef?.current && tokens.length > 0) {
-      applyDecorations(editorRef, codeEditorValue, tokens);
-    } else if (editorRef?.current && editorRef.current.textContent !== codeEditorValue) {
-      // If no tokens, just set plain text
-      editorRef.current.textContent = codeEditorValue;
+    if (editorRef?.current) {
+      if (tokens.length > 0) {
+        // Apply syntax highlighting
+        applyDecorations(editorRef, codeEditorValue, tokens);
+      } else {
+        // No tokens yet, show plain text
+        if (editorRef.current.textContent !== codeEditorValue) {
+          editorRef.current.textContent = codeEditorValue;
+        }
+      }
     }
   }, [tokens, codeEditorValue, editorRef, applyDecorations]);
 
-  // Fetch tokens when content or file path changes
+  // Handle file path changes
   useEffect(() => {
+    if (filePath !== previousFilePathRef.current) {
+      // File changed, immediately show plain text
+      if (editorRef?.current) {
+        editorRef.current.textContent = codeEditorValue;
+      }
+      previousFilePathRef.current = filePath;
+    }
+
+    // Fetch new tokens
     debouncedFetchTokens(codeEditorValue, filePath);
-  }, [codeEditorValue, filePath, debouncedFetchTokens]);
+  }, [codeEditorValue, filePath, debouncedFetchTokens, clearTokens, editorRef]);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleCursorPositionChange = () => {

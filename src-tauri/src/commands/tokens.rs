@@ -1,6 +1,7 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use tree_sitter::{Language, Node, Parser};
+use std::path::Path;
+use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent, Highlighter};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Token {
@@ -10,21 +11,164 @@ pub struct Token {
     pub class_name: String,
 }
 
-fn get_language_config(language_name: &str) -> Result<(Language, &'static str)> {
+// Standard highlight names used by Tree-sitter
+const HIGHLIGHT_NAMES: &[&str] = &[
+    "attribute",
+    "comment",
+    "constant",
+    "constant.builtin",
+    "constructor",
+    "embedded",
+    "error",
+    "function",
+    "function.builtin",
+    "function.method",
+    "keyword",
+    "keyword.control",
+    "keyword.function",
+    "keyword.operator",
+    "keyword.return",
+    "module",
+    "number",
+    "operator",
+    "property",
+    "property.builtin",
+    "punctuation",
+    "punctuation.bracket",
+    "punctuation.delimiter",
+    "punctuation.special",
+    "string",
+    "string.escape",
+    "string.special",
+    "tag",
+    "type",
+    "type.builtin",
+    "variable",
+    "variable.builtin",
+    "variable.parameter",
+];
+
+fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
     match language_name {
-        "javascript" | "js" => Ok((
-            tree_sitter_javascript::LANGUAGE.into(),
-            tree_sitter_javascript::HIGHLIGHT_QUERY,
-        )),
-        "typescript" | "ts" => Ok((
-            tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-            tree_sitter_typescript::HIGHLIGHTS_QUERY,
-        )),
-        "tsx" => Ok((
-            tree_sitter_typescript::LANGUAGE_TSX.into(),
-            tree_sitter_typescript::HIGHLIGHTS_QUERY,
-        )),
+        "javascript" | "js" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_javascript::LANGUAGE.into(),
+                language_name,
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::INJECTIONS_QUERY,
+                tree_sitter_javascript::LOCALS_QUERY,
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "typescript" | "ts" => {
+            // TypeScript inherits JavaScript highlights, so we use JavaScript's query
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+                language_name,
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::INJECTIONS_QUERY,
+                tree_sitter_javascript::LOCALS_QUERY,
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "tsx" => {
+            // TSX also inherits JavaScript highlights
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_typescript::LANGUAGE_TSX.into(),
+                language_name,
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::INJECTIONS_QUERY,
+                tree_sitter_javascript::LOCALS_QUERY,
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "json" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_json::LANGUAGE.into(),
+                language_name,
+                tree_sitter_json::HIGHLIGHTS_QUERY,
+                "", // JSON doesn't have injections/locals
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "yaml" | "yml" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_yaml::LANGUAGE.into(),
+                language_name,
+                tree_sitter_yaml::HIGHLIGHTS_QUERY,
+                "", // YAML doesn't have injections/locals
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "go" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_go::LANGUAGE.into(),
+                language_name,
+                tree_sitter_go::HIGHLIGHTS_QUERY,
+                "", // Go doesn't have injections/locals in the current version
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "rust" | "rs" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_rust::LANGUAGE.into(),
+                language_name,
+                tree_sitter_rust::HIGHLIGHTS_QUERY,
+                tree_sitter_rust::INJECTIONS_QUERY,
+                "", // Rust doesn't have LOCALS_QUERY in this version
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
         _ => anyhow::bail!("Unsupported language: {}", language_name),
+    }
+}
+
+fn get_language_from_path(path: &Path) -> Option<&'static str> {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .and_then(|ext| match ext {
+            "js" | "jsx" => Some("javascript"),
+            "ts" => Some("typescript"),
+            "tsx" => Some("tsx"),
+            "json" => Some("json"),
+            "yml" | "yaml" => Some("yaml"),
+            "go" => Some("go"),
+            "rs" => Some("rust"),
+            _ => None,
+        })
+}
+
+fn map_highlight_to_class(highlight_name: &str) -> (&str, &str) {
+    match highlight_name {
+        "keyword" | "keyword.control" | "keyword.function" | "keyword.operator"
+        | "keyword.return" => ("keyword", "token-keyword"),
+        "string" | "string.escape" | "string.special" => ("string", "token-string"),
+        "number" => ("number", "token-number"),
+        "constant" | "constant.builtin" => ("constant", "token-constant"),
+        "comment" => ("comment", "token-comment"),
+        "function" | "function.builtin" | "function.method" => ("function", "token-function"),
+        "type" | "type.builtin" => ("type", "token-type"),
+        "variable" | "variable.builtin" | "variable.parameter" => {
+            ("identifier", "token-identifier")
+        }
+        "property" | "property.builtin" => ("property", "token-property"),
+        "operator" => ("operator", "token-operator"),
+        "punctuation" | "punctuation.bracket" | "punctuation.delimiter" | "punctuation.special" => {
+            ("punctuation", "token-punctuation")
+        }
+        "tag" => ("jsx", "token-jsx"),
+        "attribute" => ("jsx-attribute", "token-jsx-attribute"),
+        _ => ("text", "token-text"),
     }
 }
 
@@ -33,235 +177,60 @@ pub async fn get_tokens(content: String, language: String) -> Result<Vec<Token>,
     tokenize_content(&content, &language).map_err(|e| format!("Failed to tokenize: {e}"))
 }
 
-// Get node type classification for better token identification
-fn classify_node(node: &Node, source: &str) -> (&'static str, &'static str) {
-    let node_text = node.utf8_text(source.as_bytes()).unwrap_or("");
+#[tauri::command]
+pub async fn get_tokens_from_path(file_path: String) -> Result<Vec<Token>, String> {
+    let path = Path::new(&file_path);
 
-    match node.kind() {
-        // Keywords
-        "const" | "let" | "var" | "function" | "async" | "await" | "return" | "if" | "else"
-        | "for" | "while" | "do" | "break" | "continue" | "switch" | "case" | "default" | "try"
-        | "catch" | "finally" | "throw" | "new" | "typeof" | "instanceof" | "in" | "import"
-        | "export" | "from" | "as" | "class" | "extends" | "static" | "interface" | "type"
-        | "enum" | "namespace" | "implements" | "private" | "public" | "protected" | "readonly" => {
-            ("keyword", "token-keyword")
-        }
+    // Read the file content asynchronously with tokio
+    let content = tokio::fs::read_to_string(&path)
+        .await
+        .map_err(|e| format!("Failed to read file: {e}"))?;
 
-        // Literals
-        "string" | "template_string" => ("string", "token-string"),
-        "number" => ("number", "token-number"),
-        "true" | "false" => ("boolean", "token-boolean"),
-        "null" | "undefined" => ("null", "token-null"),
-        "regex" => ("regex", "token-regex"),
+    // Determine the language from the file extension
+    let language = get_language_from_path(path)
+        .ok_or_else(|| format!("Unsupported file type: {:?}", path.extension()))?;
 
-        // Comments
-        "comment" | "line_comment" | "block_comment" => ("comment", "token-comment"),
-
-        // Identifiers and names
-        "identifier" => {
-            // Check if it's a known constant or type
-            if node_text.chars().next().is_some_and(|c| c.is_uppercase()) {
-                ("constant", "token-constant")
-            } else {
-                ("identifier", "token-identifier")
-            }
-        }
-        "property_identifier" => ("property", "token-property"),
-        "shorthand_property_identifier" => ("property", "token-property"),
-        "type_identifier" => ("type", "token-type"),
-
-        // Functions and methods
-        "function_declaration"
-        | "function_expression"
-        | "arrow_function"
-        | "method_definition"
-        | "generator_function" => {
-            // The function name itself will be captured separately
-            ("function", "token-function")
-        }
-
-        // Function/method calls
-        "call_expression" => ("function", "token-function"),
-
-        // JSX/TSX
-        "jsx_element"
-        | "jsx_opening_element"
-        | "jsx_closing_element"
-        | "jsx_self_closing_element" => ("jsx", "token-jsx"),
-        "jsx_attribute" => ("jsx-attribute", "token-jsx-attribute"),
-        "jsx_text" => ("jsx-text", "token-jsx-text"),
-
-        // Operators
-        "+" | "-" | "*" | "/" | "%" | "**" | "++" | "--" | "=" | "+=" | "-=" | "*=" | "/="
-        | "%=" | "**=" | "==" | "!=" | "===" | "!==" | "<" | ">" | "<=" | ">=" | "&&" | "||"
-        | "!" | "?" | ":" | "??" | "?." | "=>" => ("operator", "token-operator"),
-
-        // Punctuation
-        "{" | "}" | "[" | "]" | "(" | ")" | ";" | "," | "." | "..." => {
-            ("punctuation", "token-punctuation")
-        }
-
-        // Types (TypeScript)
-        "predefined_type" | "type_alias_declaration" | "interface_declaration" => {
-            ("type", "token-type")
-        }
-
-        // Default
-        _ => {
-            // For other nodes, default to text
-            ("text", "token-text")
-        }
-    }
-}
-
-fn extract_tokens_from_tree(node: Node, source: &str, tokens: &mut Vec<Token>) {
-    // Skip certain node types that shouldn't be tokenized
-    let skip_types = [
-        "program",
-        "statement_block",
-        "expression_statement",
-        "variable_declaration",
-        "lexical_declaration",
-        "parenthesized_expression",
-        "arguments",
-        "formal_parameters",
-        "parameter",
-    ];
-
-    if skip_types.contains(&node.kind()) {
-        // Just recurse into children
-        for child in node.children(&mut node.walk()) {
-            extract_tokens_from_tree(child, source, tokens);
-        }
-        return;
-    }
-
-    // Special handling for strings and template strings
-    match node.kind() {
-        "string" | "template_string" => {
-            // Tokenize the entire string as one token
-            tokens.push(Token {
-                start: node.start_byte(),
-                end: node.end_byte(),
-                token_type: "string".to_string(),
-                class_name: "token-string".to_string(),
-            });
-            return;
-        }
-        _ => {}
-    }
-
-    // Check if this node has no children (leaf node)
-    if node.child_count() == 0 {
-        let (token_type, class_name) = classify_node(&node, source);
-
-        // Skip whitespace-only text tokens
-        if token_type == "text" {
-            let text = node.utf8_text(source.as_bytes()).unwrap_or("");
-            if text.trim().is_empty() {
-                return;
-            }
-        }
-
-        tokens.push(Token {
-            start: node.start_byte(),
-            end: node.end_byte(),
-            token_type: token_type.to_string(),
-            class_name: class_name.to_string(),
-        });
-    } else {
-        // For parent nodes, check if we should tokenize the whole node
-        // or recurse into children
-        match node.kind() {
-            "call_expression" => {
-                // Extract function name from call expression
-                if let Some(function_node) = node.child_by_field_name("function") {
-                    // Check if it's a member expression (e.g., console.log)
-                    if function_node.kind() == "member_expression" {
-                        extract_tokens_from_tree(function_node, source, tokens);
-                    } else {
-                        // It's a direct function call
-                        tokens.push(Token {
-                            start: function_node.start_byte(),
-                            end: function_node.end_byte(),
-                            token_type: "function".to_string(),
-                            class_name: "token-function".to_string(),
-                        });
-                    }
-                }
-                if let Some(args_node) = node.child_by_field_name("arguments") {
-                    extract_tokens_from_tree(args_node, source, tokens);
-                }
-            }
-            "member_expression" => {
-                // Handle object.property
-                if let Some(object) = node.child_by_field_name("object") {
-                    extract_tokens_from_tree(object, source, tokens);
-                }
-                // Add the dot
-                for child in node.children(&mut node.walk()) {
-                    if child.kind() == "." {
-                        tokens.push(Token {
-                            start: child.start_byte(),
-                            end: child.end_byte(),
-                            token_type: "punctuation".to_string(),
-                            class_name: "token-punctuation".to_string(),
-                        });
-                    }
-                }
-                if let Some(property) = node.child_by_field_name("property") {
-                    // Check if this member expression is being called (parent is call_expression)
-                    let is_method_call =
-                        node.parent().is_some_and(|p| p.kind() == "call_expression");
-
-                    tokens.push(Token {
-                        start: property.start_byte(),
-                        end: property.end_byte(),
-                        token_type: if is_method_call {
-                            "function"
-                        } else {
-                            "property"
-                        }
-                        .to_string(),
-                        class_name: if is_method_call {
-                            "token-function"
-                        } else {
-                            "token-property"
-                        }
-                        .to_string(),
-                    });
-                }
-            }
-            _ => {
-                // Recurse into children
-                for child in node.children(&mut node.walk()) {
-                    extract_tokens_from_tree(child, source, tokens);
-                }
-            }
-        }
-    }
+    tokenize_content(&content, language).map_err(|e| format!("Failed to tokenize: {e}"))
 }
 
 pub fn tokenize_content(content: &str, language: &str) -> Result<Vec<Token>> {
-    let (lang, _) = get_language_config(language)?;
+    let config = get_language_config(language)?;
+    let mut highlighter = Highlighter::new();
 
-    // Parse the content with tree-sitter
-    let mut parser = Parser::new();
-    parser.set_language(&lang)?;
+    let highlights = highlighter
+        .highlight(&config, content.as_bytes(), None, |_| None)?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    let tree = parser
-        .parse(content, None)
-        .context("Failed to parse content")?;
-
-    let root_node = tree.root_node();
     let mut tokens = Vec::new();
+    let mut current_highlight: Option<usize> = None;
 
-    // Extract all tokens from the syntax tree
-    extract_tokens_from_tree(root_node, content, &mut tokens);
+    for event in highlights {
+        match event {
+            HighlightEvent::Source { start, end } => {
+                if let Some(highlight_idx) = current_highlight {
+                    let highlight_name = HIGHLIGHT_NAMES.get(highlight_idx).unwrap_or(&"text");
+                    let (token_type, class_name) = map_highlight_to_class(highlight_name);
 
-    // Sort tokens by start position and remove duplicates
-    tokens.sort_by_key(|token| (token.start, token.end));
-    tokens.dedup_by(|a, b| a.start == b.start && a.end == b.end);
+                    // Skip whitespace-only tokens
+                    let text = &content[start..end];
+                    if !text.trim().is_empty() {
+                        tokens.push(Token {
+                            start,
+                            end,
+                            token_type: token_type.to_string(),
+                            class_name: class_name.to_string(),
+                        });
+                    }
+                }
+            }
+            HighlightEvent::HighlightStart(highlight) => {
+                current_highlight = Some(highlight.0);
+            }
+            HighlightEvent::HighlightEnd => {
+                current_highlight = None;
+            }
+        }
+    }
 
     Ok(tokens)
 }
@@ -288,9 +257,6 @@ const result = numbers.map(n => n * 2);"#;
             println!("Token {}: {:?} = '{}'", i, token, text);
         }
 
-        // Detailed assertions
-        assert!(!tokens.is_empty(), "Should have tokens");
-
         // Check for various token types
         let token_types: Vec<&str> = tokens.iter().map(|t| t.token_type.as_str()).collect();
         let unique_types: std::collections::HashSet<&str> =
@@ -298,6 +264,7 @@ const result = numbers.map(n => n * 2);"#;
 
         println!("Unique token types: {:?}", unique_types);
 
+        assert!(!tokens.is_empty(), "Should have tokens");
         assert!(
             token_types.contains(&"keyword"),
             "Should have keyword tokens"
@@ -311,7 +278,6 @@ const result = numbers.map(n => n * 2);"#;
             token_types.contains(&"function"),
             "Should have function tokens"
         );
-        // Properties that are called as methods will be classified as functions
         assert!(token_types.contains(&"number"), "Should have number tokens");
         assert!(
             token_types.contains(&"punctuation"),
@@ -321,5 +287,62 @@ const result = numbers.map(n => n * 2);"#;
             token_types.contains(&"operator"),
             "Should have operator tokens"
         );
+    }
+
+    #[test]
+    fn test_get_language_from_path() {
+        use std::path::Path;
+
+        assert_eq!(
+            get_language_from_path(Path::new("test.js")),
+            Some("javascript")
+        );
+        assert_eq!(
+            get_language_from_path(Path::new("test.jsx")),
+            Some("javascript")
+        );
+        assert_eq!(
+            get_language_from_path(Path::new("test.ts")),
+            Some("typescript")
+        );
+        assert_eq!(get_language_from_path(Path::new("test.tsx")), Some("tsx"));
+        assert_eq!(get_language_from_path(Path::new("test.json")), Some("json"));
+        assert_eq!(get_language_from_path(Path::new("test.yaml")), Some("yaml"));
+        assert_eq!(get_language_from_path(Path::new("test.yml")), Some("yaml"));
+        assert_eq!(get_language_from_path(Path::new("test.go")), Some("go"));
+        assert_eq!(get_language_from_path(Path::new("test.rs")), Some("rust"));
+        assert_eq!(get_language_from_path(Path::new("test.txt")), None);
+        assert_eq!(get_language_from_path(Path::new("test")), None);
+    }
+
+    #[test]
+    fn test_tokenize_go() {
+        let code = r#"package main
+
+import "fmt"
+
+func main() {
+    greeting := "Hello, Go!"
+    numbers := []int{1, 2, 3}
+    for _, n := range numbers {
+        fmt.Printf("Number: %d\n", n)
+    }
+}"#;
+
+        let tokens = tokenize_content(code, "go").unwrap();
+        println!("Found {} tokens", tokens.len());
+
+        // Check for Go-specific token types
+        let token_types: Vec<&str> = tokens.iter().map(|t| t.token_type.as_str()).collect();
+        assert!(
+            token_types.contains(&"keyword"),
+            "Should have keyword tokens"
+        );
+        assert!(token_types.contains(&"string"), "Should have string tokens");
+        assert!(
+            token_types.contains(&"identifier"),
+            "Should have identifier tokens"
+        );
+        assert!(token_types.contains(&"number"), "Should have number tokens");
     }
 }
