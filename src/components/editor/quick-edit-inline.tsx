@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function QuickEditInline() {
@@ -11,6 +12,48 @@ export function QuickEditInline() {
     onChange,
   } = useEditorInstanceStore();
 
+  const [inputValue, setInputValue] = useState("");
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Calculate position based on selection
+  useEffect(() => {
+    if (isInlineAssistantVisible && editorRef?.current) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const editorRect = editorRef.current.getBoundingClientRect();
+
+        // Position at the top of the first line of selection, relative to editor
+        setPosition({
+          top: rect.top - editorRect.top - 32, // 32px above the selection
+          left: Math.max(0, rect.left - editorRect.left),
+        });
+      } else {
+        // Fallback to cursor position
+        setPosition({
+          top: assistantCursorPosition.y - 32,
+          left: assistantCursorPosition.x,
+        });
+      }
+    }
+  }, [isInlineAssistantVisible, selectedText, assistantCursorPosition, editorRef]);
+
+  // Auto-focus when component becomes visible
+  useEffect(() => {
+    if (isInlineAssistantVisible && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isInlineAssistantVisible]);
+
+  // Reset input when component closes
+  useEffect(() => {
+    if (!isInlineAssistantVisible) {
+      setInputValue("");
+    }
+  }, [isInlineAssistantVisible]);
+
   const handleClose = () => {
     setInlineAssistant(false);
     if (editorRef?.current) {
@@ -18,10 +61,22 @@ export function QuickEditInline() {
     }
   };
 
-  const handleApplyEdit = (editedText: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleClose();
+    } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleApplyEdit();
+    }
+  };
+
+  const handleApplyEdit = () => {
+    if (!inputValue.trim()) return;
+
     if (selectedText) {
       // Replace selected text
-      const newValue = value.replace(selectedText, editedText);
+      const newValue = value.replace(selectedText, inputValue);
       onChange(newValue);
     } else {
       // Insert at cursor position
@@ -29,7 +84,7 @@ export function QuickEditInline() {
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         range.deleteContents();
-        range.insertNode(document.createTextNode(editedText));
+        range.insertNode(document.createTextNode(inputValue));
         range.collapse(false);
         selection.removeAllRanges();
         selection.addRange(range);
@@ -46,39 +101,53 @@ export function QuickEditInline() {
 
   return (
     <div
-      className="fixed z-50 min-w-[300px] max-w-[600px] rounded border border-border bg-primary-bg p-4 shadow-lg"
+      className="absolute z-50 flex items-center gap-2 rounded border border-border bg-secondary-bg px-3 py-2 shadow-lg"
       style={{
-        left: assistantCursorPosition.x,
-        top: assistantCursorPosition.y,
-        transform: "translateX(-50%)",
+        top: position.top,
+        left: position.left,
       }}
     >
-      <div className="mb-3">
-        <h3 className="font-medium text-sm text-text">AI Quick Edit</h3>
-        {selectedText && <p className="text-text-lighter text-xs">Editing selected text</p>}
-      </div>
+      {/* Inline indicator */}
+      <div className="h-2 w-2 flex-shrink-0 rounded-full bg-accent"></div>
 
-      <div className="mb-3">
-        <textarea
-          className="h-20 w-full resize-none rounded border border-border bg-secondary-bg p-2 font-mono text-sm"
-          placeholder="Describe your edit or paste new code..."
-        />
-      </div>
+      {/* Inline input */}
+      <input
+        ref={inputRef}
+        type="text"
+        value={inputValue}
+        onChange={e => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="min-w-48 bg-transparent text-sm text-text placeholder-text-lighter outline-none"
+        placeholder={selectedText ? "Describe the edit..." : "Type to insert..."}
+      />
 
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={handleClose}
-          className="px-3 py-1 text-sm text-text-lighter hover:text-text"
+      {/* Selection info */}
+      {selectedText && (
+        <span className="flex-shrink-0 text-text-lighter text-xs">{selectedText.length} chars</span>
+      )}
+
+      {/* Close button */}
+      <button
+        onClick={handleClose}
+        className="ml-1 flex-shrink-0 text-text-lighter hover:text-text"
+        title="Close (Esc)"
+      >
+        <svg
+          className="h-3 w-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-label="Close"
+          role="img"
         >
-          Cancel
-        </button>
-        <button
-          onClick={() => handleApplyEdit("// AI edit placeholder")}
-          className="rounded bg-accent px-3 py-1 text-primary-bg text-sm hover:bg-accent/90"
-        >
-          Apply
-        </button>
-      </div>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
     </div>
   );
 }

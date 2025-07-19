@@ -15,7 +15,6 @@ import EditorFooter from "../editor-footer";
 import FileReloadToast from "../file-reload-toast";
 import FindBar from "../find-bar";
 import GitHubCopilotSettings from "../github-copilot-settings";
-import QuickEditInline from "../quick-edit-modal";
 import ResizableRightPane from "../resizable-right-pane";
 import ResizableSidebar from "../resizable-sidebar";
 import TabBar from "../tab-bar";
@@ -64,9 +63,7 @@ export function MainLayout() {
           {activeBuffer ? (
             <CodeEditor />
           ) : (
-            <div className="paper-text-secondary flex flex-1 items-center justify-center">
-              Select a file to edit...
-            </div>
+            <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>
           )}
         </div>
 
@@ -91,7 +88,6 @@ export function MainLayout() {
       <CommandBar />
       <CommandPalette />
       <FindBar />
-      <QuickEditInline />
       <GitHubCopilotSettings />
       <ProjectNameMenu />
       <FileReloadToast />

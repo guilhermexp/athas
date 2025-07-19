@@ -89,20 +89,8 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+K (Mac) or Ctrl+K (Windows/Linux) to open AI quick edit
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        (e.key === "k" || e.key === "K") &&
-        !e.shiftKey &&
-        coreFeatures.aiChat
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (onQuickEdit) {
-          onQuickEdit();
-        }
-        return;
-      }
+      // Cmd+K is now handled directly in the code editor to avoid conflicts
+      // Removed global handler to prevent duplicate inline assistants
 
       // Find is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms

@@ -137,11 +137,14 @@ export function EditorInput() {
   // Apply syntax highlighting decorations
   useEffect(() => {
     if (editorRef?.current) {
-      if (tokens.length > 0) {
-        // Apply syntax highlighting
+      // Only apply decorations if the editor is not focused to avoid breaking input
+      const isEditorFocused = document.activeElement === editorRef.current;
+
+      if (tokens.length > 0 && !isEditorFocused) {
+        // Apply syntax highlighting only when not actively typing
         applyDecorations(editorRef, codeEditorValue, tokens);
-      } else {
-        // No tokens yet, show plain text
+      } else if (!isEditorFocused) {
+        // No tokens yet, show plain text only when not focused
         if (editorRef.current.textContent !== codeEditorValue) {
           editorRef.current.textContent = codeEditorValue;
         }
@@ -217,6 +220,16 @@ export function EditorInput() {
       onMouseMove={handleHover}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onBlur={() => {
+        // Apply syntax highlighting when editor loses focus
+        if (editorRef?.current && tokens.length > 0) {
+          applyDecorations(editorRef, codeEditorValue, tokens);
+        }
+      }}
+      onFocus={() => {
+        // Store cursor position when focusing
+        handleCursorPositionChange();
+      }}
       className={cn(
         getEditorClasses(),
         "code-editor-content",

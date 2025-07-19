@@ -170,11 +170,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
   // Early return if no active buffer - must be after all hooks
   if (!activeBuffer) {
-    return (
-      <div className="paper-text-secondary flex flex-1 items-center justify-center">
-        Select a file to edit...
-      </div>
-    );
+    return <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>;
   }
 
   return (

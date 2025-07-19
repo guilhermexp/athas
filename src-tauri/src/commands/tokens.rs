@@ -118,6 +118,17 @@ fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
             config.configure(HIGHLIGHT_NAMES);
             Ok(config)
         }
+        "ruby" | "rb" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_ruby::LANGUAGE.into(),
+                language_name,
+                tree_sitter_ruby::HIGHLIGHTS_QUERY,
+                "", // Ruby doesn't have injections/locals in this version
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
         "rust" | "rs" => {
             let mut config = HighlightConfiguration::new(
                 tree_sitter_rust::LANGUAGE.into(),
@@ -143,6 +154,7 @@ fn get_language_from_path(path: &Path) -> Option<&'static str> {
             "json" => Some("json"),
             "yml" | "yaml" => Some("yaml"),
             "go" => Some("go"),
+            "rb" | "ruby" => Some("ruby"),
             "rs" => Some("rust"),
             _ => None,
         })
@@ -310,6 +322,8 @@ const result = numbers.map(n => n * 2);"#;
         assert_eq!(get_language_from_path(Path::new("test.yaml")), Some("yaml"));
         assert_eq!(get_language_from_path(Path::new("test.yml")), Some("yaml"));
         assert_eq!(get_language_from_path(Path::new("test.go")), Some("go"));
+        assert_eq!(get_language_from_path(Path::new("test.rb")), Some("ruby"));
+        assert_eq!(get_language_from_path(Path::new("test.ruby")), Some("ruby"));
         assert_eq!(get_language_from_path(Path::new("test.rs")), Some("rust"));
         assert_eq!(get_language_from_path(Path::new("test.txt")), None);
         assert_eq!(get_language_from_path(Path::new("test")), None);
@@ -333,6 +347,44 @@ func main() {
         println!("Found {} tokens", tokens.len());
 
         // Check for Go-specific token types
+        let token_types: Vec<&str> = tokens.iter().map(|t| t.token_type.as_str()).collect();
+        assert!(
+            token_types.contains(&"keyword"),
+            "Should have keyword tokens"
+        );
+        assert!(token_types.contains(&"string"), "Should have string tokens");
+        assert!(
+            token_types.contains(&"identifier"),
+            "Should have identifier tokens"
+        );
+        assert!(token_types.contains(&"number"), "Should have number tokens");
+    }
+
+    #[test]
+    fn test_tokenize_ruby() {
+        let code = r#"class User
+  def initialize(name)
+    @name = name
+  end
+
+  def greet
+    puts "Hello, #{@name}!"
+  end
+
+  def self.create_admin
+    new("admin")
+  end
+end
+
+user = User.new("Alice")
+user.greet
+
+numbers = [1, 2, 3].map { |n| n * 2 }"#;
+
+        let tokens = tokenize_content(code, "ruby").unwrap();
+        println!("Found {} tokens", tokens.len());
+
+        // Check for Ruby-specific token types
         let token_types: Vec<&str> = tokens.iter().map(|t| t.token_type.as_str()).collect();
         assert!(
             token_types.contains(&"keyword"),
