@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { EditorInput } from "./editor-input";
-import { SyntaxHighlight } from "./syntax-highlight";
 import { VimCursor } from "./vim-cursor";
 
 export function EditorContent() {
@@ -10,10 +9,7 @@ export function EditorContent() {
 
   return (
     <div className="relative h-full flex-1 bg-primary-bg">
-      {/* Syntax highlighting layer (behind contenteditable) */}
-      <SyntaxHighlight />
-
-      {/* Contenteditable div for input */}
+      {/* Single contenteditable layer with syntax highlighting */}
       <EditorInput />
 
       {/* Vim cursor for normal mode */}

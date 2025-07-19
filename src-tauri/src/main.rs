@@ -268,7 +268,9 @@ fn main() {
             get_system_theme,
             start_theme_monitoring,
             stop_theme_monitoring,
-            trigger_theme_detection
+            trigger_theme_detection,
+            // Token commands
+            get_tokens
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -5,6 +5,7 @@
 
 /* utils like animations */
 @import "./styles/utils.css";
+@import "./styles/token-theme.css";
 
 /* Theme imports - must come after base layer for proper cascade */
 @import "./styles/themes/dark.css" layer(themes);

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useEditorDecorations } from "../../hooks/use-editor-decorations";
 import { getCursorPosition } from "../../hooks/use-vim";
 import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
@@ -8,6 +9,7 @@ import { cn } from "../../utils/cn";
 export function EditorInput() {
   const { fontSize, tabSize, wordWrap, vimEnabled, vimMode } = useEditorConfigStore();
   const { value: codeEditorValue, setValue: setCodeEditorValue } = useCodeEditorStore();
+  const { tokens, debouncedFetchTokens, applyDecorations } = useEditorDecorations();
   const {
     editorRef,
     onChange,
@@ -35,7 +37,7 @@ export function EditorInput() {
   };
 
   const getEditorClasses = () => {
-    let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 font-mono border-none outline-none overflow-visible z-[2] shadow-none rounded-none transition-none`;
+    let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 font-mono border-none outline-none overflow-visible shadow-none rounded-none transition-none`;
 
     if (vimEnabled) {
       if (vimMode === "normal") {
@@ -131,12 +133,20 @@ export function EditorInput() {
     onKeyDown?.(e);
   };
 
-  // Sync content with contenteditable when the value from store changes
+  // Apply syntax highlighting decorations
   useEffect(() => {
-    if (editorRef?.current && editorRef.current.textContent !== codeEditorValue) {
+    if (editorRef?.current && tokens.length > 0) {
+      applyDecorations(editorRef, codeEditorValue, tokens);
+    } else if (editorRef?.current && editorRef.current.textContent !== codeEditorValue) {
+      // If no tokens, just set plain text
       editorRef.current.textContent = codeEditorValue;
     }
-  }, [codeEditorValue, editorRef]);
+  }, [tokens, codeEditorValue, editorRef, applyDecorations]);
+
+  // Fetch tokens when content or file path changes
+  useEffect(() => {
+    debouncedFetchTokens(codeEditorValue, filePath);
+  }, [codeEditorValue, filePath, debouncedFetchTokens]);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleCursorPositionChange = () => {
@@ -208,11 +218,9 @@ export function EditorInput() {
         wordBreak: wordWrap ? "break-word" : "normal",
         overflowWrap: wordWrap ? "break-word" : "normal",
         color: "var(--tw-text)",
-        opacity: 0.3,
         background: "transparent",
-        caretColor: "var(--tw-text)",
+        caretColor: vimEnabled && vimMode === "normal" ? "transparent" : "var(--tw-text)",
         border: "none",
-        zIndex: 2,
         maxWidth: "fit-content",
         minWidth: "100%",
         resize: "none",

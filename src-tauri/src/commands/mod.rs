@@ -5,6 +5,7 @@ pub mod git;
 pub mod github;
 pub mod terminal;
 pub mod theme;
+pub mod tokens;
 pub mod watcher;
 pub mod window;
 
@@ -15,5 +16,6 @@ pub use git::*;
 pub use github::*;
 pub use terminal::*;
 pub use theme::*;
+pub use tokens::*;
 pub use watcher::*;
 pub use window::*;
