@@ -2,6 +2,7 @@ import { FilePlus, FolderOpen, FolderPlus, Server } from "lucide-react";
 import type React from "react";
 import { forwardRef } from "react";
 import { cn } from "@/utils/cn";
+import { useBufferStore } from "../../stores/buffer-store";
 import { useFileSystemStore } from "../../stores/file-system-store";
 import { useProjectStore } from "../../stores/project-store";
 import { useSidebarStore } from "../../stores/sidebar-store";
@@ -45,8 +46,16 @@ export const MainSidebar = forwardRef<SearchViewRef>((_, ref) => {
 
   // Handlers
   const onOpenExtensions = () => {
-    // TODO: Implement extensions functionality
-    console.log("Open extensions");
+    const { openBuffer } = useBufferStore.getState();
+    openBuffer(
+      "extensions://marketplace",
+      "Extensions",
+      "", // Content will be handled by the component
+      false, // not an image
+      false, // not SQLite
+      false, // not a diff
+      true, // is virtual
+    );
   };
 
   const onProjectNameMenuOpen = (event: React.MouseEvent) => {

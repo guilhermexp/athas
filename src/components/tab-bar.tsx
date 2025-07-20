@@ -429,7 +429,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
                   {/* File Icon */}
                   <div className="flex-shrink-0">
-                    {buffer.path === "extensions://language-servers" ? (
+                    {buffer.path === "extensions://marketplace" ? (
                       <Package size={12} className="text-blue-500" />
                     ) : buffer.isSQLite ? (
                       <Database size={12} className="text-text-lighter" />
@@ -513,7 +513,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
           >
             {/* File Icon */}
             <span className="flex-shrink-0">
-              {sortedBuffers[draggedIndex].path === "extensions://language-servers" ? (
+              {sortedBuffers[draggedIndex].path === "extensions://marketplace" ? (
                 <Package size={12} className="text-blue-500" />
               ) : sortedBuffers[draggedIndex].isSQLite ? (
                 <Database size={12} className="text-text-lighter" />
