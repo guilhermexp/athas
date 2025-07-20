@@ -10,6 +10,7 @@ import BottomPane from "../bottom-pane";
 import CommandBar from "../command/command-bar";
 import CommandPalette from "../command/command-palette";
 import type { Diagnostic } from "../diagnostics/diagnostics-pane";
+import DiffViewer from "../diff-viewer";
 import CodeEditor from "../editor/code-editor";
 import EditorFooter from "../editor-footer";
 import FileReloadToast from "../file-reload-toast";
@@ -60,11 +61,18 @@ export function MainLayout() {
         {/* Main content area */}
         <div className="flex h-full flex-1 flex-col overflow-hidden">
           <TabBar />
-          {activeBuffer ? (
-            <CodeEditor />
-          ) : (
-            <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>
-          )}
+          {(() => {
+            if (!activeBuffer) {
+              return (
+                <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>
+              );
+            }
+            if (activeBuffer.isDiff) {
+              return <DiffViewer />;
+            } else {
+              return <CodeEditor />;
+            }
+          })()}
         </div>
 
         {/* Right sidebar or AI chat based on settings */}

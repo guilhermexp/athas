@@ -1,40 +1,29 @@
-import {
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  Edit3,
-  FileIcon,
-  FilePlus,
-  FileX,
-  Minus,
-  Plus,
-  X,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Edit3, FileIcon, FilePlus, FileX, X } from "lucide-react";
 import { useState } from "react";
+import { useBufferStore } from "../stores/buffer-store";
 import type { GitDiff, GitDiffLine } from "../utils/git";
 
-interface DiffViewerProps {
-  diff: GitDiff | null;
-  onClose: () => void;
-  fileName?: string;
-  onStageHunk?: (lines: GitDiffLine[]) => void;
-  onUnstageHunk?: (lines: GitDiffLine[]) => void;
-  onStageLine?: (line: GitDiffLine) => void;
-  onUnstageLine?: (line: GitDiffLine) => void;
-}
+const DiffViewer = () => {
+  const { activeBufferId, buffers, closeBuffer } = useBufferStore();
+  const activeBuffer = buffers.find(b => b.id === activeBufferId);
 
-const DiffViewer = ({
-  diff,
-  onClose,
-  fileName,
-  onStageHunk,
-  onUnstageHunk,
-  onStageLine,
-  onUnstageLine,
-}: DiffViewerProps) => {
   const [collapsedHunks, setCollapsedHunks] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<"unified" | "split">("unified");
   const [zoom, setZoom] = useState<number>(1);
+
+  if (!activeBuffer || !activeBuffer.isDiff) {
+    return null;
+  }
+
+  let diff: GitDiff | null = null;
+  try {
+    diff = JSON.parse(activeBuffer.content);
+  } catch (error) {
+    console.error("Failed to parse diff content:", error);
+  }
+
+  const fileName = activeBuffer.name;
+  const onClose = () => closeBuffer(activeBuffer.id);
 
   if (!diff) {
     return (
@@ -296,6 +285,7 @@ const DiffViewer = ({
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {/* TODO: Implement staging/unstaging functionality
             {(onStageHunk || onUnstageHunk) && (
               <>
                 {onStageHunk && (
@@ -319,7 +309,7 @@ const DiffViewer = ({
                   </button>
                 )}
               </>
-            )}
+            )} */}
             <button
               onClick={() => copyLineContent(hunk.header.content)}
               className="rounded p-1 text-text-lighter transition-colors hover:bg-hover hover:text-text"
@@ -413,7 +403,9 @@ const DiffViewer = ({
               >
                 <Copy size={10} />
               </button>
-              {(onStageLine || onUnstageLine) && line.line_type !== "context" && (
+              {/* TODO: Implement staging/unstaging functionality
+              {/* TODO: Implement staging/unstaging functionality
+          {(onStageLine || onUnstageLine) && line.line_type !== "context" && (
                 <>
                   {onStageLine && line.line_type === "added" && (
                     <button
@@ -434,7 +426,7 @@ const DiffViewer = ({
                     </button>
                   )}
                 </>
-              )}
+              )} */}
             </div>
           </div>
         </div>
@@ -486,6 +478,7 @@ const DiffViewer = ({
           >
             <Copy size={10} />
           </button>
+          {/* TODO: Implement staging/unstaging functionality
           {(onStageLine || onUnstageLine) && line.line_type !== "context" && (
             <>
               {onStageLine && line.line_type === "added" && (
@@ -507,7 +500,7 @@ const DiffViewer = ({
                 </button>
               )}
             </>
-          )}
+          )} */}
         </div>
       </div>
     );
