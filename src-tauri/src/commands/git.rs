@@ -1,8 +1,22 @@
+use anyhow::{Context, Result, bail};
 use base64::{Engine as _, engine::general_purpose};
-use git2::{Diff, Oid, Repository};
+use git2::{BranchType, Diff, Oid, Repository, Sort};
+use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 use tauri::command;
+use tempfile::NamedTempFile;
+
+// Convert anyhow::Result to Result<T, String> for Tauri
+trait IntoStringError<T> {
+    fn into_string_error(self) -> Result<T, String>;
+}
+
+impl<T> IntoStringError<T> for Result<T> {
+    fn into_string_error(self) -> Result<T, String> {
+        self.map_err(|e| format!("{:#}", e))
+    }
+}
 
 #[derive(serde::Serialize)]
 pub struct GitStatus {
@@ -13,9 +27,19 @@ pub struct GitStatus {
 }
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum FileStatus {
+    Modified,
+    Added,
+    Deleted,
+    Renamed,
+    Untracked,
+}
+
+#[derive(serde::Serialize)]
 pub struct GitFile {
     pub path: String,
-    pub status: String,
+    pub status: FileStatus,
     pub staged: bool,
 }
 
@@ -27,9 +51,18 @@ pub struct GitCommit {
     pub date: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum DiffLineType {
+    Added,
+    Removed,
+    Context,
+    Header,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
 pub struct GitDiffLine {
-    pub line_type: String,
+    pub line_type: DiffLineType,
     pub content: String,
     pub old_line_number: Option<u32>,
     pub new_line_number: Option<u32>,
@@ -115,7 +148,7 @@ fn parse_diff_to_lines(diff: &mut Diff) -> Result<Vec<GitDiffLine>, String> {
             'F' | 'H' => {
                 let content = String::from_utf8_lossy(line.content()).to_string();
                 lines.push(GitDiffLine {
-                    line_type: "header".to_string(),
+                    line_type: DiffLineType::Header,
                     content,
                     old_line_number: None,
                     new_line_number: None,
@@ -123,7 +156,7 @@ fn parse_diff_to_lines(diff: &mut Diff) -> Result<Vec<GitDiffLine>, String> {
             }
             '+' => {
                 lines.push(GitDiffLine {
-                    line_type: "added".to_string(),
+                    line_type: DiffLineType::Added,
                     content: String::from_utf8_lossy(line.content())
                         .trim_end_matches('\n')
                         .to_string(),
@@ -133,7 +166,7 @@ fn parse_diff_to_lines(diff: &mut Diff) -> Result<Vec<GitDiffLine>, String> {
             }
             '-' => {
                 lines.push(GitDiffLine {
-                    line_type: "removed".to_string(),
+                    line_type: DiffLineType::Removed,
                     content: String::from_utf8_lossy(line.content())
                         .trim_end_matches('\n')
                         .to_string(),
@@ -143,7 +176,7 @@ fn parse_diff_to_lines(diff: &mut Diff) -> Result<Vec<GitDiffLine>, String> {
             }
             ' ' => {
                 lines.push(GitDiffLine {
-                    line_type: "context".to_string(),
+                    line_type: DiffLineType::Context,
                     content: String::from_utf8_lossy(line.content())
                         .trim_end_matches('\n')
                         .to_string(),
@@ -160,91 +193,106 @@ fn parse_diff_to_lines(diff: &mut Diff) -> Result<Vec<GitDiffLine>, String> {
     Ok(lines)
 }
 
-fn get_ahead_behind_counts(repo_dir: &Path, branch: &str) -> (i32, i32) {
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args([
-            "rev-list",
-            "--left-right",
-            "--count",
-            &format!("{branch}...origin/{branch}"),
-        ])
-        .output();
+fn get_ahead_behind_counts(repo: &Repository, branch: &str) -> (i32, i32) {
+    let local_branch = match repo.find_branch(branch, git2::BranchType::Local) {
+        Ok(branch) => branch,
+        Err(_) => return (0, 0),
+    };
 
-    match output {
-        Ok(output) if output.status.success() => {
-            let text = String::from_utf8_lossy(&output.stdout);
-            let parts: Vec<&str> = text.trim().split('\t').collect();
-            if parts.len() == 2 {
-                let ahead = parts[0].parse().unwrap_or(0);
-                let behind = parts[1].parse().unwrap_or(0);
-                (ahead, behind)
-            } else {
-                (0, 0)
-            }
-        }
-        _ => (0, 0),
+    let upstream = match local_branch.upstream() {
+        Ok(upstream) => upstream,
+        Err(_) => return (0, 0),
+    };
+
+    let local_oid = match local_branch.get().target() {
+        Some(oid) => oid,
+        None => return (0, 0),
+    };
+
+    let upstream_oid = match upstream.get().target() {
+        Some(oid) => oid,
+        None => return (0, 0),
+    };
+
+    match repo.graph_ahead_behind(local_oid, upstream_oid) {
+        Ok((ahead, behind)) => (ahead as i32, behind as i32),
+        Err(_) => (0, 0),
     }
 }
 
 #[command]
 pub fn git_status(repo_path: String) -> Result<GitStatus, String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_status(repo_path).into_string_error()
+}
 
-    if !repo_dir.join(".git").exists() {
-        return Err("Not a git repository".to_string());
-    }
+fn _git_status(repo_path: String) -> Result<GitStatus> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    let branch_output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["rev-parse", "--abbrev-ref", "HEAD"])
-        .output()
-        .map_err(|e| format!("Failed to get branch: {e}"))?;
+    let branch = repo
+        .head()
+        .ok()
+        .and_then(|head| {
+            if head.is_branch() {
+                head.shorthand().map(|s| s.to_string())
+            } else {
+                Some("HEAD".to_string())
+            }
+        })
+        .unwrap_or_else(|| "unknown".to_string());
 
-    let branch = if branch_output.status.success() {
-        String::from_utf8_lossy(&branch_output.stdout)
-            .trim()
-            .to_string()
-    } else {
-        "unknown".to_string()
-    };
+    let (ahead, behind) = get_ahead_behind_counts(&repo, &branch);
 
-    let (ahead, behind) = get_ahead_behind_counts(repo_dir, &branch);
+    let mut status_opts = git2::StatusOptions::new();
+    status_opts
+        .include_untracked(true)
+        .include_ignored(false)
+        .include_unmodified(false);
 
-    let status_output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["status", "--porcelain"])
-        .output()
-        .map_err(|e| format!("Failed to get status: {e}"))?;
+    let statuses = repo
+        .statuses(Some(&mut status_opts))
+        .context("Failed to get status")?;
 
     let mut files = Vec::new();
-    if status_output.status.success() {
-        let status_text = String::from_utf8_lossy(&status_output.stdout);
-        for line in status_text.lines() {
-            if line.len() >= 3 {
-                let staged_char = line.chars().next().unwrap_or(' ');
-                let unstaged_char = line.chars().nth(1).unwrap_or(' ');
-                let file_path = line[3..].to_string();
+    for entry in statuses.iter() {
+        let status_flags = entry.status();
 
-                let staged = staged_char != ' ' && staged_char != '?';
-
-                let status = match (staged_char, unstaged_char) {
-                    ('M', _) | (_, 'M') => "modified",
-                    ('A', _) => "added",
-                    ('D', _) | (_, 'D') => "deleted",
-                    ('R', _) => "renamed",
-                    ('?', '?') => "untracked",
-                    _ => "modified",
-                }
-                .to_string();
-
-                files.push(GitFile {
-                    path: file_path,
-                    status,
-                    staged,
-                });
-            }
+        if status_flags == git2::Status::CURRENT {
+            continue;
         }
+
+        let path = entry.path().context("Invalid path")?.to_string();
+
+        let staged = status_flags.intersects(
+            git2::Status::INDEX_NEW
+                | git2::Status::INDEX_MODIFIED
+                | git2::Status::INDEX_DELETED
+                | git2::Status::INDEX_RENAMED
+                | git2::Status::INDEX_TYPECHANGE,
+        );
+
+        let status = if status_flags.contains(git2::Status::INDEX_NEW)
+            || (status_flags.contains(git2::Status::WT_NEW) && !staged)
+        {
+            FileStatus::Added
+        } else if status_flags.contains(git2::Status::INDEX_DELETED)
+            || status_flags.contains(git2::Status::WT_DELETED)
+        {
+            FileStatus::Deleted
+        } else if status_flags.contains(git2::Status::INDEX_RENAMED)
+            || status_flags.contains(git2::Status::WT_RENAMED)
+        {
+            FileStatus::Renamed
+        } else if status_flags.contains(git2::Status::WT_NEW) {
+            FileStatus::Untracked
+        } else {
+            FileStatus::Modified
+        };
+
+        files.push(GitFile {
+            path,
+            status,
+            staged,
+        });
     }
 
     Ok(GitStatus {
@@ -257,124 +305,165 @@ pub fn git_status(repo_path: String) -> Result<GitStatus, String> {
 
 #[command]
 pub fn git_add(repo_path: String, file_path: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_add(repo_path, file_path).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["add", &file_path])
-        .output()
-        .map_err(|e| format!("Failed to add file: {e}"))?;
+fn _git_add(repo_path: String, file_path: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    let mut index = repo.index().context("Failed to get index")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    index
+        .add_path(Path::new(&file_path))
+        .context("Failed to add file")?;
+    index.write().context("Failed to write index")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_reset(repo_path: String, file_path: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_reset(repo_path, file_path).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["reset", "HEAD", &file_path])
-        .output()
-        .map_err(|e| format!("Failed to unstage file: {e}"))?;
+fn _git_reset(repo_path: String, file_path: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    let head = repo.head().context("Failed to get HEAD")?;
+    let head_commit = head.peel_to_commit().context("Failed to get HEAD commit")?;
+    let head_tree = head_commit.tree().context("Failed to get HEAD tree")?;
+    let mut index = repo.index().context("Failed to get index")?;
+
+    let path = Path::new(&file_path);
+    match head_tree.get_path(path) {
+        Ok(entry) => {
+            let object = entry.to_object(&repo).context("Failed to get object")?;
+            let blob = object.as_blob().context("Object is not a blob")?;
+
+            let index_entry = git2::IndexEntry {
+                ctime: git2::IndexTime::new(0, 0),
+                mtime: git2::IndexTime::new(0, 0),
+                dev: 0,
+                ino: 0,
+                mode: entry.filemode() as u32,
+                uid: 0,
+                gid: 0,
+                file_size: blob.size() as u32,
+                id: entry.id(),
+                flags: 0,
+                flags_extended: 0,
+                path: file_path.as_bytes().to_vec(),
+            };
+
+            index.add(&index_entry).context("Failed to update index")?;
+        }
+        Err(_) => {
+            index
+                .remove_path(path)
+                .context("Failed to remove from index")?;
+        }
     }
+
+    index.write().context("Failed to write index")?;
+    Ok(())
 }
 
 #[command]
 pub fn git_commit(repo_path: String, message: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_commit(repo_path, message).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["commit", "-m", &message])
-        .output()
-        .map_err(|e| format!("Failed to commit: {e}"))?;
+fn _git_commit(repo_path: String, message: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    let mut index = repo.index().context("Failed to get index")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    let tree_id = index.write_tree().context("Failed to write tree")?;
+    let tree = repo.find_tree(tree_id).context("Failed to find tree")?;
+    let sig = repo.signature().context("Failed to get signature")?;
+    let head = repo.head().context("Failed to get HEAD")?;
+    let parent_commit = head
+        .peel_to_commit()
+        .context("Failed to get parent commit")?;
+
+    repo.commit(Some("HEAD"), &sig, &sig, &message, &tree, &[&parent_commit])
+        .context("Failed to create commit")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_add_all(repo_path: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_add_all(repo_path).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["add", "."])
-        .output()
-        .map_err(|e| format!("Failed to add all files: {e}"))?;
+fn _git_add_all(repo_path: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    let mut index = repo.index().context("Failed to get index")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    index
+        .add_all(["*"].iter(), git2::IndexAddOption::DEFAULT, None)
+        .context("Failed to add all files")?;
+    index.write().context("Failed to write index")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_reset_all(repo_path: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_reset_all(repo_path).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["reset", "HEAD", "."])
-        .output()
-        .map_err(|e| format!("Failed to unstage all files: {e}"))?;
+fn _git_reset_all(repo_path: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    let head = repo.head().context("Failed to get HEAD")?;
+    let head_commit = head.peel_to_commit().context("Failed to get HEAD commit")?;
+    let head_tree = head_commit.tree().context("Failed to get HEAD tree")?;
+    let mut index = repo.index().context("Failed to get index")?;
+
+    index
+        .read_tree(&head_tree)
+        .context("Failed to reset index to HEAD")?;
+    index.write().context("Failed to write index")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>, String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_log(repo_path, limit).into_string_error()
+}
 
-    if !repo_dir.join(".git").exists() {
-        return Err("Not a git repository".to_string());
-    }
+fn _git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    let mut revwalk = repo.revwalk().context("Failed to create revwalk")?;
 
-    let limit_str = limit.unwrap_or(10).to_string();
+    revwalk.push_head().context("Failed to push HEAD")?;
+    revwalk
+        .set_sorting(Sort::TIME)
+        .context("Failed to set sorting")?;
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args([
-            "log",
-            &format!("-{limit_str}"),
-            "--pretty=format:%H|%s|%an|%ad",
-            "--date=short",
-        ])
-        .output()
-        .map_err(|e| format!("Failed to get git log: {e}"))?;
-
+    let limit = limit.unwrap_or(10) as usize;
     let mut commits = Vec::new();
-    if output.status.success() {
-        let log_text = String::from_utf8_lossy(&output.stdout);
-        for line in log_text.lines() {
-            let parts: Vec<&str> = line.split('|').collect();
-            if parts.len() == 4 {
-                commits.push(GitCommit {
-                    hash: parts[0].to_string(),
-                    message: parts[1].to_string(),
-                    author: parts[2].to_string(),
-                    date: parts[3].to_string(),
-                });
-            }
+
+    for (idx, oid) in revwalk.enumerate() {
+        if idx >= limit {
+            break;
         }
+
+        let oid = oid.context("Failed to get commit oid")?;
+        let commit = repo.find_commit(oid).context("Failed to find commit")?;
+
+        let author = commit.author();
+        let time = chrono::DateTime::<chrono::Utc>::from_timestamp(author.when().seconds(), 0)
+            .map(|dt| dt.format("%Y-%m-%d").to_string())
+            .unwrap_or_default();
+
+        commits.push(GitCommit {
+            hash: oid.to_string(),
+            message: commit.summary().unwrap_or("").to_string(),
+            author: author.name().unwrap_or("Unknown").to_string(),
+            date: time,
+        });
     }
 
     Ok(commits)
@@ -775,46 +864,45 @@ pub fn git_commit_diff(
 
 #[command]
 pub fn git_branches(repo_path: String) -> Result<Vec<String>, String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_branches(repo_path).into_string_error()
+}
 
-    if !repo_dir.join(".git").exists() {
-        return Err("Not a git repository".to_string());
-    }
+fn _git_branches(repo_path: String) -> Result<Vec<String>> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    let branches = repo
+        .branches(Some(BranchType::Local))
+        .context("Failed to list branches")?;
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["branch", "--format=%(refname:short)"])
-        .output()
-        .map_err(|e| format!("Failed to get branches: {e}"))?;
-
-    let mut branches = Vec::new();
-    if output.status.success() {
-        let branch_text = String::from_utf8_lossy(&output.stdout);
-        for line in branch_text.lines() {
-            if !line.trim().is_empty() {
-                branches.push(line.trim().to_string());
-            }
+    let mut branch_names = Vec::new();
+    for branch in branches {
+        let (branch, _) = branch.context("Failed to get branch")?;
+        if let Some(name) = branch.name().context("Failed to get branch name")? {
+            branch_names.push(name.to_string());
         }
     }
 
-    Ok(branches)
+    Ok(branch_names)
 }
 
 #[command]
 pub fn git_checkout(repo_path: String, branch_name: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_checkout(repo_path, branch_name).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["checkout", &branch_name])
-        .output()
-        .map_err(|e| format!("Failed to checkout branch: {e}"))?;
+fn _git_checkout(repo_path: String, branch_name: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    let obj = repo
+        .revparse_single(&format!("refs/heads/{}", branch_name))
+        .context("Failed to find branch")?;
+
+    repo.checkout_tree(&obj, None)
+        .context("Failed to checkout tree")?;
+
+    repo.set_head(&format!("refs/heads/{}", branch_name))
+        .context("Failed to update HEAD")?;
+
+    Ok(())
 }
 
 #[command]
@@ -823,81 +911,113 @@ pub fn git_create_branch(
     branch_name: String,
     from_branch: Option<String>,
 ) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_create_branch(repo_path, branch_name, from_branch).into_string_error()
+}
 
-    let mut args = vec!["checkout", "-b", &branch_name];
-    if let Some(ref from) = from_branch {
-        args.push(from);
-    }
+fn _git_create_branch(
+    repo_path: String,
+    branch_name: String,
+    from_branch: Option<String>,
+) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(&args)
-        .output()
-        .map_err(|e| format!("Failed to create branch: {e}"))?;
-
-    if output.status.success() {
-        Ok(())
+    let target = if let Some(from) = from_branch {
+        repo.revparse_single(&from)
+            .context("Failed to find source branch")?
+            .peel_to_commit()
+            .context("Failed to peel to commit")?
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+        repo.head()
+            .context("Failed to get HEAD")?
+            .peel_to_commit()
+            .context("Failed to peel HEAD to commit")?
+    };
+
+    let branch = repo
+        .branch(&branch_name, &target, false)
+        .context("Failed to create branch")?;
+
+    let refname = branch
+        .get()
+        .name()
+        .context("Failed to get branch reference name")?;
+
+    repo.set_head(refname)
+        .context("Failed to set HEAD to new branch")?;
+
+    repo.checkout_head(Some(git2::build::CheckoutBuilder::default().force()))
+        .context("Failed to checkout new branch")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_delete_branch(repo_path: String, branch_name: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_delete_branch(repo_path, branch_name).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["branch", "-d", &branch_name])
-        .output()
-        .map_err(|e| format!("Failed to delete branch: {e}"))?;
+fn _git_delete_branch(repo_path: String, branch_name: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    let mut branch = repo
+        .find_branch(&branch_name, BranchType::Local)
+        .context("Failed to find branch")?;
+
+    branch.delete().context("Failed to delete branch")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_discard_file_changes(repo_path: String, file_path: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_discard_file_changes(repo_path, file_path).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["checkout", "--", &file_path])
-        .output()
-        .map_err(|e| format!("Failed to discard file changes: {e}"))?;
+fn _git_discard_file_changes(repo_path: String, file_path: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    let head = repo
+        .head()
+        .context("Failed to get HEAD")?
+        .peel_to_tree()
+        .context("Failed to get HEAD tree")?;
+
+    let mut checkout_opts = git2::build::CheckoutBuilder::new();
+    checkout_opts.force().update_index(true).path(&file_path);
+
+    repo.checkout_tree(head.as_object(), Some(&mut checkout_opts))
+        .context("Failed to checkout file")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_discard_all_changes(repo_path: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_discard_all_changes(repo_path).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["reset", "--hard"])
-        .output()
-        .map_err(|e| format!("Failed to discard all changes: {e}"))?;
+fn _git_discard_all_changes(repo_path: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    let head = repo
+        .head()
+        .context("Failed to get HEAD")?
+        .peel_to_commit()
+        .context("Failed to get HEAD commit")?;
+
+    repo.reset(head.as_object(), git2::ResetType::Hard, None)
+        .context("Failed to reset to HEAD")?;
+
+    Ok(())
 }
 
 #[command]
 pub fn git_push(repo_path: String, branch: Option<String>, remote: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_push(repo_path, branch, remote).into_string_error()
+}
 
+fn _git_push(repo_path: String, branch: Option<String>, remote: String) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
     let mut args = vec!["push", &remote];
     let branch_str;
     if let Some(b) = branch {
@@ -909,19 +1029,25 @@ pub fn git_push(repo_path: String, branch: Option<String>, remote: String) -> Re
         .current_dir(repo_dir)
         .args(&args)
         .output()
-        .map_err(|e| format!("Failed to push: {e}"))?;
+        .context("Failed to execute git push")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Git push failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
 }
 
 #[command]
 pub fn git_pull(repo_path: String, branch: Option<String>, remote: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_pull(repo_path, branch, remote).into_string_error()
+}
 
+fn _git_pull(repo_path: String, branch: Option<String>, remote: String) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
     let mut args = vec!["pull", &remote];
     let branch_str;
     if let Some(b) = branch {
@@ -933,19 +1059,25 @@ pub fn git_pull(repo_path: String, branch: Option<String>, remote: String) -> Re
         .current_dir(repo_dir)
         .args(&args)
         .output()
-        .map_err(|e| format!("Failed to pull: {e}"))?;
+        .context("Failed to execute git pull")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Git pull failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
 }
 
 #[command]
 pub fn git_fetch(repo_path: String, remote: Option<String>) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_fetch(repo_path, remote).into_string_error()
+}
 
+fn _git_fetch(repo_path: String, remote: Option<String>) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
     let mut args = vec!["fetch"];
     let remote_str;
     if let Some(r) = remote {
@@ -957,60 +1089,45 @@ pub fn git_fetch(repo_path: String, remote: Option<String>) -> Result<(), String
         .current_dir(repo_dir)
         .args(&args)
         .output()
-        .map_err(|e| format!("Failed to fetch: {e}"))?;
+        .context("Failed to execute git fetch")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Git fetch failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
 }
 
 #[command]
 pub fn git_init(repo_path: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_init(repo_path).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["init"])
-        .output()
-        .map_err(|e| format!("Failed to initialize repository: {e}"))?;
-
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+fn _git_init(repo_path: String) -> Result<()> {
+    Repository::init(&repo_path).context("Failed to initialize repository")?;
+    Ok(())
 }
 
 #[command]
 pub fn git_get_remotes(repo_path: String) -> Result<Vec<GitRemote>, String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_get_remotes(repo_path).into_string_error()
+}
 
-    if !repo_dir.join(".git").exists() {
-        return Err("Not a git repository".to_string());
-    }
-
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["remote", "-v"])
-        .output()
-        .map_err(|e| format!("Failed to get remotes: {e}"))?;
+fn _git_get_remotes(repo_path: String) -> Result<Vec<GitRemote>> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    let remote_names = repo.remotes().context("Failed to get remote names")?;
 
     let mut remotes = Vec::new();
-    let mut seen = std::collections::HashSet::new();
-
-    if output.status.success() {
-        let remote_text = String::from_utf8_lossy(&output.stdout);
-        for line in remote_text.lines() {
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() >= 2 {
-                let name = parts[0].to_string();
-                let url = parts[1].to_string();
-                if seen.insert(name.clone()) {
-                    remotes.push(GitRemote { name, url });
-                }
-            }
+    for name in remote_names.iter().flatten() {
+        let remote = repo.find_remote(name).context("Failed to find remote")?;
+        if let Some(url) = remote.url() {
+            remotes.push(GitRemote {
+                name: name.to_string(),
+                url: url.to_string(),
+            });
         }
     }
 
@@ -1019,51 +1136,44 @@ pub fn git_get_remotes(repo_path: String) -> Result<Vec<GitRemote>, String> {
 
 #[command]
 pub fn git_add_remote(repo_path: String, name: String, url: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_add_remote(repo_path, name, url).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["remote", "add", &name, &url])
-        .output()
-        .map_err(|e| format!("Failed to add remote: {e}"))?;
-
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+fn _git_add_remote(repo_path: String, name: String, url: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    repo.remote(&name, &url).context("Failed to add remote")?;
+    Ok(())
 }
 
 #[command]
 pub fn git_remove_remote(repo_path: String, name: String) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_remove_remote(repo_path, name).into_string_error()
+}
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(["remote", "remove", &name])
-        .output()
-        .map_err(|e| format!("Failed to remove remote: {e}"))?;
-
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+fn _git_remove_remote(repo_path: String, name: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    repo.remote_delete(&name)
+        .context("Failed to remove remote")?;
+    Ok(())
 }
 
 #[command]
 pub fn git_get_stashes(repo_path: String) -> Result<Vec<GitStash>, String> {
+    _git_get_stashes(repo_path).into_string_error()
+}
+
+fn _git_get_stashes(repo_path: String) -> Result<Vec<GitStash>> {
     let repo_dir = Path::new(&repo_path);
 
     if !repo_dir.join(".git").exists() {
-        return Err("Not a git repository".to_string());
+        bail!("Not a git repository");
     }
 
     let output = Command::new("git")
         .current_dir(repo_dir)
         .args(["stash", "list", "--format=%gd|%s|%ai"])
         .output()
-        .map_err(|e| format!("Failed to get stashes: {e}"))?;
+        .context("Failed to execute git stash list")?;
 
     let mut stashes = Vec::new();
     if output.status.success() {
@@ -1094,8 +1204,15 @@ pub fn git_create_stash(
     message: Option<String>,
     include_untracked: bool,
 ) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_create_stash(repo_path, message, include_untracked).into_string_error()
+}
 
+fn _git_create_stash(
+    repo_path: String,
+    message: Option<String>,
+    include_untracked: bool,
+) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
     let mut args = vec!["stash", "push"];
     if include_untracked {
         args.push("-u");
@@ -1109,36 +1226,48 @@ pub fn git_create_stash(
         .current_dir(repo_dir)
         .args(&args)
         .output()
-        .map_err(|e| format!("Failed to create stash: {e}"))?;
+        .context("Failed to execute git stash push")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Git stash create failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
 }
 
 #[command]
 pub fn git_apply_stash(repo_path: String, stash_index: usize) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_apply_stash(repo_path, stash_index).into_string_error()
+}
 
+fn _git_apply_stash(repo_path: String, stash_index: usize) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
     let output = Command::new("git")
         .current_dir(repo_dir)
         .args(["stash", "apply", &format!("stash@{{{stash_index}}}")])
         .output()
-        .map_err(|e| format!("Failed to apply stash: {e}"))?;
+        .context("Failed to execute git stash apply")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Git stash apply failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
 }
 
 #[command]
 pub fn git_pop_stash(repo_path: String, stash_index: Option<usize>) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_pop_stash(repo_path, stash_index).into_string_error()
+}
 
+fn _git_pop_stash(repo_path: String, stash_index: Option<usize>) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
     let mut args = vec!["stash", "pop"];
     let index_str;
     if let Some(idx) = stash_index {
@@ -1150,30 +1279,39 @@ pub fn git_pop_stash(repo_path: String, stash_index: Option<usize>) -> Result<()
         .current_dir(repo_dir)
         .args(&args)
         .output()
-        .map_err(|e| format!("Failed to pop stash: {e}"))?;
+        .context("Failed to execute git stash pop")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Git stash pop failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
 }
 
 #[command]
 pub fn git_drop_stash(repo_path: String, stash_index: usize) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_drop_stash(repo_path, stash_index).into_string_error()
+}
 
+fn _git_drop_stash(repo_path: String, stash_index: usize) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
     let output = Command::new("git")
         .current_dir(repo_dir)
         .args(["stash", "drop", &format!("stash@{{{stash_index}}}")])
         .output()
-        .map_err(|e| format!("Failed to drop stash: {e}"))?;
+        .context("Failed to execute git stash drop")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Git stash drop failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
 }
 
 #[command]
@@ -1238,47 +1376,176 @@ pub fn git_create_tag(
     message: Option<String>,
     commit: Option<String>,
 ) -> Result<(), String> {
-    let repo_dir = Path::new(&repo_path);
+    _git_create_tag(repo_path, name, message, commit).into_string_error()
+}
 
-    let mut args = vec!["tag"];
-    if let Some(msg) = &message {
-        args.push("-a");
-        args.push(&name);
-        args.push("-m");
-        args.push(msg);
+fn _git_create_tag(
+    repo_path: String,
+    name: String,
+    message: Option<String>,
+    commit: Option<String>,
+) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+
+    let target = if let Some(commit_ref) = commit {
+        repo.revparse_single(&commit_ref)
+            .context("Failed to find commit")?
     } else {
-        args.push(&name);
-    }
-    if let Some(c) = &commit {
-        args.push(c);
-    }
+        repo.head()
+            .context("Failed to get HEAD")?
+            .peel_to_commit()
+            .context("Failed to peel HEAD to commit")?
+            .into_object()
+    };
 
-    let output = Command::new("git")
-        .current_dir(repo_dir)
-        .args(&args)
-        .output()
-        .map_err(|e| format!("Failed to create tag: {e}"))?;
-
-    if output.status.success() {
-        Ok(())
+    if let Some(msg) = message {
+        let signature = repo.signature().context("Failed to get signature")?;
+        repo.tag(&name, &target, &signature, &msg, false)
+            .context("Failed to create annotated tag")?;
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+        repo.tag_lightweight(&name, &target, false)
+            .context("Failed to create lightweight tag")?;
     }
+
+    Ok(())
 }
 
 #[command]
 pub fn git_delete_tag(repo_path: String, name: String) -> Result<(), String> {
+    _git_delete_tag(repo_path, name).into_string_error()
+}
+
+fn _git_delete_tag(repo_path: String, name: String) -> Result<()> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+
+    repo.tag_delete(&name).context("Failed to delete tag")?;
+
+    Ok(())
+}
+
+#[derive(serde::Deserialize)]
+pub struct GitHunk {
+    pub file_path: String,
+    pub lines: Vec<GitDiffLine>,
+}
+
+fn create_patch_from_hunk(hunk: &GitHunk) -> Result<String, String> {
+    let mut patch = String::new();
+
+    // Find header line
+    let header_line = hunk
+        .lines
+        .iter()
+        .find(|line| matches!(line.line_type, DiffLineType::Header))
+        .ok_or_else(|| {
+            log::error!(
+                "No header line found in hunk. Line types present: {:?}",
+                hunk.lines.iter().map(|l| &l.line_type).collect::<Vec<_>>()
+            );
+            "No header line found in hunk".to_string()
+        })?;
+
+    // Write git diff header first
+    patch.push_str(&format!(
+        "diff --git a/{} b/{}\n",
+        hunk.file_path, hunk.file_path
+    ));
+    patch.push_str(&format!("--- a/{}\n", hunk.file_path));
+    patch.push_str(&format!("+++ b/{}\n", hunk.file_path));
+    patch.push_str(&header_line.content);
+    // Only add newline if header doesn't already end with one
+    if !header_line.content.ends_with('\n') {
+        patch.push('\n');
+    }
+
+    // Write hunk content
+    for line in &hunk.lines {
+        match line.line_type {
+            DiffLineType::Added => {
+                patch.push('+');
+                patch.push_str(&line.content);
+                patch.push('\n');
+            }
+            DiffLineType::Removed => {
+                patch.push('-');
+                patch.push_str(&line.content);
+                patch.push('\n');
+            }
+            DiffLineType::Context => {
+                patch.push(' ');
+                patch.push_str(&line.content);
+                patch.push('\n');
+            }
+            DiffLineType::Header => {} // Skip header lines as we already processed them
+        }
+    }
+
+    Ok(patch)
+}
+
+#[command]
+pub fn git_stage_hunk(repo_path: String, hunk: GitHunk) -> Result<(), String> {
+    _git_stage_hunk(repo_path, hunk).into_string_error()
+}
+
+fn _git_stage_hunk(repo_path: String, hunk: GitHunk) -> Result<()> {
     let repo_dir = Path::new(&repo_path);
+    let patch_content = create_patch_from_hunk(&hunk).map_err(|e| anyhow::anyhow!(e))?;
+
+    let mut temp_file = NamedTempFile::new().context("Failed to create temp file")?;
+    temp_file
+        .write_all(patch_content.as_bytes())
+        .context("Failed to write patch")?;
+    temp_file.flush().context("Failed to flush temp file")?;
 
     let output = Command::new("git")
         .current_dir(repo_dir)
-        .args(["tag", "-d", &name])
+        .args(["apply", "--cached", temp_file.path().to_str().unwrap()])
         .output()
-        .map_err(|e| format!("Failed to delete tag: {e}"))?;
+        .context("Failed to apply patch")?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        bail!(
+            "Failed to stage hunk: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
+
+    Ok(())
+}
+
+#[command]
+pub fn git_unstage_hunk(repo_path: String, hunk: GitHunk) -> Result<(), String> {
+    _git_unstage_hunk(repo_path, hunk).into_string_error()
+}
+
+fn _git_unstage_hunk(repo_path: String, hunk: GitHunk) -> Result<()> {
+    let repo_dir = Path::new(&repo_path);
+    let patch_content = create_patch_from_hunk(&hunk).map_err(|e| anyhow::anyhow!(e))?;
+
+    let mut temp_file = NamedTempFile::new().context("Failed to create temp file")?;
+    temp_file
+        .write_all(patch_content.as_bytes())
+        .context("Failed to write patch")?;
+    temp_file.flush().context("Failed to flush temp file")?;
+
+    let output = Command::new("git")
+        .current_dir(repo_dir)
+        .args([
+            "apply",
+            "--reverse",
+            "--cached",
+            temp_file.path().to_str().unwrap(),
+        ])
+        .output()
+        .context("Failed to apply reverse patch")?;
+
+    if !output.status.success() {
+        bail!(
+            "Failed to unstage hunk: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    Ok(())
 }

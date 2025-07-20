@@ -4,10 +4,12 @@ import { ProjectNameMenu } from "../../hooks/use-context-menus";
 import { useKeyboardShortcutsWrapper } from "../../hooks/use-keyboard-shortcuts-wrapper";
 import { useMenuEventsWrapper } from "../../hooks/use-menu-events-wrapper";
 import { useBufferStore } from "../../stores/buffer-store";
+import { useFileSystemStore } from "../../stores/file-system-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import { useSettingsStore } from "../../stores/settings-store";
 import { useUIState } from "../../stores/ui-state-store";
 import type { ThemeType } from "../../types/theme";
+import { type GitHunk, stageHunk, unstageHunk } from "../../utils/git";
 import AIChat from "../ai-chat/ai-chat";
 import BottomPane from "../bottom-pane";
 import CommandBar from "../command/command-bar";
@@ -33,6 +35,7 @@ export function MainLayout() {
   const { isSidebarVisible } = useUIState();
   const { isAIChatVisible, coreFeatures: persistentCoreFeatures } = usePersistentSettingsStore();
   const { settings, updateTheme } = useSettingsStore();
+  const { rootFolderPath } = useFileSystemStore();
 
   // TODO: Replace with actual diagnostics from language server or linter
   const [diagnostics] = useState<Diagnostic[]>([]);
@@ -55,6 +58,97 @@ export function MainLayout() {
   // Handle theme change
   const handleThemeChange = (theme: ThemeType) => {
     updateTheme(theme);
+  };
+
+  // Handle hunk staging/unstaging
+  const handleStageHunk = async (hunk: GitHunk) => {
+    if (!rootFolderPath) {
+      console.error("No rootFolderPath available");
+      return;
+    }
+
+    try {
+      const success = await stageHunk(rootFolderPath, hunk);
+      if (success) {
+        // Emit a custom event to notify Git view to refresh
+        window.dispatchEvent(new CustomEvent("git-status-changed"));
+
+        // Reload the current diff to show updated state
+        if (activeBuffer?.isDiff) {
+          const filePath = hunk.file_path;
+          const currentPath = activeBuffer.path;
+          const isCurrentlyViewingStaged =
+            currentPath.includes("staged") && !currentPath.includes("unstaged");
+
+          // Get the updated diff (opposite of current view since we just staged)
+          const { getFileDiff } = await import("../../utils/git");
+          const updatedDiff = await getFileDiff(
+            rootFolderPath,
+            filePath,
+            !isCurrentlyViewingStaged,
+          );
+
+          if (updatedDiff && updatedDiff.lines.length > 0) {
+            // Update the buffer content directly
+            const { updateBufferContent } = useBufferStore.getState();
+            updateBufferContent(activeBuffer.id, JSON.stringify(updatedDiff));
+          } else {
+            // No more changes in this view, close the buffer
+            const { closeBuffer } = useBufferStore.getState();
+            closeBuffer(activeBuffer.id);
+          }
+        }
+      } else {
+        console.error("Failed to stage hunk");
+      }
+    } catch (error) {
+      console.error("Error staging hunk:", error);
+    }
+  };
+
+  const handleUnstageHunk = async (hunk: GitHunk) => {
+    if (!rootFolderPath) {
+      console.error("No rootFolderPath available");
+      return;
+    }
+
+    try {
+      const success = await unstageHunk(rootFolderPath, hunk);
+      if (success) {
+        // Emit a custom event to notify Git view to refresh
+        window.dispatchEvent(new CustomEvent("git-status-changed"));
+
+        // Reload the current diff to show updated state
+        if (activeBuffer?.isDiff) {
+          const filePath = hunk.file_path;
+          const currentPath = activeBuffer.path;
+          const isCurrentlyViewingStaged =
+            currentPath.includes("staged") && !currentPath.includes("unstaged");
+
+          // Get the updated diff (opposite of current view since we just unstaged)
+          const { getFileDiff } = await import("../../utils/git");
+          const updatedDiff = await getFileDiff(
+            rootFolderPath,
+            filePath,
+            !isCurrentlyViewingStaged,
+          );
+
+          if (updatedDiff && updatedDiff.lines.length > 0) {
+            // Update the buffer content directly
+            const { updateBufferContent } = useBufferStore.getState();
+            updateBufferContent(activeBuffer.id, JSON.stringify(updatedDiff));
+          } else {
+            // No more changes in this view, close the buffer
+            const { closeBuffer } = useBufferStore.getState();
+            closeBuffer(activeBuffer.id);
+          }
+        }
+      } else {
+        console.error("Failed to unstage hunk");
+      }
+    } catch (error) {
+      console.error("Error unstaging hunk:", error);
+    }
   };
 
   // Initialize event listeners
@@ -90,7 +184,7 @@ export function MainLayout() {
               );
             }
             if (activeBuffer.isDiff) {
-              return <DiffViewer />;
+              return <DiffViewer onStageHunk={handleStageHunk} onUnstageHunk={handleUnstageHunk} />;
             } else if (activeBuffer.path === "extensions://marketplace") {
               return (
                 <ExtensionsView

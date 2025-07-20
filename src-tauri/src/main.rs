@@ -225,6 +225,8 @@ fn main() {
             git_get_tags,
             git_create_tag,
             git_delete_tag,
+            git_stage_hunk,
+            git_unstage_hunk,
             // GitHub commands
             store_github_token,
             get_github_token,

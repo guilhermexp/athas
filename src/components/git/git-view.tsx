@@ -86,6 +86,18 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     loadGitData();
   }, [loadGitData]);
 
+  // Listen for git status changes (from staging/unstaging hunks)
+  useEffect(() => {
+    const handleGitStatusChanged = () => {
+      loadGitData();
+    };
+
+    window.addEventListener("git-status-changed", handleGitStatusChanged);
+    return () => {
+      window.removeEventListener("git-status-changed", handleGitStatusChanged);
+    };
+  }, [loadGitData]);
+
   // Listen for file changes and refresh git status
   useEffect(() => {
     let refreshTimeout: NodeJS.Timeout | null = null;

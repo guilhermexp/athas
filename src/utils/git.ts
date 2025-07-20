@@ -389,3 +389,28 @@ export const deleteTag = async (repoPath: string, name: string): Promise<boolean
     return false;
   }
 };
+
+export interface GitHunk {
+  file_path: string;
+  lines: GitDiffLine[];
+}
+
+export const stageHunk = async (repoPath: string, hunk: GitHunk): Promise<boolean> => {
+  try {
+    await tauriInvoke("git_stage_hunk", { repoPath, hunk });
+    return true;
+  } catch (error) {
+    console.error("Failed to stage hunk:", error);
+    return false;
+  }
+};
+
+export const unstageHunk = async (repoPath: string, hunk: GitHunk): Promise<boolean> => {
+  try {
+    await tauriInvoke("git_unstage_hunk", { repoPath, hunk });
+    return true;
+  } catch (error) {
+    console.error("Failed to unstage hunk:", error);
+    return false;
+  }
+};

@@ -1,9 +1,25 @@
-import { ChevronDown, ChevronRight, Copy, Edit3, FileIcon, FilePlus, FileX, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Edit3,
+  FileIcon,
+  FilePlus,
+  FileX,
+  Minus,
+  Plus,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useBufferStore } from "../stores/buffer-store";
-import type { GitDiff, GitDiffLine } from "../utils/git";
+import type { GitDiff, GitDiffLine, GitHunk } from "../utils/git";
 
-const DiffViewer = () => {
+interface DiffViewerProps {
+  onStageHunk?: (hunk: GitHunk) => void;
+  onUnstageHunk?: (hunk: GitHunk) => void;
+}
+
+const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) => {
   const { activeBufferId, buffers, closeBuffer } = useBufferStore();
   const activeBuffer = buffers.find(b => b.id === activeBufferId);
 
@@ -24,6 +40,9 @@ const DiffViewer = () => {
 
   const fileName = activeBuffer.name;
   const onClose = () => closeBuffer(activeBuffer.id);
+
+  // Determine if this is a staged or unstaged diff based on the path
+  const isStaged = activeBuffer.path.includes("staged") && !activeBuffer.path.includes("unstaged");
 
   if (!diff) {
     return (
@@ -285,12 +304,17 @@ const DiffViewer = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            {/* TODO: Implement staging/unstaging functionality
             {(onStageHunk || onUnstageHunk) && (
               <>
-                {onStageHunk && (
+                {!isStaged && onStageHunk && (
                   <button
-                    onClick={() => onStageHunk(hunk.lines)}
+                    onClick={() => {
+                      const hunkData: GitHunk = {
+                        file_path: diff?.file_path || "",
+                        lines: [hunk.header, ...hunk.lines],
+                      };
+                      onStageHunk(hunkData);
+                    }}
                     className="flex items-center gap-1 rounded bg-green-500/20 px-2 py-1 text-green-400 text-xs transition-colors hover:bg-green-500/30"
                     title="Stage hunk"
                   >
@@ -298,9 +322,15 @@ const DiffViewer = () => {
                     Stage
                   </button>
                 )}
-                {onUnstageHunk && (
+                {isStaged && onUnstageHunk && (
                   <button
-                    onClick={() => onUnstageHunk(hunk.lines)}
+                    onClick={() => {
+                      const hunkData: GitHunk = {
+                        file_path: diff?.file_path || "",
+                        lines: [hunk.header, ...hunk.lines],
+                      };
+                      onUnstageHunk(hunkData);
+                    }}
                     className="flex items-center gap-1 rounded bg-red-500/20 px-2 py-1 text-red-400 text-xs transition-colors hover:bg-red-500/30"
                     title="Unstage hunk"
                   >
@@ -309,7 +339,7 @@ const DiffViewer = () => {
                   </button>
                 )}
               </>
-            )} */}
+            )}
             <button
               onClick={() => copyLineContent(hunk.header.content)}
               className="rounded p-1 text-text-lighter transition-colors hover:bg-hover hover:text-text"
