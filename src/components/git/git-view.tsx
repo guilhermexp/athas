@@ -189,6 +189,15 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         actualFilePath = actualFilePath.slice(1, -1);
       }
 
+      // Find the file in gitStatus to check its status
+      const file = gitStatus?.files.find(f => f.path === actualFilePath);
+
+      // For untracked files, open the file directly instead of trying to show a diff
+      if (file && file.status === "untracked" && !staged) {
+        handleOpenOriginalFile(actualFilePath);
+        return;
+      }
+
       const diff = await getFileDiff(repoPath, actualFilePath, staged);
 
       if (diff && (diff.lines.length > 0 || diff.is_image)) {
@@ -223,9 +232,8 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
           console.error("Failed to store file diff");
         }
       } else {
-        alert(
-          `No ${staged ? "staged" : "unstaged"} changes for this file.\nFile: ${actualFilePath}`,
-        );
+        // Instead of showing an alert, fall back to opening the file
+        handleOpenOriginalFile(actualFilePath);
       }
     } catch (error) {
       console.error("Error getting file diff:", error);
