@@ -161,27 +161,78 @@ const FileTree = ({
     [gitStatus, rootFolderPath],
   );
 
+  const hasGitChangesInDirectory = useCallback(
+    (dirPath: string): GitFile | null => {
+      if (!gitStatus || !rootFolderPath) return null;
+
+      const normalizedDirPath = dirPath.replace(/\\/g, "/");
+      const normalizedRoot = rootFolderPath.replace(/\\/g, "/");
+
+      let relativeDirPath = normalizedDirPath;
+      if (normalizedDirPath.startsWith(normalizedRoot)) {
+        relativeDirPath = normalizedDirPath.slice(normalizedRoot.length);
+      }
+
+      if (relativeDirPath.startsWith("/")) {
+        relativeDirPath = relativeDirPath.slice(1);
+      }
+
+      // Find any file within this directory that has changes
+      const fileWithChanges = gitStatus.files.find(file => {
+        const filePath = file.path;
+        return filePath.startsWith(`${relativeDirPath}/`) || filePath === relativeDirPath;
+      });
+
+      return fileWithChanges || null;
+    },
+    [gitStatus, rootFolderPath],
+  );
+
   const getGitStatusColor = useCallback(
     (file: FileEntry): string => {
+      // First check if this file itself has git status
       const gitFile = getGitFileStatus(file.path);
-      if (!gitFile) return "";
-
-      switch (gitFile.status) {
-        case "modified":
-          return gitFile.staged ? "text-orange-400" : "text-yellow-400";
-        case "added":
-          return "text-green-400";
-        case "deleted":
-          return "text-red-400";
-        case "untracked":
-          return "text-green-300";
-        case "renamed":
-          return "text-blue-400";
-        default:
-          return "";
+      if (gitFile) {
+        switch (gitFile.status) {
+          case "modified":
+            return gitFile.staged ? "text-orange-400" : "text-yellow-400";
+          case "added":
+            return "text-green-400";
+          case "deleted":
+            return "text-red-400";
+          case "untracked":
+            return "text-green-300";
+          case "renamed":
+            return "text-blue-400";
+          default:
+            return "";
+        }
       }
+
+      // If it's a directory, check if any files within it have changes
+      if (file.isDir) {
+        const dirChange = hasGitChangesInDirectory(file.path);
+        if (dirChange) {
+          switch (dirChange.status) {
+            case "modified":
+              return dirChange.staged ? "text-orange-400" : "text-yellow-400";
+            case "added":
+              return "text-green-400";
+            case "deleted":
+              return "text-red-400";
+            case "untracked":
+              return "text-green-300";
+            case "renamed":
+              return "text-blue-400";
+            default:
+              return "";
+          }
+        }
+      }
+
+      return "";
     },
-    [getGitFileStatus],
+    [getGitFileStatus, hasGitChangesInDirectory],
   );
 
   // ─────────────────────────────────────────────────────────────────
