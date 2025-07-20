@@ -206,6 +206,17 @@ fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
             config.configure(HIGHLIGHT_NAMES);
             Ok(config)
         }
+        "toml" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_toml_ng::LANGUAGE.into(),
+                language_name,
+                tree_sitter_toml_ng::HIGHLIGHTS_QUERY,
+                "", // TOML doesn't have injections/locals in this version
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
         _ => anyhow::bail!("Unsupported language: {}", language_name),
     }
 }
@@ -235,6 +246,7 @@ fn get_language_from_path(path: &Path) -> Option<&'static str> {
             "css" => Some("css"),
             "md" | "markdown" => Some("markdown"),
             "sh" | "bash" => Some("bash"),
+            "toml" => Some("toml"),
             _ => None,
         })
 }
@@ -423,6 +435,7 @@ const result = numbers.map(n => n * 2);"#;
         );
         assert_eq!(get_language_from_path(Path::new("test.sh")), Some("bash"));
         assert_eq!(get_language_from_path(Path::new("test.bash")), Some("bash"));
+        assert_eq!(get_language_from_path(Path::new("test.toml")), Some("toml"));
         assert_eq!(get_language_from_path(Path::new("test.txt")), None);
         assert_eq!(get_language_from_path(Path::new("test")), None);
     }
@@ -456,6 +469,36 @@ func main() {
             "Should have identifier tokens"
         );
         assert!(token_types.contains(&"number"), "Should have number tokens");
+    }
+
+    #[test]
+    fn test_tokenize_toml() {
+        let code = r#"[package]
+name = "example"
+version = "0.1.0"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+tokio = "1.0"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[features]
+default = ["std"]
+std = []"#;
+
+        let tokens = tokenize_content(code, "toml").unwrap();
+        println!("Found {} tokens", tokens.len());
+
+        // Check for TOML-specific token types
+        let token_types: Vec<&str> = tokens.iter().map(|t| t.token_type.as_str()).collect();
+        assert!(!tokens.is_empty(), "Should have tokens");
+        assert!(token_types.contains(&"string"), "Should have string tokens");
+        assert!(
+            token_types.contains(&"punctuation"),
+            "Should have punctuation tokens"
+        );
     }
 
     #[test]
