@@ -11,6 +11,7 @@ import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 import { useFileSystemStore } from "../../stores/file-system-store";
+import FindBar from "../find-bar";
 import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
 import { CompletionDropdown } from "./completion-dropdown";
 import { EditorContent } from "./editor-content";
@@ -54,6 +55,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   const searchQuery = useCodeEditorStore(state => state.searchQuery);
   const searchMatches = useCodeEditorStore(state => state.searchMatches);
   const currentMatchIndex = useCodeEditorStore(state => state.currentMatchIndex);
+  const { setSearchMatches, setCurrentMatchIndex } = useCodeEditorStore();
   const isFileTreeLoading = useFileSystemStore(state => state.isFileTreeLoading);
 
   // Extract values from active buffer or use defaults
@@ -133,6 +135,35 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   // Scroll management
   const { handleScroll } = useEditorScroll(editorRef, null, lineNumbersRef);
 
+  // Search functionality
+  useEffect(() => {
+    if (!searchQuery.trim() || !value) {
+      setSearchMatches([]);
+      setCurrentMatchIndex(-1);
+      return;
+    }
+
+    const matches: { start: number; end: number }[] = [];
+    const regex = new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    let match: RegExpExecArray | null;
+
+    match = regex.exec(value);
+    while (match !== null) {
+      matches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+      });
+      // Prevent infinite loop on zero-width matches
+      if (match.index === regex.lastIndex) {
+        regex.lastIndex++;
+      }
+      match = regex.exec(value);
+    }
+
+    setSearchMatches(matches);
+    setCurrentMatchIndex(matches.length > 0 ? 0 : -1);
+  }, [searchQuery, value, setSearchMatches, setCurrentMatchIndex]);
+
   // Effect to handle search navigation
   useEffect(() => {
     if (searchMatches.length > 0 && currentMatchIndex >= 0 && vimEngine) {
@@ -181,6 +212,9 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
       <div className="flex h-full flex-col">
         {/* Breadcrumbs */}
         <BreadcrumbContainer />
+
+        {/* Find Bar */}
+        <FindBar />
 
         <div
           ref={editorRef}

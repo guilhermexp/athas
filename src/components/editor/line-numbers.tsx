@@ -26,8 +26,8 @@ export function LineNumbers() {
         ref={lineNumbersRef}
         className="line-numbers-container absolute inset-0 overflow-hidden font-mono"
         style={{
-          paddingTop: "16px",
-          paddingBottom: "16px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
           paddingLeft: "16px",
           paddingRight: "8px",
           fontSize: `${fontSize}px`,

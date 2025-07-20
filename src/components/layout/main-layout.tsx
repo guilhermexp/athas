@@ -20,7 +20,6 @@ import CodeEditor from "../editor/code-editor";
 import EditorFooter from "../editor-footer";
 import ExtensionsView from "../extensions-view";
 import FileReloadToast from "../file-reload-toast";
-import FindBar from "../find-bar";
 import GitHubCopilotSettings from "../github-copilot-settings";
 import ResizableRightPane from "../resizable-right-pane";
 import ResizableSidebar from "../resizable-sidebar";
@@ -170,7 +169,6 @@ export function MainLayout() {
       {/* Global modals and overlays */}
       <CommandBar />
       <CommandPalette />
-      <FindBar />
       <GitHubCopilotSettings />
       <ProjectNameMenu />
       <FileReloadToast />

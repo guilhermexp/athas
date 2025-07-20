@@ -39,6 +39,23 @@ const FindBar = () => {
     }
   }, [isVisible]);
 
+  // Global Cmd+F handler to toggle find bar even when input is focused
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    if (isVisible) {
+      document.addEventListener("keydown", handleGlobalKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleGlobalKeyDown);
+      };
+    }
+  }, [isVisible, onClose]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -66,7 +83,7 @@ const FindBar = () => {
   }
 
   return (
-    <div className="flex items-center gap-2 border-border border-b bg-secondary-bg px-2 py-1.5">
+    <div className="find-bar flex items-center gap-2 border-border border-b bg-secondary-bg px-2 py-1.5">
       <div className="flex flex-1 items-center gap-2">
         <Search size={12} className="text-text-lighter" />
         <input
@@ -77,6 +94,7 @@ const FindBar = () => {
           onKeyDown={handleKeyDown}
           placeholder="Find in file..."
           className="flex-1 border-none bg-transparent font-mono text-text text-xs focus:outline-none focus:ring-0"
+          style={{ outline: "none", boxShadow: "none" }}
         />
 
         {searchQuery && (
@@ -91,7 +109,7 @@ const FindBar = () => {
           onClick={() => onSearch(searchQuery, "previous", true)}
           disabled={!searchQuery || totalMatches === 0}
           className={cn(
-            "flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text",
+            "flex h-5 w-5 items-center justify-center p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text",
             (!searchQuery || totalMatches === 0) && "cursor-not-allowed opacity-50",
           )}
           title="Previous match (Shift+Enter)"
@@ -102,7 +120,7 @@ const FindBar = () => {
           onClick={() => onSearch(searchQuery, "next", true)}
           disabled={!searchQuery || totalMatches === 0}
           className={cn(
-            "flex h-5 w-5 items-center justify-center rounded p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text",
+            "flex h-5 w-5 items-center justify-center p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text",
             (!searchQuery || totalMatches === 0) && "cursor-not-allowed opacity-50",
           )}
           title="Next match (Enter)"
@@ -112,7 +130,7 @@ const FindBar = () => {
         <button
           onClick={onClose}
           className={cn(
-            "flex h-5 w-5 items-center justify-center rounded p-0",
+            "flex h-5 w-5 items-center justify-center p-0",
             "text-text-lighter transition-colors hover:bg-hover hover:text-text",
           )}
           title="Close (Escape)"
