@@ -102,17 +102,6 @@ const TerminalContainer = ({
     [terminals, closeTerminal],
   );
 
-  const handleRenameTerminal = useCallback(
-    (terminalId: string) => {
-      const terminal = terminals.find(t => t.id === terminalId);
-      if (terminal) {
-        setRenamingTerminalId(terminalId);
-        setNewTerminalName(terminal.name);
-      }
-    },
-    [terminals],
-  );
-
   const confirmRename = useCallback(() => {
     if (renamingTerminalId && newTerminalName.trim()) {
       updateTerminalName(renamingTerminalId, newTerminalName.trim());
@@ -212,6 +201,17 @@ const TerminalContainer = ({
         return;
       }
 
+      // Terminal tab navigation with Ctrl+Tab and Ctrl+Shift+Tab
+      if (e.ctrlKey && e.key === "Tab") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          switchToPrevTerminal();
+        } else {
+          switchToNextTerminal();
+        }
+        return;
+      }
+
       // Terminal tab navigation with Alt+Left/Right
       if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         e.preventDefault();
@@ -281,7 +281,6 @@ const TerminalContainer = ({
           onCloseOtherTabs={handleCloseOtherTabs}
           onCloseAllTabs={handleCloseAllTabs}
           onCloseTabsToRight={handleCloseTabsToRight}
-          onRenameTerminal={handleRenameTerminal}
         />
         <div className="flex flex-1 items-center justify-center text-text-lighter">
           <div className="text-center">
@@ -312,7 +311,6 @@ const TerminalContainer = ({
         onCloseOtherTabs={handleCloseOtherTabs}
         onCloseAllTabs={handleCloseAllTabs}
         onCloseTabsToRight={handleCloseTabsToRight}
-        onRenameTerminal={handleRenameTerminal}
         onSplitView={handleSplitView}
         onFullScreen={onFullScreen}
         isFullScreen={isFullScreen}

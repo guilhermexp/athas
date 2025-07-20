@@ -15,6 +15,7 @@ interface UseKeyboardShortcutsProps {
   setIsSearchViewActive: (value: boolean) => void;
   focusSearchInput: () => void;
   focusCommandPalette: () => void;
+  focusTerminal?: () => void;
   activeBuffer: Buffer | null;
   closeBuffer: (bufferId: string) => void;
   switchToNextBuffer: () => void;
@@ -40,6 +41,7 @@ export const useKeyboardShortcuts = ({
   setIsSearchViewActive,
   focusSearchInput,
   focusCommandPalette,
+  focusTerminal,
   activeBuffer,
   closeBuffer,
   switchToNextBuffer,
@@ -64,6 +66,12 @@ export const useKeyboardShortcuts = ({
         } else {
           setBottomPaneActiveTab("terminal");
           setIsBottomPaneVisible(true);
+          // Auto-focus terminal after a short delay to ensure it's rendered
+          if (focusTerminal) {
+            setTimeout(() => {
+              focusTerminal();
+            }, 100);
+          }
         }
         return;
       }
@@ -278,5 +286,6 @@ export const useKeyboardShortcuts = ({
     onQuickEdit,
     onToggleSidebarPosition,
     coreFeatures,
+    focusTerminal,
   ]);
 };

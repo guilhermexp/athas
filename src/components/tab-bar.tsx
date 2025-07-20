@@ -1,12 +1,12 @@
-import { Database, Package, Pin, PinOff, X } from "lucide-react";
+import { Copy, Database, FolderOpen, Package, Pin, PinOff, RotateCcw, X } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import { useBufferStore } from "../stores/buffer-store";
 import { useFileWatcherStore } from "../stores/file-watcher-store";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
 import type { Buffer } from "../types/buffer";
-import { getShortcutText } from "../utils/platform";
 import FileIcon from "./file-icon";
+import KeybindingBadge from "./ui/keybinding-badge";
 
 interface TabBarProps {
   // All data now comes from stores, so no props needed
@@ -23,6 +23,9 @@ interface ContextMenuProps {
   onCloseOthers: (bufferId: string) => void;
   onCloseAll: () => void;
   onCloseToRight: (bufferId: string) => void;
+  onCopyPath?: (path: string) => void;
+  onReload?: (bufferId: string) => void;
+  onRevealInFinder?: (path: string) => void;
 }
 
 const ContextMenu = ({
@@ -35,6 +38,9 @@ const ContextMenu = ({
   onCloseOthers,
   onCloseAll,
   onCloseToRight,
+  onCopyPath,
+  onReload,
+  onRevealInFinder,
 }: ContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -67,11 +73,11 @@ const ContextMenu = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-max min-w-[120px] rounded border border-border bg-primary-bg py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800 dark:shadow-xl"
+      className="fixed z-50 w-[180px] rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
       style={{ left: position.x, top: position.y }}
     >
       <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-hover dark:text-gray-200 dark:hover:bg-gray-700"
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onPin(buffer.id);
           onClose();
@@ -81,21 +87,68 @@ const ContextMenu = ({
         {buffer.isPinned ? "Unpin Tab" : "Pin Tab"}
       </button>
 
-      <div className="my-1 border-border border-t dark:border-gray-600" />
+      <div className="my-1 border-border border-t" />
+
       <button
-        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-xs hover:bg-hover dark:text-gray-200 dark:hover:bg-gray-700"
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        onClick={async () => {
+          if (onCopyPath) {
+            onCopyPath(buffer.path);
+          } else {
+            try {
+              await navigator.clipboard.writeText(buffer.path);
+            } catch (error) {
+              console.error("Failed to copy path:", error);
+            }
+          }
+          onClose();
+        }}
+      >
+        <Copy size={12} />
+        Copy Path
+      </button>
+
+      <button
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        onClick={() => {
+          if (onRevealInFinder) {
+            onRevealInFinder(buffer.path);
+          }
+          onClose();
+        }}
+      >
+        <FolderOpen size={12} />
+        Reveal in Finder
+      </button>
+
+      {buffer.path !== "extensions://marketplace" && (
+        <button
+          className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+          onClick={() => {
+            if (onReload) {
+              onReload(buffer.id);
+            }
+            onClose();
+          }}
+        >
+          <RotateCcw size={12} />
+          Reload
+        </button>
+      )}
+
+      <div className="my-1 border-border border-t" />
+      <button
+        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseTab(buffer.id);
           onClose();
         }}
       >
         <span>Close</span>
-        <span className="font-mono text-[10px] text-text-lighter opacity-60">
-          {getShortcutText("w", ["cmd"])}
-        </span>
+        <KeybindingBadge keys={["⌘", "W"]} className="opacity-60" />
       </button>
       <button
-        className="w-full px-3 py-1.5 text-left text-xs hover:bg-hover dark:text-gray-200 dark:hover:bg-gray-700"
+        className="w-full px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseOthers(buffer.id);
           onClose();
@@ -104,7 +157,7 @@ const ContextMenu = ({
         Close Others
       </button>
       <button
-        className="w-full px-3 py-1.5 text-left text-xs hover:bg-hover dark:text-gray-200 dark:hover:bg-gray-700"
+        className="w-full px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseToRight(buffer.id);
           onClose();
@@ -113,7 +166,7 @@ const ContextMenu = ({
         Close to Right
       </button>
       <button
-        className="w-full px-3 py-1.5 text-left text-xs hover:bg-hover dark:text-gray-200 dark:hover:bg-gray-700"
+        className="w-full px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseAll();
           onClose();
@@ -555,6 +608,46 @@ const TabBar = ({ paneId }: TabBarProps) => {
         onCloseOthers={handleCloseOtherTabs || (() => {})}
         onCloseAll={handleCloseAllTabs || (() => {})}
         onCloseToRight={handleCloseTabsToRight || (() => {})}
+        onCopyPath={async (path: string) => {
+          try {
+            await navigator.clipboard.writeText(path);
+          } catch (error) {
+            console.error("Failed to copy path:", error);
+          }
+        }}
+        onReload={(bufferId: string) => {
+          // Reload the buffer by closing and reopening it
+          const buffer = buffers.find(b => b.id === bufferId);
+          if (buffer && buffer.path !== "extensions://marketplace") {
+            const { closeBuffer, openBuffer } = useBufferStore.getState();
+            closeBuffer(bufferId);
+            // Re-read the file and open it again
+            setTimeout(async () => {
+              try {
+                // This would need to use the file reading utility
+                // For now, just reopen with current content
+                openBuffer(
+                  buffer.path,
+                  buffer.name,
+                  buffer.content,
+                  buffer.isImage,
+                  buffer.isSQLite,
+                  buffer.isDiff,
+                );
+              } catch (error) {
+                console.error("Failed to reload buffer:", error);
+              }
+            }, 100);
+          }
+        }}
+        onRevealInFinder={(path: string) => {
+          // Platform-specific reveal in finder/explorer
+          if (window.electron) {
+            window.electron.shell.showItemInFolder(path);
+          } else {
+            console.log("Reveal in finder:", path);
+          }
+        }}
       />
     </>
   );

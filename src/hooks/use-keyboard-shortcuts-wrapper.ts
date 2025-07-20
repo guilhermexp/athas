@@ -68,6 +68,19 @@ export function useKeyboardShortcutsWrapper() {
         (commandPaletteRef.current as any).focus();
       }
     },
+    focusTerminal: () => {
+      // Find active terminal container and focus it
+      const terminalContainer = document.querySelector('[data-terminal-container="active"]');
+      if (terminalContainer) {
+        // Focus the hidden input of the active terminal
+        const activeTerminalInput = terminalContainer.querySelector(
+          'textarea[id^="terminal-input-"]',
+        );
+        if (activeTerminalInput) {
+          (activeTerminalInput as HTMLElement).focus();
+        }
+      }
+    },
     activeBuffer: bufferStore.getActiveBuffer(),
     closeBuffer: bufferStore.closeBuffer,
     switchToNextBuffer: bufferStore.switchToNextBuffer,
