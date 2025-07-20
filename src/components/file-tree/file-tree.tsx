@@ -25,6 +25,7 @@ import { readDirectory, readFile } from "../../utils/platform";
 import FileIcon from "../file-icon";
 import "./file-tree.css";
 import { cn } from "@/utils/cn";
+import { type GitFile, type GitStatus, getGitStatus } from "../../utils/git";
 import { moveFile } from "../../utils/platform";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
 
@@ -71,6 +72,7 @@ const FileTree = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [gitIgnore, setGitIgnore] = useState<ReturnType<typeof ignore> | null>(null);
+  const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
 
   useEffect(() => {
     const loadGitignore = async () => {
@@ -99,6 +101,25 @@ const FileTree = ({
     loadGitignore();
   }, [rootFolderPath]);
 
+  useEffect(() => {
+    const loadGitStatus = async () => {
+      if (!rootFolderPath) {
+        setGitStatus(null);
+        return;
+      }
+
+      try {
+        const status = await getGitStatus(rootFolderPath);
+        setGitStatus(status);
+      } catch (error) {
+        console.error("Failed to load git status:", error);
+        setGitStatus(null);
+      }
+    };
+
+    loadGitStatus();
+  }, [rootFolderPath, files]);
+
   const isGitIgnored = useCallback(
     (fullPath: string, isDir: boolean): boolean => {
       if (!gitIgnore || !rootFolderPath) return false;
@@ -117,6 +138,50 @@ const FileTree = ({
       return gitIgnore.ignores(relative);
     },
     [gitIgnore, rootFolderPath],
+  );
+
+  const getGitFileStatus = useCallback(
+    (filePath: string): GitFile | null => {
+      if (!gitStatus || !rootFolderPath) return null;
+
+      const normalizedFilePath = filePath.replace(/\\/g, "/");
+      const normalizedRoot = rootFolderPath.replace(/\\/g, "/");
+
+      let relativePath = normalizedFilePath;
+      if (normalizedFilePath.startsWith(normalizedRoot)) {
+        relativePath = normalizedFilePath.slice(normalizedRoot.length);
+      }
+
+      if (relativePath.startsWith("/")) {
+        relativePath = relativePath.slice(1);
+      }
+
+      return gitStatus.files.find(file => file.path === relativePath) || null;
+    },
+    [gitStatus, rootFolderPath],
+  );
+
+  const getGitStatusColor = useCallback(
+    (file: FileEntry): string => {
+      const gitFile = getGitFileStatus(file.path);
+      if (!gitFile) return "";
+
+      switch (gitFile.status) {
+        case "modified":
+          return gitFile.staged ? "text-orange-400" : "text-yellow-400";
+        case "added":
+          return "text-green-400";
+        case "deleted":
+          return "text-red-400";
+        case "untracked":
+          return "text-green-300";
+        case "renamed":
+          return "text-blue-400";
+        default:
+          return "";
+      }
+    },
+    [getGitFileStatus],
   );
 
   // ─────────────────────────────────────────────────────────────────
@@ -419,6 +484,7 @@ const FileTree = ({
               className={cn(
                 "flex-1 select-none overflow-hidden",
                 "text-ellipsis whitespace-nowrap",
+                getGitStatusColor(file),
               )}
               style={{
                 userSelect: "none",
