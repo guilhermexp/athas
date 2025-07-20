@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { FileEntry } from "../../../types/app";
@@ -11,9 +11,15 @@ interface BreadcrumbProps {
   onNavigate: (path: string) => void;
   isOutlineVisible: boolean;
   onToggleOutline: () => void;
+  onSearchClick?: () => void;
 }
 
-export default function Breadcrumb({ filePath, rootPath, onNavigate }: BreadcrumbProps) {
+export default function Breadcrumb({
+  filePath,
+  rootPath,
+  onNavigate,
+  onSearchClick,
+}: BreadcrumbProps) {
   const [dropdown, setDropdown] = useState<{
     segmentIndex: number;
     x: number;
@@ -191,6 +197,15 @@ export default function Breadcrumb({ filePath, rootPath, onNavigate }: Breadcrum
               </button>
             </div>
           ))}
+        </div>
+        <div className="flex items-center">
+          <button
+            onClick={onSearchClick}
+            className="flex h-5 w-5 items-center justify-center rounded text-text-lighter transition-colors hover:bg-hover hover:text-text"
+            title="Find in file"
+          >
+            <Search size={12} />
+          </button>
         </div>
       </div>
 

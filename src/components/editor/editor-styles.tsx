@@ -85,6 +85,44 @@ export function EditorStyles() {
           -webkit-user-select: none;
           -moz-user-select: none;
         }
+        
+        /* Search highlighting */
+        .search-highlight {
+          background-color: rgba(255, 255, 0, 0.3);
+        }
+        
+        .search-highlight-current {
+          background-color: rgba(255, 165, 0, 0.5);
+          outline: 1px solid rgba(255, 165, 0, 0.8);
+        }
+        
+        /* Remove focus rings on all inputs in find bar */
+        input[type="text"]:focus {
+          outline: none !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+        
+        /* Specifically target find bar input */
+        .find-bar input:focus {
+          outline: none !important;
+          box-shadow: none !important;
+          border: none !important;
+          ring: none !important;
+        }
+        
+        /* Remove border radius from find bar */
+        .find-bar {
+          border-radius: 0 !important;
+        }
+        
+        .find-bar input {
+          border-radius: 0 !important;
+        }
+        
+        .find-bar button {
+          border-radius: 0 !important;
+        }
       `}
     </style>
   );
