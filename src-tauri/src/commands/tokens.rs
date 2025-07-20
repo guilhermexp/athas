@@ -140,11 +140,84 @@ fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
             config.configure(HIGHLIGHT_NAMES);
             Ok(config)
         }
+        "erb" | "html.erb" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_embedded_template::LANGUAGE.into(),
+                language_name,
+                tree_sitter_embedded_template::HIGHLIGHTS_QUERY,
+                "", // ERB doesn't have injections/locals in this version
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "python" | "py" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_python::LANGUAGE.into(),
+                language_name,
+                tree_sitter_python::HIGHLIGHTS_QUERY,
+                "", // Python doesn't have injections/locals in this version
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "html" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_html::LANGUAGE.into(),
+                language_name,
+                tree_sitter_html::HIGHLIGHTS_QUERY,
+                tree_sitter_html::INJECTIONS_QUERY,
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "css" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_css::LANGUAGE.into(),
+                language_name,
+                tree_sitter_css::HIGHLIGHTS_QUERY,
+                "", // CSS doesn't have injections/locals
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "markdown" | "md" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_markdown::LANGUAGE.into(),
+                language_name,
+                tree_sitter_markdown::HIGHLIGHT_QUERY,
+                tree_sitter_markdown::INJECTION_QUERY,
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
+        "bash" | "sh" => {
+            let mut config = HighlightConfiguration::new(
+                tree_sitter_bash::LANGUAGE.into(),
+                language_name,
+                tree_sitter_bash::HIGHLIGHTS_QUERY,
+                "", // Bash doesn't have injections/locals in this version
+                "",
+            )?;
+            config.configure(HIGHLIGHT_NAMES);
+            Ok(config)
+        }
         _ => anyhow::bail!("Unsupported language: {}", language_name),
     }
 }
 
 fn get_language_from_path(path: &Path) -> Option<&'static str> {
+    // Handle .html.erb files specifically
+    if let Some(filename) = path.file_name().and_then(|name| name.to_str()) {
+        if filename.ends_with(".html.erb") {
+            return Some("erb");
+        }
+    }
+
     path.extension()
         .and_then(|ext| ext.to_str())
         .and_then(|ext| match ext {
@@ -156,6 +229,12 @@ fn get_language_from_path(path: &Path) -> Option<&'static str> {
             "go" => Some("go"),
             "rb" | "ruby" => Some("ruby"),
             "rs" => Some("rust"),
+            "erb" => Some("erb"),
+            "py" => Some("python"),
+            "html" | "htm" => Some("html"),
+            "css" => Some("css"),
+            "md" | "markdown" => Some("markdown"),
+            "sh" | "bash" => Some("bash"),
             _ => None,
         })
 }
@@ -325,6 +404,25 @@ const result = numbers.map(n => n * 2);"#;
         assert_eq!(get_language_from_path(Path::new("test.rb")), Some("ruby"));
         assert_eq!(get_language_from_path(Path::new("test.ruby")), Some("ruby"));
         assert_eq!(get_language_from_path(Path::new("test.rs")), Some("rust"));
+        assert_eq!(get_language_from_path(Path::new("test.erb")), Some("erb"));
+        assert_eq!(
+            get_language_from_path(Path::new("index.html.erb")),
+            Some("erb")
+        );
+        assert_eq!(get_language_from_path(Path::new("test.py")), Some("python"));
+        assert_eq!(get_language_from_path(Path::new("test.html")), Some("html"));
+        assert_eq!(get_language_from_path(Path::new("test.htm")), Some("html"));
+        assert_eq!(get_language_from_path(Path::new("test.css")), Some("css"));
+        assert_eq!(
+            get_language_from_path(Path::new("test.md")),
+            Some("markdown")
+        );
+        assert_eq!(
+            get_language_from_path(Path::new("test.markdown")),
+            Some("markdown")
+        );
+        assert_eq!(get_language_from_path(Path::new("test.sh")), Some("bash"));
+        assert_eq!(get_language_from_path(Path::new("test.bash")), Some("bash"));
         assert_eq!(get_language_from_path(Path::new("test.txt")), None);
         assert_eq!(get_language_from_path(Path::new("test")), None);
     }
