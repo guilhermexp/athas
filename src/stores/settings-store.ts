@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
@@ -18,7 +19,7 @@ export interface Settings {
 }
 
 const defaultSettings: Settings = {
-  theme: "auto",
+  theme: "dark", // Changed from "auto" since we don't support continuous monitoring
   autoThemeLight: "light",
   autoThemeDark: "dark",
   fontSize: 14,
@@ -93,6 +94,18 @@ const applyTheme = (theme: ThemeType) => {
   }
 };
 
+// Get system theme preference
+const getSystemThemePreference = (): "light" | "dark" => {
+  if (typeof window !== "undefined" && window.matchMedia) {
+    try {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    } catch (error) {
+      console.warn("matchMedia not available:", error);
+    }
+  }
+  return "dark";
+};
+
 // Initialize settings from localStorage
 const getInitialSettings = (): Settings => {
   if (typeof window === "undefined") return defaultSettings;
@@ -106,7 +119,35 @@ const getInitialSettings = (): Settings => {
       console.error("Error loading settings:", error);
     }
   }
-  return defaultSettings;
+
+  // No stored settings, detect OS theme for better default
+  const systemTheme = getSystemThemePreference();
+  const defaultWithOSTheme = {
+    ...defaultSettings,
+    theme: systemTheme,
+  };
+
+  // Also detect OS theme asynchronously for more accurate detection
+  invoke<string>("get_system_theme")
+    .then(detectedTheme => {
+      const theme = detectedTheme === "dark" ? "dark" : "light";
+      if (theme !== systemTheme && !localStorage.getItem("athas-code-settings")) {
+        // Update to more accurate theme if user hasn't set preferences yet
+        localStorage.setItem(
+          "athas-code-settings",
+          JSON.stringify({
+            ...defaultWithOSTheme,
+            theme,
+          }),
+        );
+        applyTheme(theme as ThemeType);
+      }
+    })
+    .catch(() => {
+      // Tauri command failed, stick with browser detection
+    });
+
+  return defaultWithOSTheme;
 };
 
 // Apply initial theme

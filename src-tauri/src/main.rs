@@ -266,9 +266,6 @@ fn main() {
             get_claude_status,
             // Theme commands
             get_system_theme,
-            start_theme_monitoring,
-            stop_theme_monitoring,
-            trigger_theme_detection,
             // Token commands
             get_tokens,
             get_tokens_from_path
