@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import type { GitDiff } from "../utils/git";
 
 interface Buffer {
   id: string;
@@ -16,6 +17,8 @@ interface Buffer {
   isActive: boolean;
   vimMode?: "normal" | "insert" | "visual";
   cursorPosition?: number;
+  // For diff buffers, store the parsed diff data
+  diffData?: GitDiff;
 }
 
 interface BufferState {
@@ -46,6 +49,7 @@ export const useBufferStore = create(
           isSQLite = false,
           isDiff = false,
           isVirtual = false,
+          diffData?: GitDiff,
         ) => {
           const { buffers, maxOpenTabs } = get();
 
@@ -84,6 +88,7 @@ export const useBufferStore = create(
             isActive: true,
             vimMode: "normal",
             cursorPosition: 0,
+            diffData,
           };
 
           set(state => {
@@ -132,10 +137,15 @@ export const useBufferStore = create(
           });
         },
 
-        updateBufferContent: (bufferId: string, content: string, markDirty = true) => {
+        updateBufferContent: (
+          bufferId: string,
+          content: string,
+          markDirty = true,
+          diffData?: GitDiff,
+        ) => {
           const buffer = get().buffers.find(b => b.id === bufferId);
-          if (!buffer || buffer.content === content) {
-            // Content hasn't changed, don't update
+          if (!buffer || (buffer.content === content && !diffData)) {
+            // Content hasn't changed and no diff data update, don't update
             return;
           }
 
@@ -143,6 +153,9 @@ export const useBufferStore = create(
             const buffer = state.buffers.find(b => b.id === bufferId);
             if (buffer) {
               buffer.content = content;
+              if (diffData) {
+                buffer.diffData = diffData;
+              }
               if (markDirty && !buffer.isVirtual) {
                 buffer.isDirty = true;
               }

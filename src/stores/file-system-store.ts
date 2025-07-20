@@ -417,12 +417,21 @@ export const useFileSystemStore = create(
 
           // Handle virtual diff files
           if (path.startsWith("diff://")) {
+            // Extract and decode the actual file path for display
+            const match = path.match(/^diff:\/\/(staged|unstaged)\/(.+)$/);
+            let displayName = getFilenameFromPath(path);
+            if (match) {
+              const [, diffType, encodedPath] = match;
+              const decodedPath = decodeURIComponent(encodedPath);
+              displayName = `${getFilenameFromPath(decodedPath)} (${diffType})`;
+            }
+
             const diffContent = localStorage.getItem(`diff-content-${path}`);
             if (diffContent) {
-              openBuffer(path, fileName, diffContent, false, false, true, true); // Mark as diff and virtual
+              openBuffer(path, displayName, diffContent, false, false, true, true); // Mark as diff and virtual
               return;
             } else {
-              openBuffer(path, fileName, "No diff content available", false, false, true, true);
+              openBuffer(path, displayName, "No diff content available", false, false, true, true);
               return;
             }
           }

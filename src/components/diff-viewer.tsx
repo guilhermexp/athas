@@ -8,11 +8,13 @@ import {
   FileX,
   Minus,
   Plus,
+  RefreshCw,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useBufferStore } from "../stores/buffer-store";
-import type { GitDiff, GitDiffLine, GitHunk } from "../utils/git";
+import { useFileSystemStore } from "../stores/file-system-store";
+import { type GitDiff, type GitDiffLine, type GitHunk, getFileDiff } from "../utils/git";
 
 interface DiffViewerProps {
   onStageHunk?: (hunk: GitHunk) => void;
@@ -20,38 +22,191 @@ interface DiffViewerProps {
 }
 
 const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) => {
-  const { activeBufferId, buffers, closeBuffer } = useBufferStore();
+  // Helper to create GitHunk object
+  const createGitHunk = (
+    hunk: { header: GitDiffLine; lines: GitDiffLine[] },
+    filePath: string,
+  ): GitHunk => ({
+    file_path: filePath,
+    lines: [hunk.header, ...hunk.lines],
+  });
+
+  // Helper to compose image src
+  const getImgSrc = (base64: string | undefined) =>
+    base64 ? `data:image/*;base64,${base64}` : undefined;
+
+  // Image container component
+  const ImageContainer: React.FC<{
+    label: string;
+    labelColor: string;
+    base64?: string;
+    alt: string;
+    zoom: number;
+  }> = ({ label, labelColor, base64, alt, zoom }) => {
+    const containerBase = "flex flex-col items-center justify-center p-4";
+    return (
+      <div className={containerBase}>
+        <span className={`mb-2 font-mono ${labelColor} text-xs`}>{label}</span>
+        {base64 ? (
+          <img
+            src={getImgSrc(base64)}
+            alt={alt}
+            style={{
+              transform: `scale(${zoom})`,
+              transition: "transform 0.1s ease-out",
+            }}
+            draggable={false}
+          />
+        ) : (
+          <div className="p-8 text-text-lighter text-xs">No image data</div>
+        )}
+      </div>
+    );
+  };
+
+  // Helper to switch to a different view (staged/unstaged)
+  const switchToView = (filePath: string, viewType: "staged" | "unstaged", diffData: GitDiff) => {
+    const encodedPath = encodeURIComponent(filePath);
+    const newVirtualPath = `diff://${viewType}/${encodedPath}`;
+    const displayName = `${filePath.split("/").pop()} (${viewType})`;
+
+    useBufferStore
+      .getState()
+      .openBuffer(
+        newVirtualPath,
+        displayName,
+        JSON.stringify(diffData),
+        false,
+        false,
+        true,
+        true,
+        diffData,
+      );
+  };
+
+  // Helper to create status badges
+  const statusBadge = (text: string, color: string) => (
+    <span className={`ml-2 rounded px-2 py-0.5 font-bold text-xs ${color}`}>{text}</span>
+  );
+  const { activeBufferId, buffers, closeBuffer, updateBufferContent } = useBufferStore();
   const activeBuffer = buffers.find(b => b.id === activeBufferId);
+  const { rootFolderPath } = useFileSystemStore();
 
   const [collapsedHunks, setCollapsedHunks] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<"unified" | "split">("unified");
   const [zoom, setZoom] = useState<number>(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Get diff from buffer or parse from content for backwards compatibility
+  const diff =
+    activeBuffer?.diffData ||
+    (activeBuffer?.isDiff && activeBuffer.content
+      ? (() => {
+          try {
+            return JSON.parse(activeBuffer.content) as GitDiff;
+          } catch {
+            return null;
+          }
+        })()
+      : null);
+
+  // Extract file path and staged status from virtual path
+  const pathMatch = activeBuffer?.path.match(/^diff:\/\/(staged|unstaged)\/(.+)$/);
+  const isStaged = pathMatch?.[1] === "staged";
+  const encodedFilePath = pathMatch?.[2];
+  const filePath = encodedFilePath ? decodeURIComponent(encodedFilePath) : null;
+
+  // Refresh diff data
+  const refreshDiff = useCallback(async () => {
+    if (!rootFolderPath || !filePath || !activeBuffer) return;
+
+    setIsRefreshing(true);
+    try {
+      // Get the diff for current view
+      const currentViewDiff = await getFileDiff(rootFolderPath, filePath, isStaged);
+
+      if (currentViewDiff && currentViewDiff.lines.length > 0) {
+        // Update buffer with new diff data for current view
+        updateBufferContent(
+          activeBuffer.id,
+          JSON.stringify(currentViewDiff),
+          false,
+          currentViewDiff,
+        );
+      } else {
+        // Current view has no changes, check the other view
+        const otherViewDiff = await getFileDiff(rootFolderPath, filePath, !isStaged);
+
+        if (otherViewDiff && otherViewDiff.lines.length > 0) {
+          // Switch to the other view
+          const newViewType = isStaged ? "unstaged" : "staged";
+          switchToView(filePath, newViewType, otherViewDiff);
+
+          // Close current buffer after opening the new one
+          closeBuffer(activeBuffer.id);
+        } else {
+          // No changes in either view, close the buffer
+          closeBuffer(activeBuffer.id);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to refresh diff:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [rootFolderPath, filePath, isStaged, activeBuffer, updateBufferContent, closeBuffer]);
+
+  // Listen for git status changes and refresh
+  useEffect(() => {
+    const handleGitStatusChanged = async () => {
+      if (!rootFolderPath || !filePath || !activeBuffer) return;
+
+      // When staging from unstaged view, we might need to switch to staged view
+      // Check if we're viewing unstaged and if staged now has changes
+      if (!isStaged) {
+        const stagedDiff = await getFileDiff(rootFolderPath, filePath, true);
+        if (stagedDiff && stagedDiff.lines.length > 0) {
+          // Open staged view
+          switchToView(filePath, "staged", stagedDiff);
+          return; // Don't refresh current buffer
+        }
+      }
+
+      // Otherwise just refresh normally
+      refreshDiff();
+    };
+
+    window.addEventListener("git-status-changed", handleGitStatusChanged);
+    return () => {
+      window.removeEventListener("git-status-changed", handleGitStatusChanged);
+    };
+  }, [refreshDiff, rootFolderPath, filePath, activeBuffer, isStaged]);
 
   if (!activeBuffer || !activeBuffer.isDiff) {
     return null;
   }
 
-  let diff: GitDiff | null = null;
-  try {
-    diff = JSON.parse(activeBuffer.content);
-  } catch (error) {
-    console.error("Failed to parse diff content:", error);
-  }
-
   const fileName = activeBuffer.name;
   const onClose = () => closeBuffer(activeBuffer.id);
-
-  // Determine if this is a staged or unstaged diff based on the path
-  const isStaged = activeBuffer.path.includes("staged") && !activeBuffer.path.includes("unstaged");
 
   if (!diff) {
     return (
       <div className="flex h-full flex-col bg-primary-bg">
         <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-4 py-2">
           <h3 className="font-medium text-sm text-text">Diff Viewer</h3>
-          <button onClick={onClose} className="p-1 text-text-lighter hover:text-text">
-            <X size={14} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={refreshDiff}
+              disabled={isRefreshing}
+              className="p-1 text-text-lighter hover:text-text disabled:opacity-50"
+              title="Refresh diff"
+            >
+              <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+            </button>
+            <button onClick={onClose} className="p-1 text-text-lighter hover:text-text">
+              <X size={14} />
+            </button>
+          </div>
         </div>
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-text-lighter">No diff to display</p>
@@ -66,14 +221,6 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
     const ext = fileLabel?.split(".").pop()?.toUpperCase() || "";
     const leftLabel = diff.is_deleted ? "Deleted Version" : "Previous Version";
     const rightLabel = diff.is_new ? "Added Version" : "New Version";
-    const containerBase = "flex flex-col items-center justify-center p-4";
-    const badge = (text: string, color: string) => (
-      <span className={`ml-2 rounded px-2 py-0.5 font-bold text-xs ${color}`}>{text}</span>
-    );
-
-    // Compose image src
-    const getImgSrc = (base64: string | undefined) =>
-      base64 ? `data:image/*;base64,${base64}` : undefined;
 
     return (
       <div className="flex h-full select-none flex-col bg-primary-bg">
@@ -90,9 +237,9 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
             <span className="font-mono text-text text-xs">
               {fileLabel} {ext && <>• {ext}</>}
             </span>
-            {diff.is_new && badge("ADDED", "bg-green-600 text-white")}
-            {diff.is_deleted && badge("DELETED", "bg-red-600 text-white")}
-            {!diff.is_new && !diff.is_deleted && badge("MODIFIED", "bg-blue-600 text-white")}
+            {diff.is_new && statusBadge("ADDED", "bg-green-600 text-white")}
+            {diff.is_deleted && statusBadge("DELETED", "bg-red-600 text-white")}
+            {!diff.is_new && !diff.is_deleted && statusBadge("MODIFIED", "bg-blue-600 text-white")}
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -133,75 +280,39 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
           {/* Side-by-side for modified, single for added/deleted */}
           {diff.is_new && !diff.old_blob_base64 ? (
             // Added
-            <div className={containerBase}>
-              <span className="mb-2 font-mono text-green-600 text-xs">{rightLabel}</span>
-              {diff.new_blob_base64 ? (
-                <img
-                  src={getImgSrc(diff.new_blob_base64)}
-                  alt="Added"
-                  style={{
-                    transform: `scale(${zoom})`,
-                    transition: "transform 0.1s ease-out",
-                  }}
-                  draggable={false}
-                />
-              ) : (
-                <div className="p-8 text-text-lighter text-xs">No image data</div>
-              )}
-            </div>
+            <ImageContainer
+              label={rightLabel}
+              labelColor="text-green-600"
+              base64={diff.new_blob_base64}
+              alt="Added"
+              zoom={zoom}
+            />
           ) : diff.is_deleted && !diff.new_blob_base64 ? (
             // Deleted
-            <div className={containerBase}>
-              <span className="mb-2 font-mono text-red-600 text-xs">{leftLabel}</span>
-              {diff.old_blob_base64 ? (
-                <img
-                  src={getImgSrc(diff.old_blob_base64)}
-                  alt="Deleted"
-                  style={{
-                    transform: `scale(${zoom})`,
-                    transition: "transform 0.1s ease-out",
-                  }}
-                  draggable={false}
-                />
-              ) : (
-                <div className="p-8 text-text-lighter text-xs">No image data</div>
-              )}
-            </div>
+            <ImageContainer
+              label={leftLabel}
+              labelColor="text-red-600"
+              base64={diff.old_blob_base64}
+              alt="Deleted"
+              zoom={zoom}
+            />
           ) : (
             // Modified (side-by-side)
             <>
-              <div className={containerBase}>
-                <span className="mb-2 font-mono text-text-lighter text-xs">{leftLabel}</span>
-                {diff.old_blob_base64 ? (
-                  <img
-                    src={getImgSrc(diff.old_blob_base64)}
-                    alt="Previous"
-                    style={{
-                      transform: `scale(${zoom})`,
-                      transition: "transform 0.1s ease-out",
-                    }}
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="p-8 text-text-lighter text-xs">No image data</div>
-                )}
-              </div>
-              <div className={containerBase}>
-                <span className="mb-2 font-mono text-text-lighter text-xs">{rightLabel}</span>
-                {diff.new_blob_base64 ? (
-                  <img
-                    src={getImgSrc(diff.new_blob_base64)}
-                    alt="New"
-                    style={{
-                      transform: `scale(${zoom})`,
-                      transition: "transform 0.1s ease-out",
-                    }}
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="p-8 text-text-lighter text-xs">No image data</div>
-                )}
-              </div>
+              <ImageContainer
+                label={leftLabel}
+                labelColor="text-text-lighter"
+                base64={diff.old_blob_base64}
+                alt="Previous"
+                zoom={zoom}
+              />
+              <ImageContainer
+                label={rightLabel}
+                labelColor="text-text-lighter"
+                base64={diff.new_blob_base64}
+                alt="New"
+                zoom={zoom}
+              />
             </>
           )}
         </div>
@@ -308,13 +419,8 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
               <>
                 {!isStaged && onStageHunk && (
                   <button
-                    onClick={() => {
-                      const hunkData: GitHunk = {
-                        file_path: diff?.file_path || "",
-                        lines: [hunk.header, ...hunk.lines],
-                      };
-                      onStageHunk(hunkData);
-                    }}
+                    key={`stage-${hunk.id}-${activeBuffer?.path}`}
+                    onClick={() => onStageHunk(createGitHunk(hunk, diff?.file_path || ""))}
                     className="flex items-center gap-1 rounded bg-green-500/20 px-2 py-1 text-green-400 text-xs transition-colors hover:bg-green-500/30"
                     title="Stage hunk"
                   >
@@ -324,13 +430,8 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
                 )}
                 {isStaged && onUnstageHunk && (
                   <button
-                    onClick={() => {
-                      const hunkData: GitHunk = {
-                        file_path: diff?.file_path || "",
-                        lines: [hunk.header, ...hunk.lines],
-                      };
-                      onUnstageHunk(hunkData);
-                    }}
+                    key={`unstage-${hunk.id}-${activeBuffer?.path}`}
+                    onClick={() => onUnstageHunk(createGitHunk(hunk, diff?.file_path || ""))}
                     className="flex items-center gap-1 rounded bg-red-500/20 px-2 py-1 text-red-400 text-xs transition-colors hover:bg-red-500/30"
                     title="Unstage hunk"
                   >
@@ -434,7 +535,6 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
                 <Copy size={10} />
               </button>
               {/* TODO: Implement staging/unstaging functionality
-              {/* TODO: Implement staging/unstaging functionality
           {(onStageLine || onUnstageLine) && line.line_type !== "context" && (
                 <>
                   {onStageLine && line.line_type === "added" && (
@@ -508,29 +608,6 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
           >
             <Copy size={10} />
           </button>
-          {/* TODO: Implement staging/unstaging functionality
-          {(onStageLine || onUnstageLine) && line.line_type !== "context" && (
-            <>
-              {onStageLine && line.line_type === "added" && (
-                <button
-                  onClick={() => onStageLine(line)}
-                  className="rounded p-1 text-green-400 transition-colors hover:bg-green-500/20 hover:text-green-300"
-                  title="Stage line"
-                >
-                  <Plus size={10} />
-                </button>
-              )}
-              {onUnstageLine && line.line_type === "removed" && (
-                <button
-                  onClick={() => onUnstageLine(line)}
-                  className="rounded p-1 text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
-                  title="Unstage line"
-                >
-                  <Minus size={10} />
-                </button>
-              )}
-            </>
-          )} */}
         </div>
       </div>
     );

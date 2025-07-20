@@ -70,34 +70,8 @@ export function MainLayout() {
     try {
       const success = await stageHunk(rootFolderPath, hunk);
       if (success) {
-        // Emit a custom event to notify Git view to refresh
+        // Emit a custom event to notify Git view and DiffViewer to refresh
         window.dispatchEvent(new CustomEvent("git-status-changed"));
-
-        // Reload the current diff to show updated state
-        if (activeBuffer?.isDiff) {
-          const filePath = hunk.file_path;
-          const currentPath = activeBuffer.path;
-          const isCurrentlyViewingStaged =
-            currentPath.includes("staged") && !currentPath.includes("unstaged");
-
-          // Get the updated diff (opposite of current view since we just staged)
-          const { getFileDiff } = await import("../../utils/git");
-          const updatedDiff = await getFileDiff(
-            rootFolderPath,
-            filePath,
-            !isCurrentlyViewingStaged,
-          );
-
-          if (updatedDiff && updatedDiff.lines.length > 0) {
-            // Update the buffer content directly
-            const { updateBufferContent } = useBufferStore.getState();
-            updateBufferContent(activeBuffer.id, JSON.stringify(updatedDiff));
-          } else {
-            // No more changes in this view, close the buffer
-            const { closeBuffer } = useBufferStore.getState();
-            closeBuffer(activeBuffer.id);
-          }
-        }
       } else {
         console.error("Failed to stage hunk");
       }
@@ -115,34 +89,8 @@ export function MainLayout() {
     try {
       const success = await unstageHunk(rootFolderPath, hunk);
       if (success) {
-        // Emit a custom event to notify Git view to refresh
+        // Emit a custom event to notify Git view and DiffViewer to refresh
         window.dispatchEvent(new CustomEvent("git-status-changed"));
-
-        // Reload the current diff to show updated state
-        if (activeBuffer?.isDiff) {
-          const filePath = hunk.file_path;
-          const currentPath = activeBuffer.path;
-          const isCurrentlyViewingStaged =
-            currentPath.includes("staged") && !currentPath.includes("unstaged");
-
-          // Get the updated diff (opposite of current view since we just unstaged)
-          const { getFileDiff } = await import("../../utils/git");
-          const updatedDiff = await getFileDiff(
-            rootFolderPath,
-            filePath,
-            !isCurrentlyViewingStaged,
-          );
-
-          if (updatedDiff && updatedDiff.lines.length > 0) {
-            // Update the buffer content directly
-            const { updateBufferContent } = useBufferStore.getState();
-            updateBufferContent(activeBuffer.id, JSON.stringify(updatedDiff));
-          } else {
-            // No more changes in this view, close the buffer
-            const { closeBuffer } = useBufferStore.getState();
-            closeBuffer(activeBuffer.id);
-          }
-        }
       } else {
         console.error("Failed to unstage hunk");
       }

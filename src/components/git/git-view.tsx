@@ -1,6 +1,7 @@
 import { Edit3, FileIcon, FilePlus, FileX, GitBranch, RefreshCw, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
+import { useBufferStore } from "../../stores/buffer-store";
 import { useGitStore } from "../../stores/git-store";
 import {
   type GitFile,
@@ -10,7 +11,6 @@ import {
   getGitLog,
   getGitStatus,
 } from "../../utils/git";
-import { safeLocalStorageSetItem, truncateJsonArrayData } from "../../utils/storage";
 
 // Import modular components
 import GitActionsMenu from "./git-actions-menu";
@@ -61,6 +61,8 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         getBranches(repoPath),
       ]);
       updateGitData({ gitStatus: status, commits, branches });
+
+      // Note: DiffViewer now handles its own refresh via git-status-changed event
     } catch (error) {
       console.error("Failed to load git data:", error);
     } finally {
@@ -213,36 +215,22 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
       const diff = await getFileDiff(repoPath, actualFilePath, staged);
 
       if (diff && (diff.lines.length > 0 || diff.is_image)) {
-        const diffFileName = `${actualFilePath.split("/").pop()}.diff`;
-        const virtualPath = `diff://${staged ? "staged" : "unstaged"}/${diffFileName}`;
-        const diffJson = JSON.stringify(diff);
+        // Encode the full file path in the virtual path
+        const encodedPath = encodeURIComponent(actualFilePath);
+        const virtualPath = `diff://${staged ? "staged" : "unstaged"}/${encodedPath}`;
+        const displayName = `${actualFilePath.split("/").pop()} (${staged ? "staged" : "unstaged"})`;
 
-        const success = safeLocalStorageSetItem(`diff-content-${virtualPath}`, diffJson, {
-          clearPrefix: "diff-content-",
-          truncateData: data => truncateJsonArrayData(data, 1000),
-          onSuccess: () => {
-            onFileSelect(virtualPath, false);
-          },
-          onTruncated: (_originalSize, _truncatedSize) => {
-            onFileSelect(virtualPath, false);
-            if (diff.is_image) {
-              console.log(`Image diff displayed successfully.\nFile: ${actualFilePath}`);
-            } else {
-              alert(
-                `File diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`,
-              );
-            }
-          },
-          onQuotaExceeded: _error => {
-            alert(
-              `Failed to display diff: The file diff is too large to display.\nFile: ${actualFilePath}\nTry viewing smaller portions of the file.`,
-            );
-          },
-        });
-
-        if (!success) {
-          console.error("Failed to store file diff");
-        }
+        // Open buffer with diff data directly
+        useBufferStore.getState().openBuffer(
+          virtualPath,
+          displayName,
+          JSON.stringify(diff), // Keep for backwards compatibility
+          false, // isImage
+          false, // isSQLite
+          true, // isDiff
+          true, // isVirtual
+          diff, // Pass the diff data directly
+        );
       } else {
         // Instead of showing an alert, fall back to opening the file
         handleOpenOriginalFile(actualFilePath);
@@ -263,30 +251,18 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         const diff = filePath ? diffs.find(d => d.file_path === filePath) || diffs[0] : diffs[0]; // Show specific file or first diff
         const diffFileName = `${diff.file_path.split("/").pop()}.diff`;
         const virtualPath = `diff://commit/${commitHash}/${diffFileName}`;
-        const diffJson = JSON.stringify(diff);
 
-        const success = safeLocalStorageSetItem(`diff-content-${virtualPath}`, diffJson, {
-          clearPrefix: "diff-content-",
-          truncateData: data => truncateJsonArrayData(data, 1000),
-          onSuccess: () => {
-            onFileSelect(virtualPath, false);
-          },
-          onTruncated: (_originalSize, _truncatedSize) => {
-            onFileSelect(virtualPath, false);
-            alert(
-              `Diff was too large and has been truncated to the first 1000 lines.\nOriginal diff had ${diff.lines.length} lines.`,
-            );
-          },
-          onQuotaExceeded: _error => {
-            alert(
-              `Failed to display diff: The commit diff is too large to display.\nCommit: ${commitHash}\nConsider viewing individual files instead.`,
-            );
-          },
-        });
-
-        if (!success) {
-          console.error("Failed to store commit diff");
-        }
+        // Open buffer with diff data directly
+        useBufferStore.getState().openBuffer(
+          virtualPath,
+          diffFileName,
+          JSON.stringify(diff), // Keep for backwards compatibility
+          false, // isImage
+          false, // isSQLite
+          true, // isDiff
+          true, // isVirtual
+          diff, // Pass the diff data directly
+        );
       } else {
         alert(`No changes in this commit for the specified file.`);
       }
