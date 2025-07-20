@@ -2,23 +2,25 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
 import { Bot, Maximize2, Minimize2, Minus, Settings, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useBufferStore } from "@/stores/buffer-store";
+import SettingsDialog from "@/components/settings/settings-dialog";
 import { usePersistentSettingsStore } from "@/stores/persistent-settings-store";
 import { useProjectStore } from "@/stores/project-store";
-import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/utils/cn";
 
 interface CustomTitleBarProps {
   title?: string;
   showMinimal?: boolean;
   isWelcomeScreen?: boolean;
+  onOpenSettings?: () => void;
 }
 
-const CustomTitleBar = ({ showMinimal = false, isWelcomeScreen = false }: CustomTitleBarProps) => {
+const CustomTitleBar = ({
+  showMinimal = false,
+  isWelcomeScreen = false,
+  onOpenSettings,
+}: CustomTitleBarProps) => {
   const { getProjectName } = useProjectStore();
   const { isAIChatVisible, setIsAIChatVisible } = usePersistentSettingsStore();
-  const { openBuffer } = useBufferStore();
-  const { getSettingsJSON } = useSettingsStore();
 
   const projectName = getProjectName();
   const [isMaximized, setIsMaximized] = useState(false);
@@ -179,18 +181,7 @@ const CustomTitleBar = ({ showMinimal = false, isWelcomeScreen = false }: Custom
             <Bot size={14} />
           </button>
           <button
-            onClick={() => {
-              const settingsContent = getSettingsJSON();
-              openBuffer(
-                "settings://user-settings.json",
-                "settings.json",
-                settingsContent,
-                false,
-                false,
-                false,
-                true,
-              );
-            }}
+            onClick={onOpenSettings}
             className={cn(
               "mr-4 flex items-center justify-center rounded p-1",
               "text-text-lighter transition-colors hover:bg-hover hover:text-text",
@@ -240,18 +231,7 @@ const CustomTitleBar = ({ showMinimal = false, isWelcomeScreen = false }: Custom
         </button>
         {/* Settings button */}
         <button
-          onClick={() => {
-            const settingsContent = getSettingsJSON();
-            openBuffer(
-              "settings://user-settings.json",
-              "settings.json",
-              settingsContent,
-              false,
-              false,
-              false,
-              true,
-            );
-          }}
+          onClick={onOpenSettings}
           className={cn(
             "mr-2 flex items-center justify-center rounded px-1 py-0.5",
             "text-text-lighter transition-colors hover:bg-hover hover:text-text",
@@ -297,4 +277,31 @@ const CustomTitleBar = ({ showMinimal = false, isWelcomeScreen = false }: Custom
   );
 };
 
-export default CustomTitleBar;
+const CustomTitleBarWithSettings = (props: Omit<CustomTitleBarProps, "onOpenSettings">) => {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Handle Cmd+, (Mac) or Ctrl+, (Windows/Linux) to open settings
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isMac = navigator.platform.includes("Mac");
+      const isSettingsShortcut = event.key === "," && (isMac ? event.metaKey : event.ctrlKey);
+
+      if (isSettingsShortcut) {
+        event.preventDefault();
+        setIsSettingsOpen(true);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  return (
+    <>
+      <CustomTitleBar {...props} onOpenSettings={() => setIsSettingsOpen(true)} />
+      <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+    </>
+  );
+};
+
+export default CustomTitleBarWithSettings;
