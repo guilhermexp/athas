@@ -186,10 +186,10 @@ fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
         }
         "markdown" | "md" => {
             let mut config = HighlightConfiguration::new(
-                tree_sitter_markdown::LANGUAGE.into(),
+                tree_sitter_md::LANGUAGE.into(),
                 language_name,
-                tree_sitter_markdown::HIGHLIGHT_QUERY,
-                tree_sitter_markdown::INJECTION_QUERY,
+                tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
+                tree_sitter_md::INJECTION_QUERY_BLOCK,
                 "",
             )?;
             config.configure(HIGHLIGHT_NAMES);
@@ -199,7 +199,7 @@ fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
             let mut config = HighlightConfiguration::new(
                 tree_sitter_bash::LANGUAGE.into(),
                 language_name,
-                tree_sitter_bash::HIGHLIGHTS_QUERY,
+                tree_sitter_bash::HIGHLIGHT_QUERY,
                 "", // Bash doesn't have injections/locals in this version
                 "",
             )?;

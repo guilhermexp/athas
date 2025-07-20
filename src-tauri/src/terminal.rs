@@ -269,7 +269,7 @@ impl TerminalConnection {
                 }
             }
             TerminalKind::Wsl {
-                distribution,
+                distribution: _,
                 working_directory: _,
             } => {
                 #[cfg(target_os = "windows")]
