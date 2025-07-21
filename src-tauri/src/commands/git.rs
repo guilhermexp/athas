@@ -262,7 +262,8 @@ fn _git_status(repo_path: String) -> Result<GitStatus> {
 
         let path = entry.path().context("Invalid path")?.to_string();
 
-        let staged = status_flags.intersects(
+        // Check for staged changes
+        let has_staged = status_flags.intersects(
             git2::Status::INDEX_NEW
                 | git2::Status::INDEX_MODIFIED
                 | git2::Status::INDEX_DELETED
@@ -270,29 +271,54 @@ fn _git_status(repo_path: String) -> Result<GitStatus> {
                 | git2::Status::INDEX_TYPECHANGE,
         );
 
-        let status = if status_flags.contains(git2::Status::INDEX_NEW)
-            || (status_flags.contains(git2::Status::WT_NEW) && !staged)
-        {
-            FileStatus::Added
-        } else if status_flags.contains(git2::Status::INDEX_DELETED)
-            || status_flags.contains(git2::Status::WT_DELETED)
-        {
-            FileStatus::Deleted
-        } else if status_flags.contains(git2::Status::INDEX_RENAMED)
-            || status_flags.contains(git2::Status::WT_RENAMED)
-        {
-            FileStatus::Renamed
-        } else if status_flags.contains(git2::Status::WT_NEW) {
-            FileStatus::Untracked
-        } else {
-            FileStatus::Modified
-        };
+        // Check for unstaged changes
+        let has_unstaged = status_flags.intersects(
+            git2::Status::WT_NEW
+                | git2::Status::WT_MODIFIED
+                | git2::Status::WT_DELETED
+                | git2::Status::WT_RENAMED
+                | git2::Status::WT_TYPECHANGE,
+        );
 
-        files.push(GitFile {
-            path,
-            status,
-            staged,
-        });
+        // Add staged entry if there are staged changes
+        if has_staged {
+            let status = if status_flags.contains(git2::Status::INDEX_NEW) {
+                FileStatus::Added
+            } else if status_flags.contains(git2::Status::INDEX_DELETED) {
+                FileStatus::Deleted
+            } else if status_flags.contains(git2::Status::INDEX_RENAMED) {
+                FileStatus::Renamed
+            } else {
+                FileStatus::Modified
+            };
+
+            files.push(GitFile {
+                path: path.clone(),
+                status,
+                staged: true,
+            });
+        }
+
+        // Add unstaged entry if there are unstaged changes
+        if has_unstaged {
+            let status = if status_flags.contains(git2::Status::WT_NEW) && !has_staged {
+                FileStatus::Untracked
+            } else if status_flags.contains(git2::Status::WT_DELETED) {
+                FileStatus::Deleted
+            } else if status_flags.contains(git2::Status::WT_RENAMED) {
+                FileStatus::Renamed
+            } else if status_flags.contains(git2::Status::WT_NEW) {
+                FileStatus::Added
+            } else {
+                FileStatus::Modified
+            };
+
+            files.push(GitFile {
+                path,
+                status,
+                staged: false,
+            });
+        }
     }
 
     Ok(GitStatus {
@@ -498,7 +524,11 @@ pub fn git_diff_file(
             .map_err(|e| format!("Failed to get index: {e}"))?;
         repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut diff_opts))
     } else {
-        repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut diff_opts))
+        // For unstaged changes, compare index to working directory
+        let index = repo
+            .index()
+            .map_err(|e| format!("Failed to get index: {e}"))?;
+        repo.diff_index_to_workdir(Some(&index), Some(&mut diff_opts))
     };
 
     let mut diff = diff_result.map_err(|e| format!("Failed to create diff: {e}"))?;
@@ -517,7 +547,11 @@ pub fn git_diff_file(
                 .map_err(|e| format!("Failed to get index: {e}"))?;
             repo.diff_tree_to_index(Some(&head_tree), Some(&index), Some(&mut broader_diff_opts))
         } else {
-            repo.diff_tree_to_workdir(Some(&head_tree), Some(&mut broader_diff_opts))
+            // For unstaged changes, compare index to working directory
+            let index = repo
+                .index()
+                .map_err(|e| format!("Failed to get index: {e}"))?;
+            repo.diff_index_to_workdir(Some(&index), Some(&mut broader_diff_opts))
         };
 
         if let Ok(broader_diff) = broader_diff_result {
@@ -1316,57 +1350,57 @@ fn _git_drop_stash(repo_path: String, stash_index: usize) -> Result<()> {
 
 #[command]
 pub fn git_get_tags(repo_path: String) -> Result<Vec<GitTag>, String> {
-    let repo =
-        Repository::open(&repo_path).map_err(|e| format!("Failed to open repository: {e}"))?;
+    _git_get_tags(repo_path).into_string_error()
+}
 
-    let mut tags = Vec::new();
-    repo.tag_foreach(|oid, name| {
-        if let Ok(name_str) = std::str::from_utf8(name) {
-            let tag_name = name_str
-                .strip_prefix("refs/tags/")
-                .unwrap_or(name_str)
-                .to_string();
+fn _git_get_tags(repo_path: String) -> Result<Vec<GitTag>> {
+    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+    let tag_names = repo.tag_names(None).context("Failed to get tag names")?;
 
-            if let Ok(obj) = repo.find_object(oid, None) {
-                let (commit_id, message, date) = if let Some(tag) = obj.as_tag() {
-                    let target_id = tag.target_id().to_string();
-                    let msg = tag.message().map(|m| m.to_string());
-                    let tagger = tag.tagger();
-                    let date = tagger
-                        .map(|t| {
-                            let time = t.when();
-                            let datetime =
-                                chrono::DateTime::<chrono::Utc>::from_timestamp(time.seconds(), 0)
-                                    .unwrap_or_default();
-                            datetime.format("%Y-%m-%d %H:%M:%S").to_string()
-                        })
-                        .unwrap_or_default();
-                    (target_id, msg, date)
-                } else if let Ok(commit) = repo.find_commit(oid) {
-                    let time = commit.time();
-                    let datetime =
-                        chrono::DateTime::<chrono::Utc>::from_timestamp(time.seconds(), 0)
-                            .unwrap_or_default();
-                    let date = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
-                    (oid.to_string(), None, date)
-                } else {
-                    (oid.to_string(), None, String::new())
-                };
+    let mut tags: Vec<GitTag> = tag_names
+        .iter()
+        .flatten()
+        .filter_map(|name| {
+            repo.revparse_single(&format!("refs/tags/{}", name))
+                .ok()
+                .map(|obj| (name, obj))
+        })
+        .map(|(name, obj)| {
+            let (commit_id, message, date) = match obj.as_tag() {
+                Some(tag) => (
+                    tag.target_id().to_string(),
+                    tag.message().map(|m| m.to_string()),
+                    format_git_time(tag.tagger().map(|t| t.when().seconds())),
+                ),
+                None => match obj.peel_to_commit() {
+                    Ok(commit) => (
+                        commit.id().to_string(),
+                        None,
+                        format_git_time(Some(commit.time().seconds())),
+                    ),
+                    Err(_) => (obj.id().to_string(), None, String::new()),
+                },
+            };
 
-                tags.push(GitTag {
-                    name: tag_name,
-                    commit: commit_id,
-                    message,
-                    date,
-                });
+            GitTag {
+                name: name.to_string(),
+                commit: commit_id,
+                message,
+                date,
             }
-        }
-        true
-    })
-    .map_err(|e| format!("Failed to iterate tags: {e}"))?;
+        })
+        .collect();
 
     tags.sort_by(|a, b| b.date.cmp(&a.date));
+
     Ok(tags)
+}
+
+fn format_git_time(seconds: Option<i64>) -> String {
+    seconds
+        .and_then(|s| chrono::DateTime::<chrono::Utc>::from_timestamp(s, 0))
+        .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+        .unwrap_or_default()
 }
 
 #[command]
