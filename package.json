@@ -38,7 +38,7 @@
     "clsx": "^2.1.1",
     "ignore": "^7.0.5",
     "immer": "^10.1.1",
-    "lucide-react": "^0.511.0",
+    "lucide-react": "^0.525.0",
     "material-file-icons": "^2.4.0",
     "prismjs": "^1.30.0",
     "react": "^18.3.1",
@@ -48,21 +48,21 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.1.1",
+    "@biomejs/biome": "^2.1.2",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@tailwindcss/vite": "^4.1.8",
+    "@tailwindcss/vite": "^4.1.11",
     "@tauri-apps/cli": "^2",
-    "@types/react": "^19.1.6",
-    "@types/react-dom": "^19.1.5",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.0",
     "lint-staged": "^16.1.2",
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.13.0",
-    "tailwindcss": "^4.1.8",
-    "typescript": "~5.6.2",
-    "vite": "^6.3.5"
+    "tailwindcss": "^4.1.11",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.5"
   },
   "simple-git-hooks": {
     "pre-commit": "bunx concurrently --names \"rust,ts\" --prefix-colors \"yellow,cyan\" './scripts/format-staged-rust.sh' './scripts/format-staged-biome.sh && bun check:all'",
