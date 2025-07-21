@@ -1,10 +1,10 @@
 import { Database, Package, Pin, X } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { cn } from "@/utils/cn";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBufferStore } from "../../stores/buffer-store";
 import { useFileWatcherStore } from "../../stores/file-watcher-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import type { Buffer } from "../../types/buffer";
+import { cn } from "../../utils/cn";
 import FileIcon from "../file-icon";
 import ContextMenu from "./tab-context-menu";
 
@@ -22,6 +22,160 @@ interface TabPosition {
   width: number;
   center: number;
 }
+
+interface TabBarItemProps {
+  buffer: Buffer;
+  index: number;
+  isActive: boolean;
+  isExternallyModified: boolean;
+  isDraggedTab: boolean;
+  showDropIndicatorBefore: boolean;
+  tabRef: (el: HTMLDivElement | null) => void;
+  onMouseDown: (e: React.MouseEvent) => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragEnd: (e: React.DragEvent) => void;
+  handleTabClose: (id: string) => void;
+}
+
+const TabBarItem = memo(function TabBarItem({
+  buffer,
+  isActive,
+  isExternallyModified,
+  isDraggedTab,
+  showDropIndicatorBefore,
+  tabRef,
+  onMouseDown,
+  onContextMenu,
+  onDragStart,
+  onDragEnd,
+  handleTabClose,
+}: TabBarItemProps) {
+  return (
+    <React.Fragment key={buffer.id}>
+      {/* Drop indicator before tab */}
+      {showDropIndicatorBefore && (
+        <div className="relative">
+          <div className="drop-indicator absolute top-1 bottom-1 left-0 z-20 w-0.5 bg-accent" />
+        </div>
+      )}
+      <div
+        ref={tabRef}
+        className={cn(
+          "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-0.5",
+          isActive ? "bg-primary-bg" : "bg-secondary-bg",
+          buffer.isPinned ? "border-l-2 border-l-blue-500" : "",
+          isDraggedTab ? "opacity-30" : "opacity-100",
+        )}
+        style={{ minWidth: "120px", maxWidth: "400px" }}
+        onMouseDown={onMouseDown}
+        onContextMenu={onContextMenu}
+        draggable={true}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+      >
+        {/* Active tab indicator */}
+        {isActive && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent" />}
+
+        {/* File Icon */}
+        <div className="grid size-3 max-h-3 max-w-3 shrink-0 place-content-center py-3">
+          {buffer.path === "extensions://marketplace" ? (
+            <Package size={12} className="text-blue-500" />
+          ) : buffer.isSQLite ? (
+            <Database size={12} className="text-text-lighter" />
+          ) : (
+            <FileIcon
+              fileName={buffer.name}
+              isDir={false}
+              className="text-text-lighter"
+              size={12}
+            />
+          )}
+        </div>
+
+        {/* Pin indicator */}
+        {buffer.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
+
+        {/* File Name */}
+        <span
+          className={cn(
+            "flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs",
+            isActive ? "text-text" : "text-text-light",
+          )}
+          title={buffer.path}
+        >
+          {buffer.name}
+          {buffer.isDirty && <span className="ml-1 text-text-lighter">•</span>}
+          {isExternallyModified && !buffer.isDirty && (
+            <span className="ml-1 text-yellow-400" title="Modified externally">
+              ⚠
+            </span>
+          )}
+        </span>
+
+        {/* Close Button */}
+        {!buffer.isPinned && (
+          <div
+            onClick={e => {
+              e.stopPropagation();
+              handleTabClose(buffer.id);
+            }}
+            className={cn(
+              "flex-shrink-0 cursor-pointer select-none rounded p-0.5",
+              "text-text-lighter transition-all duration-150",
+              "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
+              {
+                "opacity-100": isActive,
+                "opacity-0": !isActive,
+              },
+            )}
+            title={`Close ${buffer.name}`}
+            draggable={false}
+          >
+            <X className="pointer-events-none select-none" size={12} />
+          </div>
+        )}
+      </div>
+    </React.Fragment>
+  );
+});
+
+const DragPreview = ({ x, y, buffer }: { x: number; y: number; buffer: Buffer }) => {
+  return (
+    <div
+      className="pointer-events-none fixed z-50"
+      style={{
+        left: x,
+        top: y,
+        transform: "translate(0, 0)",
+      }}
+    >
+      <div className="tab-drag-preview flex items-center gap-1.5 rounded border border-border bg-primary-bg px-2 py-1 font-mono text-xs opacity-90">
+        {/* File Icon */}
+        <span className="grid size-3 shrink-0 place-content-center py-3">
+          {buffer.path === "extensions://marketplace" ? (
+            <Package size={12} className="text-blue-500" />
+          ) : buffer.isSQLite ? (
+            <Database size={12} className="text-text-lighter" />
+          ) : (
+            <FileIcon
+              fileName={buffer.name}
+              isDir={false}
+              className="text-text-lighter"
+              size={12}
+            />
+          )}
+        </span>
+        {/* Pin indicator */}
+        {buffer.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
+        <span className="max-w-[200px] truncate text-text">
+          {buffer.name}
+          {buffer.isDirty && <span className="ml-1 text-text-lighter">•</span>}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 const TabBar = ({ paneId }: TabBarProps) => {
   // Get everything from stores
@@ -68,7 +222,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
   const tabBarRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const dragPreviewRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef(dragState);
 
   // Keep ref in sync with state
@@ -122,13 +275,10 @@ const TabBar = ({ paneId }: TabBarProps) => {
     }
   }, [activeBufferId, sortedBuffers]);
 
-  // Cache tab positions when drag starts
-  const cacheTabPositions = (): TabPosition[] => {
+  const cacheTabPositions = useCallback((): TabPosition[] => {
     if (!tabBarRef.current) return [];
-
     const containerRect = tabBarRef.current.getBoundingClientRect();
     const positions: TabPosition[] = [];
-
     tabRefs.current.forEach((tab, index) => {
       if (tab) {
         const rect = tab.getBoundingClientRect();
@@ -143,9 +293,8 @@ const TabBar = ({ paneId }: TabBarProps) => {
         });
       }
     });
-
     return positions;
-  };
+  }, []);
 
   // Calculate drop target with improved hysteresis and correct positioning
   const calculateDropTarget = (
@@ -203,113 +352,128 @@ const TabBar = ({ paneId }: TabBarProps) => {
     };
   };
 
-  const handleMouseDown = (e: React.MouseEvent, index: number) => {
-    if (e.button !== 0 || (e.target as HTMLElement).closest("button")) {
-      return;
-    }
-
-    handleTabClick(sortedBuffers[index].id);
-
-    e.preventDefault();
-
-    setDragState({
-      isDragging: false,
-      draggedIndex: index,
-      dropTargetIndex: null,
-      startPosition: { x: e.clientX, y: e.clientY },
-      currentPosition: { x: e.clientX, y: e.clientY },
-      tabPositions: [],
-      lastValidDropTarget: null,
-      dragDirection: null,
-    });
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    setDragState(prev => {
-      if (prev.draggedIndex === null || !prev.startPosition) return prev;
-
-      const currentPosition = { x: e.clientX, y: e.clientY };
-      const distance = Math.sqrt(
-        (currentPosition.x - prev.startPosition.x) ** 2 +
-          (currentPosition.y - prev.startPosition.y) ** 2,
-      );
-
-      if (!prev.isDragging && distance > DRAG_THRESHOLD) {
-        const tabPositions = cacheTabPositions();
-
-        const newState = {
-          ...prev,
-          isDragging: true,
-          currentPosition,
-          tabPositions,
-          dropTargetIndex: prev.draggedIndex,
-          lastValidDropTarget: prev.draggedIndex,
-        };
-        return newState;
-      }
-
-      if (prev.isDragging) {
-        const { dropTarget, direction } = calculateDropTarget(
-          e.clientX,
-          prev.dropTargetIndex,
-          prev.draggedIndex,
-          prev.tabPositions,
-          prev.dragDirection,
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      setDragState(prev => {
+        if (prev.draggedIndex === null || !prev.startPosition) return prev;
+        const currentPosition = { x: e.clientX, y: e.clientY };
+        const distance = Math.sqrt(
+          (currentPosition.x - prev.startPosition.x) ** 2 +
+            (currentPosition.y - prev.startPosition.y) ** 2,
         );
+        if (!prev.isDragging && distance > DRAG_THRESHOLD) {
+          const tabPositions = cacheTabPositions();
+          if (
+            prev.isDragging &&
+            prev.currentPosition?.x === currentPosition.x &&
+            prev.currentPosition?.y === currentPosition.y
+          ) {
+            return prev; // No change
+          }
+          return {
+            ...prev,
+            isDragging: true,
+            currentPosition,
+            tabPositions,
+            dropTargetIndex: prev.draggedIndex,
+            lastValidDropTarget: prev.draggedIndex,
+          };
+        }
+        if (prev.isDragging) {
+          const { dropTarget, direction } = calculateDropTarget(
+            e.clientX,
+            prev.dropTargetIndex,
+            prev.draggedIndex,
+            prev.tabPositions,
+            prev.dragDirection,
+          );
+          if (
+            prev.currentPosition?.x === currentPosition.x &&
+            prev.currentPosition?.y === currentPosition.y &&
+            prev.dropTargetIndex === dropTarget &&
+            prev.dragDirection === direction
+          ) {
+            return prev; // No change
+          }
+          return {
+            ...prev,
+            currentPosition,
+            dropTargetIndex: dropTarget,
+            lastValidDropTarget: dropTarget,
+            dragDirection: direction,
+          };
+        }
+        if (
+          prev.currentPosition?.x === currentPosition.x &&
+          prev.currentPosition?.y === currentPosition.y
+        ) {
+          return prev; // No change
+        }
+        return { ...prev, currentPosition };
+      });
+    },
+    [cacheTabPositions],
+  );
 
-        const newState = {
-          ...prev,
-          currentPosition,
-          dropTargetIndex: dropTarget,
-          lastValidDropTarget: dropTarget,
-          dragDirection: direction,
-        };
-        return newState;
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent, index: number) => {
+      if (e.button !== 0 || (e.target as HTMLElement).closest("button")) {
+        return;
       }
+      handleTabClick(sortedBuffers[index].id);
+      e.preventDefault();
+      setDragState({
+        isDragging: false,
+        draggedIndex: index,
+        dropTargetIndex: null,
+        startPosition: { x: e.clientX, y: e.clientY },
+        currentPosition: { x: e.clientX, y: e.clientY },
+        tabPositions: [],
+        lastValidDropTarget: null,
+        dragDirection: null,
+      });
+    },
+    [handleTabClick, sortedBuffers],
+  );
 
-      return { ...prev, currentPosition };
-    });
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, buffer: Buffer) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, buffer: Buffer) => {
     e.preventDefault();
     setContextMenu({
       isOpen: true,
       position: { x: e.clientX, y: e.clientY },
       buffer,
     });
-  };
+  }, []);
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    const buffer = sortedBuffers[index];
-    if (!buffer) return;
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, index: number) => {
+      const buffer = sortedBuffers[index];
+      if (!buffer) return;
+      e.dataTransfer.setData(
+        "application/tab-data",
+        JSON.stringify({
+          bufferId: buffer.id,
+          paneId: paneId,
+          bufferData: buffer,
+        }),
+      );
+      e.dataTransfer.effectAllowed = "move";
+      const dragImage = document.createElement("div");
+      dragImage.className =
+        "bg-primary-bg border border-border rounded px-2 py-1 text-xs font-mono shadow-lg";
+      dragImage.textContent = buffer.name;
+      dragImage.style.position = "absolute";
+      dragImage.style.top = "-1000px";
+      document.body.appendChild(dragImage);
+      e.dataTransfer.setDragImage(dragImage, 0, 0);
+      setTimeout(() => {
+        document.body.removeChild(dragImage);
+      }, 0);
+    },
+    [sortedBuffers, paneId],
+  );
 
-    // for the future
-    e.dataTransfer.setData(
-      "application/tab-data",
-      JSON.stringify({
-        bufferId: buffer.id,
-        paneId: paneId,
-        bufferData: buffer,
-      }),
-    );
-    e.dataTransfer.effectAllowed = "move";
-
-    const dragImage = document.createElement("div");
-    dragImage.className =
-      "bg-primary-bg border border-border rounded px-2 py-1 text-xs font-mono shadow-lg";
-    dragImage.textContent = buffer.name;
-    dragImage.style.position = "absolute";
-    dragImage.style.top = "-1000px";
-    document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
-
-    setTimeout(() => {
-      document.body.removeChild(dragImage);
-    }, 0);
-  };
-
-  const handleDragEnd = () => {};
+  const handleDragEnd = useCallback(() => {}, []);
 
   const closeContextMenu = () => {
     setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, buffer: null });
@@ -367,7 +531,14 @@ const TabBar = ({ paneId }: TabBarProps) => {
       document.removeEventListener("mousemove", handleGlobalMouseMove);
       document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
-  }, [dragState.draggedIndex, reorderBuffers, handleTabClick, sortedBuffers]);
+  }, [dragState.draggedIndex, reorderBuffers, handleTabClick, sortedBuffers, handleMouseMove]);
+
+  // Ensure tabRefs is always in sync with sortedBuffers
+  useEffect(() => {
+    tabRefs.current = tabRefs.current.slice(0, sortedBuffers.length);
+  }, [sortedBuffers.length]);
+
+  const MemoizedContextMenu = useMemo(() => ContextMenu, []);
 
   if (buffers.length === 0) {
     return null;
@@ -383,102 +554,29 @@ const TabBar = ({ paneId }: TabBarProps) => {
             const isActive = buffer.id === activeBufferId;
             const isExternallyModified = externallyModifiedPaths.has(buffer.path);
             const isDraggedTab = isDragging && draggedIndex === index;
-
-            // Show drop indicator before this tab
             const showDropIndicatorBefore =
               isDragging && dropTargetIndex === index && draggedIndex !== index;
-
             return (
-              <React.Fragment key={buffer.id}>
-                {/* Drop indicator before tab */}
-                {showDropIndicatorBefore && (
-                  <div className="relative">
-                    <div className="drop-indicator absolute top-1 bottom-1 left-0 z-20 w-0.5 bg-accent" />
-                  </div>
-                )}
-                <div
-                  ref={el => {
-                    tabRefs.current[index] = el;
-                  }}
-                  className={cn(
-                    "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-0.5",
-                    isActive ? "bg-primary-bg" : "bg-secondary-bg",
-                    buffer.isPinned ? "border-l-2 border-l-blue-500" : "",
-                    isDraggedTab ? "opacity-30" : "opacity-100",
-                  )}
-                  style={{ minWidth: "120px", maxWidth: "400px" }}
-                  onMouseDown={e => handleMouseDown(e, index)}
-                  onContextMenu={e => handleContextMenu(e, buffer)}
-                  draggable={true}
-                  onDragStart={e => handleDragStart(e, index)}
-                  onDragEnd={handleDragEnd}
-                >
-                  {/* Active tab indicator */}
-                  {isActive && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent" />}
-
-                  {/* File Icon */}
-                  <div className="grid size-3 max-h-3 max-w-3 shrink-0 place-content-center py-3">
-                    {buffer.path === "extensions://marketplace" ? (
-                      <Package size={12} className="text-blue-500" />
-                    ) : buffer.isSQLite ? (
-                      <Database size={12} className="text-text-lighter" />
-                    ) : (
-                      <FileIcon
-                        fileName={buffer.name}
-                        isDir={false}
-                        className="text-text-lighter"
-                        size={12}
-                      />
-                    )}
-                  </div>
-
-                  {/* Pin indicator */}
-                  {buffer.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
-
-                  {/* File Name */}
-                  <span
-                    className={cn(
-                      "flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs",
-                      isActive ? "text-text" : "text-text-light",
-                    )}
-                    title={buffer.path}
-                  >
-                    {buffer.name}
-                    {buffer.isDirty && <span className="ml-1 text-text-lighter">•</span>}
-                    {isExternallyModified && !buffer.isDirty && (
-                      <span className="ml-1 text-yellow-400" title="Modified externally">
-                        ⚠
-                      </span>
-                    )}
-                  </span>
-
-                  {/* Close Button */}
-                  {!buffer.isPinned && (
-                    <div
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleTabClose(buffer.id);
-                      }}
-                      className={cn(
-                        "flex-shrink-0 cursor-pointer select-none rounded p-0.5",
-                        "text-text-lighter transition-all duration-150",
-                        "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
-                        {
-                          "opacity-100": isActive,
-                          "opacity-0": !isActive,
-                        },
-                      )}
-                      title={`Close ${buffer.name}`}
-                      draggable={false}
-                    >
-                      <X className="pointer-events-none select-none" size={12} />
-                    </div>
-                  )}
-                </div>
-              </React.Fragment>
+              <TabBarItem
+                key={buffer.id}
+                buffer={buffer}
+                index={index}
+                isActive={isActive}
+                isExternallyModified={isExternallyModified}
+                isDraggedTab={isDraggedTab}
+                showDropIndicatorBefore={showDropIndicatorBefore}
+                tabRef={el => {
+                  tabRefs.current[index] = el;
+                }}
+                onMouseDown={e => handleMouseDown(e, index)}
+                onContextMenu={e => handleContextMenu(e, buffer)}
+                onDragStart={e => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                handleTabClose={handleTabClose}
+              />
             );
           })}
-          {/* Drop indicator after the last tab */}
+
           {isDragging && dropTargetIndex === sortedBuffers.length && (
             <div className="relative">
               <div className="drop-indicator absolute top-1 bottom-1 left-0 z-20 w-0.5 bg-accent" />
@@ -486,49 +584,16 @@ const TabBar = ({ paneId }: TabBarProps) => {
           )}
         </div>
 
-        {/* Floating tab preview while dragging */}
         {isDragging && draggedIndex !== null && currentPosition && (
-          <div
-            ref={dragPreviewRef}
-            className="pointer-events-none fixed z-50"
-            style={{
-              left: currentPosition.x,
-              top: currentPosition.y,
-              transform: "translate(0, 0)",
-            }}
-          >
-            <div className="tab-drag-preview flex items-center gap-1.5 rounded border border-border bg-primary-bg px-2 py-1 font-mono text-xs opacity-90">
-              {/* File Icon */}
-              <span className="grid size-3 shrink-0 place-content-center py-3">
-                {sortedBuffers[draggedIndex].path === "extensions://marketplace" ? (
-                  <Package size={12} className="text-blue-500" />
-                ) : sortedBuffers[draggedIndex].isSQLite ? (
-                  <Database size={12} className="text-text-lighter" />
-                ) : (
-                  <FileIcon
-                    fileName={sortedBuffers[draggedIndex].name}
-                    isDir={false}
-                    className="text-text-lighter"
-                    size={12}
-                  />
-                )}
-              </span>
-              {/* Pin indicator */}
-              {sortedBuffers[draggedIndex].isPinned && (
-                <Pin size={8} className="flex-shrink-0 text-blue-500" />
-              )}
-              <span className="max-w-[200px] truncate text-text">
-                {sortedBuffers[draggedIndex].name}
-                {sortedBuffers[draggedIndex].isDirty && (
-                  <span className="ml-1 text-text-lighter">•</span>
-                )}
-              </span>
-            </div>
-          </div>
+          <DragPreview
+            x={currentPosition.x}
+            y={currentPosition.y}
+            buffer={sortedBuffers[draggedIndex]}
+          />
         )}
       </div>
 
-      <ContextMenu
+      <MemoizedContextMenu
         isOpen={contextMenu.isOpen}
         position={contextMenu.position}
         buffer={contextMenu.buffer}
