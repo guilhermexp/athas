@@ -1,15 +1,15 @@
-import { Database, Package, Pin, X } from "lucide-react";
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { useBufferStore } from "../../stores/buffer-store";
 import { useFileWatcherStore } from "../../stores/file-watcher-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import type { Buffer } from "../../types/buffer";
-import { cn } from "../../utils/cn";
-import FileIcon from "../file-icon";
-import ContextMenu from "./tab-context-menu";
+
+import TabBarItem from "./tab-bar-item";
+import TabContextMenu from "./tab-context-menu";
+import TabDragPreview from "./tab-drag-preview";
 
 interface TabBarProps {
-  // All data now comes from stores, so no props needed
   paneId?: string; // For split view panes (future feature)
 }
 
@@ -22,160 +22,6 @@ interface TabPosition {
   width: number;
   center: number;
 }
-
-interface TabBarItemProps {
-  buffer: Buffer;
-  index: number;
-  isActive: boolean;
-  isExternallyModified: boolean;
-  isDraggedTab: boolean;
-  showDropIndicatorBefore: boolean;
-  tabRef: (el: HTMLDivElement | null) => void;
-  onMouseDown: (e: React.MouseEvent) => void;
-  onContextMenu: (e: React.MouseEvent) => void;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragEnd: (e: React.DragEvent) => void;
-  handleTabClose: (id: string) => void;
-}
-
-const TabBarItem = memo(function TabBarItem({
-  buffer,
-  isActive,
-  isExternallyModified,
-  isDraggedTab,
-  showDropIndicatorBefore,
-  tabRef,
-  onMouseDown,
-  onContextMenu,
-  onDragStart,
-  onDragEnd,
-  handleTabClose,
-}: TabBarItemProps) {
-  return (
-    <React.Fragment key={buffer.id}>
-      {/* Drop indicator before tab */}
-      {showDropIndicatorBefore && (
-        <div className="relative">
-          <div className="drop-indicator absolute top-1 bottom-1 left-0 z-20 w-0.5 bg-accent" />
-        </div>
-      )}
-      <div
-        ref={tabRef}
-        className={cn(
-          "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-0.5",
-          isActive ? "bg-primary-bg" : "bg-secondary-bg",
-          buffer.isPinned ? "border-l-2 border-l-blue-500" : "",
-          isDraggedTab ? "opacity-30" : "opacity-100",
-        )}
-        style={{ minWidth: "120px", maxWidth: "400px" }}
-        onMouseDown={onMouseDown}
-        onContextMenu={onContextMenu}
-        draggable={true}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-      >
-        {/* Active tab indicator */}
-        {isActive && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent" />}
-
-        {/* File Icon */}
-        <div className="grid size-3 max-h-3 max-w-3 shrink-0 place-content-center py-3">
-          {buffer.path === "extensions://marketplace" ? (
-            <Package size={12} className="text-blue-500" />
-          ) : buffer.isSQLite ? (
-            <Database size={12} className="text-text-lighter" />
-          ) : (
-            <FileIcon
-              fileName={buffer.name}
-              isDir={false}
-              className="text-text-lighter"
-              size={12}
-            />
-          )}
-        </div>
-
-        {/* Pin indicator */}
-        {buffer.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
-
-        {/* File Name */}
-        <span
-          className={cn(
-            "flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs",
-            isActive ? "text-text" : "text-text-light",
-          )}
-          title={buffer.path}
-        >
-          {buffer.name}
-          {buffer.isDirty && <span className="ml-1 text-text-lighter">•</span>}
-          {isExternallyModified && !buffer.isDirty && (
-            <span className="ml-1 text-yellow-400" title="Modified externally">
-              ⚠
-            </span>
-          )}
-        </span>
-
-        {/* Close Button */}
-        {!buffer.isPinned && (
-          <div
-            onClick={e => {
-              e.stopPropagation();
-              handleTabClose(buffer.id);
-            }}
-            className={cn(
-              "flex-shrink-0 cursor-pointer select-none rounded p-0.5",
-              "text-text-lighter transition-all duration-150",
-              "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
-              {
-                "opacity-100": isActive,
-                "opacity-0": !isActive,
-              },
-            )}
-            title={`Close ${buffer.name}`}
-            draggable={false}
-          >
-            <X className="pointer-events-none select-none" size={12} />
-          </div>
-        )}
-      </div>
-    </React.Fragment>
-  );
-});
-
-const DragPreview = ({ x, y, buffer }: { x: number; y: number; buffer: Buffer }) => {
-  return (
-    <div
-      className="pointer-events-none fixed z-50"
-      style={{
-        left: x,
-        top: y,
-        transform: "translate(0, 0)",
-      }}
-    >
-      <div className="tab-drag-preview flex items-center gap-1.5 rounded border border-border bg-primary-bg px-2 py-1 font-mono text-xs opacity-90">
-        {/* File Icon */}
-        <span className="grid size-3 shrink-0 place-content-center py-3">
-          {buffer.path === "extensions://marketplace" ? (
-            <Package size={12} className="text-blue-500" />
-          ) : buffer.isSQLite ? (
-            <Database size={12} className="text-text-lighter" />
-          ) : (
-            <FileIcon
-              fileName={buffer.name}
-              isDir={false}
-              className="text-text-lighter"
-              size={12}
-            />
-          )}
-        </span>
-        {/* Pin indicator */}
-        {buffer.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
-        <span className="max-w-[200px] truncate text-text">
-          {buffer.name}
-          {buffer.isDirty && <span className="ml-1 text-text-lighter">•</span>}
-        </span>
-      </div>
-    </div>
-  );
-};
 
 const TabBar = ({ paneId }: TabBarProps) => {
   // Get everything from stores
@@ -224,12 +70,10 @@ const TabBar = ({ paneId }: TabBarProps) => {
   const tabRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragStateRef = useRef(dragState);
 
-  // Keep ref in sync with state
   useEffect(() => {
     dragStateRef.current = dragState;
   }, [dragState]);
 
-  // Sort buffers: pinned tabs first, then regular tabs
   const sortedBuffers = useMemo(() => {
     return [...buffers].sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
@@ -240,10 +84,8 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
   useEffect(() => {
     if (maxOpenTabs > 0 && buffers.length > maxOpenTabs && handleTabClose) {
-      // Filter out pinned and active tabs
       const closableBuffers = buffers.filter(b => !b.isPinned && b.id !== activeBufferId);
 
-      // Close oldest tabs until under limit (oldest = lowest index)
       let tabsToClose = buffers.length - maxOpenTabs;
       for (let i = 0; i < closableBuffers.length && tabsToClose > 0; i++) {
         handleTabClose(closableBuffers[i].id);
@@ -296,7 +138,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
     return positions;
   }, []);
 
-  // Calculate drop target with improved hysteresis and correct positioning
   const calculateDropTarget = (
     mouseX: number,
     currentDropTarget: number | null,
@@ -533,12 +374,11 @@ const TabBar = ({ paneId }: TabBarProps) => {
     };
   }, [dragState.draggedIndex, reorderBuffers, handleTabClick, sortedBuffers, handleMouseMove]);
 
-  // Ensure tabRefs is always in sync with sortedBuffers
   useEffect(() => {
     tabRefs.current = tabRefs.current.slice(0, sortedBuffers.length);
   }, [sortedBuffers.length]);
 
-  const MemoizedContextMenu = useMemo(() => ContextMenu, []);
+  const MemoizedTabContextMenu = useMemo(() => TabContextMenu, []);
 
   if (buffers.length === 0) {
     return null;
@@ -585,7 +425,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
         </div>
 
         {isDragging && draggedIndex !== null && currentPosition && (
-          <DragPreview
+          <TabDragPreview
             x={currentPosition.x}
             y={currentPosition.y}
             buffer={sortedBuffers[draggedIndex]}
@@ -593,7 +433,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
         )}
       </div>
 
-      <MemoizedContextMenu
+      <MemoizedTabContextMenu
         isOpen={contextMenu.isOpen}
         position={contextMenu.position}
         buffer={contextMenu.buffer}
