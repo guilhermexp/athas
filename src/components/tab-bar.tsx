@@ -268,6 +268,10 @@ const TabBar = ({ paneId }: TabBarProps) => {
     e.preventDefault();
     setDraggedIndex(index);
     setDragStartPosition({ x: e.clientX, y: e.clientY });
+
+    if (!isDragging) {
+      handleTabClick(sortedBuffers[index].id);
+    }
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -470,11 +474,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
                   } ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}`}
                   style={{ minWidth: "120px", maxWidth: "400px" }}
                   onMouseDown={e => handleMouseDown(e, index)}
-                  onClick={() => {
-                    if (!isDragging) {
-                      handleTabClick(buffer.id);
-                    }
-                  }}
                   onContextMenu={e => handleContextMenu(e, buffer)}
                 >
                   {/* Active tab indicator */}
