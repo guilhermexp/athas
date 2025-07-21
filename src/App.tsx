@@ -1,10 +1,14 @@
 import { enableMapSet } from "immer";
 import { useEffect } from "react";
+import { FontPreloader } from "./components/font-preloader";
+import { FontStyleInjector } from "./components/font-style-injector";
 import { MainLayout } from "./components/layout/main-layout";
 import WelcomeScreen from "./components/window/welcome-screen";
 import { useFileWatcherEvents } from "./hooks/use-file-watcher-events";
+import { useSettingsSync } from "./hooks/use-settings-sync";
 import { useAppStore } from "./stores/app-store";
 import { useFileSystemStore } from "./stores/file-system-store";
+import { useFontStore } from "./stores/font-store";
 import { useRecentFoldersStore } from "./stores/recent-folders-store";
 import { cn } from "./utils/cn";
 import { isMac } from "./utils/platform";
@@ -16,6 +20,7 @@ function App() {
   const { files, rootFolderPath, handleOpenFolder } = useFileSystemStore();
   const { cleanup } = useAppStore();
   const { recentFolders, openRecentFolder } = useRecentFoldersStore();
+  const { loadAvailableFonts } = useFontStore();
 
   // Platform-specific setup
   useEffect(() => {
@@ -31,8 +36,16 @@ function App() {
     };
   }, [cleanup]);
 
+  // Initialize fonts on app start (will use cache if available)
+  useEffect(() => {
+    loadAvailableFonts();
+  }, [loadAvailableFonts]);
+
   // Initialize event listeners
   useFileWatcherEvents();
+
+  // Sync settings with editor config
+  useSettingsSync();
 
   // Check for remote connection from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -44,16 +57,22 @@ function App() {
 
   if (shouldShowWelcome) {
     return (
-      <WelcomeScreen
-        onOpenFolder={handleOpenFolder}
-        recentFolders={recentFolders}
-        onOpenRecentFolder={openRecentFolder}
-      />
+      <>
+        <FontPreloader />
+        <FontStyleInjector />
+        <WelcomeScreen
+          onOpenFolder={handleOpenFolder}
+          recentFolders={recentFolders}
+          onOpenRecentFolder={openRecentFolder}
+        />
+      </>
     );
   }
 
   return (
     <div className={cn("flex h-screen w-screen flex-col overflow-hidden bg-transparent")}>
+      <FontPreloader />
+      <FontStyleInjector />
       <div
         className={cn("window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg")}
       >

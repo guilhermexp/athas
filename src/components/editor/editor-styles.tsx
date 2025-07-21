@@ -2,6 +2,53 @@ export function EditorStyles() {
   return (
     <style>
       {`
+        /* Font loading and display rules */
+        @font-face {
+          font-family: 'JetBrains Mono';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Fira Code';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Source Code Pro';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Hack';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Inconsolata';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Ubuntu Mono';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Roboto Mono';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'DejaVu Sans Mono';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Liberation Mono';
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Noto Sans Mono';
+          font-display: swap;
+        }
+        
+        /* Force font override class */
+        .code-editor-font-override {
+          font-family: var(--editor-font-family) !important;
+        }
+        
         .code-editor-content {
           font-family: inherit;
           background: transparent;
@@ -9,6 +56,10 @@ export function EditorStyles() {
           outline: none;
           color: var(--color-text);
           caret-color: var(--color-text);
+          /* Force font loading */
+          font-display: swap;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
         .code-editor-content.vim-normal-mode {
           caret-color: transparent;
@@ -57,6 +108,9 @@ export function EditorStyles() {
           user-select: none;
           -webkit-user-select: none;
           -moz-user-select: none;
+          /* Font optimization for line numbers */
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
         .line-numbers-container::-webkit-scrollbar {
           display: none;
@@ -67,6 +121,11 @@ export function EditorStyles() {
           font-variant-numeric: tabular-nums;
           -webkit-font-feature-settings: "tnum";
           font-feature-settings: "tnum";
+        }
+        
+        /* Force line numbers font override */
+        .line-numbers-container.font-override {
+          font-family: var(--editor-font-family) !important;
         }
         
         /* Disable selection on breadcrumbs */
