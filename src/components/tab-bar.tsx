@@ -522,8 +522,12 @@ const TabBar = ({ paneId }: TabBarProps) => {
                       }}
                       className={cn(
                         "flex-shrink-0 cursor-pointer rounded p-0.5",
-                        "text-text-lighter opacity-0 transition-all duration-150",
+                        "text-text-lighter transition-all duration-150",
                         "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
+                        {
+                          "opacity-100": isActive,
+                          "opacity-0": !isActive,
+                        },
                       )}
                       title={`Close ${buffer.name}`}
                     >
