@@ -9,6 +9,7 @@ export interface Settings {
   autoThemeLight: ThemeType;
   autoThemeDark: ThemeType;
   fontSize: number;
+  fontFamily: string;
   tabSize: number;
   wordWrap: boolean;
   lineNumbers: boolean;
@@ -23,6 +24,7 @@ const defaultSettings: Settings = {
   autoThemeLight: "light",
   autoThemeDark: "dark",
   fontSize: 14,
+  fontFamily: "JetBrains Mono",
   tabSize: 2,
   wordWrap: true,
   lineNumbers: true,
@@ -185,6 +187,7 @@ export const useSettingsStore = create(
 
         // Update individual setting
         updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => {
+          console.log(`Updating setting ${key} to:`, value);
           set(state => {
             state.settings[key] = value;
           });

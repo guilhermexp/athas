@@ -268,6 +268,10 @@ fn main() {
             get_claude_status,
             // Theme commands
             get_system_theme,
+            // Font commands
+            get_system_fonts,
+            get_monospace_fonts,
+            validate_font,
             // Token commands
             get_tokens,
             get_tokens_from_path

@@ -61,6 +61,7 @@ export function VimCompatibleEditor() {
   const {
     value: codeEditorValue,
     setValue: setCodeEditorValue,
+    fontFamily,
     searchMatches,
     currentMatchIndex,
   } = useCodeEditorStore();
@@ -88,12 +89,18 @@ export function VimCompatibleEditor() {
 
   const getEditorStyles = {
     fontSize: `${fontSize}px`,
+    fontFamily: fontFamily,
     tabSize: tabSize,
     lineHeight: `${fontSize * 1.4}px`,
   };
 
+  // Debug font changes
+  useEffect(() => {
+    console.log("Editor font family changed to:", fontFamily);
+  }, [fontFamily]);
+
   const getEditorClasses = () => {
-    let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 font-mono border-none outline-none overflow-visible shadow-none rounded-none transition-none`;
+    let classes = `absolute top-0 bottom-0 right-0 left-0 m-0 border-none outline-none overflow-visible shadow-none rounded-none transition-none`;
 
     if (vimEnabled) {
       if (vimMode === "normal") {
@@ -508,7 +515,7 @@ export function VimCompatibleEditor() {
       }}
       className={cn(
         getEditorClasses(),
-        "code-editor-content",
+        "code-editor-content code-editor-font-override",
         vimEnabled && vimMode === "normal" && "vim-normal-mode",
         vimEnabled && vimMode === "insert" && "vim-insert-mode",
         className,

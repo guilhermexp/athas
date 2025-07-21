@@ -1,11 +1,13 @@
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function LineNumbers() {
   const fontSize = useEditorConfigStore(state => state.fontSize);
   const wordWrap = useEditorConfigStore(state => state.wordWrap);
+  const fontFamily = useCodeEditorStore(state => state.fontFamily);
   const { value, lineNumbersRef, editorRef } = useEditorInstanceStore();
   const [lineElements, setLineElements] = useState<React.ReactElement[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -174,10 +176,11 @@ export function LineNumbers() {
     >
       <div
         ref={lineNumbersRef}
-        className="line-numbers-container absolute inset-0 overflow-hidden font-mono"
+        className="line-numbers-container absolute inset-0 overflow-hidden font-override"
         style={{
           padding: "8px 8px 50vh 16px", // Match editor padding
           fontSize: `${fontSize}px`,
+          fontFamily: fontFamily,
           lineHeight: `${fontSize * 1.4}px`,
           color: "var(--tw-text-lighter)",
           textAlign: "right",

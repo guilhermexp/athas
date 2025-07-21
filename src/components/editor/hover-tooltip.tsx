@@ -1,8 +1,10 @@
+import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function HoverTooltip() {
   const fontSize = useEditorConfigStore(state => state.fontSize);
+  const fontFamily = useCodeEditorStore(state => state.fontFamily);
   const { hoverInfo, handleMouseEnter, handleMouseLeave } = useEditorInstanceStore();
 
   if (!hoverInfo?.visible) return null;
@@ -14,6 +16,7 @@ export function HoverTooltip() {
         left: hoverInfo.position?.x || 0,
         top: hoverInfo.position?.y || 0,
         fontSize: `${fontSize * 0.9}px`,
+        fontFamily: fontFamily,
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

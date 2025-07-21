@@ -6,6 +6,7 @@ interface UseEditorSyncProps {
   filename: string;
   filePath: string;
   fontSize: number;
+  fontFamily: string;
   tabSize: number;
   wordWrap: boolean;
   lineNumbers: boolean;
@@ -23,6 +24,7 @@ export const useEditorSync = (props: UseEditorSyncProps) => {
   const setFilename = useCodeEditorStore(state => state.setFilename);
   const setFilePath = useCodeEditorStore(state => state.setFilePath);
   const setFontSize = useCodeEditorStore(state => state.setFontSize);
+  const setFontFamily = useCodeEditorStore(state => state.setFontFamily);
   const setTabSize = useCodeEditorStore(state => state.setTabSize);
   const setWordWrap = useCodeEditorStore(state => state.setWordWrap);
   const setLineNumbers = useCodeEditorStore(state => state.setLineNumbers);
@@ -50,6 +52,10 @@ export const useEditorSync = (props: UseEditorSyncProps) => {
   useEffect(() => {
     setFontSize(props.fontSize);
   }, [props.fontSize, setFontSize]);
+
+  useEffect(() => {
+    setFontFamily(props.fontFamily);
+  }, [props.fontFamily, setFontFamily]);
 
   useEffect(() => {
     setTabSize(props.tabSize);
