@@ -111,44 +111,129 @@ fn get_system_fonts_sync() -> Vec<FontInfo> {
 }
 
 #[cfg(target_os = "macos")]
+use std::process::Command;
+
+#[cfg(target_os = "macos")]
 fn get_system_fonts_sync() -> Vec<FontInfo> {
     let mut fonts = Vec::new();
     let mut font_families = HashSet::new();
 
-    // Common macOS fonts
-    let macos_fonts = vec![
-        ("Monaco", "Monaco", "Regular", true),
-        ("Menlo", "Menlo", "Regular", true),
-        ("SF Mono", "SF Mono", "Regular", true),
-        ("Consolas", "Consolas", "Regular", true),
-        ("Courier New", "Courier New", "Regular", true),
-        ("JetBrains Mono", "JetBrains Mono", "Regular", true),
-        ("Fira Code", "Fira Code", "Regular", true),
-        ("Source Code Pro", "Source Code Pro", "Regular", true),
-        ("Cascadia Code", "Cascadia Code", "Regular", true),
-        ("Cascadia Mono", "Cascadia Mono", "Regular", true),
-        ("Hack", "Hack", "Regular", true),
-        ("Inconsolata", "Inconsolata", "Regular", true),
-        ("Ubuntu Mono", "Ubuntu Mono", "Regular", true),
-        ("Roboto Mono", "Roboto Mono", "Regular", true),
-        ("DejaVu Sans Mono", "DejaVu Sans Mono", "Regular", true),
-        ("Liberation Mono", "Liberation Mono", "Regular", true),
-        ("Arial", "Arial", "Regular", false),
-        ("Helvetica", "Helvetica", "Regular", false),
-        ("Times New Roman", "Times New Roman", "Regular", false),
-        ("Calibri", "Calibri", "Regular", false),
-        ("San Francisco", "San Francisco", "Regular", false),
-    ];
+    // Try to get actual system fonts using system_profiler
+    if let Ok(output) = Command::new("system_profiler")
+        .args(&["SPFontsDataType", "-detailLevel", "mini"])
+        .output()
+    {
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if line.trim().starts_with("Font Name:") || line.trim().starts_with("_name:") {
+                    if let Some(font_name) = line.split(':').nth(1) {
+                        let family = font_name.trim().to_string();
+                        if !family.is_empty() && !font_families.contains(&family) {
+                            let is_monospace = is_monospace_font(&family);
+                            font_families.insert(family.clone());
+                            fonts.push(FontInfo {
+                                name: family.clone(),
+                                family: family.clone(),
+                                style: "Regular".to_string(),
+                                is_monospace,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    for (name, family, style, is_monospace) in macos_fonts {
-        if !font_families.contains(family) {
-            font_families.insert(family.to_string());
-            fonts.push(FontInfo {
-                name: name.to_string(),
-                family: family.to_string(),
-                style: style.to_string(),
-                is_monospace,
-            });
+    // If system_profiler didn't work, try using font book database
+    if fonts.is_empty() {
+        if let Ok(output) = Command::new("find")
+            .args(&[
+                "/System/Library/Fonts",
+                "/Library/Fonts",
+                "/Users/*/Library/Fonts",
+                "-name",
+                "*.ttf",
+                "-o",
+                "-name",
+                "*.otf",
+            ])
+            .output()
+        {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                for line in stdout.lines() {
+                    if let Some(filename) = std::path::Path::new(line).file_stem() {
+                        let family = filename.to_string_lossy().to_string();
+                        if !font_families.contains(&family) {
+                            let is_monospace = is_monospace_font(&family);
+                            font_families.insert(family.clone());
+                            fonts.push(FontInfo {
+                                name: family.clone(),
+                                family: family.clone(),
+                                style: "Regular".to_string(),
+                                is_monospace,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // If still no fonts found, fall back to known macOS fonts
+    if fonts.is_empty() {
+        let macos_fonts = vec![
+            ("JetBrains Mono", "JetBrains Mono", "Regular", true),
+            ("Monaco", "Monaco", "Regular", true),
+            ("Menlo", "Menlo", "Regular", true),
+            ("SF Mono", "SF Mono", "Regular", true),
+            ("Consolas", "Consolas", "Regular", true),
+            ("Courier New", "Courier New", "Regular", true),
+            ("Fira Code", "Fira Code", "Regular", true),
+            ("Source Code Pro", "Source Code Pro", "Regular", true),
+            ("Cascadia Code", "Cascadia Code", "Regular", true),
+            ("Cascadia Mono", "Cascadia Mono", "Regular", true),
+            ("Hack", "Hack", "Regular", true),
+            ("Inconsolata", "Inconsolata", "Regular", true),
+            ("Ubuntu Mono", "Ubuntu Mono", "Regular", true),
+            ("Roboto Mono", "Roboto Mono", "Regular", true),
+            ("DejaVu Sans Mono", "DejaVu Sans Mono", "Regular", true),
+            ("Liberation Mono", "Liberation Mono", "Regular", true),
+            ("Iosevka", "Iosevka", "Regular", true),
+            ("Input Mono", "Input Mono", "Regular", true),
+            ("Anonymous Pro", "Anonymous Pro", "Regular", true),
+            (
+                "Fantasque Sans Mono",
+                "Fantasque Sans Mono",
+                "Regular",
+                true,
+            ),
+            ("Victor Mono", "Victor Mono", "Regular", true),
+            ("Operator Mono", "Operator Mono", "Regular", true),
+            ("Dank Mono", "Dank Mono", "Regular", true),
+            ("Comic Code", "Comic Code", "Regular", true),
+            ("Space Mono", "Space Mono", "Regular", true),
+            ("IBM Plex Mono", "IBM Plex Mono", "Regular", true),
+            ("Courier", "Courier", "Regular", true),
+            ("Arial", "Arial", "Regular", false),
+            ("Helvetica", "Helvetica", "Regular", false),
+            ("Times New Roman", "Times New Roman", "Regular", false),
+            ("Helvetica Neue", "Helvetica Neue", "Regular", false),
+            ("San Francisco", "San Francisco", "Regular", false),
+            ("Avenir", "Avenir", "Regular", false),
+        ];
+
+        for (name, family, style, is_monospace) in macos_fonts {
+            if !font_families.contains(family) {
+                font_families.insert(family.to_string());
+                fonts.push(FontInfo {
+                    name: name.to_string(),
+                    family: family.to_string(),
+                    style: style.to_string(),
+                    is_monospace,
+                });
+            }
         }
     }
 

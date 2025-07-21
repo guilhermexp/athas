@@ -6,6 +6,8 @@ export function EditorStyles() {
         @font-face {
           font-family: 'JetBrains Mono';
           font-display: swap;
+          font-weight: normal;
+          font-style: normal;
         }
         @font-face {
           font-family: 'Fira Code';

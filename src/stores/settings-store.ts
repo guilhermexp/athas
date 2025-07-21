@@ -24,7 +24,7 @@ const defaultSettings: Settings = {
   autoThemeLight: "light",
   autoThemeDark: "dark",
   fontSize: 14,
-  fontFamily: "JetBrains Mono, Consolas, 'Courier New', monospace",
+  fontFamily: "JetBrains Mono",
   tabSize: 2,
   wordWrap: true,
   lineNumbers: true,

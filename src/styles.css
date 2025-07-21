@@ -110,7 +110,7 @@ body {
     padding: 0;
     overflow: hidden;
     font-family:
-        var(--app-font-family, ui-monospace), SFMono-Regular, "SF Mono", Consolas, "Liberation Mono",
+        var(--app-font-family, "JetBrains Mono"), "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono",
         Menlo, monospace;
     overscroll-behavior: none !important;
     /* Prevent elastic bounce globally */
@@ -124,12 +124,12 @@ button {
 
 /* Apply app-wide font family to all elements */
 * {
-    font-family: var(--app-font-family, ui-monospace), SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    font-family: var(--app-font-family, "JetBrains Mono"), "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 /* Override Tailwind's font-mono class to use our custom variable */
 .font-mono {
-    font-family: var(--app-font-family, ui-monospace), SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace !important;
+    font-family: var(--app-font-family, "JetBrains Mono"), "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace !important;
 }
 
 /* Specific overrides for components that should use editor font */
@@ -138,7 +138,7 @@ button {
 .editor-input,
 .line-numbers,
 .hover-tooltip {
-    font-family: var(--editor-font-family, monospace) !important;
+    font-family: var(--editor-font-family, "JetBrains Mono"), "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace !important;
 }
 
 /* CSS variables that themes can override */

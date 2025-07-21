@@ -12,11 +12,12 @@ export const FontStyleInjector = () => {
 
     if (!fontFamily) return;
 
-    // Set CSS variables for both editor and app-wide font
-    document.documentElement.style.setProperty("--editor-font-family", `"${fontFamily}"`);
-    document.documentElement.style.setProperty("--app-font-family", `"${fontFamily}"`);
+    // Set CSS variables for both editor and app-wide font with proper fallbacks
+    const fallbackChain = `"${fontFamily}", "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`;
+    document.documentElement.style.setProperty("--editor-font-family", fallbackChain);
+    document.documentElement.style.setProperty("--app-font-family", fallbackChain);
 
-    console.log("Setting app font family to:", fontFamily);
+    console.log("Setting app font family to:", fallbackChain);
   }, [editorConfigFontFamily, codeEditorFontFamily]);
 
   return null;

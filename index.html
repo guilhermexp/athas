@@ -17,9 +17,13 @@
                         
                         if (savedFont) {
                             // Set CSS variables immediately
-                            document.documentElement.style.setProperty('--app-font-family', `"${savedFont}"`);
-                            document.documentElement.style.setProperty('--editor-font-family', `"${savedFont}"`);
+                            document.documentElement.style.setProperty('--app-font-family', `"${savedFont}", "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
+                            document.documentElement.style.setProperty('--editor-font-family', `"${savedFont}", "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
                             console.log('Early font initialization:', savedFont);
+                        } else {
+                            // Set JetBrains Mono as default
+                            document.documentElement.style.setProperty('--app-font-family', `"JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
+                            document.documentElement.style.setProperty('--editor-font-family', `"JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
                         }
                     }
                     
@@ -30,13 +34,20 @@
                         const editorFont = editorSettings.state?.fontFamily;
                         
                         if (editorFont && !document.documentElement.style.getPropertyValue('--app-font-family')) {
-                            document.documentElement.style.setProperty('--app-font-family', `"${editorFont}"`);
-                            document.documentElement.style.setProperty('--editor-font-family', `"${editorFont}"`);
+                            document.documentElement.style.setProperty('--app-font-family', `"${editorFont}", "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
+                            document.documentElement.style.setProperty('--editor-font-family', `"${editorFont}", "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
                             console.log('Early font initialization from editor store:', editorFont);
                         }
                     }
                 } catch (error) {
                     console.warn('Failed to load font early:', error);
+                }
+                
+                // Ensure we always have a font fallback set
+                if (!document.documentElement.style.getPropertyValue('--app-font-family')) {
+                    document.documentElement.style.setProperty('--app-font-family', `"JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
+                    document.documentElement.style.setProperty('--editor-font-family', `"JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace`);
+                    console.log('Set default JetBrains Mono font fallback');
                 }
             })();
         </script>

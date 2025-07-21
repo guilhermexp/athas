@@ -5,7 +5,7 @@ type VimMode = "normal" | "insert" | "visual" | "visual-line" | "visual-block" |
 
 const initialState = {
   fontSize: 14,
-  fontFamily: "JetBrains Mono, Consolas, 'Courier New', monospace",
+  fontFamily: "JetBrains Mono",
   tabSize: 2,
   wordWrap: true,
   lineNumbers: true,
