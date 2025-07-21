@@ -481,7 +481,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
                   {isActive && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent" />}
 
                   {/* File Icon */}
-                  <div className="flex-shrink-0">
+                  <div className="grid size-3 max-h-3 max-w-3 shrink-0 place-content-center py-3">
                     {buffer.path === "extensions://marketplace" ? (
                       <Package size={12} className="text-blue-500" />
                     ) : buffer.isSQLite ? (
