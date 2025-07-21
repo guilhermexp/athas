@@ -7,7 +7,7 @@ export function EditorStyles() {
           background: transparent;
           border: none;
           outline: none;
-          color: transparent;
+          color: var(--color-text);
           caret-color: var(--color-text);
         }
         .code-editor-content.vim-normal-mode {
@@ -30,19 +30,12 @@ export function EditorStyles() {
           overflow-wrap: normal;
           word-break: normal;
         }
-        /* Disable default div selection, keep span selection */
-        div.code-editor-content::selection {
-          background: transparent !important;
+        /* Simple selection styling */
+        .code-editor-content::selection {
+          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
         }
-        div.code-editor-content::-moz-selection {
-          background: transparent !important;
-        }
-        /* Ensure spans show proper selection */
-        .code-editor-content:not(.vim-visual-selection) span::selection {
-          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3)) !important;
-        }
-        .code-editor-content:not(.vim-visual-selection) span::-moz-selection {
-          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3)) !important;
+        .code-editor-content::-moz-selection {
+          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
         }
         .code-editor-content:empty:before {
           content: attr(data-placeholder);

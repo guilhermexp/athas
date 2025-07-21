@@ -19,7 +19,6 @@ import { EditorStyles } from "./editor-styles";
 import { HoverTooltip } from "./hover-tooltip";
 import { LineNumbers } from "./line-numbers";
 import { QuickEditInline } from "./quick-edit-inline";
-import { VimCommandLine } from "./vim-command-line";
 
 // import type { VimCommandLineRef } from "../vim-command-line"; // Unused for now
 
@@ -231,9 +230,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
             {/* Editor content area */}
             <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
               <EditorContent />
-
-              {/* Vim command line - positioned absolutely at bottom */}
-              {vimEnabled && vimMode === "command" && vimEngine && <VimCommandLine />}
 
               {/* LSP Completion Dropdown - temporarily disabled */}
               <CompletionDropdown />

@@ -4,7 +4,7 @@ import { VimEngine } from "./vim/vim-engine";
 import type { VimMode } from "./vim/vim-types";
 
 export const useVim = (
-  _editorRef: React.RefObject<HTMLDivElement>,
+  _editorRef: React.RefObject<HTMLDivElement | null>,
   _content: string,
   onChange: (content: string) => void,
   enabled: boolean,
@@ -57,35 +57,87 @@ export const setCursorPosition = (element: HTMLDivElement, position: number): vo
     document.activeElement === element || element.contains(document.activeElement);
   if (!isElementFocused) return;
 
+  // Ensure position is within bounds
+  const textContent = element.textContent || "";
+  const clampedPosition = Math.max(0, Math.min(position, textContent.length));
+
   const range = document.createRange();
-  let currentPos = 0;
-  let found = false;
+  const result = findTextNodeAtPosition(element, clampedPosition);
 
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-
-  let node = walker.nextNode();
-  while (node && !found) {
-    const textLength = node.textContent?.length || 0;
-    if (currentPos + textLength >= position) {
-      range.setStart(node, position - currentPos);
-      range.setEnd(node, position - currentPos);
-      found = true;
-    } else {
-      currentPos += textLength;
-      node = walker.nextNode();
+  if (result.node) {
+    try {
+      range.setStart(result.node, result.offset);
+      range.setEnd(result.node, result.offset);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } catch (error) {
+      console.warn("Error setting cursor position:", error);
+      // Fallback to placing cursor at end
+      setCursorAtEnd(element, selection);
     }
+  } else {
+    // Fallback to placing cursor at end
+    setCursorAtEnd(element, selection);
+  }
+};
+
+// Helper function to find text node at position (optimized for large files)
+const findTextNodeAtPosition = (
+  element: HTMLDivElement,
+  position: number,
+): { node: Text | null; offset: number } => {
+  let currentPos = 0;
+
+  const findNodeRecursive = (node: Node): { node: Text | null; offset: number } => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const textNode = node as Text;
+      const textLength = textNode.textContent?.length || 0;
+
+      if (currentPos + textLength >= position) {
+        return { node: textNode, offset: Math.min(position - currentPos, textLength) };
+      } else {
+        currentPos += textLength;
+        return { node: null, offset: 0 };
+      }
+    }
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      for (let i = 0; i < node.childNodes.length; i++) {
+        const result = findNodeRecursive(node.childNodes[i]);
+        if (result.node) {
+          return result;
+        }
+      }
+    }
+
+    return { node: null, offset: 0 };
+  };
+
+  return findNodeRecursive(element);
+};
+
+// Helper function to set cursor at end of element
+const setCursorAtEnd = (element: HTMLDivElement, selection: Selection): void => {
+  const range = document.createRange();
+
+  // Find the last text node
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+  let lastNode: Text | null = null;
+  let node = walker.nextNode();
+
+  while (node) {
+    lastNode = node as Text;
+    node = walker.nextNode();
   }
 
-  if (!found && element.childNodes.length > 0) {
-    // Position is beyond the text, place at the end
-    const lastNode = element.childNodes[element.childNodes.length - 1];
-    if (lastNode.nodeType === Node.TEXT_NODE) {
-      range.setStart(lastNode, lastNode.textContent?.length || 0);
-      range.setEnd(lastNode, lastNode.textContent?.length || 0);
-    } else {
-      range.setStartAfter(lastNode);
-      range.setEndAfter(lastNode);
-    }
+  if (lastNode) {
+    const textLength = lastNode.textContent?.length || 0;
+    range.setStart(lastNode, textLength);
+    range.setEnd(lastNode, textLength);
+  } else {
+    // If no text nodes, place cursor at end of element
+    range.selectNodeContents(element);
+    range.collapse(false);
   }
 
   selection.removeAllRanges();

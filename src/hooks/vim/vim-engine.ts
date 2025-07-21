@@ -273,67 +273,129 @@ export class VimEngine {
     const selection = window.getSelection();
     if (!selection) return;
 
+    // Ensure position is within bounds
+    const textContent = element.textContent || "";
+    const clampedPosition = Math.max(0, Math.min(position, textContent.length));
+
     const range = document.createRange();
-    let currentPos = 0;
-    let found = false;
+    const result = this.findTextNodeAtPosition(element, clampedPosition);
 
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-
-    let node = walker.nextNode();
-    while (node && !found) {
-      const textLength = node.textContent?.length || 0;
-      if (currentPos + textLength >= position) {
-        range.setStart(node, position - currentPos);
-        range.setEnd(node, position - currentPos);
-        found = true;
-      } else {
-        currentPos += textLength;
-        node = walker.nextNode();
+    if (result.node) {
+      try {
+        range.setStart(result.node, result.offset);
+        range.setEnd(result.node, result.offset);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } catch (error) {
+        // Fallback: place cursor at end of element
+        console.warn("Error setting cursor position:", error);
+        this.setCursorAtEnd(element, selection);
       }
+    } else {
+      // Fallback: place cursor at end of element
+      this.setCursorAtEnd(element, selection);
     }
-
-    if (!found && element.childNodes.length > 0) {
-      const lastNode = element.childNodes[element.childNodes.length - 1];
-      if (lastNode.nodeType === Node.TEXT_NODE) {
-        range.setStart(lastNode, lastNode.textContent?.length || 0);
-        range.setEnd(lastNode, lastNode.textContent?.length || 0);
-      } else {
-        range.setStartAfter(lastNode);
-        range.setEndAfter(lastNode);
-      }
-    }
-
-    selection.removeAllRanges();
-    selection.addRange(range);
   }
 
   private setContentEditableSelection(element: HTMLDivElement, start: number, end: number): void {
     const selection = window.getSelection();
     if (!selection) return;
 
-    const range = document.createRange();
-    let currentPos = 0;
-    let startSet = false;
-    let endSet = false;
+    // Ensure positions are within bounds and ordered correctly
+    const textContent = element.textContent || "";
+    const clampedStart = Math.max(0, Math.min(start, textContent.length));
+    const clampedEnd = Math.max(clampedStart, Math.min(end, textContent.length));
 
+    const range = document.createRange();
+    const startResult = this.findTextNodeAtPosition(element, clampedStart);
+    const endResult = this.findTextNodeAtPosition(element, clampedEnd);
+
+    if (startResult.node && endResult.node) {
+      try {
+        range.setStart(startResult.node, startResult.offset);
+        range.setEnd(endResult.node, endResult.offset);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } catch (error) {
+        console.warn("Error setting selection:", error);
+        // Fallback: place cursor at start position
+        this.setContentEditableCursorPosition(element, clampedStart);
+      }
+    } else {
+      // Fallback: place cursor at start position
+      this.setContentEditableCursorPosition(element, clampedStart);
+    }
+  }
+
+  // Optimized method to find text node at a given position
+  private findTextNodeAtPosition(
+    element: HTMLDivElement,
+    position: number,
+  ): { node: Text | null; offset: number } {
+    let currentPos = 0;
+
+    // Use a more efficient approach for traversing text nodes
+    const findNodeRecursive = (node: Node): { node: Text | null; offset: number } => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const textNode = node as Text;
+        const textLength = textNode.textContent?.length || 0;
+
+        if (currentPos + textLength >= position) {
+          return { node: textNode, offset: position - currentPos };
+        } else {
+          currentPos += textLength;
+          return { node: null, offset: 0 };
+        }
+      }
+
+      // Handle element nodes by recursing through children
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          const result = findNodeRecursive(node.childNodes[i]);
+          if (result.node) {
+            return result;
+          }
+        }
+      }
+
+      return { node: null, offset: 0 };
+    };
+
+    const result = findNodeRecursive(element);
+    return result.node ? result : this.findLastTextNode(element);
+  }
+
+  // Find the last text node in the element (fallback)
+  private findLastTextNode(element: HTMLDivElement): { node: Text | null; offset: number } {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
 
+    let lastNode: Text | null = null;
     let node = walker.nextNode();
-    while (node && (!startSet || !endSet)) {
-      const textLength = node.textContent?.length || 0;
 
-      if (!startSet && currentPos + textLength >= start) {
-        range.setStart(node, start - currentPos);
-        startSet = true;
-      }
-
-      if (!endSet && currentPos + textLength >= end) {
-        range.setEnd(node, end - currentPos);
-        endSet = true;
-      }
-
-      currentPos += textLength;
+    while (node) {
+      lastNode = node as Text;
       node = walker.nextNode();
+    }
+
+    if (lastNode) {
+      return { node: lastNode, offset: lastNode.textContent?.length || 0 };
+    }
+
+    return { node: null, offset: 0 };
+  }
+
+  // Fallback method to set cursor at end of element
+  private setCursorAtEnd(element: HTMLDivElement, selection: Selection): void {
+    const range = document.createRange();
+    const lastTextNode = this.findLastTextNode(element);
+
+    if (lastTextNode.node) {
+      range.setStart(lastTextNode.node, lastTextNode.offset);
+      range.setEnd(lastTextNode.node, lastTextNode.offset);
+    } else {
+      // If no text nodes, place cursor at end of element
+      range.selectNodeContents(element);
+      range.collapse(false);
     }
 
     selection.removeAllRanges();

@@ -1,27 +1,18 @@
-import { useRef } from "react";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
-import { EditorInput } from "./editor-input";
-import { VimCursor } from "./vim-cursor";
+import { TextEditor } from "./text-editor";
+import { VimIntegration } from "./vim/vim-integration";
+import { VimCompatibleEditor } from "./vim-compatible-editor";
 
 export function EditorContent() {
-  const { vimEnabled, vimMode, lineNumbers } = useEditorConfigStore();
-  const editorRef = useRef<HTMLDivElement | null>(null);
+  const { vimEnabled } = useEditorConfigStore();
 
   return (
     <div className="relative h-full flex-1 bg-primary-bg">
-      {/* Single contenteditable layer with syntax highlighting */}
-      <EditorInput />
+      {/* Use standard text editor when vim is disabled, vim-specific editor when enabled */}
+      {vimEnabled ? <VimCompatibleEditor /> : <TextEditor />}
 
-      {/* Vim cursor for normal mode */}
-      {vimEnabled && vimMode === "normal" && (
-        <VimCursor
-          editorRef={editorRef}
-          cursorPosition={0}
-          visible={true}
-          fontSize={14} // Will be handled by the component itself
-          lineNumbers={lineNumbers}
-        />
-      )}
+      {/* Vim integration layer */}
+      <VimIntegration />
     </div>
   );
 }
