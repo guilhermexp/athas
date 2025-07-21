@@ -576,10 +576,11 @@ button {
     overflow: hidden;
 }
 
+/* fero - commented because i dont think this really needed */
 /* Only apply border radius on macOS */
-.platform-macos .window-container {
+/* .platform-macos .window-container {
     border-radius: 12px;
-}
+} */
 
 /* Ensure scrolling works properly in all browsers */
 textarea {
@@ -1015,4 +1016,28 @@ textarea::-webkit-scrollbar-thumb:hover {
     color: #3498db;
     border-radius: 2px;
     padding: 0 2px;
+}
+
+.tab-bar-item {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.tab-drag-preview {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes dropIndicatorPulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+.drop-indicator {
+  animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
