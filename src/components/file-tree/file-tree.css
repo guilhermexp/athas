@@ -38,3 +38,9 @@
   scroll-behavior: smooth !important;
   pointer-events: auto !important;
 }
+
+/* Apply app-wide font family to file tree */
+.file-tree-container,
+.file-tree-container * {
+  font-family: var(--app-font-family, monospace) !important;
+}

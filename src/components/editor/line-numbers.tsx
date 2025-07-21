@@ -1,9 +1,11 @@
 import { useMemo } from "react";
+import { useCodeEditorStore } from "../../stores/code-editor-store";
 import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function LineNumbers() {
   const fontSize = useEditorConfigStore(state => state.fontSize);
+  const fontFamily = useCodeEditorStore(state => state.fontFamily);
   const { value, lineNumbersRef } = useEditorInstanceStore();
   // Calculate line numbers
   const lineNumbersArray = useMemo(() => {
@@ -24,13 +26,14 @@ export function LineNumbers() {
     >
       <div
         ref={lineNumbersRef}
-        className="line-numbers-container absolute inset-0 overflow-hidden font-mono"
+        className="line-numbers-container absolute inset-0 overflow-hidden font-override"
         style={{
           paddingTop: "8px",
           paddingBottom: "8px",
           paddingLeft: "16px",
           paddingRight: "8px",
           fontSize: `${fontSize}px`,
+          fontFamily: fontFamily,
           lineHeight: `${fontSize * 1.4}px`,
           color: "var(--tw-text-lighter)",
           textAlign: "right",

@@ -50,8 +50,16 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   // Get data from stores
   const activeBuffer = useBufferStore(state => state.getActiveBuffer());
   const { handleContentChange } = useAppStore();
-  const { vimEnabled, vimMode, fontSize, tabSize, wordWrap, lineNumbers, aiCompletion } =
-    useEditorConfigStore();
+  const {
+    vimEnabled,
+    vimMode,
+    fontSize,
+    fontFamily,
+    tabSize,
+    wordWrap,
+    lineNumbers,
+    aiCompletion,
+  } = useEditorConfigStore();
   const searchQuery = useCodeEditorStore(state => state.searchQuery);
   const searchMatches = useCodeEditorStore(state => state.searchMatches);
   const currentMatchIndex = useCodeEditorStore(state => state.currentMatchIndex);
@@ -87,6 +95,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
     filename,
     filePath,
     fontSize,
+    fontFamily,
     tabSize,
     wordWrap,
     lineNumbers,

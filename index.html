@@ -5,6 +5,41 @@
         <link rel="icon" type="image/svg+xml" href="/vite.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Athas</title>
+        <script>
+            // Early font initialization - runs before React loads
+            (function() {
+                try {
+                    // Get saved font from localStorage
+                    const savedSettings = localStorage.getItem('athas-settings-store');
+                    if (savedSettings) {
+                        const settings = JSON.parse(savedSettings);
+                        const savedFont = settings.state?.fontFamily;
+                        
+                        if (savedFont) {
+                            // Set CSS variables immediately
+                            document.documentElement.style.setProperty('--app-font-family', `"${savedFont}"`);
+                            document.documentElement.style.setProperty('--editor-font-family', `"${savedFont}"`);
+                            console.log('Early font initialization:', savedFont);
+                        }
+                    }
+                    
+                    // Also check code-editor-store for fallback
+                    const codeEditorState = localStorage.getItem('code-editor-store');
+                    if (codeEditorState) {
+                        const editorSettings = JSON.parse(codeEditorState);
+                        const editorFont = editorSettings.state?.fontFamily;
+                        
+                        if (editorFont && !document.documentElement.style.getPropertyValue('--app-font-family')) {
+                            document.documentElement.style.setProperty('--app-font-family', `"${editorFont}"`);
+                            document.documentElement.style.setProperty('--editor-font-family', `"${editorFont}"`);
+                            console.log('Early font initialization from editor store:', editorFont);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Failed to load font early:', error);
+                }
+            })();
+        </script>
     </head>
 
     <body>

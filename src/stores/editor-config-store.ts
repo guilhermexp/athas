@@ -5,6 +5,7 @@ type VimMode = "normal" | "insert" | "visual" | "visual-line" | "visual-block" |
 
 const initialState = {
   fontSize: 14,
+  fontFamily: "JetBrains Mono, Consolas, 'Courier New', monospace",
   tabSize: 2,
   wordWrap: true,
   lineNumbers: true,
@@ -19,6 +20,7 @@ export const useEditorConfigStore = create(
   combine(initialState, set => ({
     // Actions
     setFontSize: (size: number) => set({ fontSize: size }),
+    setFontFamily: (family: string) => set({ fontFamily: family }),
     setTabSize: (size: number) => set({ tabSize: size }),
     setWordWrap: (wrap: boolean) => set({ wordWrap: wrap }),
     setLineNumbers: (show: boolean) => set({ lineNumbers: show }),

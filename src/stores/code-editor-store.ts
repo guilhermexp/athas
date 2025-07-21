@@ -33,6 +33,7 @@ const initialState = {
 
   // Editor Settings
   fontSize: 14,
+  fontFamily: "JetBrains Mono, Consolas, 'Courier New', monospace",
   tabSize: 2,
   wordWrap: false,
   lineNumbers: true,
@@ -77,6 +78,7 @@ export const useCodeEditorStore = create(
 
     // Editor Settings Actions
     setFontSize: (size: number) => set({ fontSize: size }),
+    setFontFamily: (family: string) => set({ fontFamily: family }),
     setTabSize: (size: number) => set({ tabSize: size }),
     setWordWrap: (wrap: boolean) => set({ wordWrap: wrap }),
     setLineNumbers: (show: boolean) => set({ lineNumbers: show }),

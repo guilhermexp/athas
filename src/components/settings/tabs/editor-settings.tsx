@@ -1,3 +1,4 @@
+import { FontSelector } from "@/components/ui/font-selector";
 import Input from "@/components/ui/input";
 import Section, { SettingRow } from "@/components/ui/section";
 import Toggle from "@/components/ui/toggle";
@@ -9,6 +10,15 @@ export const EditorSettings = () => {
   return (
     <div className="space-y-4">
       <Section title="Typography">
+        <SettingRow label="Font Family" description="Editor font family">
+          <FontSelector
+            value={settings.fontFamily}
+            onChange={fontFamily => updateSetting("fontFamily", fontFamily)}
+            className="w-48"
+            monospaceOnly={true}
+          />
+        </SettingRow>
+
         <SettingRow label="Font Size" description="Editor font size in pixels">
           <Input
             type="number"
