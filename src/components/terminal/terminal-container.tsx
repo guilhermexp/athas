@@ -1,6 +1,7 @@
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTerminalTabs } from "../../hooks/use-terminal-tabs";
+import { useUIState } from "../../stores/ui-state-store";
 import TerminalSession from "./terminal-session";
 import TerminalTabBar from "./terminal-tab-bar";
 
@@ -38,6 +39,8 @@ const TerminalContainer = ({
   const [newTerminalName, setNewTerminalName] = useState("");
   const [isSplitView, setIsSplitView] = useState(false);
   const hasInitializedRef = useRef(false);
+  const terminalSessionRefs = useRef<Map<string, { focus: () => void }>>(new Map());
+  const { registerTerminalFocus, clearTerminalFocus } = useUIState();
 
   const handleNewTerminal = useCallback(() => {
     const dirName = currentDirectory.split("/").pop() || "terminal";
@@ -140,6 +143,36 @@ const TerminalContainer = ({
     },
     [updateTerminalActivity],
   );
+
+  // Focus the active terminal
+  const focusActiveTerminal = useCallback(() => {
+    if (activeTerminalId) {
+      const terminalRef = terminalSessionRefs.current.get(activeTerminalId);
+      if (terminalRef) {
+        terminalRef.focus();
+      }
+    }
+  }, [activeTerminalId]);
+
+  // Register terminal session ref
+  const registerTerminalRef = useCallback(
+    (terminalId: string, ref: { focus: () => void } | null) => {
+      if (ref) {
+        terminalSessionRefs.current.set(terminalId, ref);
+      } else {
+        terminalSessionRefs.current.delete(terminalId);
+      }
+    },
+    [],
+  );
+
+  // Register focus callback with UI state
+  useEffect(() => {
+    registerTerminalFocus(focusActiveTerminal);
+    return () => {
+      clearTerminalFocus();
+    };
+  }, [registerTerminalFocus, clearTerminalFocus, focusActiveTerminal]);
 
   // Terminal-specific keyboard shortcuts
   // Terminal-specific keyboard shortcuts
@@ -332,6 +365,7 @@ const TerminalContainer = ({
                       isActive={true}
                       onDirectoryChange={handleDirectoryChange}
                       onActivity={handleActivity}
+                      onRegisterRef={registerTerminalRef}
                     />
                   ),
               )}
@@ -347,6 +381,7 @@ const TerminalContainer = ({
                     isActive={true}
                     onDirectoryChange={handleDirectoryChange}
                     onActivity={handleActivity}
+                    onRegisterRef={registerTerminalRef}
                   />
                 );
               })()}
@@ -361,6 +396,7 @@ const TerminalContainer = ({
               isActive={terminal.id === activeTerminalId}
               onDirectoryChange={handleDirectoryChange}
               onActivity={handleActivity}
+              onRegisterRef={registerTerminalRef}
             />
           ))
         )}

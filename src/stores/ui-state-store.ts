@@ -31,6 +31,10 @@ const initialState = {
   // Context Menus
   folderHeaderContextMenu: null as { x: number; y: number } | null,
   projectNameMenu: null as { x: number; y: number } | null,
+
+  // Terminal Focus Management
+  terminalFocusRequested: false,
+  terminalFocusCallback: null as (() => void) | null,
 };
 
 export const useUIState = create(
@@ -86,6 +90,16 @@ export const useUIState = create(
         isRemoteViewActive: view === "remote",
       });
     },
+
+    // Terminal Focus Management
+    registerTerminalFocus: (callback: () => void) => set({ terminalFocusCallback: callback }),
+    requestTerminalFocus: () => {
+      const state = _get();
+      if (state.terminalFocusCallback) {
+        state.terminalFocusCallback();
+      }
+    },
+    clearTerminalFocus: () => set({ terminalFocusCallback: null }),
   })),
 );
 

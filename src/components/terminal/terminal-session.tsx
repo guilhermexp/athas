@@ -12,6 +12,7 @@ interface TerminalSessionProps {
   isActive: boolean;
   onDirectoryChange?: (terminalId: string, directory: string) => void;
   onActivity?: (terminalId: string) => void;
+  onRegisterRef?: (terminalId: string, ref: { focus: () => void } | null) => void;
 }
 
 interface LineItem {
@@ -49,9 +50,11 @@ const TerminalSession = ({
   isActive,
   onDirectoryChange: _onDirectoryChange,
   onActivity,
+  onRegisterRef,
 }: TerminalSessionProps) => {
   const sessionRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [connectionId, setConnectionId] = useState<string | null>(null);
   const [screen, setScreen] = useState<LineItem[][]>([]);
   const [cursorLine, setCursorLine] = useState(0);
@@ -146,15 +149,29 @@ const TerminalSession = ({
     }
   }, [isActive, connectionId, terminal, calculateTerminalSize, onActivity]);
 
+  // Focus method that can be called externally
+  const focusTerminal = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // Register ref with parent
+  useEffect(() => {
+    if (onRegisterRef) {
+      onRegisterRef(terminal.id, { focus: focusTerminal });
+      return () => {
+        onRegisterRef(terminal.id, null);
+      };
+    }
+  }, [terminal.id, onRegisterRef, focusTerminal]);
+
   // Auto-focus hidden input when terminal becomes active
   useEffect(() => {
-    if (isActive) {
-      const hiddenInput = document.getElementById(`terminal-input-${terminal.id}`);
-      if (hiddenInput) {
-        hiddenInput.focus();
-      }
+    if (isActive && inputRef.current) {
+      inputRef.current.focus();
     }
-  }, [isActive, terminal.id]);
+  }, [isActive]);
 
   // Auto-scroll to bottom when screen updates
   useEffect(() => {
@@ -563,9 +580,8 @@ const TerminalSession = ({
           )}
           onClick={() => {
             // Focus the hidden input when terminal is clicked
-            const hiddenInput = document.getElementById(`terminal-input-${terminal.id}`);
-            if (hiddenInput) {
-              hiddenInput.focus();
+            if (inputRef.current) {
+              inputRef.current.focus();
             }
           }}
         >
@@ -593,6 +609,7 @@ const TerminalSession = ({
 
       {/* Hidden textarea for capturing keyboard input */}
       <textarea
+        ref={inputRef}
         id={`terminal-input-${terminal.id}`}
         className="pointer-events-none fixed resize-none opacity-0"
         style={{

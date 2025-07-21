@@ -16,9 +16,16 @@ const EditorFooter = () => {
           <button
             onClick={() => {
               uiState.setBottomPaneActiveTab("terminal");
-              uiState.setIsBottomPaneVisible(
-                !uiState.isBottomPaneVisible || uiState.bottomPaneActiveTab !== "terminal",
-              );
+              const showingTerminal =
+                !uiState.isBottomPaneVisible || uiState.bottomPaneActiveTab !== "terminal";
+              uiState.setIsBottomPaneVisible(showingTerminal);
+
+              // Request terminal focus after showing
+              if (showingTerminal) {
+                setTimeout(() => {
+                  uiState.requestTerminalFocus();
+                }, 100);
+              }
             }}
             className={`flex items-center gap-0.5 rounded px-1 py-0.5 transition-colors ${
               uiState.isBottomPaneVisible && uiState.bottomPaneActiveTab === "terminal"

@@ -16,6 +16,7 @@ interface UseKeyboardShortcutsProps {
   focusSearchInput: () => void;
   focusCommandPalette: () => void;
   focusTerminal?: () => void;
+  requestTerminalFocus?: () => void;
   activeBuffer: Buffer | null;
   closeBuffer: (bufferId: string) => void;
   switchToNextBuffer: () => void;
@@ -42,6 +43,7 @@ export const useKeyboardShortcuts = ({
   focusSearchInput,
   focusCommandPalette,
   focusTerminal,
+  requestTerminalFocus,
   activeBuffer,
   closeBuffer,
   switchToNextBuffer,
@@ -66,12 +68,14 @@ export const useKeyboardShortcuts = ({
         } else {
           setBottomPaneActiveTab("terminal");
           setIsBottomPaneVisible(true);
-          // Auto-focus terminal after a short delay to ensure it's rendered
-          if (focusTerminal) {
-            setTimeout(() => {
+          // Request terminal focus through UI state
+          setTimeout(() => {
+            if (requestTerminalFocus) {
+              requestTerminalFocus();
+            } else if (focusTerminal) {
               focusTerminal();
-            }, 100);
-          }
+            }
+          }, 100);
         }
         return;
       }

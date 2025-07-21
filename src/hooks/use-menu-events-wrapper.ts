@@ -33,7 +33,19 @@ export function useMenuEventsWrapper() {
     onFindReplace: () => console.log("Find/Replace not implemented"),
     onCommandPalette: () => uiState.setIsCommandPaletteVisible(true),
     onToggleSidebar: () => uiState.setIsSidebarVisible(!uiState.isSidebarVisible),
-    onToggleTerminal: () => uiState.setIsBottomPaneVisible(!uiState.isBottomPaneVisible),
+    onToggleTerminal: () => {
+      const showingTerminal =
+        !uiState.isBottomPaneVisible || uiState.bottomPaneActiveTab !== "terminal";
+      uiState.setBottomPaneActiveTab("terminal");
+      uiState.setIsBottomPaneVisible(showingTerminal);
+
+      // Request terminal focus after showing
+      if (showingTerminal) {
+        setTimeout(() => {
+          uiState.requestTerminalFocus();
+        }, 100);
+      }
+    },
     onToggleAiChat: () => setIsAIChatVisible(!isAIChatVisible),
     onSplitEditor: () => console.log("Split Editor not implemented"),
     onToggleVim: editorConfigStore.toggleVim,
