@@ -55,10 +55,7 @@ function App() {
   return (
     <div className={cn("flex h-screen w-screen flex-col overflow-hidden bg-transparent")}>
       <div
-        className={cn(
-          "window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg",
-          isMac() && "rounded-xl",
-        )}
+        className={cn("window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg")}
       >
         <MainLayout />
       </div>

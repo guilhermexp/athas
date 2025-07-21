@@ -23,7 +23,7 @@ import FileReloadToast from "../file-reload-toast";
 import GitHubCopilotSettings from "../github-copilot-settings";
 import ResizableRightPane from "../resizable-right-pane";
 import ResizableSidebar from "../resizable-sidebar";
-import TabBar from "../tab-bar";
+import TabBar from "../tab-bar/tab-bar";
 import CustomTitleBarWithSettings from "../window/custom-title-bar";
 import { MainSidebar } from "./main-sidebar";
 
