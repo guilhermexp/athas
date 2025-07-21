@@ -1,11 +1,10 @@
 import { File, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
+import { useBufferStore } from "../../stores/buffer-store";
 import { useFileSystemStore } from "../../stores/file-system-store";
+import { useRecentFilesStore } from "../../stores/recent-files-store";
 import { useUIState } from "../../stores/ui-state-store";
-
-// Storage key for recently opened files
-const RECENT_FILES_KEY = "athas-recent-files";
 
 // Files and directories to ignore in the command bar
 const IGNORED_PATTERNS = [
@@ -128,43 +127,6 @@ const fuzzyScore = (text: string, query: string): number => {
   return 0; // No match
 };
 
-// In-memory cache for recent files to avoid localStorage reads
-// TODO: This is a hack to avoid localStorage reads. We should use redis maybe .
-let recentFilesCache: string[] = [];
-let cacheInitialized = false;
-
-// Initialize cache asynchronously
-const initializeCache = () => {
-  if (cacheInitialized) return;
-
-  setTimeout(() => {
-    try {
-      const stored = localStorage.getItem(RECENT_FILES_KEY);
-      recentFilesCache = stored ? JSON.parse(stored) : [];
-      cacheInitialized = true;
-    } catch {
-      recentFilesCache = [];
-      cacheInitialized = true;
-    }
-  }, 0);
-};
-
-// Add file to recent files (async, non-blocking)
-const addToRecentFiles = (filePath: string) => {
-  // Update cache immediately for instant UI update
-  const filtered = recentFilesCache.filter(path => path !== filePath);
-  recentFilesCache = [filePath, ...filtered].slice(0, 20);
-
-  // Persist to localStorage asynchronously (non-blocking)
-  setTimeout(() => {
-    try {
-      localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(recentFilesCache));
-    } catch {
-      // Ignore localStorage errors
-    }
-  }, 0);
-};
-
 const CommandBar = () => {
   // Get data from stores
   const { isCommandBarVisible, setIsCommandBarVisible } = useUIState();
@@ -173,18 +135,20 @@ const CommandBar = () => {
 
   const isVisible = isCommandBarVisible;
   const onClose = () => setIsCommandBarVisible(false);
-  const onFileSelect = (path: string) => handleFileSelect(path, false);
   const [query, setQuery] = useState("");
-  const [recentFiles, setRecentFiles] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<Array<{ name: string; path: string; isDir: boolean }>>([]);
 
-  // Initialize cache and load files when component mounts
+  // Get data from stores
+  const { buffers, activeBufferId } = useBufferStore();
+  const activeBuffer = buffers.find(b => b.id === activeBufferId);
+  const { addOrUpdateRecentFile, getRecentFilesOrderedByFrecency } = useRecentFilesStore();
+  const recentFiles = getRecentFilesOrderedByFrecency();
+
+  // Load all project files when component mounts
   useEffect(() => {
-    initializeCache();
-    // Load all project files asynchronously
     getAllProjectFiles().then(allFiles => {
       const formattedFiles = allFiles.map(file => ({
         name: file.name,
@@ -200,8 +164,6 @@ const CommandBar = () => {
     if (isVisible) {
       setQuery("");
       setSelectedIndex(0);
-      // Use cached recent files or empty array if cache not ready
-      setRecentFiles(cacheInitialized ? [...recentFilesCache] : []);
       // Focus the input field immediately
       if (inputRef.current) {
         inputRef.current.focus();
@@ -276,22 +238,44 @@ const CommandBar = () => {
   );
 
   // Memoize file filtering and sorting
-  const { recentFilesInResults, otherFiles } = useMemo(() => {
+  const { openBufferFiles, recentFilesInResults, otherFiles } = useMemo(() => {
     const allFiles = files.filter(entry => !entry.isDir && !shouldIgnoreFile(entry.path));
 
+    // Get open buffers (excluding active buffer)
+    const openBufferPaths = buffers
+      .filter(buffer => buffer.id !== activeBufferId && !buffer.isVirtual)
+      .map(buffer => buffer.path);
+
+    const openBufferFilesData = allFiles.filter(file => openBufferPaths.includes(file.path));
+
+    // Get recent file paths (excluding active buffer)
+    const recentFilePaths = recentFiles
+      .filter(rf => !activeBuffer || rf.path !== activeBuffer.path)
+      .map(rf => rf.path);
+
     if (!query.trim()) {
-      // No search query - show recent files first, then alphabetical
+      // No search query - show open buffers, then recent files by frecency, then alphabetical
       const recent = allFiles
-        .filter(file => recentFiles.includes(file.path))
-        .sort((a, b) => recentFiles.indexOf(a.path) - recentFiles.indexOf(b.path));
+        .filter(file => recentFilePaths.includes(file.path) && !openBufferPaths.includes(file.path))
+        .sort((a, b) => {
+          const aIndex = recentFiles.findIndex(rf => rf.path === a.path);
+          const bIndex = recentFiles.findIndex(rf => rf.path === b.path);
+          return aIndex - bIndex; // Already sorted by frecency
+        });
 
       const others = allFiles
-        .filter(file => !recentFiles.includes(file.path))
+        .filter(
+          file =>
+            !recentFilePaths.includes(file.path) &&
+            !openBufferPaths.includes(file.path) &&
+            (!activeBuffer || file.path !== activeBuffer.path),
+        )
         .sort((a, b) => a.name.localeCompare(b.name));
 
       return {
+        openBufferFiles: openBufferFilesData,
         recentFilesInResults: recent.slice(0, 10),
-        otherFiles: others.slice(0, 20 - recent.length),
+        otherFiles: others.slice(0, 20 - openBufferFilesData.length - recent.length),
       };
     }
 
@@ -310,43 +294,66 @@ const CommandBar = () => {
         // First sort by score (highest first)
         if (b.score !== a.score) return b.score - a.score;
 
-        // Then prioritize recent files
-        const aIsRecent = recentFiles.includes(a.file.path);
-        const bIsRecent = recentFiles.includes(b.file.path);
+        // Then prioritize open buffers
+        const aIsOpen = openBufferPaths.includes(a.file.path);
+        const bIsOpen = openBufferPaths.includes(b.file.path);
+        if (aIsOpen && !bIsOpen) return -1;
+        if (!aIsOpen && bIsOpen) return 1;
+
+        // Then prioritize recent files by frecency
+        const aIsRecent = recentFilePaths.includes(a.file.path);
+        const bIsRecent = recentFilePaths.includes(b.file.path);
         if (aIsRecent && !bIsRecent) return -1;
         if (!aIsRecent && bIsRecent) return 1;
+
+        if (aIsRecent && bIsRecent) {
+          const aIndex = recentFiles.findIndex(rf => rf.path === a.file.path);
+          const bIndex = recentFiles.findIndex(rf => rf.path === b.file.path);
+          return aIndex - bIndex;
+        }
 
         // Finally sort alphabetically
         return a.file.name.localeCompare(b.file.name);
       });
 
+    const openBuffers = scoredFiles
+      .filter(({ file }) => openBufferPaths.includes(file.path))
+      .map(({ file }) => file);
+
     const recent = scoredFiles
-      .filter(({ file }) => recentFiles.includes(file.path))
+      .filter(
+        ({ file }) => recentFilePaths.includes(file.path) && !openBufferPaths.includes(file.path),
+      )
       .map(({ file }) => file);
 
     const others = scoredFiles
-      .filter(({ file }) => !recentFiles.includes(file.path))
+      .filter(
+        ({ file }) =>
+          !recentFilePaths.includes(file.path) &&
+          !openBufferPaths.includes(file.path) &&
+          (!activeBuffer || file.path !== activeBuffer.path),
+      )
       .map(({ file }) => file);
 
     return {
-      recentFilesInResults: recent.slice(0, 20),
-      otherFiles: others.slice(0, 20 - recent.length),
+      openBufferFiles: openBuffers.slice(0, 20),
+      recentFilesInResults: recent.slice(0, 20 - openBuffers.length),
+      otherFiles: others.slice(0, 20 - openBuffers.length - recent.length),
     };
-  }, [files, recentFiles, query]);
+  }, [files, recentFiles, query, buffers, activeBufferId, activeBuffer]);
 
   const handleItemSelect = useCallback(
     (path: string) => {
-      // Update cache and state immediately
-      addToRecentFiles(path);
-      setRecentFiles(prev => {
-        const filtered = prev.filter(p => p !== path);
-        return [path, ...filtered].slice(0, 20);
-      });
+      // Extract filename from path
+      const fileName = path.split("/").pop() || path;
+
+      // Update recent files store with frecency
+      addOrUpdateRecentFile(path, fileName);
 
       handleFileSelect(path, false);
       onClose();
     },
-    [onFileSelect, onClose],
+    [handleFileSelect, onClose, addOrUpdateRecentFile],
   );
 
   // Auto-scroll selected item into view
@@ -363,7 +370,7 @@ const CommandBar = () => {
         block: "nearest",
       });
     }
-  }, [selectedIndex, isVisible, recentFilesInResults, otherFiles]);
+  }, [selectedIndex, isVisible, openBufferFiles, recentFilesInResults, otherFiles]);
 
   // Handle arrow key navigation - separate effect after files are defined
   useEffect(() => {
@@ -371,7 +378,7 @@ const CommandBar = () => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Handle arrow key navigation
-      const allResults = [...recentFilesInResults, ...otherFiles];
+      const allResults = [...openBufferFiles, ...recentFilesInResults, ...otherFiles];
       const totalItems = allResults.length;
 
       if (totalItems === 0) return;
@@ -395,7 +402,14 @@ const CommandBar = () => {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isVisible, recentFilesInResults, otherFiles, selectedIndex, handleFileSelect]);
+  }, [
+    isVisible,
+    openBufferFiles,
+    recentFilesInResults,
+    otherFiles,
+    selectedIndex,
+    handleItemSelect,
+  ]);
 
   if (!isVisible) {
     return null;
@@ -430,17 +444,59 @@ const CommandBar = () => {
             ref={scrollContainerRef}
             className="custom-scrollbar max-h-80 overflow-y-auto bg-transparent"
           >
-            {recentFilesInResults.length === 0 && otherFiles.length === 0 ? (
+            {openBufferFiles.length === 0 &&
+            recentFilesInResults.length === 0 &&
+            otherFiles.length === 0 ? (
               <div className="px-4 py-6 text-center font-mono text-sm text-text-lighter">
                 {query ? "No matching files found" : "No files available"}
               </div>
             ) : (
               <>
+                {/* Open Buffers Section */}
+                {openBufferFiles.length > 0 && (
+                  <div className="p-0">
+                    {openBufferFiles.map((file, index) => {
+                      const globalIndex = index;
+                      const isSelected = globalIndex === selectedIndex;
+                      return (
+                        <button
+                          key={`open-${file.path}`}
+                          data-item-index={globalIndex}
+                          onClick={() => handleItemSelect(file.path)}
+                          className={cn(
+                            "m-0 flex w-full cursor-pointer items-center gap-2",
+                            "rounded-none border-none px-3 py-1.5 font-mono",
+                            "transition-colors duration-150",
+                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover",
+                          )}
+                        >
+                          <File size={13} className="text-accent" />
+                          <div className="min-w-0 flex-1 text-left">
+                            <div className="truncate text-sm">
+                              <span className="text-text">{file.name}</span>
+                              {getDirectoryPath(file.path) && (
+                                <span className="ml-2 text-text-lighter text-xs opacity-60">
+                                  {getDirectoryPath(file.path)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="rounded bg-accent/20 px-1.5 py-0.5 font-medium text-accent text-xs">
+                              open
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
                 {/* Recent Files Section - Minimal */}
                 {recentFilesInResults.length > 0 && (
                   <div className="p-0">
                     {recentFilesInResults.map((file, index) => {
-                      const globalIndex = index;
+                      const globalIndex = openBufferFiles.length + index;
                       const isSelected = globalIndex === selectedIndex;
                       return (
                         <button
@@ -480,7 +536,8 @@ const CommandBar = () => {
                 {otherFiles.length > 0 && (
                   <div className="p-0">
                     {otherFiles.map((file, index) => {
-                      const globalIndex = recentFilesInResults.length + index;
+                      const globalIndex =
+                        openBufferFiles.length + recentFilesInResults.length + index;
                       const isSelected = globalIndex === selectedIndex;
                       return (
                         <button

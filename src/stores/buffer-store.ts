@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { GitDiff } from "../utils/git";
+import { useRecentFilesStore } from "./recent-files-store";
 
 interface Buffer {
   id: string;
@@ -95,6 +96,11 @@ export const useBufferStore = create(
             state.buffers = [...newBuffers.map(b => ({ ...b, isActive: false })), newBuffer];
             state.activeBufferId = newBuffer.id;
           });
+
+          // Track in recent files (only for real files, not virtual/diff buffers)
+          if (!isVirtual && !isDiff && !isImage && !isSQLite) {
+            useRecentFilesStore.getState().addOrUpdateRecentFile(path, name);
+          }
 
           return newBuffer.id;
         },
