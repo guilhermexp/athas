@@ -15,7 +15,7 @@ import BottomPane from "../bottom-pane";
 import CommandBar from "../command/command-bar";
 import CommandPalette from "../command/command-palette";
 import type { Diagnostic } from "../diagnostics/diagnostics-pane";
-import DiffViewer from "../diff-viewer";
+import DiffViewer from "../diff-viewer/DiffViewer";
 import CodeEditor from "../editor/code-editor";
 import EditorFooter from "../editor-footer";
 import ExtensionsView from "../extensions-view";
