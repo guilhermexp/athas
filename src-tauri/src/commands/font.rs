@@ -19,26 +19,48 @@ fn get_system_fonts_sync() -> Vec<FontInfo> {
     let mut fonts = Vec::new();
     let mut font_families = HashSet::new();
 
-    // Method 1: Try fc-list with more comprehensive options
-    if let Ok(output) = Command::new("fc-list")
-        .args(&["--format=%{family[0]}:%{style[0]}:%{spacing}\n"])
-        .output()
-    {
+    // Method 1: Try fc-list to get all font families (simplest approach)
+    if let Ok(output) = Command::new("fc-list").args(&[": family"]).output() {
         if output.status.success() {
             let stdout = String::from_utf8_lossy(&output.stdout);
             for line in stdout.lines() {
-                if let Some(font_info) = parse_fc_list_line_detailed(line) {
-                    // Only add unique font families
-                    if !font_families.contains(&font_info.family) {
-                        font_families.insert(font_info.family.clone());
-                        fonts.push(font_info);
+                let family = line.trim().to_string();
+                if !family.is_empty() && !font_families.contains(&family) {
+                    let is_monospace = is_monospace_font(&family);
+                    font_families.insert(family.clone());
+                    fonts.push(FontInfo {
+                        name: family.clone(),
+                        family: family.clone(),
+                        style: "Regular".to_string(),
+                        is_monospace,
+                    });
+                }
+            }
+        }
+    }
+
+    // Method 2: Try fc-list with more comprehensive options if the simple method didn't work
+    if fonts.is_empty() {
+        if let Ok(output) = Command::new("fc-list")
+            .args(&["--format=%{family[0]}:%{style[0]}:%{spacing}\n"])
+            .output()
+        {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                for line in stdout.lines() {
+                    if let Some(font_info) = parse_fc_list_line_detailed(line) {
+                        // Only add unique font families
+                        if !font_families.contains(&font_info.family) {
+                            font_families.insert(font_info.family.clone());
+                            fonts.push(font_info);
+                        }
                     }
                 }
             }
         }
     }
 
-    // Method 2: Fallback - try simpler fc-list format
+    // Method 3: Fallback - try simpler fc-list format
     if fonts.is_empty() {
         if let Ok(output) = Command::new("fc-list")
             .args(&[":", "family", "style", "spacing"])
@@ -58,9 +80,59 @@ fn get_system_fonts_sync() -> Vec<FontInfo> {
         }
     }
 
-    // Method 3: Manual font directory scanning for Arch Linux
+    // Method 4: Manual font directory scanning if fc-list is not available
     if fonts.is_empty() {
         scan_font_directories(&mut fonts, &mut font_families);
+    }
+
+    // If still no fonts found, add common Linux fonts
+    if fonts.is_empty() {
+        let linux_fonts = vec![
+            ("JetBrains Mono", "JetBrains Mono", "Regular", true),
+            ("DejaVu Sans Mono", "DejaVu Sans Mono", "Regular", true),
+            ("Liberation Mono", "Liberation Mono", "Regular", true),
+            ("Ubuntu Mono", "Ubuntu Mono", "Regular", true),
+            ("Noto Sans Mono", "Noto Sans Mono", "Regular", true),
+            ("Droid Sans Mono", "Droid Sans Mono", "Regular", true),
+            ("Source Code Pro", "Source Code Pro", "Regular", true),
+            ("Fira Code", "Fira Code", "Regular", true),
+            ("Hack", "Hack", "Regular", true),
+            ("Inconsolata", "Inconsolata", "Regular", true),
+            ("Roboto Mono", "Roboto Mono", "Regular", true),
+            ("Courier New", "Courier New", "Regular", true),
+            ("Consolas", "Consolas", "Regular", true),
+            ("Space Mono", "Space Mono", "Regular", true),
+            ("IBM Plex Mono", "IBM Plex Mono", "Regular", true),
+            ("Anonymous Pro", "Anonymous Pro", "Regular", true),
+            (
+                "Fantasque Sans Mono",
+                "Fantasque Sans Mono",
+                "Regular",
+                true,
+            ),
+            ("Victor Mono", "Victor Mono", "Regular", true),
+            ("Iosevka", "Iosevka", "Regular", true),
+            ("Input Mono", "Input Mono", "Regular", true),
+            ("Courier", "Courier", "Regular", true),
+            ("DejaVu Sans", "DejaVu Sans", "Regular", false),
+            ("Liberation Sans", "Liberation Sans", "Regular", false),
+            ("Ubuntu", "Ubuntu", "Regular", false),
+            ("Noto Sans", "Noto Sans", "Regular", false),
+            ("Arial", "Arial", "Regular", false),
+            ("Times New Roman", "Times New Roman", "Regular", false),
+        ];
+
+        for (name, family, style, is_monospace) in linux_fonts {
+            if !font_families.contains(family) {
+                font_families.insert(family.to_string());
+                fonts.push(FontInfo {
+                    name: name.to_string(),
+                    family: family.to_string(),
+                    style: style.to_string(),
+                    is_monospace,
+                });
+            }
+        }
     }
 
     // Add common fallback fonts if not found
@@ -71,35 +143,114 @@ fn get_system_fonts_sync() -> Vec<FontInfo> {
 }
 
 #[cfg(target_os = "windows")]
+use std::process::Command;
+
+#[cfg(target_os = "windows")]
 fn get_system_fonts_sync() -> Vec<FontInfo> {
     let mut fonts = Vec::new();
     let mut font_families = HashSet::new();
 
-    // Common Windows fonts - a full implementation would query the registry
-    // or use Windows API to get all installed fonts
-    let windows_fonts = vec![
-        ("Consolas", "Consolas", "Regular", true),
-        ("Courier New", "Courier New", "Regular", true),
-        ("Cascadia Code", "Cascadia Code", "Regular", true),
-        ("Cascadia Mono", "Cascadia Mono", "Regular", true),
-        ("JetBrains Mono", "JetBrains Mono", "Regular", true),
-        ("Fira Code", "Fira Code", "Regular", true),
-        ("Source Code Pro", "Source Code Pro", "Regular", true),
-        ("Arial", "Arial", "Regular", false),
-        ("Times New Roman", "Times New Roman", "Regular", false),
-        ("Calibri", "Calibri", "Regular", false),
-        ("Segoe UI", "Segoe UI", "Regular", false),
-    ];
+    // Try to get fonts using PowerShell to query installed fonts
+    if let Ok(output) = Command::new("powershell")
+        .args(&[
+            "-Command",
+            "[System.Reflection.Assembly]::LoadWithPartialName('System.Drawing'); (New-Object System.Drawing.Text.InstalledFontCollection).Families | Select-Object Name | ForEach-Object { $_.Name }"
+        ])
+        .output()
+    {
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                let family = line.trim().to_string();
+                if !family.is_empty() && !font_families.contains(&family) {
+                    let is_monospace = is_monospace_font(&family);
+                    font_families.insert(family.clone());
+                    fonts.push(FontInfo {
+                        name: family.clone(),
+                        family: family.clone(),
+                        style: "Regular".to_string(),
+                        is_monospace,
+                    });
+                }
+            }
+        }
+    }
 
-    for (name, family, style, is_monospace) in windows_fonts {
-        if !font_families.contains(family) {
-            font_families.insert(family.to_string());
-            fonts.push(FontInfo {
-                name: name.to_string(),
-                family: family.to_string(),
-                style: style.to_string(),
-                is_monospace,
-            });
+    // If PowerShell approach didn't work, try scanning Windows font directories
+    if fonts.is_empty() {
+        let font_dirs = vec![
+            "C:\\Windows\\Fonts",
+            "C:\\Users\\%USERNAME%\\AppData\\Local\\Microsoft\\Windows\\Fonts",
+        ];
+
+        for &dir in &font_dirs {
+            if let Ok(output) = Command::new("dir").args(&["/b", dir]).output() {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    for line in stdout.lines() {
+                        if line.ends_with(".ttf") || line.ends_with(".otf") {
+                            if let Some(name) = line
+                                .strip_suffix(".ttf")
+                                .or_else(|| line.strip_suffix(".otf"))
+                            {
+                                let family = name.to_string();
+                                if !font_families.contains(&family) {
+                                    let is_monospace = is_monospace_font(&family);
+                                    font_families.insert(family.clone());
+                                    fonts.push(FontInfo {
+                                        name: family.clone(),
+                                        family: family.clone(),
+                                        style: "Regular".to_string(),
+                                        is_monospace,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // If still no fonts found, fall back to known Windows fonts
+    if fonts.is_empty() {
+        let windows_fonts = vec![
+            ("JetBrains Mono", "JetBrains Mono", "Regular", true),
+            ("Consolas", "Consolas", "Regular", true),
+            ("Courier New", "Courier New", "Regular", true),
+            ("Cascadia Code", "Cascadia Code", "Regular", true),
+            ("Cascadia Mono", "Cascadia Mono", "Regular", true),
+            ("Fira Code", "Fira Code", "Regular", true),
+            ("Source Code Pro", "Source Code Pro", "Regular", true),
+            ("Hack", "Hack", "Regular", true),
+            ("Inconsolata", "Inconsolata", "Regular", true),
+            ("Ubuntu Mono", "Ubuntu Mono", "Regular", true),
+            ("Roboto Mono", "Roboto Mono", "Regular", true),
+            ("DejaVu Sans Mono", "DejaVu Sans Mono", "Regular", true),
+            ("Liberation Mono", "Liberation Mono", "Regular", true),
+            ("Space Mono", "Space Mono", "Regular", true),
+            ("IBM Plex Mono", "IBM Plex Mono", "Regular", true),
+            ("Anonymous Pro", "Anonymous Pro", "Regular", true),
+            ("Droid Sans Mono", "Droid Sans Mono", "Regular", true),
+            ("Courier", "Courier", "Regular", true),
+            ("Arial", "Arial", "Regular", false),
+            ("Times New Roman", "Times New Roman", "Regular", false),
+            ("Calibri", "Calibri", "Regular", false),
+            ("Segoe UI", "Segoe UI", "Regular", false),
+            ("Verdana", "Verdana", "Regular", false),
+            ("Tahoma", "Tahoma", "Regular", false),
+        ];
+
+        for (name, family, style, is_monospace) in windows_fonts {
+            if !font_families.contains(family) {
+                font_families.insert(family.to_string());
+                fonts.push(FontInfo {
+                    name: name.to_string(),
+                    family: family.to_string(),
+                    style: style.to_string(),
+                    is_monospace,
+                });
+            }
         }
     }
 
