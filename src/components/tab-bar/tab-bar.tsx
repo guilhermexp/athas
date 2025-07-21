@@ -13,6 +13,16 @@ interface TabBarProps {
   paneId?: string; // For split view panes (future feature)
 }
 
+const DRAG_THRESHOLD = 5;
+
+interface TabPosition {
+  index: number;
+  left: number;
+  right: number;
+  width: number;
+  center: number;
+}
+
 const TabBar = ({ paneId }: TabBarProps) => {
   // Get everything from stores
   const {
@@ -28,18 +38,28 @@ const TabBar = ({ paneId }: TabBarProps) => {
   } = useBufferStore();
   const { maxOpenTabs } = usePersistentSettingsStore();
   const { externallyModifiedPaths } = useFileWatcherStore();
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dropTarget, setDropTarget] = useState<number | null>(null);
-  const [dragStartPosition, setDragStartPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [dragCurrentPosition, setDragCurrentPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [isDraggedOutside, setIsDraggedOutside] = useState(false);
+
+  // Drag state
+  const [dragState, setDragState] = useState<{
+    isDragging: boolean;
+    draggedIndex: number | null;
+    dropTargetIndex: number | null;
+    startPosition: { x: number; y: number } | null;
+    currentPosition: { x: number; y: number } | null;
+    tabPositions: TabPosition[];
+    lastValidDropTarget: number | null;
+    dragDirection: "left" | "right" | null;
+  }>({
+    isDragging: false,
+    draggedIndex: null,
+    dropTargetIndex: null,
+    startPosition: null,
+    currentPosition: null,
+    tabPositions: [],
+    lastValidDropTarget: null,
+    dragDirection: null,
+  });
+
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
     position: { x: number; y: number };
@@ -48,6 +68,13 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
   const tabBarRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const dragPreviewRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef(dragState);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    dragStateRef.current = dragState;
+  }, [dragState]);
 
   // Sort buffers: pinned tabs first, then regular tabs
   const sortedBuffers = useMemo(() => {
@@ -95,118 +122,167 @@ const TabBar = ({ paneId }: TabBarProps) => {
     }
   }, [activeBufferId, sortedBuffers]);
 
+  // Cache tab positions when drag starts
+  const cacheTabPositions = (): TabPosition[] => {
+    if (!tabBarRef.current) return [];
+
+    const containerRect = tabBarRef.current.getBoundingClientRect();
+    const positions: TabPosition[] = [];
+
+    tabRefs.current.forEach((tab, index) => {
+      if (tab) {
+        const rect = tab.getBoundingClientRect();
+        const left = rect.left - containerRect.left;
+        const right = rect.right - containerRect.left;
+        positions.push({
+          index,
+          left,
+          right,
+          width: rect.width,
+          center: left + rect.width / 2,
+        });
+      }
+    });
+
+    return positions;
+  };
+
+  // Calculate drop target with improved hysteresis and correct positioning
+  const calculateDropTarget = (
+    mouseX: number,
+    currentDropTarget: number | null,
+    draggedIndex: number,
+    tabPositions: TabPosition[],
+    dragDirection: "left" | "right" | null,
+  ): { dropTarget: number; direction: "left" | "right" | null } => {
+    if (!tabBarRef.current || tabPositions.length === 0) {
+      return { dropTarget: currentDropTarget ?? draggedIndex, direction: dragDirection };
+    }
+
+    const containerRect = tabBarRef.current.getBoundingClientRect();
+    const relativeX = mouseX - containerRect.left;
+
+    let newDropTarget = draggedIndex;
+
+    // before first tab
+    if (relativeX < tabPositions[0]?.left) {
+      newDropTarget = 0;
+    }
+    // after last tab
+    else if (relativeX > tabPositions[tabPositions.length - 1]?.right) {
+      newDropTarget = tabPositions.length;
+    }
+    // we over yo lets do some magic
+    else {
+      for (let i = 0; i < tabPositions.length; i++) {
+        const pos = tabPositions[i];
+
+        if (relativeX >= pos.left && relativeX <= pos.right) {
+          const relativePositionInTab = (relativeX - pos.left) / pos.width;
+          if (currentDropTarget !== null && Math.abs(currentDropTarget - i) <= 1) {
+            const threshold = 0.25;
+
+            if (relativePositionInTab < 0.5 - threshold) {
+              newDropTarget = i;
+            } else if (relativePositionInTab > 0.5 + threshold) {
+              newDropTarget = i + 1;
+            } else {
+              newDropTarget = currentDropTarget;
+            }
+          } else {
+            newDropTarget = relativePositionInTab < 0.5 ? i : i + 1;
+          }
+          break;
+        }
+      }
+    }
+
+    return {
+      dropTarget: newDropTarget,
+      direction: relativeX > (tabPositions[draggedIndex]?.center ?? 0) ? "right" : "left",
+    };
+  };
+
   const handleMouseDown = (e: React.MouseEvent, index: number) => {
     if (e.button !== 0 || (e.target as HTMLElement).closest("button")) {
       return;
     }
 
     e.preventDefault();
-    setDraggedIndex(index);
-    setDragStartPosition({ x: e.clientX, y: e.clientY });
 
-    if (!isDragging) {
-      handleTabClick(sortedBuffers[index].id);
-    }
+    setDragState({
+      isDragging: false,
+      draggedIndex: index,
+      dropTargetIndex: null,
+      startPosition: { x: e.clientX, y: e.clientY },
+      currentPosition: { x: e.clientX, y: e.clientY },
+      tabPositions: [],
+      lastValidDropTarget: null,
+      dragDirection: null,
+    });
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (draggedIndex === null || !dragStartPosition || !tabBarRef.current) return;
+    setDragState(prev => {
+      if (prev.draggedIndex === null || !prev.startPosition) return prev;
 
-    setDragCurrentPosition({ x: e.clientX, y: e.clientY });
+      const currentPosition = { x: e.clientX, y: e.clientY };
+      const distance = Math.sqrt(
+        (currentPosition.x - prev.startPosition.x) ** 2 +
+          (currentPosition.y - prev.startPosition.y) ** 2,
+      );
 
-    const distance = Math.sqrt(
-      (e.clientX - dragStartPosition.x) ** 2 + (e.clientY - dragStartPosition.y) ** 2,
-    );
+      if (!prev.isDragging && distance > DRAG_THRESHOLD) {
+        const tabPositions = cacheTabPositions();
 
-    if (distance > 5 && !isDragging) {
-      setIsDragging(true);
-      // Notify parent about drag start
-      // const draggedBuffer = sortedBuffers[draggedIndex];
-      // TODO: Implement drag start handler if needed
-    }
-
-    if (isDragging) {
-      const rect = tabBarRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      // Check if dragged outside the tab bar
-      const isOutside = x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
-      setIsDraggedOutside(isOutside);
-
-      if (!isOutside) {
-        // Handle internal reordering
-        const tabElements = Array.from(tabBarRef.current.children) as HTMLElement[];
-
-        let newDropTarget: number | null = null;
-        for (let i = 0; i < tabElements.length; i++) {
-          const tabRect = tabElements[i].getBoundingClientRect();
-          const tabX = tabRect.left - rect.left;
-          const tabWidth = tabRect.width;
-
-          // Determine if cursor is in left or right half of the tab
-          if (x >= tabX && x <= tabX + tabWidth) {
-            const relativeX = x - tabX;
-            if (relativeX < tabWidth / 2) {
-              newDropTarget = i;
-            } else {
-              newDropTarget = i + 1;
-            }
-            break;
-          }
-        }
-
-        // Clamp drop target to valid range
-        if (newDropTarget !== null) {
-          newDropTarget = Math.max(0, Math.min(tabElements.length, newDropTarget));
-        }
-
-        if (newDropTarget !== dropTarget) {
-          setDropTarget(newDropTarget);
-        }
-      } else {
-        setDropTarget(null);
+        const newState = {
+          ...prev,
+          isDragging: true,
+          currentPosition,
+          tabPositions,
+          dropTargetIndex: prev.draggedIndex,
+          lastValidDropTarget: prev.draggedIndex,
+        };
+        return newState;
       }
-    }
+
+      if (prev.isDragging) {
+        const { dropTarget, direction } = calculateDropTarget(
+          e.clientX,
+          prev.dropTargetIndex,
+          prev.draggedIndex,
+          prev.tabPositions,
+          prev.dragDirection,
+        );
+
+        const newState = {
+          ...prev,
+          currentPosition,
+          dropTargetIndex: dropTarget,
+          lastValidDropTarget: dropTarget,
+          dragDirection: direction,
+        };
+        return newState;
+      }
+
+      return { ...prev, currentPosition };
+    });
   };
 
-  const handleMouseUp = () => {
-    if (draggedIndex !== null) {
-      if (
-        !isDraggedOutside &&
-        dropTarget !== null &&
-        dropTarget !== draggedIndex &&
-        reorderBuffers
-      ) {
-        // Adjust dropTarget if moving right (forward)
-        let adjustedDropTarget = dropTarget;
-        if (draggedIndex < dropTarget) {
-          adjustedDropTarget = dropTarget - 1;
-        }
-        if (adjustedDropTarget !== draggedIndex) {
-          reorderBuffers(draggedIndex, adjustedDropTarget);
-          const movedBuffer = sortedBuffers[draggedIndex];
-          if (movedBuffer) {
-            handleTabClick(movedBuffer.id);
-          }
-        }
-      }
-      // TODO: Implement drag end handler if needed
-    }
-
-    setIsDragging(false);
-    setDraggedIndex(null);
-    setDropTarget(null);
-    setDragStartPosition(null);
-    setDragCurrentPosition(null);
-    setIsDraggedOutside(false);
+  const handleContextMenu = (e: React.MouseEvent, buffer: Buffer) => {
+    e.preventDefault();
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      buffer,
+    });
   };
 
-  // Add drag data to enable cross-pane tab movement
   const handleDragStart = (e: React.DragEvent, index: number) => {
     const buffer = sortedBuffers[index];
     if (!buffer) return;
 
+    // for the future
     e.dataTransfer.setData(
       "application/tab-data",
       JSON.stringify({
@@ -217,7 +293,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
     );
     e.dataTransfer.effectAllowed = "move";
 
-    // Create drag image
     const dragImage = document.createElement("div");
     dragImage.className =
       "bg-primary-bg border border-border rounded px-2 py-1 text-xs font-mono shadow-lg";
@@ -232,48 +307,71 @@ const TabBar = ({ paneId }: TabBarProps) => {
     }, 0);
   };
 
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    setDraggedIndex(null);
-    setDropTarget(null);
-    setDragStartPosition(null);
-    setDragCurrentPosition(null);
-    setIsDraggedOutside(false);
-    // TODO: Implement drag end handler if needed
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, buffer: Buffer) => {
-    e.preventDefault();
-    setContextMenu({
-      isOpen: true,
-      position: { x: e.clientX, y: e.clientY },
-      buffer,
-    });
-  };
+  const handleDragEnd = () => {};
 
   const closeContextMenu = () => {
     setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, buffer: null });
   };
 
   useEffect(() => {
-    if (draggedIndex === null) return;
+    if (dragState.draggedIndex === null) return;
 
-    const move = (e: MouseEvent) => handleMouseMove(e);
-    const up = () => handleMouseUp();
-    document.addEventListener("mousemove", move);
-    document.addEventListener("mouseup", up);
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      handleMouseMove(e);
+    };
+
+    const handleGlobalMouseUp = () => {
+      const currentState = dragStateRef.current;
+
+      if (
+        currentState.isDragging &&
+        currentState.draggedIndex !== null &&
+        currentState.dropTargetIndex !== null &&
+        reorderBuffers
+      ) {
+        if (currentState.dropTargetIndex !== currentState.draggedIndex) {
+          let adjustedDropTarget = currentState.dropTargetIndex;
+          if (currentState.draggedIndex < currentState.dropTargetIndex) {
+            adjustedDropTarget = currentState.dropTargetIndex - 1;
+          }
+
+          if (adjustedDropTarget !== currentState.draggedIndex) {
+            reorderBuffers(currentState.draggedIndex, adjustedDropTarget);
+
+            const movedBuffer = sortedBuffers[currentState.draggedIndex];
+            if (movedBuffer) {
+              handleTabClick(movedBuffer.id);
+            }
+          }
+        }
+      }
+
+      setDragState({
+        isDragging: false,
+        draggedIndex: null,
+        dropTargetIndex: null,
+        startPosition: null,
+        currentPosition: null,
+        tabPositions: [],
+        lastValidDropTarget: null,
+        dragDirection: null,
+      });
+    };
+
+    document.addEventListener("mousemove", handleGlobalMouseMove);
+    document.addEventListener("mouseup", handleGlobalMouseUp);
 
     return () => {
-      document.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseup", up);
+      document.removeEventListener("mousemove", handleGlobalMouseMove);
+      document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draggedIndex, dragStartPosition, isDragging, dropTarget]);
+  }, [dragState.draggedIndex, reorderBuffers, handleTabClick, sortedBuffers]);
 
-  // Early return after all hooks are declared
   if (buffers.length === 0) {
     return null;
   }
+
+  const { isDragging, draggedIndex, dropTargetIndex, currentPosition } = dragState;
 
   return (
     <>
@@ -282,34 +380,41 @@ const TabBar = ({ paneId }: TabBarProps) => {
           {sortedBuffers.map((buffer, index) => {
             const isActive = buffer.id === activeBufferId;
             const isExternallyModified = externallyModifiedPaths.has(buffer.path);
-            // Drop indicator should be shown before the tab at dropTarget
-            const showDropIndicator =
-              dropTarget === index && draggedIndex !== null && !isDraggedOutside;
+            const isDraggedTab = isDragging && draggedIndex === index;
+
+            // Show drop indicator before this tab
+            const showDropIndicatorBefore =
+              isDragging && dropTargetIndex === index && draggedIndex !== index;
 
             return (
               <React.Fragment key={buffer.id}>
                 {/* Drop indicator before tab */}
-                {showDropIndicator && (
-                  <div className="relative flex items-center">
-                    <div
-                      className="absolute top-0 bottom-0 z-10 h-full w-0.5 bg-accent"
-                      style={{ height: "100%" }}
-                    />
+                {showDropIndicatorBefore && (
+                  <div className="relative">
+                    <div className="drop-indicator absolute top-1 bottom-1 left-0 z-20 w-0.5 bg-accent" />
                   </div>
                 )}
                 <div
                   ref={el => {
                     tabRefs.current[index] = el;
                   }}
+                  className={cn(
+                    "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-0.5",
+                    isActive ? "bg-primary-bg" : "bg-secondary-bg",
+                    buffer.isPinned ? "border-l-2 border-l-blue-500" : "",
+                    isDraggedTab ? "opacity-30" : "opacity-100",
+                  )}
+                  style={{ minWidth: "120px", maxWidth: "400px" }}
+                  onMouseDown={e => handleMouseDown(e, index)}
+                  onClick={() => {
+                    if (!isDragging) {
+                      handleTabClick(buffer.id);
+                    }
+                  }}
+                  onContextMenu={e => handleContextMenu(e, buffer)}
                   draggable={true}
                   onDragStart={e => handleDragStart(e, index)}
                   onDragEnd={handleDragEnd}
-                  className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-0.5 ${
-                    isActive ? "bg-primary-bg" : "bg-secondary-bg"
-                  } ${buffer.isPinned ? "border-l-2 border-l-blue-500" : ""}`}
-                  style={{ minWidth: "120px", maxWidth: "400px" }}
-                  onMouseDown={e => handleMouseDown(e, index)}
-                  onContextMenu={e => handleContextMenu(e, buffer)}
                 >
                   {/* Active tab indicator */}
                   {isActive && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent" />}
@@ -335,7 +440,10 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
                   {/* File Name */}
                   <span
-                    className={`flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs ${isActive ? "text-text" : "text-text-light"} `}
+                    className={cn(
+                      "flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs",
+                      isActive ? "text-text" : "text-text-light",
+                    )}
                     title={buffer.path}
                   >
                     {buffer.name}
@@ -349,13 +457,13 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
                   {/* Close Button */}
                   {!buffer.isPinned && (
-                    <button
+                    <div
                       onClick={e => {
                         e.stopPropagation();
                         handleTabClose(buffer.id);
                       }}
                       className={cn(
-                        "flex-shrink-0 cursor-pointer rounded p-0.5",
+                        "flex-shrink-0 cursor-pointer select-none rounded p-0.5",
                         "text-text-lighter transition-all duration-150",
                         "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
                         {
@@ -364,69 +472,61 @@ const TabBar = ({ paneId }: TabBarProps) => {
                         },
                       )}
                       title={`Close ${buffer.name}`}
+                      draggable={false}
                     >
-                      <X size={12} />
-                    </button>
+                      <X className="pointer-events-none select-none" size={12} />
+                    </div>
                   )}
                 </div>
               </React.Fragment>
             );
           })}
           {/* Drop indicator after the last tab */}
-          {dropTarget === sortedBuffers.length && draggedIndex !== null && !isDraggedOutside && (
-            <div className="relative flex items-center">
-              <div
-                className="absolute top-0 bottom-0 z-10 w-0.5 bg-accent"
-                style={{ height: "100%" }}
-              />
+          {isDragging && dropTargetIndex === sortedBuffers.length && (
+            <div className="relative">
+              <div className="drop-indicator absolute top-1 bottom-1 left-0 z-20 w-0.5 bg-accent" />
             </div>
           )}
         </div>
-        {/* Floating tab name while dragging */}
-        {isDragging && draggedIndex !== null && dragCurrentPosition && (
+
+        {/* Floating tab preview while dragging */}
+        {isDragging && draggedIndex !== null && currentPosition && (
           <div
-            ref={el => {
-              if (el && window) {
-                // Center the floating tab on the cursor
-                const rect = el.getBoundingClientRect();
-                el.style.left = `${dragCurrentPosition.x - rect.width / 2}px`;
-                el.style.top = `${dragCurrentPosition.y - rect.height / 2}px`;
-              }
-            }}
-            className="fixed z-50 flex cursor-pointer items-center gap-1.5 rounded border border-border bg-primary-bg px-2 py-1.5 font-mono text-xs shadow-lg"
+            ref={dragPreviewRef}
+            className="pointer-events-none fixed z-50"
             style={{
-              opacity: 0.95,
-              minWidth: 60,
-              maxWidth: 220,
-              whiteSpace: "nowrap",
-              color: "var(--color-text)",
+              left: currentPosition.x,
+              top: currentPosition.y,
+              transform: "translate(0, 0)",
             }}
           >
-            {/* File Icon */}
-            <span className="flex-shrink-0">
-              {sortedBuffers[draggedIndex].path === "extensions://marketplace" ? (
-                <Package size={12} className="text-blue-500" />
-              ) : sortedBuffers[draggedIndex].isSQLite ? (
-                <Database size={12} className="text-text-lighter" />
-              ) : (
-                <FileIcon
-                  fileName={sortedBuffers[draggedIndex].name}
-                  isDir={false}
-                  className="text-text-lighter"
-                  size={12}
-                />
+            <div className="tab-drag-preview flex items-center gap-1.5 rounded border border-border bg-primary-bg px-2 py-1 font-mono text-xs opacity-90">
+              {/* File Icon */}
+              <span className="grid size-3 shrink-0 place-content-center py-3">
+                {sortedBuffers[draggedIndex].path === "extensions://marketplace" ? (
+                  <Package size={12} className="text-blue-500" />
+                ) : sortedBuffers[draggedIndex].isSQLite ? (
+                  <Database size={12} className="text-text-lighter" />
+                ) : (
+                  <FileIcon
+                    fileName={sortedBuffers[draggedIndex].name}
+                    isDir={false}
+                    className="text-text-lighter"
+                    size={12}
+                  />
+                )}
+              </span>
+              {/* Pin indicator */}
+              {sortedBuffers[draggedIndex].isPinned && (
+                <Pin size={8} className="flex-shrink-0 text-blue-500" />
               )}
-            </span>
-            {/* Pin indicator */}
-            {sortedBuffers[draggedIndex].isPinned && (
-              <Pin size={8} className="flex-shrink-0 text-blue-500" />
-            )}
-            <span className="truncate">
-              {sortedBuffers[draggedIndex].name}
-              {sortedBuffers[draggedIndex].isDirty && (
-                <span className="ml-1 text-text-lighter">•</span>
-              )}
-            </span>
+              <span className="max-w-[200px] truncate text-text">
+                {sortedBuffers[draggedIndex].name}
+                {sortedBuffers[draggedIndex].isDirty && (
+                  <span className="ml-1 text-text-lighter">•</span>
+                )}
+              </span>
+            </div>
           </div>
         )}
       </div>
