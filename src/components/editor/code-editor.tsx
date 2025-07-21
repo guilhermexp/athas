@@ -14,10 +14,8 @@ import { useFileSystemStore } from "../../stores/file-system-store";
 import FindBar from "../find-bar";
 import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
 import { CompletionDropdown } from "./completion-dropdown";
-import { EditorContent } from "./editor-content";
 import { EditorStyles } from "./editor-styles";
 import { HoverTooltip } from "./hover-tooltip";
-import { LineNumbers } from "./line-numbers";
 import { QuickEditInline } from "./quick-edit-inline";
 
 // import type { VimCommandLineRef } from "../vim-command-line"; // Unused for now
@@ -33,7 +31,7 @@ interface CodeEditorProps {
 
 export interface CodeEditorRef {
   editor: HTMLDivElement | null;
-  textarea: HTMLDivElement | null;
+  textarea: HTMLTextAreaElement | null;
 }
 
 // Main CodeEditor Component
@@ -174,18 +172,16 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
   // Effect to handle search navigation
   useEffect(() => {
-    if (searchMatches.length > 0 && currentMatchIndex >= 0 && vimEngine) {
+    if (searchMatches.length > 0 && currentMatchIndex >= 0) {
       const match = searchMatches[currentMatchIndex];
-      if (match) {
-        vimEngine.setState({ cursorPosition: match.start });
-        // Scroll to position
-        if (editorRef.current) {
-          const editor = editorRef.current;
-          const textarea = editor.querySelector('[contenteditable="true"]') as HTMLDivElement;
-          if (textarea) {
-            textarea.focus();
-            // Implement scroll to cursor position
-          }
+      if (match && editorRef.current) {
+        const textarea = editorRef.current.querySelector("textarea") as HTMLTextAreaElement;
+        if (textarea) {
+          textarea.setSelectionRange(match.start, match.end);
+          textarea.focus();
+        }
+        if (vimEngine) {
+          vimEngine.setState({ cursorPosition: match.start });
         }
       }
     }
@@ -204,7 +200,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
     ref,
     () => ({
       editor: editorRef.current,
-      textarea: editorRef.current?.querySelector('[contenteditable="true"]') as HTMLDivElement,
+      textarea: editorRef.current?.querySelector("textarea") as HTMLTextAreaElement,
     }),
     [],
   );
@@ -233,12 +229,81 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
           {/* Main editor layout */}
           <div className="flex h-full">
-            {/* Line numbers */}
-            {lineNumbers && <LineNumbers />}
-
-            {/* Editor content area */}
+            {/* Editor content area with CSS line numbers */}
             <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
-              <EditorContent />
+              <div className="relative h-full">
+                <textarea
+                  ref={el => {
+                    if (editorRef.current && el) {
+                      (editorRef.current as any).textarea = el;
+                    }
+                  }}
+                  value={value}
+                  onChange={e => onChange(e.target.value)}
+                  className="editor-textarea scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 absolute inset-0 h-full w-full resize-none overflow-auto border-none bg-transparent font-mono text-[var(--color-text)] outline-none"
+                  style={{
+                    fontSize: `${fontSize}px`,
+                    lineHeight: `${fontSize * 1.4}px`,
+                    fontFamily: "monospace",
+                    tabSize: tabSize,
+                    whiteSpace: wordWrap ? "pre-wrap" : "pre",
+                    wordBreak: wordWrap ? "break-word" : "normal",
+                    overflowWrap: wordWrap ? "break-word" : "normal",
+                    padding: lineNumbers
+                      ? `8px 8px 50vh ${Math.max(3, Math.floor(Math.log10(Math.max(1, value.split("\n").length))) + 1) * fontSize * 0.6 + 32}px`
+                      : "8px 8px 50vh 8px",
+                  }}
+                  spellCheck={false}
+                />
+
+                {/* CSS-based line numbers */}
+                {lineNumbers && (
+                  <div
+                    className="line-numbers absolute top-0 left-0 select-none overflow-hidden font-mono"
+                    style={{
+                      fontSize: `${fontSize}px`,
+                      lineHeight: `${fontSize * 1.4}px`,
+                      fontFamily: "monospace",
+                      color: "var(--tw-text-lighter)",
+                      padding: "8px 8px 50vh 8px",
+                      textAlign: "right",
+                      width: `${Math.max(3, Math.floor(Math.log10(Math.max(1, value.split("\n").length))) + 1) * fontSize * 0.6 + 24}px`,
+                      borderRight: "1px solid var(--border)",
+                      backgroundColor: "var(--terniary-bg)",
+                      fontFeatureSettings: '"tnum"',
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {value.split("\n").map((_, index) => (
+                      <div
+                        key={index + 1}
+                        className="line-number cursor-pointer transition-colors hover:text-[var(--color-text)]"
+                        style={{
+                          height: `${fontSize * 1.4}px`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          paddingRight: "8px",
+                        }}
+                        onClick={() => {
+                          const textarea = editorRef.current?.querySelector(
+                            "textarea",
+                          ) as HTMLTextAreaElement;
+                          if (textarea) {
+                            const lines = value.split("\n");
+                            const lineStart =
+                              lines.slice(0, index).join("\n").length + (index > 0 ? 1 : 0);
+                            textarea.setSelectionRange(lineStart, lineStart + lines[index].length);
+                            textarea.focus();
+                          }
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* LSP Completion Dropdown - temporarily disabled */}
               <CompletionDropdown />
