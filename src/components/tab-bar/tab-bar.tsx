@@ -208,6 +208,8 @@ const TabBar = ({ paneId }: TabBarProps) => {
       return;
     }
 
+    handleTabClick(sortedBuffers[index].id);
+
     e.preventDefault();
 
     setDragState({
@@ -406,11 +408,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
                   )}
                   style={{ minWidth: "120px", maxWidth: "400px" }}
                   onMouseDown={e => handleMouseDown(e, index)}
-                  onClick={() => {
-                    if (!isDragging) {
-                      handleTabClick(buffer.id);
-                    }
-                  }}
                   onContextMenu={e => handleContextMenu(e, buffer)}
                   draggable={true}
                   onDragStart={e => handleDragStart(e, index)}
