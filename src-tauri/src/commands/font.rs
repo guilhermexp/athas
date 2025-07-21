@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::process::Command;
 
 #[cfg(target_os = "linux")]
 use std::fs;
+#[cfg(target_os = "linux")]
+use std::process::Command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FontInfo {
@@ -91,6 +92,55 @@ fn get_system_fonts_sync() -> Vec<FontInfo> {
     ];
 
     for (name, family, style, is_monospace) in windows_fonts {
+        if !font_families.contains(family) {
+            font_families.insert(family.to_string());
+            fonts.push(FontInfo {
+                name: name.to_string(),
+                family: family.to_string(),
+                style: style.to_string(),
+                is_monospace,
+            });
+        }
+    }
+
+    // Add common fallback fonts if not found
+    add_common_fonts(&mut fonts, &font_families);
+
+    fonts.sort_by(|a, b| a.family.cmp(&b.family));
+    filter_validated_fonts(fonts)
+}
+
+#[cfg(target_os = "macos")]
+fn get_system_fonts_sync() -> Vec<FontInfo> {
+    let mut fonts = Vec::new();
+    let mut font_families = HashSet::new();
+
+    // Common macOS fonts
+    let macos_fonts = vec![
+        ("Monaco", "Monaco", "Regular", true),
+        ("Menlo", "Menlo", "Regular", true),
+        ("SF Mono", "SF Mono", "Regular", true),
+        ("Consolas", "Consolas", "Regular", true),
+        ("Courier New", "Courier New", "Regular", true),
+        ("JetBrains Mono", "JetBrains Mono", "Regular", true),
+        ("Fira Code", "Fira Code", "Regular", true),
+        ("Source Code Pro", "Source Code Pro", "Regular", true),
+        ("Cascadia Code", "Cascadia Code", "Regular", true),
+        ("Cascadia Mono", "Cascadia Mono", "Regular", true),
+        ("Hack", "Hack", "Regular", true),
+        ("Inconsolata", "Inconsolata", "Regular", true),
+        ("Ubuntu Mono", "Ubuntu Mono", "Regular", true),
+        ("Roboto Mono", "Roboto Mono", "Regular", true),
+        ("DejaVu Sans Mono", "DejaVu Sans Mono", "Regular", true),
+        ("Liberation Mono", "Liberation Mono", "Regular", true),
+        ("Arial", "Arial", "Regular", false),
+        ("Helvetica", "Helvetica", "Regular", false),
+        ("Times New Roman", "Times New Roman", "Regular", false),
+        ("Calibri", "Calibri", "Regular", false),
+        ("San Francisco", "San Francisco", "Regular", false),
+    ];
+
+    for (name, family, style, is_monospace) in macos_fonts {
         if !font_families.contains(family) {
             font_families.insert(family.to_string());
             fonts.push(FontInfo {
@@ -438,8 +488,6 @@ pub async fn validate_font(font_family: String) -> Result<bool, String> {
         // Fallback: check if font exists in our detected fonts list
         let fonts = get_system_fonts_sync();
         let is_valid = fonts.iter().any(|font| font.family == font_family);
-        return Ok(is_valid);
+        Ok(is_valid)
     }
-
-    Ok(false)
 }
