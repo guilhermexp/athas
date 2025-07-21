@@ -1,12 +1,11 @@
 import { AlertCircle, Terminal as TerminalIcon } from "lucide-react";
-import { useBufferStore } from "../stores/buffer-store";
+import { useActiveBuffer } from "../stores/buffer-store";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
 import { useUIState } from "../stores/ui-state-store";
 import { getFilenameFromPath, getLanguageFromFilename } from "../utils/file-utils";
 
 const EditorFooter = () => {
-  const { activeBufferId, buffers } = useBufferStore();
-  const activeBuffer = buffers.find(b => b.id === activeBufferId);
+  const activeBuffer = useActiveBuffer();
   const { coreFeatures } = usePersistentSettingsStore();
   const uiState = useUIState();
   return (

@@ -12,8 +12,9 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useBufferStore } from "../stores/buffer-store";
+import { useActiveBuffer, useBufferStore } from "../stores/buffer-store";
 import { useFileSystemStore } from "../stores/file-system-store";
+import { cn } from "../utils/cn";
 import { type GitDiff, type GitDiffLine, type GitHunk, getFileDiff } from "../utils/git";
 
 interface DiffViewerProps {
@@ -88,8 +89,8 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
   const statusBadge = (text: string, color: string) => (
     <span className={`ml-2 rounded px-2 py-0.5 font-bold text-xs ${color}`}>{text}</span>
   );
-  const { activeBufferId, buffers, closeBuffer, updateBufferContent } = useBufferStore();
-  const activeBuffer = buffers.find(b => b.id === activeBufferId);
+  const { closeBuffer, updateBufferContent } = useBufferStore();
+  const activeBuffer = useActiveBuffer();
   const { rootFolderPath } = useFileSystemStore();
 
   const [collapsedHunks, setCollapsedHunks] = useState<Set<number>>(new Set());
@@ -192,13 +193,18 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
   if (!diff) {
     return (
       <div className="flex h-full flex-col bg-primary-bg">
-        <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-4 py-2">
+        <div
+          className={cn(
+            "flex items-center justify-between border-border",
+            "border-b bg-secondary-bg px-4 py-2",
+          )}
+        >
           <h3 className="font-medium text-sm text-text">Diff Viewer</h3>
           <div className="flex items-center gap-2">
             <button
               onClick={refreshDiff}
               disabled={isRefreshing}
-              className="p-1 text-text-lighter hover:text-text disabled:opacity-50"
+              className={cn("p-1 text-text-lighter hover:text-text", "disabled:opacity-50")}
               title="Refresh diff"
             >
               <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
@@ -225,7 +231,12 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
     return (
       <div className="flex h-full select-none flex-col bg-primary-bg">
         {/* Header */}
-        <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-4 py-2">
+        <div
+          className={cn(
+            "flex items-center justify-between border-border",
+            "border-b bg-secondary-bg px-4 py-2",
+          )}
+        >
           <div className="flex items-center gap-2">
             {diff.is_new ? (
               <FilePlus size={14} className="text-green-500" />
@@ -249,7 +260,9 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
             >
               -
             </button>
-            <span className="min-w-[50px] px-2 text-center font-mono text-text-lighter text-xs">
+            <span
+              className={cn("min-w-[50px] px-2 text-center font-mono", "text-text-lighter text-xs")}
+            >
               {Math.round(zoom * 100)}%
             </span>
             <button
@@ -276,7 +289,12 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
           </div>
         </div>
         {/* Image Diff Content */}
-        <div className="flex flex-1 items-center justify-center gap-8 overflow-auto bg-[var(--editor-bg)]">
+        <div
+          className={cn(
+            "flex flex-1 items-center justify-center gap-8",
+            "overflow-auto bg-[var(--editor-bg)]",
+          )}
+        >
           {/* Side-by-side for modified, single for added/deleted */}
           {diff.is_new && !diff.old_blob_base64 ? (
             // Added
@@ -317,7 +335,12 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
           )}
         </div>
         {/* Footer/Info */}
-        <div className="flex items-center gap-4 border-border border-t bg-secondary-bg px-4 py-2 text-text-lighter text-xs">
+        <div
+          className={cn(
+            "flex items-center gap-4 border-border border-t",
+            "bg-secondary-bg px-4 py-2 text-text-lighter text-xs",
+          )}
+        >
           <span>Zoom: {Math.round(zoom * 100)}%</span>
           <span>Type: {ext}</span>
           <span>Use +/- buttons to zoom in/out</span>
@@ -398,17 +421,19 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
             >
               {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
             </button>
-            <span className="rounded bg-blue-500/10 px-2 py-1 font-mono text-blue-400 text-xs">
+            <span
+              className={cn("rounded bg-blue-500/10 px-2 py-1", "font-mono text-blue-400 text-xs")}
+            >
               {hunk.header.content}
             </span>
             <div className="flex items-center gap-2 text-xs">
               {removedCount > 0 && (
-                <span className="rounded bg-red-500/10 px-2 py-0.5 text-red-400">
+                <span className={cn("rounded bg-red-500/10 px-2 py-0.5", "text-red-400")}>
                   -{removedCount}
                 </span>
               )}
               {addedCount > 0 && (
-                <span className="rounded bg-green-500/10 px-2 py-0.5 text-green-400">
+                <span className={cn("rounded bg-green-500/10 px-2 py-0.5", "text-green-400")}>
                   +{addedCount}
                 </span>
               )}
@@ -421,7 +446,11 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
                   <button
                     key={`stage-${hunk.id}-${activeBuffer?.path}`}
                     onClick={() => onStageHunk(createGitHunk(hunk, diff?.file_path || ""))}
-                    className="flex items-center gap-1 rounded bg-green-500/20 px-2 py-1 text-green-400 text-xs transition-colors hover:bg-green-500/30"
+                    className={cn(
+                      "flex items-center gap-1 rounded bg-green-500/20",
+                      "px-2 py-1 text-green-400 text-xs transition-colors",
+                      "hover:bg-green-500/30",
+                    )}
                     title="Stage hunk"
                   >
                     <Plus size={10} />
@@ -432,7 +461,11 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
                   <button
                     key={`unstage-${hunk.id}-${activeBuffer?.path}`}
                     onClick={() => onUnstageHunk(createGitHunk(hunk, diff?.file_path || ""))}
-                    className="flex items-center gap-1 rounded bg-red-500/20 px-2 py-1 text-red-400 text-xs transition-colors hover:bg-red-500/30"
+                    className={cn(
+                      "flex items-center gap-1 rounded bg-red-500/20",
+                      "px-2 py-1 text-red-400 text-xs transition-colors",
+                      "hover:bg-red-500/30",
+                    )}
                     title="Unstage hunk"
                   >
                     <Minus size={10} />
@@ -443,7 +476,10 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
             )}
             <button
               onClick={() => copyLineContent(hunk.header.content)}
-              className="rounded p-1 text-text-lighter transition-colors hover:bg-hover hover:text-text"
+              className={cn(
+                "rounded p-1 text-text-lighter transition-colors",
+                "hover:bg-hover hover:text-text",
+              )}
               title="Copy hunk header"
             >
               <Copy size={10} />
@@ -459,11 +495,11 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
       const base = "group hover:bg-hover/50 transition-colors border-l-2";
       switch (line.line_type) {
         case "added":
-          return `${base} bg-green-500/5 border-green-500/30 hover:bg-green-500/10`;
+          return cn(base, "bg-green-500/5 border-green-500/30 hover:bg-green-500/10");
         case "removed":
-          return `${base} bg-red-500/5 border-red-500/30 hover:bg-red-500/10`;
+          return cn(base, "bg-red-500/5 border-red-500/30 hover:bg-red-500/10");
         default:
-          return `${base} border-transparent`;
+          return cn(base, "border-transparent");
       }
     };
 
@@ -483,12 +519,16 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
 
     if (viewMode === "split") {
       return (
-        <div key={`${hunkId}-${index}`} className={`flex font-mono text-xs ${getLineClasses()}`}>
+        <div key={`${hunkId}-${index}`} className={cn("flex font-mono text-xs", getLineClasses())}>
           {/* Old/Left Side */}
           <div className="flex flex-1 border-border border-r">
             {/* Old Line Number */}
             <div
-              className={`w-12 select-none px-2 py-1 text-right text-text-lighter ${getLineNumberBg()} border-border border-r`}
+              className={cn(
+                "w-12 select-none px-2 py-1 text-right text-text-lighter",
+                getLineNumberBg(),
+                "border-border border-r",
+              )}
             >
               {line.line_type !== "added" ? oldNum : ""}
             </div>
@@ -509,7 +549,11 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
           <div className="flex flex-1">
             {/* New Line Number */}
             <div
-              className={`w-12 select-none px-2 py-1 text-right text-text-lighter ${getLineNumberBg()} border-border border-r`}
+              className={cn(
+                "w-12 select-none px-2 py-1 text-right text-text-lighter",
+                getLineNumberBg(),
+                "border-border border-r",
+              )}
             >
               {line.line_type !== "removed" ? newNum : ""}
             </div>
@@ -526,10 +570,18 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-1 px-2 opacity-0 transition-opacity group-hover:opacity-100">
+            <div
+              className={cn(
+                "flex items-center gap-1 px-2 opacity-0",
+                "transition-opacity group-hover:opacity-100",
+              )}
+            >
               <button
                 onClick={() => copyLineContent(line.content)}
-                className="rounded p-1 text-text-lighter transition-colors hover:bg-hover hover:text-text"
+                className={cn(
+                  "rounded p-1 text-text-lighter transition-colors",
+                  "hover:bg-hover hover:text-text",
+                )}
                 title="Copy line"
               >
                 <Copy size={10} />
@@ -565,17 +617,27 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
 
     // Unified view (original implementation)
     return (
-      <div key={`${hunkId}-${index}`} className={`flex font-mono text-xs ${getLineClasses()}`}>
+      <div key={`${hunkId}-${index}`} className={cn("flex font-mono text-xs", getLineClasses())}>
         {/* Line Numbers */}
-        <div className={`flex ${getLineNumberBg()} border-border border-r`}>
+        <div className={cn("flex", getLineNumberBg(), "border-border border-r")}>
           <div className="w-12 select-none px-2 py-1 text-right text-text-lighter">{oldNum}</div>
-          <div className="w-12 select-none border-border border-l px-2 py-1 text-right text-text-lighter">
+          <div
+            className={cn(
+              "w-12 select-none border-border border-l px-2 py-1",
+              "text-right text-text-lighter",
+            )}
+          >
             {newNum}
           </div>
         </div>
 
         {/* Change Indicator */}
-        <div className="flex w-8 items-center justify-center border-border border-r bg-secondary-bg py-1">
+        <div
+          className={cn(
+            "flex w-8 items-center justify-center border-border",
+            "border-r bg-secondary-bg py-1",
+          )}
+        >
           {line.line_type === "added" && (
             <span className="font-bold text-green-500 text-sm">+</span>
           )}
@@ -600,10 +662,18 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 px-2 opacity-0 transition-opacity group-hover:opacity-100">
+        <div
+          className={cn(
+            "flex items-center gap-1 px-2 opacity-0",
+            "transition-opacity group-hover:opacity-100",
+          )}
+        >
           <button
             onClick={() => copyLineContent(line.content)}
-            className="rounded p-1 text-text-lighter transition-colors hover:bg-hover hover:text-text"
+            className={cn(
+              "rounded p-1 text-text-lighter transition-colors",
+              "hover:bg-hover hover:text-text",
+            )}
             title="Copy line"
           >
             <Copy size={10} />
@@ -621,7 +691,12 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
   return (
     <div className="flex h-full flex-col bg-primary-bg">
       {/* Header */}
-      <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-4 py-2">
+      <div
+        className={cn(
+          "flex items-center justify-between border-border",
+          "border-b bg-secondary-bg px-4 py-2",
+        )}
+      >
         <div className="flex items-center gap-2">
           {getFileIcon()}
           <div>
@@ -649,14 +724,17 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode(viewMode === "unified" ? "split" : "unified")}
-            className="rounded bg-hover px-2 py-1 text-text text-xs transition-colors hover:bg-border"
+            className={cn(
+              "rounded bg-hover px-2 py-1 text-text text-xs",
+              "transition-colors hover:bg-border",
+            )}
             title={`Switch to ${viewMode === "unified" ? "split" : "unified"} view`}
           >
             {viewMode === "unified" ? "Split" : "Unified"}
           </button>
           <button
             onClick={onClose}
-            className="rounded p-1 text-text-lighter hover:bg-hover hover:text-text"
+            className={cn("rounded p-1 text-text-lighter", "hover:bg-hover hover:text-text")}
             title="Close diff viewer"
           >
             <X size={14} />
@@ -701,7 +779,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
 
       {/* Summary Footer */}
       <div className="border-border border-t bg-secondary-bg px-4 py-2">
-        <div className="flex items-center gap-4 text-text-lighter text-xs">
+        <div className={cn("flex items-center gap-4 text-text-lighter text-xs")}>
           <span>Total lines: {diff.lines.length}</span>
           {addedLines > 0 && (
             <span className="flex items-center gap-1">

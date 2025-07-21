@@ -291,3 +291,8 @@ export const useBufferStore = create(
     ),
   ),
 );
+
+// Selectors
+export const useActiveBuffer = () => {
+  return useBufferStore(state => state.buffers.find(b => b.id === state.activeBufferId) || null);
+};

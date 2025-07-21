@@ -3,7 +3,7 @@ import { createCoreFeaturesList } from "../../constants/core-features";
 import { ProjectNameMenu } from "../../hooks/use-context-menus";
 import { useKeyboardShortcutsWrapper } from "../../hooks/use-keyboard-shortcuts-wrapper";
 import { useMenuEventsWrapper } from "../../hooks/use-menu-events-wrapper";
-import { useBufferStore } from "../../stores/buffer-store";
+import { useActiveBuffer } from "../../stores/buffer-store";
 import { useFileSystemStore } from "../../stores/file-system-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import { useSettingsStore } from "../../stores/settings-store";
@@ -28,8 +28,7 @@ import CustomTitleBarWithSettings from "../window/custom-title-bar";
 import { MainSidebar } from "./main-sidebar";
 
 export function MainLayout() {
-  const { activeBufferId, buffers } = useBufferStore();
-  const activeBuffer = buffers.find(b => b.id === activeBufferId);
+  const activeBuffer = useActiveBuffer();
 
   const { isSidebarVisible } = useUIState();
   const { isAIChatVisible, coreFeatures: persistentCoreFeatures } = usePersistentSettingsStore();
