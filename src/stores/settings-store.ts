@@ -17,6 +17,7 @@ export interface Settings {
   autoSave: boolean;
   aiCompletion: boolean;
   sidebarPosition: "left" | "right";
+  mouseWheelZoom: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -31,6 +32,7 @@ const defaultSettings: Settings = {
   autoSave: true,
   aiCompletion: true,
   sidebarPosition: "left",
+  mouseWheelZoom: false,
 };
 
 // Theme class constants
