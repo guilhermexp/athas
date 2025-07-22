@@ -1,6 +1,8 @@
 import type React from "react";
 import { useCallback } from "react";
-import { useCodeEditorStore } from "../stores/code-editor-store";
+import { useEditorCompletionStore } from "../stores/editor-completion-store";
+import { useEditorContentStore } from "../stores/editor-content-store";
+import { useEditorSettingsStore } from "../stores/editor-settings-store";
 import { isMac } from "../utils/platform";
 
 export const useEditorKeyboard = (
@@ -8,18 +10,16 @@ export const useEditorKeyboard = (
   onChange: (value: string) => void,
 ) => {
   // Store subscriptions
-  const isLspCompletionVisible = useCodeEditorStore(state => state.isLspCompletionVisible);
-  const lspCompletions = useCodeEditorStore(state => state.lspCompletions);
-  const selectedLspIndex = useCodeEditorStore(state => state.selectedLspIndex);
-  const disabled = useCodeEditorStore(state => state.disabled);
-  const tabSize = useCodeEditorStore(state => state.tabSize);
-  const language = useCodeEditorStore(state => state.language);
-  const value = useCodeEditorStore(state => state.value);
-
-  // Store actions
-  const nextLspCompletion = useCodeEditorStore(state => state.nextLspCompletion);
-  const prevLspCompletion = useCodeEditorStore(state => state.prevLspCompletion);
-  const setIsLspCompletionVisible = useCodeEditorStore(state => state.setIsLspCompletionVisible);
+  const { value, language } = useEditorContentStore();
+  const { disabled, tabSize } = useEditorSettingsStore();
+  const {
+    isLspCompletionVisible,
+    lspCompletions,
+    selectedLspIndex,
+    nextLspCompletion,
+    prevLspCompletion,
+    setIsLspCompletionVisible,
+  } = useEditorCompletionStore();
 
   // Apply LSP completion (this should be passed from parent for now)
   const applyLspCompletion = useCallback(

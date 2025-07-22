@@ -1,5 +1,8 @@
 import { useEffect } from "react";
-import { useCodeEditorStore } from "../stores/code-editor-store";
+import { useEditorCompletionStore } from "../stores/editor-completion-store";
+import { useEditorContentStore } from "../stores/editor-content-store";
+import { useEditorSearchStore } from "../stores/editor-search-store";
+import { useEditorSettingsStore } from "../stores/editor-settings-store";
 
 interface UseEditorSyncProps {
   value: string;
@@ -18,19 +21,11 @@ interface UseEditorSyncProps {
 }
 
 export const useEditorSync = (props: UseEditorSyncProps) => {
-  const setValue = useCodeEditorStore(state => state.setValue);
-  const setFilename = useCodeEditorStore(state => state.setFilename);
-  const setFilePath = useCodeEditorStore(state => state.setFilePath);
-  const setFontSize = useCodeEditorStore(state => state.setFontSize);
-  const setFontFamily = useCodeEditorStore(state => state.setFontFamily);
-  const setTabSize = useCodeEditorStore(state => state.setTabSize);
-  const setWordWrap = useCodeEditorStore(state => state.setWordWrap);
-  const setLineNumbers = useCodeEditorStore(state => state.setLineNumbers);
-  const setDisabled = useCodeEditorStore(state => state.setDisabled);
-  const setAiCompletion = useCodeEditorStore(state => state.setAiCompletion);
-  const setSearchQuery = useCodeEditorStore(state => state.setSearchQuery);
-  const setSearchMatches = useCodeEditorStore(state => state.setSearchMatches);
-  const setCurrentMatchIndex = useCodeEditorStore(state => state.setCurrentMatchIndex);
+  const { setValue, setFilename, setFilePath } = useEditorContentStore();
+  const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers, setDisabled } =
+    useEditorSettingsStore();
+  const { setSearchQuery, setSearchMatches, setCurrentMatchIndex } = useEditorSearchStore();
+  const { setAiCompletion } = useEditorCompletionStore();
 
   // Sync all props with store
   useEffect(() => {

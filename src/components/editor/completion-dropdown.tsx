@@ -1,3 +1,4 @@
+import { useEditorCompletionStore } from "../../stores/editor-completion-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export function CompletionDropdown() {
@@ -6,9 +7,9 @@ export function CompletionDropdown() {
     lspCompletions,
     selectedLspIndex,
     completionPosition,
-    setLspCompletion,
-    editorRef,
-  } = useEditorInstanceStore();
+    setIsLspCompletionVisible,
+  } = useEditorCompletionStore();
+  const { editorRef } = useEditorInstanceStore();
 
   if (!isLspCompletionVisible) return null;
 
@@ -17,24 +18,24 @@ export function CompletionDropdown() {
     if (editorRef?.current) {
       // This would contain the actual completion application logic
       // For now, just close the dropdown
-      setLspCompletion(false);
+      setIsLspCompletionVisible(false);
     }
   };
 
   // const handleClose = () => {
-  //   setLspCompletion(false);
+  //   setIsLspCompletionVisible(false);
   // };
 
   return (
     <div
       className="fixed z-50 min-w-[200px] max-w-[400px] rounded border border-border bg-primary-bg shadow-lg"
       style={{
-        left: completionPosition.x,
-        top: completionPosition.y,
+        left: completionPosition.left,
+        top: completionPosition.top,
       }}
     >
       <div className="max-h-[300px] overflow-y-auto">
-        {lspCompletions.map((item, index) => (
+        {lspCompletions.map((item: any, index: number) => (
           <div
             key={index}
             className={`cursor-pointer px-3 py-2 text-sm hover:bg-hover ${

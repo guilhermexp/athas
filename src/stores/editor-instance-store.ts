@@ -15,40 +15,10 @@ const initialState = {
   editorRef: null as RefObject<HTMLDivElement | null> | null,
   lineNumbersRef: null as RefObject<HTMLDivElement | null> | null,
 
-  // LSP completion state
-  isLspCompletionVisible: false,
-  lspCompletions: [] as any[],
-  selectedLspIndex: 0,
-  completionPosition: { x: 0, y: 0 },
-
-  // Hover state
-  hoverInfo: null as any,
-
   // Inline assistant state
   isInlineAssistantVisible: false,
   selectedText: "",
   assistantCursorPosition: { x: 0, y: 0 },
-
-  // Event handlers
-  handleUserInteraction: (() => {}) as () => void,
-  handleScroll: (() => {}) as (e: React.UIEvent<HTMLDivElement>) => void,
-  handleHover: (() => {}) as (e: React.MouseEvent<HTMLDivElement>) => void,
-  handleMouseEnter: (() => {}) as (e: React.MouseEvent<HTMLDivElement>) => void,
-  handleMouseLeave: (() => {}) as (e: React.MouseEvent<HTMLDivElement>) => void,
-  onCursorPositionChange: undefined as ((position: number) => void) | undefined,
-  onKeyDown: undefined as ((e: React.KeyboardEvent<HTMLDivElement>) => void) | undefined,
-
-  // LSP
-  isLanguageSupported: undefined as ((filePath: string) => boolean) | undefined,
-  handleLspCompletion: (() => {}) as (
-    pos: number,
-    editorRef: RefObject<HTMLDivElement | null>,
-  ) => void,
-
-  // Inline assistant
-  setSelectedText: (() => {}) as (text: string) => void,
-  setAssistantCursorPosition: (() => {}) as (pos: { x: number; y: number }) => void,
-  setIsInlineAssistantVisible: (() => {}) as (visible: boolean) => void,
 
   // UI props
   placeholder: undefined as string | undefined,
@@ -66,41 +36,8 @@ export const useEditorInstanceStore = create(
     }) => set(refs),
     setContent: (value: string, onChange: (value: string) => void) => set({ value, onChange }),
     setFileInfo: (filePath: string, filename: string) => set({ filePath, filename }),
-    setHandlers: (
-      handlers: Partial<{
-        handleUserInteraction: () => void;
-        handleScroll: (e: React.UIEvent<HTMLDivElement>) => void;
-        handleHover: (e: React.MouseEvent<HTMLDivElement>) => void;
-        handleMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => void;
-        handleMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => void;
-        onCursorPositionChange: (position: number) => void;
-        onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
-        isLanguageSupported: (filePath: string) => boolean;
-        handleLspCompletion: (pos: number, editorRef: RefObject<HTMLDivElement | null>) => void;
-        setSelectedText: (text: string) => void;
-        setAssistantCursorPosition: (pos: { x: number; y: number }) => void;
-        setIsInlineAssistantVisible: (visible: boolean) => void;
-      }>,
-    ) => set(handlers),
     setUIProps: (props: { placeholder?: string; disabled: boolean; className?: string }) =>
       set(props),
-
-    // LSP actions
-    setLspCompletion: (
-      visible: boolean,
-      completions: any[] = [],
-      selectedIndex: number = 0,
-      position: { x: number; y: number } = { x: 0, y: 0 },
-    ) =>
-      set({
-        isLspCompletionVisible: visible,
-        lspCompletions: completions,
-        selectedLspIndex: selectedIndex,
-        completionPosition: position,
-      }),
-
-    // Hover actions
-    setHoverInfo: (info: any) => set({ hoverInfo: info }),
 
     // Inline assistant actions
     setInlineAssistant: (

@@ -1,11 +1,13 @@
 import { useEffect } from "react";
-import { useEditorConfigStore } from "../stores/editor-config-store";
+import { useEditorCompletionStore } from "../stores/editor-completion-store";
+import { useEditorSettingsStore } from "../stores/editor-settings-store";
 import { useSettingsStore } from "../stores/settings-store";
 
 export const useSettingsSync = () => {
   const { settings } = useSettingsStore();
-  const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers, setAiCompletion } =
-    useEditorConfigStore();
+  const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers } =
+    useEditorSettingsStore();
+  const { setAiCompletion } = useEditorCompletionStore();
 
   // Sync font size
   useEffect(() => {

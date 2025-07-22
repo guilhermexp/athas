@@ -6,9 +6,10 @@ import { useHover } from "../../hooks/use-hover";
 import { useLspCompletion } from "../../hooks/use-lsp-completion";
 import { useAppStore } from "../../stores/app-store";
 import { useBufferStore } from "../../stores/buffer-store";
-import { useCodeEditorStore } from "../../stores/code-editor-store";
-import { useEditorConfigStore } from "../../stores/editor-config-store";
+import { useEditorCompletionStore } from "../../stores/editor-completion-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
+import { useEditorSearchStore } from "../../stores/editor-search-store";
+import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 import { useFileSystemStore } from "../../stores/file-system-store";
 import FindBar from "../find-bar";
 import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
@@ -48,12 +49,10 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   // Get data from stores
   const activeBuffer = useBufferStore(state => state.getActiveBuffer());
   const { handleContentChange } = useAppStore();
-  const { fontSize, fontFamily, tabSize, wordWrap, lineNumbers, aiCompletion } =
-    useEditorConfigStore();
-  const searchQuery = useCodeEditorStore(state => state.searchQuery);
-  const searchMatches = useCodeEditorStore(state => state.searchMatches);
-  const currentMatchIndex = useCodeEditorStore(state => state.currentMatchIndex);
-  const { setSearchMatches, setCurrentMatchIndex } = useCodeEditorStore();
+  const { fontSize, fontFamily, tabSize, wordWrap, lineNumbers } = useEditorSettingsStore();
+  const { aiCompletion } = useEditorCompletionStore();
+  const { searchQuery, searchMatches, currentMatchIndex, setSearchMatches, setCurrentMatchIndex } =
+    useEditorSearchStore();
   const isFileTreeLoading = useFileSystemStore(state => state.isFileTreeLoading);
 
   // Extract values from active buffer or use defaults

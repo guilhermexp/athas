@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useCodeEditorStore } from "../stores/code-editor-store";
+import { useEditorCompletionStore } from "../stores/editor-completion-store";
 
 interface UseHoverProps {
   getHover?: (filePath: string, line: number, character: number) => Promise<any>;
@@ -18,9 +18,7 @@ export const useHover = ({
 }: UseHoverProps) => {
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const setHoverInfo = useCodeEditorStore(state => state.setHoverInfo);
-  const setIsHovering = useCodeEditorStore(state => state.setIsHovering);
-  const isHovering = useCodeEditorStore(state => state.isHovering);
+  const { setHoverInfo, setIsHovering, isHovering } = useEditorCompletionStore();
 
   const handleHover = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {

@@ -1,17 +1,14 @@
 import { useEffect } from "react";
-import { useCodeEditorStore } from "@/stores/code-editor-store";
-import { useEditorConfigStore } from "@/stores/editor-config-store";
+import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useSettingsStore } from "@/stores/settings-store";
 
 export const FontStyleInjector = () => {
-  const codeEditorFontFamily = useCodeEditorStore(state => state.fontFamily);
-  const editorConfigFontFamily = useEditorConfigStore(state => state.fontFamily);
+  const codeEditorFontFamily = useEditorSettingsStore(state => state.fontFamily);
   const { settings } = useSettingsStore();
 
   useEffect(() => {
-    // Priority: Settings store → Editor config → Code editor store → JetBrains Mono default
-    const fontFamily =
-      settings.fontFamily || editorConfigFontFamily || codeEditorFontFamily || "JetBrains Mono";
+    // Priority: Settings store → Code editor store → JetBrains Mono default
+    const fontFamily = settings.fontFamily || codeEditorFontFamily || "JetBrains Mono";
 
     // Set CSS variables for both editor and app-wide font with simple fallbacks
     const fallbackChain = `"${fontFamily}", "JetBrains Mono", monospace`;
@@ -19,7 +16,7 @@ export const FontStyleInjector = () => {
     document.documentElement.style.setProperty("--app-font-family", fallbackChain);
 
     console.log("Setting font family:", fontFamily, "| Full chain:", fallbackChain);
-  }, [settings.fontFamily, editorConfigFontFamily, codeEditorFontFamily]);
+  }, [settings.fontFamily, codeEditorFontFamily]);
 
   // Set initial default styles immediately on mount
   useEffect(() => {

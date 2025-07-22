@@ -1,6 +1,6 @@
 import type React from "react";
 import { useCallback } from "react";
-import { useCodeEditorStore } from "../stores/code-editor-store";
+import { useEditorContentStore } from "../stores/editor-content-store";
 
 export const useEditorScroll = (
   editorRef: React.RefObject<HTMLDivElement | null>,
@@ -8,8 +8,7 @@ export const useEditorScroll = (
   lineNumbersRef: React.RefObject<HTMLDivElement | null>,
 ) => {
   // Store subscriptions
-  const setCursorPosition = useCodeEditorStore(state => state.setCursorPosition);
-  const setIsTyping = useCodeEditorStore(state => state.setIsTyping);
+  const { setCursorPosition, setIsTyping } = useEditorContentStore();
 
   // Sync scroll between contenteditable and line numbers
   const handleScroll = useCallback(
@@ -25,15 +24,7 @@ export const useEditorScroll = (
 
   // Handle cursor position changes
   const handleCursorPositionChange = useCallback(
-    (
-      onCursorPositionChange?: (position: number) => void,
-      filePath?: string,
-      isLanguageSupported?: (filePath: string) => boolean,
-      handleLspCompletion?: (
-        pos: number,
-        editorRef: React.RefObject<HTMLDivElement | null>,
-      ) => void,
-    ) => {
+    (onCursorPositionChange?: (position: number) => void) => {
       if (editorRef.current) {
         // Get cursor position from selection
         const selection = window.getSelection();
@@ -42,14 +33,6 @@ export const useEditorScroll = (
 
         if (onCursorPositionChange) {
           onCursorPositionChange(position);
-        }
-
-        // Skip LSP for remote files to avoid delays
-        const isRemoteFile = filePath?.startsWith("remote://");
-
-        // Trigger LSP completion if supported
-        if (!isRemoteFile && handleLspCompletion && isLanguageSupported?.(filePath || "")) {
-          handleLspCompletion(position, editorRef);
         }
       }
     },

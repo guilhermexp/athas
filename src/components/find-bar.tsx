@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef } from "react";
-import { useCodeEditorStore } from "../stores/code-editor-store";
+import { useEditorSearchStore } from "../stores/editor-search-store";
 import { useUIState } from "../stores/ui-state-store";
 import { cn } from "../utils/cn";
 
@@ -15,7 +15,7 @@ const FindBar = () => {
     currentMatchIndex,
     searchNext,
     searchPrevious,
-  } = useCodeEditorStore();
+  } = useEditorSearchStore();
 
   const isVisible = isFindVisible;
   const onClose = () => setIsFindVisible(false);

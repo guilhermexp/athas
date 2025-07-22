@@ -1,47 +1,29 @@
-import { useCodeEditorStore } from "../../stores/code-editor-store";
-import { useEditorConfigStore } from "../../stores/editor-config-store";
-import { useEditorInstanceStore } from "../../stores/editor-instance-store";
+import { useEditorCompletionStore } from "../../stores/editor-completion-store";
+import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 
 export function HoverTooltip() {
-  const fontSize = useEditorConfigStore(state => state.fontSize);
-  const fontFamily = useCodeEditorStore(state => state.fontFamily);
-  const { hoverInfo, handleMouseEnter, handleMouseLeave } = useEditorInstanceStore();
+  const fontSize = useEditorSettingsStore(state => state.fontSize);
+  const fontFamily = useEditorSettingsStore(state => state.fontFamily);
+  const { hoverInfo, setIsHovering } = useEditorCompletionStore();
 
-  if (!hoverInfo?.visible) return null;
+  const handleMouseEnter = () => setIsHovering(true);
+  const handleMouseLeave = () => setIsHovering(false);
+
+  if (!hoverInfo) return null;
 
   return (
     <div
       className="fixed z-50 max-w-md rounded border border-border bg-primary-bg p-3 shadow-lg"
       style={{
-        left: hoverInfo.position?.x || 0,
-        top: hoverInfo.position?.y || 0,
+        left: hoverInfo.position?.left || 0,
+        top: hoverInfo.position?.top || 0,
         fontSize: `${fontSize * 0.9}px`,
         fontFamily: fontFamily,
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {hoverInfo.contents && (
-        <div className="space-y-2">
-          {Array.isArray(hoverInfo.contents) ? (
-            hoverInfo.contents.map((content: any, index: number) => (
-              <div key={index} className="text-sm">
-                {typeof content === "string" ? (
-                  <span className="font-mono text-text">{content}</span>
-                ) : content.language ? (
-                  <pre className="rounded bg-secondary-bg p-2 font-mono text-xs">
-                    <code>{content.value}</code>
-                  </pre>
-                ) : (
-                  <div className="text-text-light">{content.value || content}</div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="text-sm text-text">{hoverInfo.contents}</div>
-          )}
-        </div>
-      )}
+      {hoverInfo.content && <div className="text-sm text-text">{hoverInfo.content}</div>}
     </div>
   );
 }

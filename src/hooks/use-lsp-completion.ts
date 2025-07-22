@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { CompletionItem } from "vscode-languageserver-protocol";
-import { useCodeEditorStore } from "../stores/code-editor-store";
+import { useEditorCompletionStore } from "../stores/editor-completion-store";
 
 interface UseLspCompletionProps {
   getCompletions?: (filePath: string, line: number, character: number) => Promise<CompletionItem[]>;
@@ -21,10 +21,12 @@ export const useLspCompletion = ({
 }: UseLspCompletionProps) => {
   const mountedRef = useRef(true);
 
-  const setLspCompletions = useCodeEditorStore(state => state.setLspCompletions);
-  const setSelectedLspIndex = useCodeEditorStore(state => state.setSelectedLspIndex);
-  const setIsLspCompletionVisible = useCodeEditorStore(state => state.setIsLspCompletionVisible);
-  const setCompletionPosition = useCodeEditorStore(state => state.setCompletionPosition);
+  const {
+    setLspCompletions,
+    setSelectedLspIndex,
+    setIsLspCompletionVisible,
+    setCompletionPosition,
+  } = useEditorCompletionStore();
 
   const handleLspCompletion = useCallback(
     async (cursorPos: number, editorRef: React.RefObject<HTMLDivElement | null>) => {

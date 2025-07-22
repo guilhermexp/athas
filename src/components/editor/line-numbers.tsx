@@ -1,13 +1,12 @@
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useCodeEditorStore } from "../../stores/code-editor-store";
-import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
+import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 
 export function LineNumbers() {
-  const fontSize = useEditorConfigStore(state => state.fontSize);
-  const wordWrap = useEditorConfigStore(state => state.wordWrap);
-  const fontFamily = useCodeEditorStore(state => state.fontFamily);
+  const fontSize = useEditorSettingsStore(state => state.fontSize);
+  const wordWrap = useEditorSettingsStore(state => state.wordWrap);
+  const fontFamily = useEditorSettingsStore(state => state.fontFamily);
   const { value, lineNumbersRef, editorRef } = useEditorInstanceStore();
   const [lineElements, setLineElements] = useState<React.ReactElement[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
