@@ -13,10 +13,14 @@ pub async fn start_claude_code(
 
     // Start interceptor first
     if !bridge.get_status().interceptor_running {
-        bridge
-            .start_interceptor()
-            .await
-            .map_err(|e| e.to_string())?;
+        match bridge.start_interceptor().await {
+            Ok(_) => {}
+            Err(_) => {
+                return Err(
+                    "Claude Code is currently unavailable. Please try again later.".to_string(),
+                );
+            }
+        }
     }
 
     // Then start Claude Code with workspace path

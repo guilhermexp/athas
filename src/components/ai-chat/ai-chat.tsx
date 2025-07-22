@@ -4,7 +4,12 @@ import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat/store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
-import { getProviderById } from "../../types/ai-provider";
+import {
+  getAvailableProviders,
+  getProviderById,
+  setClaudeCodeAvailability,
+} from "../../types/ai-provider";
+import type { ClaudeStatus } from "../../types/claude";
 import { getChatCompletionStream } from "../../utils/ai-chat";
 import { cn } from "../../utils/cn";
 import ApiKeyModal from "../api-key-modal";
@@ -78,6 +83,38 @@ export default function AIChat({
     checkApiKey(aiProviderId);
     checkAllProviderApiKeys();
   }, [aiProviderId, checkApiKey, checkAllProviderApiKeys]);
+
+  // Check Claude Code availability on mount
+  useEffect(() => {
+    const checkClaudeCodeStatus = async () => {
+      try {
+        const status = await invoke<ClaudeStatus>("get_claude_status");
+        setClaudeCodeAvailability(status.interceptor_running);
+
+        // If Claude Code is selected but not available, switch to first available provider
+        if (aiProviderId === "claude-code" && !status.interceptor_running) {
+          const availableProviders = getAvailableProviders();
+          if (availableProviders.length > 0) {
+            const firstProvider = availableProviders[0];
+            setAIProviderAndModel(firstProvider.id, firstProvider.models[0].id);
+          }
+        }
+      } catch (_error) {
+        // If we can't check status, assume it's not available
+        setClaudeCodeAvailability(false);
+
+        // Switch away from Claude Code if it's selected
+        if (aiProviderId === "claude-code") {
+          const availableProviders = getAvailableProviders();
+          if (availableProviders.length > 0) {
+            const firstProvider = availableProviders[0];
+            setAIProviderAndModel(firstProvider.id, firstProvider.models[0].id);
+          }
+        }
+      }
+    };
+    checkClaudeCodeStatus();
+  }, [aiProviderId, setAIProviderAndModel]);
 
   // Wrapper for deleteChat to handle event
   const handleDeleteChat = (chatId: string, event: React.MouseEvent) => {

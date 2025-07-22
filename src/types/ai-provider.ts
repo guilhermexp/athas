@@ -445,6 +445,21 @@ export const AI_PROVIDERS: ModelProvider[] = [
   },
 ];
 
+// Track Claude Code availability
+let claudeCodeAvailable = false;
+
+export const setClaudeCodeAvailability = (available: boolean) => {
+  claudeCodeAvailable = available;
+};
+
+export const getAvailableProviders = (): ModelProvider[] => {
+  if (claudeCodeAvailable) {
+    return AI_PROVIDERS;
+  }
+  // Filter out Claude Code if not available
+  return AI_PROVIDERS.filter(provider => provider.id !== "claude-code");
+};
+
 export const getProviderById = (id: string): ModelProvider | undefined => {
   return AI_PROVIDERS.find(provider => provider.id === id);
 };

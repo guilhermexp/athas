@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, bail};
 use futures_util::StreamExt;
 use serde::Serialize;
+use std::env;
 use std::process::Stdio;
 use tauri::{AppHandle, Emitter};
 use tokio::process::{Child, Command};
@@ -37,6 +38,10 @@ impl ClaudeCodeBridge {
         }
     }
 
+    fn get_interceptor_base_url() -> String {
+        env::var("CLAUDE_PROXY_BASE_URL").unwrap_or_else(|_| "http://localhost:3456".to_string())
+    }
+
     pub async fn start_interceptor(&mut self) -> Result<()> {
         if self.ws_handle.is_some() {
             bail!("WebSocket connection already active");
@@ -44,13 +49,18 @@ impl ClaudeCodeBridge {
 
         log::info!("Connecting to external interceptor service...");
 
-        let ws_url = format!("ws://localhost:3456/ws?session={}", self.session_id);
+        let base_url = Self::get_interceptor_base_url();
+        let ws_base = base_url
+            .replace("http://", "ws://")
+            .replace("https://", "wss://");
+        let ws_url = format!("{}/ws?session={}", ws_base, self.session_id);
         let app_handle = self.app_handle.clone();
 
         // Try to connect to the WebSocket
-        let (ws_stream, _) = connect_async(ws_url).await.context(
-            "Failed to connect to interceptor service. Make sure it's running on port 3456",
-        )?;
+        let (ws_stream, _) = connect_async(&ws_url).await.context(format!(
+            "Failed to connect to interceptor service at {}. Make sure it's running.",
+            base_url
+        ))?;
 
         let (_write, mut read) = ws_stream.split();
 
@@ -101,7 +111,7 @@ impl ClaudeCodeBridge {
             .arg("stream-json")
             .env(
                 "ANTHROPIC_BASE_URL",
-                format!("http://localhost:3456/{}", self.session_id),
+                format!("{}/{}", Self::get_interceptor_base_url(), self.session_id),
             )
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

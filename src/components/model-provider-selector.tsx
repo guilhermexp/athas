@@ -1,7 +1,7 @@
 import { Bot, Check, ChevronDown, Key } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
-import { AI_PROVIDERS, getModelById } from "../types/ai-provider";
+import { getAvailableProviders, getModelById } from "../types/ai-provider";
 import { cn } from "../utils/cn";
 
 interface ModelProviderSelectorProps {
@@ -83,7 +83,7 @@ const ModelProviderSelector = ({
             "rounded-lg border border-border bg-primary-bg shadow-xl",
           )}
         >
-          {AI_PROVIDERS.map(provider => (
+          {getAvailableProviders().map(provider => (
             <div key={provider.id} className="border-border border-b last:border-b-0">
               {/* Provider Header */}
               <div
@@ -177,7 +177,9 @@ const ModelProviderSelector = ({
       {hoveredModel &&
         isOpen &&
         (() => {
-          const model = AI_PROVIDERS.flatMap(p => p.models).find(m => m.id === hoveredModel);
+          const model = getAvailableProviders()
+            .flatMap(p => p.models)
+            .find(m => m.id === hoveredModel);
           return model?.description ? (
             <div
               className="pointer-events-none fixed z-[10000] max-w-xs rounded border border-border bg-primary-bg px-2 py-1 shadow-lg"

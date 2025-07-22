@@ -62,7 +62,9 @@ fn main() {
                     let mut bridge = claude_bridge_clone.lock().await;
                     match bridge.start_interceptor().await {
                         Ok(_) => log::info!("Interceptor auto-started successfully"),
-                        Err(e) => log::error!("Failed to auto-start interceptor: {}", e),
+                        Err(_) => {
+                            log::warn!("Claude Code service is unavailable");
+                        }
                     }
                 });
             }

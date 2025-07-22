@@ -5,7 +5,7 @@ import Section, { SettingRow } from "@/components/ui/section";
 import Toggle from "@/components/ui/toggle";
 import { usePersistentSettingsStore } from "@/stores/persistent-settings-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { AI_PROVIDERS, getModelById } from "@/types/ai-provider";
+import { getAvailableProviders, getModelById } from "@/types/ai-provider";
 
 export const AISettings = () => {
   const { aiProviderId, aiModelId, setAIProviderAndModel, coreFeatures, setCoreFeatures } =
@@ -14,10 +14,10 @@ export const AISettings = () => {
   const { settings, updateSetting } = useSettingsStore();
   const [apiKeysVisible, setApiKeysVisible] = useState(false);
 
-  const currentProvider = AI_PROVIDERS.find(p => p.id === aiProviderId);
+  const currentProvider = getAvailableProviders().find(p => p.id === aiProviderId);
   const currentModel = getModelById(aiProviderId, aiModelId);
 
-  const providerOptions = AI_PROVIDERS.map(provider => ({
+  const providerOptions = getAvailableProviders().map(provider => ({
     value: provider.id,
     label: provider.name,
   }));
@@ -29,7 +29,7 @@ export const AISettings = () => {
     })) || [];
 
   const handleProviderChange = (providerId: string) => {
-    const provider = AI_PROVIDERS.find(p => p.id === providerId);
+    const provider = getAvailableProviders().find(p => p.id === providerId);
     if (provider && provider.models.length > 0) {
       setAIProviderAndModel(providerId, provider.models[0].id);
     }
@@ -102,17 +102,19 @@ export const AISettings = () => {
         </SettingRow>
 
         {apiKeysVisible &&
-          AI_PROVIDERS.filter(provider => provider.requiresApiKey).map(provider => (
-            <SettingRow
-              key={provider.id}
-              label={`${provider.name} API Key`}
-              description={`Authentication for ${provider.name} services`}
-            >
-              <Button variant="ghost" size="xs">
-                Configure
-              </Button>
-            </SettingRow>
-          ))}
+          getAvailableProviders()
+            .filter(provider => provider.requiresApiKey)
+            .map(provider => (
+              <SettingRow
+                key={provider.id}
+                label={`${provider.name} API Key`}
+                description={`Authentication for ${provider.name} services`}
+              >
+                <Button variant="ghost" size="xs">
+                  Configure
+                </Button>
+              </SettingRow>
+            ))}
       </Section>
 
       <Section title="Chat Behavior">

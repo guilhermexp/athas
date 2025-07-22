@@ -38,22 +38,26 @@ export class ClaudeCodeStreamHandler {
       this.setupTimeout();
     } catch (error) {
       console.error("❌ Claude Code error:", error);
-      this.handlers.onError(`Claude Code error: ${error}`);
+      this.handlers.onError("Claude Code is currently unavailable");
     }
   }
 
   private async ensureClaudeCodeRunning(): Promise<void> {
-    const status = await invoke<ClaudeStatus>("get_claude_status");
+    try {
+      const status = await invoke<ClaudeStatus>("get_claude_status");
 
-    if (!status.running) {
-      console.log("🚀 Starting Claude Code...");
-      const startStatus = await invoke<ClaudeStatus>("start_claude_code");
+      if (!status.running) {
+        console.log("🚀 Starting Claude Code...");
+        const startStatus = await invoke<ClaudeStatus>("start_claude_code");
 
-      if (!startStatus.running) {
-        throw new Error("Failed to start Claude Code. Please check your setup.");
+        if (!startStatus.running) {
+          throw new Error("Claude Code is currently unavailable");
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-
-      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (_error: any) {
+      throw new Error("Claude Code is currently unavailable");
     }
   }
 

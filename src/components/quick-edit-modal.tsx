@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAppStore } from "../stores/app-store";
 import { useBufferStore } from "../stores/buffer-store";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
-import { AI_PROVIDERS, getModelById } from "../types/ai-provider";
+import { getAvailableProviders, getModelById } from "../types/ai-provider";
 import { getProviderApiToken } from "../utils/ai-chat";
 import { getFilenameFromPath, getLanguageFromFilename } from "../utils/file-utils";
 import ModelProviderSelector from "./model-provider-selector";
@@ -98,7 +98,7 @@ const QuickEditInline = () => {
 
     try {
       // Use selected provider/model
-      const provider = AI_PROVIDERS.find(p => p.id === providerId);
+      const provider = getAvailableProviders().find(p => p.id === providerId);
       const model = provider ? getModelById(provider.id, modelId) : null;
 
       if (!provider || !model) {
