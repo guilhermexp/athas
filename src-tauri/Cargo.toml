@@ -24,7 +24,6 @@ crossbeam-channel = "0.5"
 env_logger = "0.11.8"
 futures-util = "0.3"
 git2 = "0.18"
-interceptor = { path = "../interceptor" }
 lazy_static = "1.4"
 log = "0.4.27"
 lsp-types = { version = "0.95", features = ["proposed"] }
@@ -46,6 +45,7 @@ tauri-plugin-process = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-store = "2"
 tokio = { version = "1.0", features = ["full"] }
+tokio-tungstenite = "0.24"
 tree-sitter = "0.25.8"
 tree-sitter-go = "0.23.4"
 tree-sitter-highlight = "0.25.8"

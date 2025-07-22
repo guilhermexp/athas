@@ -8,6 +8,7 @@ use tokio::sync::Mutex;
 mod claude_bridge;
 mod commands;
 mod file_watcher;
+mod interceptor_types;
 mod logger;
 mod lsp;
 mod menu;

@@ -1,10 +1,13 @@
 use anyhow::{Context, Result, bail};
-use interceptor::{InterceptorMessage, start_proxy_server_with_ws};
+use futures_util::StreamExt;
 use serde::Serialize;
 use std::process::Stdio;
 use tauri::{AppHandle, Emitter};
 use tokio::process::{Child, Command};
-use tokio::sync::mpsc;
+use tokio_tungstenite::{connect_async, tungstenite::Message};
+
+use crate::interceptor_types::InterceptorMessage;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaudeStatus {
@@ -16,10 +19,10 @@ pub struct ClaudeStatus {
 pub struct ClaudeCodeBridge {
     claude_process: Option<Child>,
     pub claude_stdin: Option<tokio::process::ChildStdin>,
-    interceptor_handle: Option<tokio::task::JoinHandle<()>>,
-    server_handle: Option<tokio::task::JoinHandle<()>>,
+    ws_handle: Option<tokio::task::JoinHandle<()>>,
     ws_connected: bool,
     app_handle: AppHandle,
+    session_id: String,
 }
 
 impl ClaudeCodeBridge {
@@ -27,54 +30,59 @@ impl ClaudeCodeBridge {
         Self {
             claude_process: None,
             claude_stdin: None,
-            interceptor_handle: None,
-            server_handle: None,
+            ws_handle: None,
             ws_connected: false,
             app_handle,
+            session_id: Uuid::new_v4().to_string(),
         }
     }
 
     pub async fn start_interceptor(&mut self) -> Result<()> {
-        if self.interceptor_handle.is_some() {
-            bail!("Interceptor is already running");
+        if self.ws_handle.is_some() {
+            bail!("WebSocket connection already active");
         }
 
-        log::info!("Starting interceptor as embedded service...");
+        log::info!("Connecting to external interceptor service...");
 
-        // todo: we shouldn't hardcode this
-        let proxy_port = 3456;
-
-        // Start the interceptor proxy server
-        let (rx, ws_state, server_handle) = start_proxy_server_with_ws(proxy_port).await?;
-
-        // Create channels for message distribution
-        let (broadcast_tx, mut broadcast_rx) = mpsc::unbounded_channel::<InterceptorMessage>();
+        let ws_url = format!("ws://localhost:3456/ws?session={}", self.session_id);
         let app_handle = self.app_handle.clone();
 
-        // Spawn WebSocket broadcaster
-        tokio::spawn(async move {
-            while let Some(message) = broadcast_rx.recv().await {
-                ws_state.broadcast(message);
+        // Try to connect to the WebSocket
+        let (ws_stream, _) = connect_async(ws_url).await.context(
+            "Failed to connect to interceptor service. Make sure it's running on port 3456",
+        )?;
+
+        let (_write, mut read) = ws_stream.split();
+
+        // Spawn task to handle incoming messages
+        let ws_handle = tokio::spawn(async move {
+            while let Some(msg) = read.next().await {
+                match msg {
+                    Ok(Message::Text(text)) => {
+                        if let Ok(interceptor_msg) =
+                            serde_json::from_str::<InterceptorMessage>(&text)
+                        {
+                            // Emit to frontend
+                            let _ = app_handle.emit("claude-message", interceptor_msg);
+                        }
+                    }
+                    Ok(Message::Close(_)) => {
+                        log::info!("WebSocket connection closed");
+                        break;
+                    }
+                    Err(e) => {
+                        log::error!("WebSocket error: {}", e);
+                        break;
+                    }
+                    _ => {}
+                }
             }
         });
 
-        // Spawn message handler that forwards to frontend
-        let message_handler = tokio::spawn(async move {
-            let mut rx = rx;
-            while let Some(message) = rx.recv().await {
-                // Forward to WebSocket clients
-                let _ = broadcast_tx.send(message.clone());
-
-                // Emit to frontend
-                let _ = app_handle.emit("claude-message", message);
-            }
-        });
-
-        self.interceptor_handle = Some(message_handler);
-        self.server_handle = Some(server_handle);
+        self.ws_handle = Some(ws_handle);
         self.ws_connected = true;
 
-        log::info!("Interceptor started successfully on port {}", proxy_port);
+        log::info!("Connected to interceptor service successfully");
         Ok(())
     }
 
@@ -91,7 +99,10 @@ impl ClaudeCodeBridge {
             .arg("stream-json")
             .arg("--input-format")
             .arg("stream-json")
-            .env("ANTHROPIC_BASE_URL", "http://localhost:3456")
+            .env(
+                "ANTHROPIC_BASE_URL",
+                format!("http://localhost:3456/{}", self.session_id),
+            )
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
@@ -141,7 +152,7 @@ impl ClaudeCodeBridge {
     }
 
     pub async fn stop_claude_process_only(&mut self) -> Result<()> {
-        // Stop Claude Code process only, keep interceptor running
+        // Stop Claude Code process only, keep WebSocket connection
         if let Some(mut child) = self.claude_process.take() {
             let _ = child.kill().await;
         }
@@ -155,7 +166,7 @@ impl ClaudeCodeBridge {
         ClaudeStatus {
             running: self.claude_process.is_some(),
             connected: self.ws_connected,
-            interceptor_running: self.interceptor_handle.is_some(),
+            interceptor_running: self.ws_connected,
         }
     }
 }
