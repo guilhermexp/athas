@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
 import type { CoreFeature } from "../types/core-features";
-import type { ThemeType } from "../types/theme";
 import Button from "./ui/button";
 
 interface Extension {
@@ -18,8 +17,8 @@ interface Extension {
 interface ExtensionsViewProps {
   onServerInstall: (server: Extension) => void;
   onServerUninstall: (serverId: string) => void;
-  onThemeChange: (theme: ThemeType) => void;
-  currentTheme: ThemeType;
+  onThemeChange: (theme: "auto" | "athas-light" | "athas-dark") => void;
+  currentTheme: "auto" | "athas-light" | "athas-dark";
   coreFeatures?: CoreFeature[];
   onCoreFeatureToggle?: (featureId: string, enabled: boolean) => void;
 }
@@ -67,256 +66,6 @@ const AVAILABLE_EXTENSIONS: Extension[] = [
     description: "C/C++ language server with diagnostics",
     category: "language-server",
     status: "inactive",
-  },
-  // Updated Themes
-  {
-    id: "catppuccin-mocha",
-    name: "Catppuccin Mocha",
-    description: "Dark and warm flavor of Catppuccin",
-    category: "theme",
-    status: "inactive",
-    themeId: "catppuccin-mocha",
-  },
-  {
-    id: "catppuccin-macchiato",
-    name: "Catppuccin Macchiato",
-    description: "Balanced dark flavor of Catppuccin",
-    category: "theme",
-    status: "inactive",
-    themeId: "catppuccin-macchiato",
-  },
-  {
-    id: "catppuccin-frappe",
-    name: "Catppuccin Frappé",
-    description: "Light dark flavor of Catppuccin",
-    category: "theme",
-    status: "inactive",
-    themeId: "catppuccin-frappe",
-  },
-  {
-    id: "catppuccin-latte",
-    name: "Catppuccin Latte",
-    description: "Light and creamy flavor of Catppuccin",
-    category: "theme",
-    status: "inactive",
-    themeId: "catppuccin-latte",
-  },
-  {
-    id: "tokyo-night",
-    name: "Tokyo Night",
-    description: "Dark and elegant theme inspired by Tokyo",
-    category: "theme",
-    status: "inactive",
-    themeId: "tokyo-night",
-  },
-  {
-    id: "tokyo-night-storm",
-    name: "Tokyo Night Storm",
-    description: "Stormy variant of Tokyo Night",
-    category: "theme",
-    status: "inactive",
-    themeId: "tokyo-night-storm",
-  },
-  {
-    id: "tokyo-night-light",
-    name: "Tokyo Night Light",
-    description: "Light variant of Tokyo Night",
-    category: "theme",
-    status: "inactive",
-    themeId: "tokyo-night-light",
-  },
-  {
-    id: "dracula",
-    name: "Dracula",
-    description: "Dark theme with vivid highlights",
-    category: "theme",
-    status: "inactive",
-    themeId: "dracula",
-  },
-  {
-    id: "dracula-soft",
-    name: "Dracula Soft",
-    description: "Softer variant of Dracula",
-    category: "theme",
-    status: "inactive",
-    themeId: "dracula-soft",
-  },
-  {
-    id: "nord",
-    name: "Nord",
-    description: "Arctic-inspired cool color palette",
-    category: "theme",
-    status: "inactive",
-    themeId: "nord",
-  },
-  {
-    id: "nord-light",
-    name: "Nord Light",
-    description: "Light variant of Nord theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "nord-light",
-  },
-  {
-    id: "github-dark",
-    name: "GitHub Dark",
-    description: "Official GitHub dark theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "github-dark",
-  },
-  {
-    id: "github-dark-dimmed",
-    name: "GitHub Dark Dimmed",
-    description: "Dimmed variant of GitHub dark",
-    category: "theme",
-    status: "inactive",
-    themeId: "github-dark-dimmed",
-  },
-  {
-    id: "github-light",
-    name: "GitHub Light",
-    description: "Official GitHub light theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "github-light",
-  },
-  {
-    id: "one-dark-pro",
-    name: "One Dark Pro",
-    description: "Enhanced Atom One Dark theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "one-dark-pro",
-  },
-  {
-    id: "one-light-pro",
-    name: "One Light Pro",
-    description: "Light variant of One Dark Pro",
-    category: "theme",
-    status: "inactive",
-    themeId: "one-light-pro",
-  },
-  {
-    id: "material-deep-ocean",
-    name: "Material Deep Ocean",
-    description: "Deep blue material design theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "material-deep-ocean",
-  },
-  {
-    id: "material-palenight",
-    name: "Material Palenight",
-    description: "Elegant purple-based material theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "material-palenight",
-  },
-
-  {
-    id: "material-lighter",
-    name: "Material Lighter",
-    description: "Light variant of Material theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "material-lighter",
-  },
-  {
-    id: "gruvbox-dark",
-    name: "Gruvbox Dark",
-    description: "Dark retro groove theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "gruvbox-dark",
-  },
-  {
-    id: "gruvbox-light",
-    name: "Gruvbox Light",
-    description: "Light retro groove theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "gruvbox-light",
-  },
-  {
-    id: "solarized-dark",
-    name: "Solarized Dark",
-    description: "Dark precision colors theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "solarized-dark",
-  },
-  {
-    id: "solarized-light",
-    name: "Solarized Light",
-    description: "Light precision colors theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "solarized-light",
-  },
-  {
-    id: "synthwave-84",
-    name: "SynthWave 84",
-    description: "Retro synthwave-inspired theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "synthwave-84",
-  },
-  {
-    id: "monokai-pro",
-    name: "Monokai Pro",
-    description: "Professional Monokai theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "monokai-pro",
-  },
-  {
-    id: "ayu-dark",
-    name: "Ayu Dark",
-    description: "Dark variant of Ayu theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "ayu-dark",
-  },
-  {
-    id: "ayu-mirage",
-    name: "Ayu Mirage",
-    description: "Mirage variant of Ayu theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "ayu-mirage",
-  },
-  {
-    id: "ayu-light",
-    name: "Ayu Light",
-    description: "Light variant of Ayu theme",
-    category: "theme",
-    status: "inactive",
-    themeId: "ayu-light",
-  },
-  {
-    id: "vercel-dark",
-    name: "Vercel Dark",
-    description: "Clean dark theme inspired by Vercel design",
-    category: "theme",
-    status: "inactive",
-    themeId: "vercel-dark",
-  },
-  {
-    id: "vesper",
-    name: "Vesper",
-    description: "Dark theme with deep oranges and greens",
-    category: "theme",
-    status: "inactive",
-    themeId: "vesper",
-  },
-  {
-    id: "aura",
-    name: "Aura",
-    description: "A beautiful dark theme with purple and green",
-    category: "theme",
-    status: "inactive",
-    themeId: "aura",
   },
 ];
 
@@ -413,7 +162,9 @@ export default function ExtensionsView({
       // For themes, we just need to call onThemeChange
       // The status will be updated via the useEffect above
       onThemeChange(
-        extension.status === "inactive" ? (extension.themeId as ThemeType) : ("auto" as ThemeType),
+        extension.status === "inactive"
+          ? (extension.themeId as "auto" | "athas-light" | "athas-dark")
+          : ("auto" as "auto" | "athas-light" | "athas-dark"),
       );
     }
   };
@@ -506,16 +257,17 @@ export default function ExtensionsView({
           onClick={() => setExtensionsActiveTab("theme")}
           variant="ghost"
           size="sm"
+          disabled
           data-active={extensionsActiveTab === "theme"}
           className={cn(
-            "flex items-center gap-1 text-xs",
+            "flex cursor-not-allowed items-center gap-1 text-xs opacity-50",
             extensionsActiveTab === "theme"
               ? "bg-selected text-text"
-              : "bg-transparent text-text-lighter hover:bg-hover",
+              : "bg-transparent text-text-lighter",
           )}
         >
           <Palette size={14} />
-          Themes
+          Themes (Coming Soon)
         </Button>
       </div>
 
@@ -544,7 +296,7 @@ export default function ExtensionsView({
           )}
 
         {/* Extensions */}
-        {extensionsActiveTab !== "core" && (
+        {extensionsActiveTab !== "core" && extensionsActiveTab !== "theme" && (
           <div>
             {extensionsActiveTab === "all" && filteredExtensions.length > 0 && (
               <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">

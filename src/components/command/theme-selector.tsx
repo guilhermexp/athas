@@ -2,10 +2,11 @@ import { Monitor, Moon, Sun, X } from "lucide-react";
 import type React from "react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
-import type { ThemeType } from "../../types/theme";
+
+type Theme = "auto" | "athas-light" | "athas-dark";
 
 interface ThemeInfo {
-  id: ThemeType;
+  id: Theme;
   name: string;
   description: string;
   category: "System" | "Light" | "Dark" | "Colorful";
@@ -15,8 +16,8 @@ interface ThemeInfo {
 interface ThemeSelectorProps {
   isVisible: boolean;
   onClose: () => void;
-  onThemeChange: (theme: ThemeType) => void;
-  currentTheme?: ThemeType;
+  onThemeChange: (theme: Theme) => void;
+  currentTheme?: Theme;
 }
 
 export interface ThemeSelectorRef {
@@ -33,218 +34,21 @@ const THEME_DEFINITIONS: ThemeInfo[] = [
     category: "System",
     icon: <Monitor size={16} />,
   },
-
-  // Light themes
+  // Light theme
   {
-    id: "light",
-    name: "Light",
-    description: "Classic light theme",
+    id: "athas-light",
+    name: "Athas Light",
+    description: "Clean and bright theme",
     category: "Light",
     icon: <Sun size={16} />,
   },
+  // Dark theme
   {
-    id: "catppuccin-latte",
-    name: "Catppuccin Latte",
-    description: "Warm light theme with pastel colors",
-    category: "Light",
-  },
-  {
-    id: "tokyo-night-light",
-    name: "Tokyo Night Light",
-    description: "Light version of Tokyo Night",
-    category: "Light",
-  },
-  {
-    id: "nord-light",
-    name: "Nord Light",
-    description: "Arctic light theme",
-    category: "Light",
-  },
-  {
-    id: "github-light",
-    name: "GitHub Light",
-    description: "GitHub's light theme",
-    category: "Light",
-  },
-  {
-    id: "one-light-pro",
-    name: "One Light Pro",
-    description: "Atom's One Light theme",
-    category: "Light",
-  },
-  {
-    id: "material-lighter",
-    name: "Material Lighter",
-    description: "Google's Material Design light",
-    category: "Light",
-  },
-  {
-    id: "gruvbox-light",
-    name: "Gruvbox Light",
-    description: "Retro groove light colors",
-    category: "Light",
-  },
-  {
-    id: "solarized-light",
-    name: "Solarized Light",
-    description: "Precision colors for machines and people",
-    category: "Light",
-  },
-  {
-    id: "ayu-light",
-    name: "Ayu Light",
-    description: "Simple, bright theme",
-    category: "Light",
-  },
-
-  // Dark themes
-  {
-    id: "dark",
-    name: "Dark",
-    description: "Classic dark theme",
+    id: "athas-dark",
+    name: "Athas Dark",
+    description: "Modern dark theme",
     category: "Dark",
     icon: <Moon size={16} />,
-  },
-  {
-    id: "midnight",
-    name: "Midnight",
-    description: "Pure black with no borders",
-    category: "Dark",
-    icon: <Moon size={16} />,
-  },
-  {
-    id: "catppuccin-mocha",
-    name: "Catppuccin Mocha",
-    description: "Warm dark theme with vibrant colors",
-    category: "Dark",
-  },
-  {
-    id: "catppuccin-macchiato",
-    name: "Catppuccin Macchiato",
-    description: "Medium dark theme",
-    category: "Dark",
-  },
-  {
-    id: "catppuccin-frappe",
-    name: "Catppuccin Frappé",
-    description: "Cool dark theme",
-    category: "Dark",
-  },
-  {
-    id: "nord",
-    name: "Nord",
-    description: "Arctic, north-bluish color palette",
-    category: "Dark",
-  },
-  {
-    id: "github-dark",
-    name: "GitHub Dark",
-    description: "GitHub's dark theme",
-    category: "Dark",
-  },
-  {
-    id: "github-dark-dimmed",
-    name: "GitHub Dark Dimmed",
-    description: "GitHub's dimmed dark theme",
-    category: "Dark",
-  },
-  {
-    id: "one-dark-pro",
-    name: "One Dark Pro",
-    description: "Atom's One Dark theme",
-    category: "Dark",
-  },
-  {
-    id: "material-deep-ocean",
-    name: "Material Deep Ocean",
-    description: "Deep ocean material theme",
-    category: "Dark",
-  },
-  {
-    id: "material-palenight",
-    name: "Material Palenight",
-    description: "Elegant material dark theme",
-    category: "Dark",
-  },
-  {
-    id: "gruvbox-dark",
-    name: "Gruvbox Dark",
-    description: "Retro groove dark colors",
-    category: "Dark",
-  },
-  {
-    id: "solarized-dark",
-    name: "Solarized Dark",
-    description: "Precision dark colors",
-    category: "Dark",
-  },
-  {
-    id: "monokai-pro",
-    name: "Monokai Pro",
-    description: "Professional Monokai",
-    category: "Dark",
-  },
-  {
-    id: "ayu-dark",
-    name: "Ayu Dark",
-    description: "Simple, elegant dark theme",
-    category: "Dark",
-  },
-  {
-    id: "ayu-mirage",
-    name: "Ayu Mirage",
-    description: "Medium contrast Ayu theme",
-    category: "Dark",
-  },
-  {
-    id: "vercel-dark",
-    name: "Vercel Dark",
-    description: "Vercel's dark theme",
-    category: "Dark",
-  },
-  {
-    id: "vesper",
-    name: "Vesper",
-    description: "Dark theme with deep blues and purples",
-    category: "Dark",
-  },
-
-  // Colorful themes
-  {
-    id: "tokyo-night",
-    name: "Tokyo Night",
-    description: "Dark theme with vibrant colors",
-    category: "Colorful",
-  },
-  {
-    id: "tokyo-night-storm",
-    name: "Tokyo Night Storm",
-    description: "Stormy variant of Tokyo Night",
-    category: "Colorful",
-  },
-  {
-    id: "dracula",
-    name: "Dracula",
-    description: "Dark theme with purple accents",
-    category: "Colorful",
-  },
-  {
-    id: "dracula-soft",
-    name: "Dracula Soft",
-    description: "Softer variant of Dracula",
-    category: "Colorful",
-  },
-  {
-    id: "synthwave-84",
-    name: "SynthWave '84",
-    description: "Retro cyberpunk theme",
-    category: "Colorful",
-  },
-  {
-    id: "aura",
-    name: "Aura",
-    description: "Dark theme with purple and green",
-    category: "Colorful",
   },
 ];
 

@@ -8,7 +8,6 @@ import { useFileSystemStore } from "../../stores/file-system-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import { useSettingsStore } from "../../stores/settings-store";
 import { useUIState } from "../../stores/ui-state-store";
-import type { ThemeType } from "../../types/theme";
 import { type GitHunk, stageHunk, unstageHunk } from "../../utils/git";
 import AIChat from "../ai-chat/ai-chat";
 import BottomPane from "../bottom-pane";
@@ -54,7 +53,7 @@ export function MainLayout() {
   };
 
   // Handle theme change
-  const handleThemeChange = (theme: ThemeType) => {
+  const handleThemeChange = (theme: "auto" | "athas-light" | "athas-dark") => {
     updateTheme(theme);
   };
 

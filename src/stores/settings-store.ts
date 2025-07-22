@@ -2,12 +2,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import type { ThemeType } from "../types/theme";
+
+type Theme = "auto" | "athas-light" | "athas-dark";
 
 export interface Settings {
-  theme: ThemeType;
-  autoThemeLight: ThemeType;
-  autoThemeDark: ThemeType;
+  theme: Theme;
+  autoThemeLight: Theme;
+  autoThemeDark: Theme;
   fontSize: number;
   fontFamily: string;
   tabSize: number;
@@ -20,9 +21,9 @@ export interface Settings {
 }
 
 const defaultSettings: Settings = {
-  theme: "dark", // Changed from "auto" since we don't support continuous monitoring
-  autoThemeLight: "light",
-  autoThemeDark: "dark",
+  theme: "athas-dark", // Changed from "auto" since we don't support continuous monitoring
+  autoThemeLight: "athas-light",
+  autoThemeDark: "athas-dark",
   fontSize: 14,
   fontFamily: "JetBrains Mono",
   tabSize: 2,
@@ -35,52 +36,10 @@ const defaultSettings: Settings = {
 };
 
 // Theme class constants
-const ALL_THEME_CLASSES = [
-  "force-light",
-  "force-dark",
-  "force-midnight",
-  "force-tokyo-night",
-  "force-tokyonight",
-  "force-dracula",
-  "force-nord",
-  "force-github",
-  "force-github-dark",
-  "force-github-light",
-  "force-one-dark",
-  "force-one-dark-pro",
-  "force-material",
-  "force-material-deep-ocean",
-  "force-ayu-dark",
-  "force-vesper",
-  "force-catppuccin",
-  "force-catppuccin-mocha",
-  "force-catppuccin-macchiato",
-  "force-catppuccin-frappe",
-  "force-catppuccin-latte",
-  "force-tokyo-night-storm",
-  "force-tokyo-night-light",
-  "force-dracula-soft",
-  "force-nord-light",
-  "force-github-dark-dimmed",
-  "force-one-light-pro",
-  "force-material-palenight",
-  "force-material-lighter",
-  "force-gruvbox",
-  "force-gruvbox-light",
-  "force-solarized-dark",
-  "force-solarized-light",
-  "force-synthwave-84",
-  "force-monokai",
-  "force-monokai-pro",
-  "force-ayu",
-  "force-ayu-mirage",
-  "force-ayu-light",
-  "force-vercel-dark",
-  "force-aura",
-];
+const ALL_THEME_CLASSES = ["force-athas-light", "force-athas-dark"];
 
 // Apply theme to document
-const applyTheme = (theme: ThemeType) => {
+const applyTheme = (theme: Theme) => {
   if (typeof window === "undefined") return;
 
   // Remove all existing theme classes
@@ -88,10 +47,7 @@ const applyTheme = (theme: ThemeType) => {
 
   // Apply new theme if not auto
   if (theme && theme !== "auto") {
-    let themeClass = `force-${theme}`;
-    if (theme === "gruvbox-dark") {
-      themeClass = "force-gruvbox";
-    }
+    const themeClass = `force-${theme}`;
     document.documentElement.classList.add(themeClass);
   }
 };
@@ -126,7 +82,7 @@ const getInitialSettings = (): Settings => {
   const systemTheme = getSystemThemePreference();
   const defaultWithOSTheme = {
     ...defaultSettings,
-    theme: systemTheme,
+    theme: systemTheme === "dark" ? "athas-dark" : ("athas-light" as Theme),
   };
 
   // Also detect OS theme asynchronously for more accurate detection
@@ -139,10 +95,10 @@ const getInitialSettings = (): Settings => {
           "athas-code-settings",
           JSON.stringify({
             ...defaultWithOSTheme,
-            theme,
+            theme: theme === "dark" ? "athas-dark" : "athas-light",
           }),
         );
-        applyTheme(theme as ThemeType);
+        applyTheme(theme === "dark" ? "athas-dark" : ("athas-light" as Theme));
       }
     })
     .catch(() => {
@@ -211,7 +167,7 @@ export const useSettingsStore = create(
         },
 
         // Update theme
-        updateTheme: (theme: ThemeType) => {
+        updateTheme: (theme: Theme) => {
           set(state => {
             state.settings.theme = theme;
           });
