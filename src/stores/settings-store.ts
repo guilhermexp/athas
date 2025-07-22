@@ -15,7 +15,6 @@ export interface Settings {
   wordWrap: boolean;
   lineNumbers: boolean;
   autoSave: boolean;
-  vimMode: boolean;
   aiCompletion: boolean;
   sidebarPosition: "left" | "right";
 }
@@ -30,7 +29,6 @@ const defaultSettings: Settings = {
   wordWrap: true,
   lineNumbers: true,
   autoSave: true,
-  vimMode: false,
   aiCompletion: true,
   sidebarPosition: "left",
 };

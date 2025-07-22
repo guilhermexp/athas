@@ -1,6 +1,5 @@
 import { useAppStore } from "../stores/app-store";
 import { useBufferStore } from "../stores/buffer-store";
-import { useEditorConfigStore } from "../stores/editor-config-store";
 import { useFileSystemStore } from "../stores/file-system-store";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
 import { useSettingsStore } from "../stores/settings-store";
@@ -12,7 +11,6 @@ export function useMenuEventsWrapper() {
   const fileSystemStore = useFileSystemStore();
   const appStore = useAppStore();
   const bufferStore = useBufferStore();
-  const editorConfigStore = useEditorConfigStore();
   const settingsStore = useSettingsStore();
   const { isAIChatVisible, setIsAIChatVisible } = usePersistentSettingsStore();
 
@@ -48,7 +46,7 @@ export function useMenuEventsWrapper() {
     },
     onToggleAiChat: () => setIsAIChatVisible(!isAIChatVisible),
     onSplitEditor: () => console.log("Split Editor not implemented"),
-    onToggleVim: editorConfigStore.toggleVim,
+    onToggleVim: () => console.log("Toggle Vim not implemented"),
     onGoToFile: () => uiState.setIsCommandBarVisible(true),
     onGoToLine: () => console.log("Go to Line not implemented"),
     onNextTab: bufferStore.switchToNextBuffer,

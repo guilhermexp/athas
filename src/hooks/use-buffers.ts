@@ -37,8 +37,6 @@ const bufferReducer = (state: BufferState, action: BufferAction): BufferState =>
         isVirtual,
         isActive: true,
         isPinned: false,
-        vimMode: "normal",
-        cursorPosition: 0,
       };
 
       return {
@@ -115,16 +113,6 @@ const bufferReducer = (state: BufferState, action: BufferAction): BufferState =>
       };
     }
 
-    case "UPDATE_BUFFER_VIM_STATE": {
-      const { id, vimMode, cursorPosition } = action.payload;
-      return {
-        ...state,
-        buffers: state.buffers.map(buffer =>
-          buffer.id === id ? { ...buffer, vimMode: vimMode as any, cursorPosition } : buffer,
-        ),
-      };
-    }
-
     case "UPDATE_BUFFER": {
       const { buffer } = action.payload;
       return {
@@ -193,13 +181,6 @@ export const useBuffers = () => {
     dispatch({ type: "MARK_BUFFER_DIRTY", payload: { id, isDirty } });
   }, []);
 
-  const updateBufferVimState = useCallback(
-    (id: string, vimMode: string, cursorPosition: number) => {
-      dispatch({ type: "UPDATE_BUFFER_VIM_STATE", payload: { id, vimMode, cursorPosition } });
-    },
-    [],
-  );
-
   const updateBuffer = useCallback((buffer: Buffer) => {
     dispatch({ type: "UPDATE_BUFFER", payload: { buffer } });
   }, []);
@@ -244,7 +225,6 @@ export const useBuffers = () => {
     setActiveBuffer,
     updateBufferContent,
     markBufferDirty,
-    updateBufferVimState,
     updateBuffer,
     getActiveBuffer,
     switchToNextBuffer,

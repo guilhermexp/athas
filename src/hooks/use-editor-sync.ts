@@ -11,8 +11,6 @@ interface UseEditorSyncProps {
   wordWrap: boolean;
   lineNumbers: boolean;
   disabled: boolean;
-  vimEnabled: boolean;
-  vimMode?: "normal" | "insert" | "visual" | "visual-line" | "visual-block" | "command";
   aiCompletion: boolean;
   searchQuery: string;
   searchMatches: { start: number; end: number }[];
@@ -29,8 +27,6 @@ export const useEditorSync = (props: UseEditorSyncProps) => {
   const setWordWrap = useCodeEditorStore(state => state.setWordWrap);
   const setLineNumbers = useCodeEditorStore(state => state.setLineNumbers);
   const setDisabled = useCodeEditorStore(state => state.setDisabled);
-  const setVimEnabled = useCodeEditorStore(state => state.setVimEnabled);
-  const setVimMode = useCodeEditorStore(state => state.setVimMode);
   const setAiCompletion = useCodeEditorStore(state => state.setAiCompletion);
   const setSearchQuery = useCodeEditorStore(state => state.setSearchQuery);
   const setSearchMatches = useCodeEditorStore(state => state.setSearchMatches);
@@ -72,16 +68,6 @@ export const useEditorSync = (props: UseEditorSyncProps) => {
   useEffect(() => {
     setDisabled(props.disabled);
   }, [props.disabled, setDisabled]);
-
-  useEffect(() => {
-    setVimEnabled(props.vimEnabled);
-  }, [props.vimEnabled, setVimEnabled]);
-
-  useEffect(() => {
-    if (props.vimMode) {
-      setVimMode(props.vimMode);
-    }
-  }, [props.vimMode, setVimMode]);
 
   useEffect(() => {
     setAiCompletion(props.aiCompletion);

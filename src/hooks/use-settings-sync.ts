@@ -4,15 +4,8 @@ import { useSettingsStore } from "../stores/settings-store";
 
 export const useSettingsSync = () => {
   const { settings } = useSettingsStore();
-  const {
-    setFontSize,
-    setFontFamily,
-    setTabSize,
-    setWordWrap,
-    setLineNumbers,
-    setVimEnabled,
-    setAiCompletion,
-  } = useEditorConfigStore();
+  const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers, setAiCompletion } =
+    useEditorConfigStore();
 
   // Sync font size
   useEffect(() => {
@@ -39,11 +32,6 @@ export const useSettingsSync = () => {
   useEffect(() => {
     setLineNumbers(settings.lineNumbers);
   }, [settings.lineNumbers, setLineNumbers]);
-
-  // Sync vim mode
-  useEffect(() => {
-    setVimEnabled(settings.vimMode);
-  }, [settings.vimMode, setVimEnabled]);
 
   // Sync AI completion
   useEffect(() => {

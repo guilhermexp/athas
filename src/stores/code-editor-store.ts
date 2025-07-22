@@ -19,8 +19,6 @@ type CompletionPosition = {
   left: number;
 };
 
-type VimMode = "normal" | "insert" | "visual" | "visual-line" | "visual-block" | "command";
-
 const initialState = {
   // Core Editor State
   value: "",
@@ -56,11 +54,6 @@ const initialState = {
   searchQuery: "",
   searchMatches: [] as SearchMatch[],
   currentMatchIndex: -1,
-
-  // Vim State
-  vimEnabled: false,
-  vimMode: "normal" as VimMode,
-  vimRegister: "",
 
   // UI State
   isTyping: false,
@@ -103,11 +96,6 @@ export const useCodeEditorStore = create(
     setSearchMatches: (matches: SearchMatch[]) => set({ searchMatches: matches }),
     setCurrentMatchIndex: (index: number) => set({ currentMatchIndex: index }),
 
-    // Vim Actions
-    setVimEnabled: (enabled: boolean) => set({ vimEnabled: enabled }),
-    setVimMode: (mode: VimMode) => set({ vimMode: mode }),
-    setVimRegister: (register: string) => set({ vimRegister: register }),
-
     // UI Actions
     setIsTyping: (typing: boolean) => set({ isTyping: typing }),
 
@@ -132,13 +120,6 @@ export const useCodeEditorStore = create(
         searchQuery: "",
         searchMatches: [],
         currentMatchIndex: -1,
-      }),
-
-    resetVim: () =>
-      set({
-        vimEnabled: false,
-        vimMode: "normal",
-        vimRegister: "",
       }),
 
     // Complex Actions

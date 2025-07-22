@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { CodeEditorRef } from "../components/editor/code-editor";
-import type { FileEntry, VimMode } from "../types/app";
+import type { FileEntry } from "../types/app";
 import { readDirectoryContents } from "../utils/file-operations";
 import {
   addFileToTree,
@@ -72,9 +72,6 @@ export const useFileSystemStore = create(
           isDir: boolean,
           line?: number,
           column?: number,
-          vimEnabled?: boolean,
-          setVimMode?: (mode: VimMode) => void,
-          updateCursorPosition?: () => void,
           codeEditorRef?: React.RefObject<CodeEditorRef | null>,
         ) => {
           if (isDir) {
@@ -88,9 +85,6 @@ export const useFileSystemStore = create(
             line,
             column,
             codeEditorRef,
-            vimEnabled,
-            setVimMode: setVimMode as any,
-            updateCursorPosition,
           });
         },
 

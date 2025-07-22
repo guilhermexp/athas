@@ -63,14 +63,6 @@ export const EditorSettings = () => {
       </Section>
 
       <Section title="Features">
-        <SettingRow label="Vim Mode" description="Enable Vim keybindings">
-          <Toggle
-            checked={settings.vimMode}
-            onChange={checked => updateSetting("vimMode", checked)}
-            size="sm"
-          />
-        </SettingRow>
-
         <SettingRow label="AI Completion" description="Enable AI-powered code completion">
           <Toggle
             checked={settings.aiCompletion}

@@ -16,8 +16,6 @@ interface Buffer {
   isSQLite: boolean;
   isDiff: boolean;
   isActive: boolean;
-  vimMode?: "normal" | "insert" | "visual";
-  cursorPosition?: number;
   // For diff buffers, store the parsed diff data
   diffData?: GitDiff;
 }
@@ -87,8 +85,6 @@ export const useBufferStore = create(
             isSQLite,
             isDiff,
             isActive: true,
-            vimMode: "normal",
-            cursorPosition: 0,
             diffData,
           };
 
@@ -183,16 +179,6 @@ export const useBufferStore = create(
             const index = state.buffers.findIndex(b => b.id === updatedBuffer.id);
             if (index !== -1) {
               state.buffers[index] = updatedBuffer;
-            }
-          });
-        },
-
-        updateBufferVimState: (bufferId: string, vimMode: string, cursorPosition: number) => {
-          set(state => {
-            const buffer = state.buffers.find(b => b.id === bufferId);
-            if (buffer) {
-              buffer.vimMode = vimMode as any;
-              buffer.cursorPosition = cursorPosition;
             }
           });
         },

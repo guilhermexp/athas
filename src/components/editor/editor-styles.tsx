@@ -63,20 +63,8 @@ export function EditorStyles() {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
-        .code-editor-content.vim-normal-mode {
-          caret-color: transparent;
-        }
-        .code-editor-content.vim-insert-mode {
-          caret-color: var(--color-text);
-        }
         .code-editor-content:focus {
           outline: none;
-        }
-        .code-editor-content:not(.vim-visual-selection)::selection {
-          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
-        }
-        .code-editor-content:not(.vim-visual-selection)::-moz-selection {
-          background-color: var(--selection-bg, rgba(0, 123, 255, 0.3));
         }
         .code-editor-content {
           white-space: pre;
@@ -94,13 +82,6 @@ export function EditorStyles() {
           content: attr(data-placeholder);
           color: var(--color-text-lighter);
           pointer-events: none;
-        }
-        .vim-cursor-blink {
-          animation: vim-cursor-blink 1s infinite;
-        }
-        @keyframes vim-cursor-blink {
-          0%, 50% { opacity: 1; }
-          51%, 100% { opacity: 0; }
         }
 
         /* Hide scrollbars on line numbers */

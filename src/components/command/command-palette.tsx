@@ -1,10 +1,9 @@
-import { Bot, Palette, Settings, Terminal, X } from "lucide-react";
+import { Bot, Palette, Settings, X } from "lucide-react";
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import { useAppStore } from "../../stores/app-store";
 import { useBufferStore } from "../../stores/buffer-store";
-import { useEditorConfigStore } from "../../stores/editor-config-store";
 import { useSettingsStore } from "../../stores/settings-store";
 import { useUIState } from "../../stores/ui-state-store";
 import ThemeSelector from "./theme-selector";
@@ -26,7 +25,6 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
   // Get data from stores
   const { isCommandPaletteVisible, setIsCommandPaletteVisible } = useUIState();
   const settingsStore = useSettingsStore();
-  const { vimEnabled, toggleVim } = useEditorConfigStore();
   const { openBuffer } = useBufferStore();
   const { openQuickEdit } = useAppStore();
 
@@ -34,7 +32,6 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
   const onClose = () => setIsCommandPaletteVisible(false);
   const currentTheme = settingsStore.settings.theme;
   const onThemeChange = settingsStore.updateTheme;
-  const onToggleVimMode = toggleVim;
   const onQuickEditInline = () => {
     // TODO: Implement quick edit
     const selection = window.getSelection();
@@ -124,19 +121,6 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
       action: () => {
         console.log("Opening theme selector...");
         setIsThemeSelectorVisible(true);
-      },
-    },
-    {
-      id: "toggle-vim-mode",
-      label: `Editor: ${vimEnabled ? "Disable" : "Enable"} Vim Mode`,
-      description: `${vimEnabled ? "Turn off" : "Turn on"} Vim key bindings`,
-      icon: <Terminal size={16} />,
-      category: "Editor",
-      action: () => {
-        if (onToggleVimMode) {
-          onToggleVimMode();
-        }
-        onClose();
       },
     },
   ];

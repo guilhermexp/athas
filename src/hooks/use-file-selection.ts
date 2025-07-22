@@ -1,7 +1,6 @@
 import type React from "react";
 import { useCallback } from "react";
 import type { CodeEditorRef } from "../components/editor/code-editor";
-import type { VimMode } from "../types/app";
 import { getFilenameFromPath, isImageFile, isSQLiteFile } from "../utils/file-utils";
 import type { GitDiff, GitDiffLine } from "../utils/git";
 import { readFile } from "../utils/platform";
@@ -17,9 +16,6 @@ interface UseFileSelectionProps {
     isVirtual: boolean,
   ) => void;
   handleFolderToggle: (path: string) => Promise<void>;
-  vimEnabled: boolean;
-  setVimMode: (mode: VimMode) => void;
-  updateCursorPosition: () => void;
   codeEditorRef: React.RefObject<CodeEditorRef | null>;
 }
 
@@ -126,9 +122,6 @@ const parseRawDiffContent = (content: string, filePath: string): GitDiff => {
 export const useFileSelection = ({
   openBuffer,
   handleFolderToggle,
-  vimEnabled,
-  setVimMode,
-  updateCursorPosition,
   codeEditorRef,
 }: UseFileSelectionProps) => {
   const handleFileSelect = useCallback(
@@ -210,22 +203,13 @@ export const useFileSelection = ({
               }
             });
           }
-
-          // Reset vim mode when opening new file
-          if (vimEnabled) {
-            setVimMode("normal");
-            // Update cursor position immediately after vim mode change
-            requestAnimationFrame(() => {
-              updateCursorPosition();
-            });
-          }
         } catch (error) {
           console.error("Error reading file:", error);
           openBuffer(path, fileName, `Error reading file: ${error}`, false, false, false, false);
         }
       }
     },
-    [openBuffer, handleFolderToggle, vimEnabled, setVimMode, updateCursorPosition, codeEditorRef],
+    [openBuffer, handleFolderToggle, codeEditorRef],
   );
 
   return {

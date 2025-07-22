@@ -141,8 +141,6 @@ pub fn create_menu<R: tauri::Runtime>(
         .separator()
         .text("split_editor", "Split Editor")
         .separator()
-        .text("toggle_vim", "Toggle Vim Mode")
-        .separator()
         .item(&theme_menu)
         .build()?;
 

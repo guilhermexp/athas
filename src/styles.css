@@ -563,20 +563,6 @@ button {
 }
 
 /* Custom utility classes */
-@utility vim-cursor-blink {
-    animation: vim-cursor-blink 1s infinite;
-}
-
-/* Visual mode selection styling */
-.vim-visual-selection::selection {
-    background: rgba(59, 130, 246, 0.3) !important;
-    color: var(--color-text);
-}
-
-.vim-visual-selection::-moz-selection {
-    background: rgba(59, 130, 246, 0.3) !important;
-    color: var(--color-text);
-}
 
 /* Tab bar scrollbar hiding */
 .scrollbar-none {

@@ -28,19 +28,6 @@
     animation: slide-in-right 0.3s ease-out;
 }
 
-/* Vim cursor animation */
-@keyframes vim-cursor-blink {
-
-    0%,
-    50% {
-        opacity: 0.8;
-    }
-
-    51%,
-    100% {
-        opacity: 0.3;
-    }
-}
 
 @keyframes fadeInUp {
     0% {

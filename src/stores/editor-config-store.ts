@@ -1,8 +1,6 @@
 import { create, type ExtractState } from "zustand";
 import { combine } from "zustand/middleware";
 
-type VimMode = "normal" | "insert" | "visual" | "visual-line" | "visual-block" | "command";
-
 const initialState = {
   fontSize: 14,
   fontFamily: "JetBrains Mono",
@@ -10,8 +8,6 @@ const initialState = {
   wordWrap: true,
   lineNumbers: true,
   theme: "auto",
-  vimEnabled: false,
-  vimMode: "normal" as VimMode,
   aiCompletion: true,
 };
 
@@ -25,10 +21,7 @@ export const useEditorConfigStore = create(
     setWordWrap: (wrap: boolean) => set({ wordWrap: wrap }),
     setLineNumbers: (show: boolean) => set({ lineNumbers: show }),
     setTheme: (theme: string) => set({ theme }),
-    setVimEnabled: (enabled: boolean) => set({ vimEnabled: enabled }),
-    setVimMode: (mode: VimMode) => set({ vimMode: mode }),
     setAiCompletion: (enabled: boolean) => set({ aiCompletion: enabled }),
-    toggleVim: () => set(state => ({ vimEnabled: !state.vimEnabled })),
 
     // Bulk configuration update
     updateConfig: (config: Partial<typeof initialState>) => set(state => ({ ...state, ...config })),
@@ -43,8 +36,6 @@ export type EditorConfig = Omit<
   | "setWordWrap"
   | "setLineNumbers"
   | "setTheme"
-  | "setVimEnabled"
-  | "setVimMode"
   | "setAiCompletion"
   | "updateConfig"
 >;

@@ -73,10 +73,6 @@ export const KeyboardSettings = () => {
       </Section>
 
       <Section title="Preferences">
-        <SettingRow label="Enable Vim Keybindings" description="Use Vim-style key commands">
-          <Toggle checked={false} onChange={() => {}} size="sm" />
-        </SettingRow>
-
         <SettingRow label="Tab Navigation" description="Navigate UI elements with Tab key">
           <Toggle checked={true} onChange={() => {}} size="sm" />
         </SettingRow>

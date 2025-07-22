@@ -4,7 +4,6 @@ import { useEditorScroll } from "../../hooks/use-editor-scroll";
 import { useEditorSync } from "../../hooks/use-editor-sync";
 import { useHover } from "../../hooks/use-hover";
 import { useLspCompletion } from "../../hooks/use-lsp-completion";
-import { useVim } from "../../hooks/use-vim";
 import { useAppStore } from "../../stores/app-store";
 import { useBufferStore } from "../../stores/buffer-store";
 import { useCodeEditorStore } from "../../stores/code-editor-store";
@@ -49,16 +48,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   // Get data from stores
   const activeBuffer = useBufferStore(state => state.getActiveBuffer());
   const { handleContentChange } = useAppStore();
-  const {
-    vimEnabled,
-    vimMode,
-    fontSize,
-    fontFamily,
-    tabSize,
-    wordWrap,
-    lineNumbers,
-    aiCompletion,
-  } = useEditorConfigStore();
+  const { fontSize, fontFamily, tabSize, wordWrap, lineNumbers, aiCompletion } =
+    useEditorConfigStore();
   const searchQuery = useCodeEditorStore(state => state.searchQuery);
   const searchMatches = useCodeEditorStore(state => state.searchMatches);
   const currentMatchIndex = useCodeEditorStore(state => state.currentMatchIndex);
@@ -99,8 +90,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
     wordWrap,
     lineNumbers,
     disabled: false,
-    vimEnabled,
-    vimMode,
     aiCompletion,
     searchQuery,
     searchMatches,
@@ -125,20 +114,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
     fontSize,
     lineNumbers,
   });
-
-  // Vim integration
-  const { vimEngine } = useVim(
-    editorRef,
-    value,
-    onChange,
-    vimEnabled,
-    (_pos: number) => {},
-    () => {}, // onModeChange - Already synced via store
-    (initialCommand?: string) => {
-      // Implementation if needed
-      console.log("Vim command:", initialCommand);
-    },
-  );
 
   // Scroll management
   const { handleScroll } = useEditorScroll(editorRef, null, lineNumbersRef);
@@ -174,10 +149,9 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
   // Effect to handle search navigation
   useEffect(() => {
-    if (searchMatches.length > 0 && currentMatchIndex >= 0 && vimEngine) {
+    if (searchMatches.length > 0 && currentMatchIndex >= 0) {
       const match = searchMatches[currentMatchIndex];
       if (match) {
-        vimEngine.setState({ cursorPosition: match.start });
         // Scroll to position
         if (editorRef.current) {
           const editor = editorRef.current;
@@ -189,7 +163,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
         }
       }
     }
-  }, [currentMatchIndex, searchMatches, vimEngine]);
+  }, [currentMatchIndex, searchMatches]);
 
   // Cleanup
   useEffect(() => {

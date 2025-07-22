@@ -1,7 +1,6 @@
 import type React from "react";
 import { useCallback } from "react";
 import { useCodeEditorStore } from "../stores/code-editor-store";
-import { getCursorPosition } from "./use-vim";
 
 export const useEditorScroll = (
   editorRef: React.RefObject<HTMLDivElement | null>,
@@ -30,16 +29,15 @@ export const useEditorScroll = (
       onCursorPositionChange?: (position: number) => void,
       filePath?: string,
       isLanguageSupported?: (filePath: string) => boolean,
-      vimEnabled?: boolean,
-      vimMode?: string,
       handleLspCompletion?: (
         pos: number,
         editorRef: React.RefObject<HTMLDivElement | null>,
       ) => void,
     ) => {
       if (editorRef.current) {
-        // Use the getCursorPosition utility for contenteditable
-        const position = getCursorPosition(editorRef.current);
+        // Get cursor position from selection
+        const selection = window.getSelection();
+        const position = selection?.focusOffset || 0;
         setCursorPosition(position);
 
         if (onCursorPositionChange) {
@@ -49,13 +47,8 @@ export const useEditorScroll = (
         // Skip LSP for remote files to avoid delays
         const isRemoteFile = filePath?.startsWith("remote://");
 
-        // Trigger LSP completion if supported and in insert mode (or vim disabled)
-        if (
-          !isRemoteFile &&
-          handleLspCompletion &&
-          isLanguageSupported?.(filePath || "") &&
-          (!vimEnabled || vimMode === "insert")
-        ) {
+        // Trigger LSP completion if supported
+        if (!isRemoteFile && handleLspCompletion && isLanguageSupported?.(filePath || "")) {
           handleLspCompletion(position, editorRef);
         }
       }

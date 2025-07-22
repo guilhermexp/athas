@@ -24,10 +24,6 @@ const initialState = {
   // Hover state
   hoverInfo: null as any,
 
-  // Vim command line state
-  isVimCommandLineVisible: false,
-  vimCommandLineInitialCommand: "",
-
   // Inline assistant state
   isInlineAssistantVisible: false,
   selectedText: "",
@@ -53,9 +49,6 @@ const initialState = {
   setSelectedText: (() => {}) as (text: string) => void,
   setAssistantCursorPosition: (() => {}) as (pos: { x: number; y: number }) => void,
   setIsInlineAssistantVisible: (() => {}) as (visible: boolean) => void,
-
-  // Vim
-  vimEngine: undefined as any,
 
   // UI props
   placeholder: undefined as string | undefined,
@@ -87,7 +80,6 @@ export const useEditorInstanceStore = create(
         setSelectedText: (text: string) => void;
         setAssistantCursorPosition: (pos: { x: number; y: number }) => void;
         setIsInlineAssistantVisible: (visible: boolean) => void;
-        vimEngine: any;
       }>,
     ) => set(handlers),
     setUIProps: (props: { placeholder?: string; disabled: boolean; className?: string }) =>
@@ -109,13 +101,6 @@ export const useEditorInstanceStore = create(
 
     // Hover actions
     setHoverInfo: (info: any) => set({ hoverInfo: info }),
-
-    // Vim command line actions
-    setVimCommandLine: (visible: boolean, initialCommand: string = "") =>
-      set({
-        isVimCommandLineVisible: visible,
-        vimCommandLineInitialCommand: initialCommand,
-      }),
 
     // Inline assistant actions
     setInlineAssistant: (

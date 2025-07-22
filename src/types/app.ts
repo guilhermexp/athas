@@ -9,8 +9,6 @@ export interface FileEntry {
   ignored?: boolean;
 }
 
-export type VimMode = "normal" | "insert" | "visual" | "visual-line" | "visual-block";
-
 export interface ContextMenuState {
   x: number;
   y: number;

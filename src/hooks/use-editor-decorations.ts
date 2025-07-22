@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { getTokensFromPath, type Token } from "../lib/rust-api/tokens";
-import { getCursorPosition, setCursorPosition } from "./use-vim";
 
 interface DecoratedSegment {
   text: string;
@@ -84,9 +83,6 @@ export function useEditorDecorations() {
   ) => {
     if (!editorRef.current || !content) return;
 
-    // Save cursor position
-    const cursorPos = getCursorPosition(editorRef.current);
-
     // Create segments
     const segments: DecoratedSegment[] = [];
     let lastEnd = 0;
@@ -150,9 +146,6 @@ export function useEditorDecorations() {
         });
       }
     });
-
-    // Restore cursor position
-    setCursorPosition(editorRef.current, cursorPos);
   };
 
   useEffect(() => {
