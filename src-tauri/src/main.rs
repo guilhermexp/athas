@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use log::{debug, info};
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
@@ -63,7 +64,9 @@ fn main() {
                     match bridge.start_interceptor().await {
                         Ok(_) => log::info!("Interceptor auto-started successfully"),
                         Err(_) => {
-                            log::warn!("Claude Code service is unavailable");
+                            log::warn!(
+                                "Claude Code service is unavailable. Disabling Claude provider."
+                            );
                         }
                     }
                 });
@@ -99,11 +102,11 @@ fn main() {
                 if let Some(window) = _app_handle.get_webview_window("main") {
                     match event.id().0.as_str() {
                         "quit" => {
-                            println!("Quit menu item clicked");
+                            info!("Quit menu item clicked");
                             std::process::exit(0);
                         }
                         "quit_app" => {
-                            println!("Quit app menu item triggered");
+                            info!("Quit app menu item triggered");
                             std::process::exit(0);
                         }
                         "new_file" => {
@@ -119,7 +122,7 @@ fn main() {
                             let _ = window.emit("menu_save_as", ());
                         }
                         "close_tab" => {
-                            println!("Close tab menu item triggered");
+                            debug!("Close tab menu item triggered");
                             let _ = window.emit("menu_close_tab", ());
                         }
                         "undo" => {

@@ -4,6 +4,7 @@ import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat/store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
+import { useProjectStore } from "../../stores/project-store";
 import {
   getAvailableProviders,
   getProviderById,
@@ -25,12 +26,14 @@ export default function AIChat({
   className,
   activeBuffer,
   buffers = [],
-  rootFolderPath,
   selectedFiles = [],
   allProjectFiles = [],
   mode: _,
   onApplyCode,
 }: AIChatProps) {
+  // Get rootFolderPath from project store
+  const { rootFolderPath } = useProjectStore();
+
   // Provider and Model State from persistent store
   const { aiProviderId, aiModelId, setAIProviderAndModel } = usePersistentSettingsStore();
 
@@ -527,7 +530,6 @@ export default function AIChat({
       <AIChatInputBar
         buffers={buffers}
         allProjectFiles={allProjectFiles}
-        rootFolderPath={rootFolderPath}
         onSendMessage={sendMessage}
         onStopStreaming={stopStreaming}
         onApiKeyRequest={handleApiKeyRequest}

@@ -1,20 +1,22 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat/store";
+import { useProjectStore } from "../../stores/project-store";
 import type { FileEntry } from "../../types/app";
 import FileIcon from "../file-icon";
 
 interface FileMentionDropdownProps {
   files: FileEntry[];
   onSelect: (file: FileEntry) => void;
-  rootFolderPath?: string;
 }
 
 export const FileMentionDropdown = React.memo(function FileMentionDropdown({
   files,
   onSelect,
-  rootFolderPath,
 }: FileMentionDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Get rootFolderPath from project store
+  const { rootFolderPath } = useProjectStore();
 
   // Get state from store
   const { mentionState, hideMention, getFilteredFiles } = useAIChatStore();

@@ -12,7 +12,6 @@ import type { AIChatInputBarProps } from "./types";
 export default function AIChatInputBar({
   buffers,
   allProjectFiles,
-  rootFolderPath,
   onSendMessage,
   onStopStreaming,
   onApiKeyRequest,
@@ -384,11 +383,7 @@ export default function AIChatInputBar({
 
       {/* File Mention Dropdown */}
       {mentionState.active && (
-        <FileMentionDropdown
-          files={allProjectFiles}
-          onSelect={handleFileMentionSelect}
-          rootFolderPath={rootFolderPath}
-        />
+        <FileMentionDropdown files={allProjectFiles} onSelect={handleFileMentionSelect} />
       )}
     </div>
   );

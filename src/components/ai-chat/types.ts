@@ -44,7 +44,6 @@ export interface AIChatProps {
   // Context from the main app
   activeBuffer?: Buffer | null;
   buffers?: Buffer[];
-  rootFolderPath?: string;
   selectedFiles?: string[];
   allProjectFiles?: FileEntry[];
   mode: "chat";
@@ -83,7 +82,6 @@ export interface ModeSelectorProps {
 export interface AIChatInputBarProps {
   buffers: Buffer[];
   allProjectFiles: FileEntry[];
-  rootFolderPath?: string;
   onSendMessage: () => Promise<void>;
   onStopStreaming: () => void;
   onApiKeyRequest: (providerId: string) => void;

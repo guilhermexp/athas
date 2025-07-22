@@ -1,5 +1,6 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, bail, ensure};
 use futures_util::StreamExt;
+use log::info;
 use serde::Serialize;
 use std::env;
 use std::process::Stdio;
@@ -97,66 +98,59 @@ impl ClaudeCodeBridge {
     }
 
     pub async fn start_claude_code(&mut self, workspace_path: Option<String>) -> Result<()> {
-        if self.claude_process.is_some() {
-            bail!("Claude Code is already running");
-        }
+        ensure!(
+            self.claude_process.is_none(),
+            "Claude Code is already running"
+        );
 
         let mut cmd = Command::new("claude");
-        cmd.arg("--dangerously-skip-permissions")
-            .arg("--print")
-            .arg("--verbose")
-            .arg("--output-format")
-            .arg("stream-json")
-            .arg("--input-format")
-            .arg("stream-json")
-            .env(
-                "ANTHROPIC_BASE_URL",
-                format!("{}/{}", Self::get_interceptor_base_url(), self.session_id),
-            )
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
+        cmd.args([
+            "--dangerously-skip-permissions",
+            "--print",
+            "--verbose",
+            "--output-format",
+            "stream-json",
+            "--input-format",
+            "stream-json",
+        ])
+        .env(
+            "ANTHROPIC_BASE_URL",
+            format!("{}/{}", Self::get_interceptor_base_url(), self.session_id),
+        )
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
-        // Set the working directory if workspace path is provided
-        if let Some(path) = workspace_path {
-            cmd.current_dir(&path);
+        if let Some(path) = &workspace_path {
+            cmd.current_dir(path);
             log::info!("Starting Claude Code in workspace: {}", path);
         }
 
-        let mut child = cmd.spawn().map_err(|e| {
-            anyhow::anyhow!(
-                "Failed to spawn Claude process: {}. Make sure 'claude' is in your PATH",
-                e
-            )
-        })?;
+        let mut child = cmd
+            .spawn()
+            .context("Failed to spawn Claude process. Make sure 'claude' is in your PATH")?;
 
-        // Get stdin handle
-        let stdin = child.stdin.take().context("Failed to get stdin")?;
-        self.claude_stdin = Some(stdin);
+        self.claude_stdin = Some(child.stdin.take().context("Failed to get stdin")?);
 
-        // Consume stdout and stderr to prevent broken pipe errors, but discard the output
-        // since all communication goes through the interceptor
-        if let Some(stdout) = child.stdout.take() {
-            tokio::spawn(async move {
-                use tokio::io::{AsyncBufReadExt, BufReader};
-                let reader = BufReader::new(stdout);
-                let mut lines = reader.lines();
-                // Just consume and discard
-                while let Ok(Some(_)) = lines.next_line().await {}
-            });
+        // Consume stdout and stderr to prevent broken pipe errors
+        use tokio::io::{AsyncBufReadExt, BufReader};
+        macro_rules! consume_stream {
+            ($stream:expr) => {
+                if let Some(stream) = $stream {
+                    tokio::spawn(async move {
+                        let mut lines = BufReader::new(stream).lines();
+                        while let Ok(Some(_)) = lines.next_line().await {}
+                    });
+                }
+            };
         }
 
-        if let Some(stderr) = child.stderr.take() {
-            tokio::spawn(async move {
-                use tokio::io::{AsyncBufReadExt, BufReader};
-                let reader = BufReader::new(stderr);
-                let mut lines = reader.lines();
-                // Just consume and discard
-                while let Ok(Some(_)) = lines.next_line().await {}
-            });
-        }
+        consume_stream!(child.stdout.take());
+        consume_stream!(child.stderr.take());
 
         self.claude_process = Some(child);
+
+        info!("Started `claude` successfully on {:?}", workspace_path);
 
         Ok(())
     }
@@ -165,6 +159,7 @@ impl ClaudeCodeBridge {
         // Stop Claude Code process only, keep WebSocket connection
         if let Some(mut child) = self.claude_process.take() {
             let _ = child.kill().await;
+            info!("Killed current `claude` process instance");
         }
 
         self.claude_stdin = None;
