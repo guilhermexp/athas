@@ -11,9 +11,11 @@ export function TextEditor() {
   const { value: codeEditorValue, setValue: setCodeEditorValue } = useCodeEditorStore();
   const { onChange, disabled, placeholder, filePath, editorRef, lineNumbersRef } =
     useEditorInstanceStore();
+
   const localRef = useRef<HTMLDivElement>(null);
   const fallbackLineNumbersRef = useRef<HTMLDivElement>(null);
-  const { tokens, debouncedFetchTokens } = useEditorDecorations();
+
+  const { tokens, fetchTokens } = useEditorDecorations();
 
   // Use the ref from the store or fallback to local ref
   const divRef = editorRef || localRef;
@@ -24,9 +26,9 @@ export function TextEditor() {
   // Fetch tokens when content or file changes
   useEffect(() => {
     if (filePath) {
-      debouncedFetchTokens(codeEditorValue, filePath);
+      fetchTokens(filePath);
     }
-  }, [codeEditorValue, filePath, debouncedFetchTokens]);
+  }, [codeEditorValue, filePath, fetchTokens]);
 
   // Apply syntax highlighting with proper timing to preserve highlighting during editing
   useEffect(() => {
@@ -80,38 +82,36 @@ export function TextEditor() {
         highlightedHTML += escapeHtml(content.substring(lastEnd));
       }
 
-      if (element.innerHTML !== highlightedHTML) {
-        element.innerHTML = highlightedHTML;
+      element.innerHTML = highlightedHTML;
 
-        // Restore cursor position if editor was focused
-        if (isEditorFocused && cursorPos > 0) {
-          setTimeout(() => {
-            if (document.activeElement === element) {
-              const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-              let currentPos = 0;
-              let node = walker.nextNode();
+      // Restore cursor position if editor was focused
+      if (isEditorFocused && cursorPos > 0) {
+        setTimeout(() => {
+          if (document.activeElement === element) {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+            let currentPos = 0;
+            let node = walker.nextNode();
 
-              while (node) {
-                const textLength = node.textContent?.length || 0;
-                if (currentPos + textLength >= cursorPos) {
-                  const range = document.createRange();
-                  const offset = Math.min(cursorPos - currentPos, textLength);
-                  range.setStart(node, offset);
-                  range.setEnd(node, offset);
+            while (node) {
+              const textLength = node.textContent?.length || 0;
+              if (currentPos + textLength >= cursorPos) {
+                const range = document.createRange();
+                const offset = Math.min(cursorPos - currentPos, textLength);
+                range.setStart(node, offset);
+                range.setEnd(node, offset);
 
-                  const newSelection = window.getSelection();
-                  if (newSelection) {
-                    newSelection.removeAllRanges();
-                    newSelection.addRange(range);
-                  }
-                  break;
+                const newSelection = window.getSelection();
+                if (newSelection) {
+                  newSelection.removeAllRanges();
+                  newSelection.addRange(range);
                 }
-                currentPos += textLength;
-                node = walker.nextNode();
+                break;
               }
+              currentPos += textLength;
+              node = walker.nextNode();
             }
-          }, 0);
-        }
+          }
+        }, 0);
       }
     }
   }, [tokens, codeEditorValue, divRef]);
@@ -132,14 +132,6 @@ export function TextEditor() {
     if (divRef.current) {
       divRef.current.removeAttribute("data-composing");
     }
-  };
-
-  const handleFocus = () => {
-    // Keep syntax highlighting when focusing - no need to convert to plain text
-  };
-
-  const handleBlur = () => {
-    // Highlighting is now maintained continuously, no special blur handling needed
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -176,8 +168,6 @@ export function TextEditor() {
       contentEditable={!disabled}
       suppressContentEditableWarning={true}
       onInput={handleInput}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onScroll={handleScroll}
       onCompositionStart={handleCompositionStart}
