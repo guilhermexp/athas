@@ -1,11 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import Convert from "ansi-to-html";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Terminal as TerminalType } from "../../types/terminal";
-import "../../styles/prism-terminal.css";
 import { cn } from "@/utils/cn";
+import { colorToCSS } from "@/utils/terminal-colors";
+import type { Terminal as TerminalType } from "../../types/terminal";
 
 interface TerminalSessionProps {
   terminal: TerminalType;
@@ -63,19 +62,6 @@ const TerminalSession = ({
   const [terminalSize, setTerminalSize] = useState({ rows: 24, cols: 80 });
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Create ANSI to HTML converter with minimal overrides
-  // Let the shell's color configuration come through naturally
-  const ansiConverter = useRef(
-    new Convert({
-      fg: "inherit", // Use shell's default foreground
-      bg: "transparent", // Transparent background to use theme
-      newline: false,
-      escapeXML: false, // Don't escape XML to preserve Unicode characters (Nerd Fonts)
-      // Don't override colors - let shell/terminal defaults come through
-      colors: undefined,
-    }),
-  );
 
   // Calculate terminal size based on container dimensions
   const calculateTerminalSize = useCallback(() => {
@@ -466,11 +452,14 @@ const TerminalSession = ({
       if (item.is_underline) className += " underline";
 
       // Enhanced color handling
-      if (item.foreground_color) {
-        style.color = item.foreground_color || "#cccccc";
+      const fgColor = colorToCSS(item.foreground_color);
+      const bgColor = colorToCSS(item.background_color);
+
+      if (fgColor) {
+        style.color = fgColor;
       }
-      if (item.background_color) {
-        style.backgroundColor = item.background_color || "transparent";
+      if (bgColor) {
+        style.backgroundColor = bgColor;
       }
 
       // Smart highlighting enhancements
@@ -478,7 +467,7 @@ const TerminalSession = ({
       const enhancedLexeme = lexeme;
 
       // Only apply enhancements if there's no existing color
-      if (!item.foreground_color) {
+      if (!fgColor) {
         // File extensions
         if (lexeme.match(/\.(js|ts|tsx|jsx)$/)) {
           style.color = "#f0db4f";
@@ -543,14 +532,9 @@ const TerminalSession = ({
       }
 
       return (
-        <span
-          key={itemIndex}
-          className={className}
-          style={style}
-          dangerouslySetInnerHTML={{
-            __html: ansiConverter.current.toHtml(enhancedLexeme),
-          }}
-        />
+        <span key={itemIndex} className={className} style={style}>
+          {enhancedLexeme}
+        </span>
       );
     });
 

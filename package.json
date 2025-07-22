@@ -34,7 +34,6 @@
     "@tauri-apps/plugin-window-state": "^2",
     "@types/prismjs": "^1.26.5",
     "@types/uuid": "^10.0.0",
-    "ansi-to-html": "^0.7.2",
     "clsx": "^2.1.1",
     "ignore": "^7.0.5",
     "immer": "^10.1.1",

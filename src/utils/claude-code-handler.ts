@@ -23,7 +23,6 @@ export class ClaudeCodeStreamHandler {
   private timeout?: NodeJS.Timeout;
   private expectingMoreMessages = false;
   private lastActivityTime = Date.now();
-  private messageCount = 0;
   private isFirstMessage = true;
   private currentToolName: string | null = null;
 
@@ -110,7 +109,6 @@ export class ClaudeCodeStreamHandler {
         this.handlers.onNewMessage();
       }
       this.isFirstMessage = false;
-      this.messageCount++;
     }
 
     // Handle tool use blocks

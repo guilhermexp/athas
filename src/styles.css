@@ -53,6 +53,24 @@
         --tw-syntax-tag: #22863a;
         --tw-syntax-attribute: #6f42c1;
         --tw-syntax-punctuation: #24292e;
+
+        /* Terminal ANSI colors - harmonized with syntax highlighting */
+        --tw-terminal-black: #24292e;
+        --tw-terminal-red: #d73a49;
+        --tw-terminal-green: #22863a;
+        --tw-terminal-yellow: #e36209;
+        --tw-terminal-blue: #005cc5;
+        --tw-terminal-magenta: #6f42c1;
+        --tw-terminal-cyan: #032f62;
+        --tw-terminal-white: #666666;
+        --tw-terminal-bright-black: #6a737d;
+        --tw-terminal-bright-red: #c53030;
+        --tw-terminal-bright-green: #28a745;
+        --tw-terminal-bright-yellow: #d69e2e;
+        --tw-terminal-bright-blue: #3182ce;
+        --tw-terminal-bright-magenta: #8b5cf6;
+        --tw-terminal-bright-cyan: #0891b2;
+        --tw-terminal-bright-white: #333333;
     }
 
     /* Force Athas Dark theme */
@@ -99,6 +117,24 @@
         --tw-syntax-tag: #7ee787;
         --tw-syntax-attribute: #d2a8ff;
         --tw-syntax-punctuation: #b3b3b3;
+
+        /* Terminal ANSI colors - harmonized with syntax highlighting */
+        --tw-terminal-black: #1a1a1a;
+        --tw-terminal-red: #ff7b72;
+        --tw-terminal-green: #7ee787;
+        --tw-terminal-yellow: #ffa657;
+        --tw-terminal-blue: #79c0ff;
+        --tw-terminal-magenta: #d2a8ff;
+        --tw-terminal-cyan: #a5d6ff;
+        --tw-terminal-white: #b3b3b3;
+        --tw-terminal-bright-black: #8b949e;
+        --tw-terminal-bright-red: #f87171;
+        --tw-terminal-bright-green: #86efac;
+        --tw-terminal-bright-yellow: #fbbf24;
+        --tw-terminal-bright-blue: #60a5fa;
+        --tw-terminal-bright-magenta: #c084fc;
+        --tw-terminal-bright-cyan: #67e8f9;
+        --tw-terminal-bright-white: #e5e5e5;
     }
 }
 
@@ -156,6 +192,24 @@
     --color-syntax-regex: var(--tw-syntax-regex);
     --color-syntax-jsx: var(--tw-syntax-jsx);
     --color-syntax-jsx-attribute: var(--tw-syntax-jsx-attribute);
+
+    /* Terminal colors */
+    --color-terminal-black: var(--tw-terminal-black);
+    --color-terminal-red: var(--tw-terminal-red);
+    --color-terminal-green: var(--tw-terminal-green);
+    --color-terminal-yellow: var(--tw-terminal-yellow);
+    --color-terminal-blue: var(--tw-terminal-blue);
+    --color-terminal-magenta: var(--tw-terminal-magenta);
+    --color-terminal-cyan: var(--tw-terminal-cyan);
+    --color-terminal-white: var(--tw-terminal-white);
+    --color-terminal-bright-black: var(--tw-terminal-bright-black);
+    --color-terminal-bright-red: var(--tw-terminal-bright-red);
+    --color-terminal-bright-green: var(--tw-terminal-bright-green);
+    --color-terminal-bright-yellow: var(--tw-terminal-bright-yellow);
+    --color-terminal-bright-blue: var(--tw-terminal-bright-blue);
+    --color-terminal-bright-magenta: var(--tw-terminal-bright-magenta);
+    --color-terminal-bright-cyan: var(--tw-terminal-bright-cyan);
+    --color-terminal-bright-white: var(--tw-terminal-bright-white);
 }
 
 
@@ -267,6 +321,24 @@ button {
         --tw-syntax-attribute: #6f42c1;
         --tw-syntax-punctuation: #24292e;
 
+        /* Terminal ANSI colors - harmonized with syntax highlighting */
+        --tw-terminal-black: #24292e;
+        --tw-terminal-red: #d73a49;
+        --tw-terminal-green: #22863a;
+        --tw-terminal-yellow: #e36209;
+        --tw-terminal-blue: #005cc5;
+        --tw-terminal-magenta: #6f42c1;
+        --tw-terminal-cyan: #032f62;
+        --tw-terminal-white: #666666;
+        --tw-terminal-bright-black: #6a737d;
+        --tw-terminal-bright-red: #c53030;
+        --tw-terminal-bright-green: #28a745;
+        --tw-terminal-bright-yellow: #d69e2e;
+        --tw-terminal-bright-blue: #3182ce;
+        --tw-terminal-bright-magenta: #8b5cf6;
+        --tw-terminal-bright-cyan: #0891b2;
+        --tw-terminal-bright-white: #333333;
+
     }
 
     @media (prefers-color-scheme: dark) {
@@ -314,6 +386,24 @@ button {
             --tw-syntax-tag: #7ee787;
             --tw-syntax-attribute: #d2a8ff;
             --tw-syntax-punctuation: #b3b3b3;
+
+            /* Terminal ANSI colors - harmonized with syntax highlighting */
+            --tw-terminal-black: #1a1a1a;
+            --tw-terminal-red: #ff7b72;
+            --tw-terminal-green: #7ee787;
+            --tw-terminal-yellow: #ffa657;
+            --tw-terminal-blue: #79c0ff;
+            --tw-terminal-magenta: #d2a8ff;
+            --tw-terminal-cyan: #a5d6ff;
+            --tw-terminal-white: #b3b3b3;
+            --tw-terminal-bright-black: #8b949e;
+            --tw-terminal-bright-red: #f87171;
+            --tw-terminal-bright-green: #86efac;
+            --tw-terminal-bright-yellow: #fbbf24;
+            --tw-terminal-bright-blue: #60a5fa;
+            --tw-terminal-bright-magenta: #c084fc;
+            --tw-terminal-bright-cyan: #67e8f9;
+            --tw-terminal-bright-white: #e5e5e5;
 
         }
     }
