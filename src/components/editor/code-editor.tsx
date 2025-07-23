@@ -17,9 +17,7 @@ import { CompletionDropdown } from "./completion-dropdown";
 import { EditorStyles } from "./editor-styles";
 import { HoverTooltip } from "./hover-tooltip";
 import { LineNumbers } from "./line-numbers";
-import { TextEditor } from "./text-editor";
-
-// import type { VimCommandLineRef } from "../vim-command-line"; // Unused for now
+import { VirtualTextEditor } from "./virtual-text-editor";
 
 interface CodeEditorProps {
   // All props are now optional as we get most data from stores
@@ -36,7 +34,6 @@ export interface CodeEditorRef {
 }
 
 const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, ref) => {
-  // Refs - must be called unconditionally
   const editorRef = useRef<HTMLDivElement>(null as any);
   const lineNumbersRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
@@ -207,7 +204,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
             {/* Editor content area */}
             <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
               <div className="relative h-full flex-1 bg-primary-bg">
-                <TextEditor />
+                <VirtualTextEditor />
               </div>
 
               {/* LSP Completion Dropdown - temporarily disabled */}

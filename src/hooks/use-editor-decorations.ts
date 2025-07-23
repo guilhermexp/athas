@@ -29,8 +29,16 @@ export function useEditorDecorations() {
     }, DEBOUNCE_TIME_MS);
   }, []);
 
+  const clearTokens = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setTokens([]);
+  }, []);
+
   return {
     tokens,
     fetchTokens,
+    clearTokens,
   };
 }
