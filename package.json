@@ -20,7 +20,8 @@
     "clean": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
     "__prepare": "this will install git hooks after you do 'bun install'",
     "prepare": "simple-git-hooks",
-    "commitlint": "commitlint --edit"
+    "commitlint": "commitlint --edit",
+    "knip": "knip"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -54,10 +55,12 @@
     "@commitlint/config-conventional": "^19.8.1",
     "@tailwindcss/vite": "^4.1.11",
     "@tauri-apps/cli": "^2",
+    "@types/node": "^24.1.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.0",
+    "knip": "^5.62.0",
     "lint-staged": "^16.1.2",
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.13.0",
