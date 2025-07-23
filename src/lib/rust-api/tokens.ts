@@ -10,7 +10,3 @@ export interface Token {
 export async function getTokens(content: string, fileExtension: string): Promise<Token[]> {
   return invoke<Token[]>("get_tokens", { content, fileExtension });
 }
-
-export async function getTokensFromPath(filePath: string): Promise<Token[]> {
-  return invoke<Token[]>("get_tokens_from_path", { filePath });
-}

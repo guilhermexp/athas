@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { create, type ExtractState } from "zustand";
+import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
 interface FileChangeEvent {
@@ -107,8 +107,6 @@ export const useFileWatcherStore = create(
     },
   })),
 );
-
-export type FileWatcherState = ExtractState<typeof useFileWatcherStore>;
 
 // Initialize event listener (called only once)
 export async function initializeFileWatcherListener() {

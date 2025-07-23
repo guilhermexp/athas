@@ -1,14 +1,14 @@
-export interface AIUserMessage {
+interface AIUserMessage {
   role: "user";
   content: string;
 }
 
-export interface AIAssistantMessage {
+interface AIAssistantMessage {
   role: "assistant";
   content: string;
 }
 
-export interface AISystemMessage {
+interface AISystemMessage {
   role: "system";
   content: string;
 }

@@ -1,4 +1,4 @@
-import { create, type ExtractState } from "zustand";
+import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import type { BottomPaneTab, QuickEditSelection } from "../types/ui-state";
 
@@ -102,5 +102,3 @@ export const useUIState = create(
     clearTerminalFocus: () => set({ terminalFocusCallback: null }),
   })),
 );
-
-export type UIState = ExtractState<typeof useUIState>;

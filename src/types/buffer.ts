@@ -11,28 +11,3 @@ export interface Buffer {
   isActive: boolean;
   isPinned?: boolean; // Whether the tab is pinned
 }
-
-export interface BufferState {
-  buffers: Buffer[];
-  activeBufferId: string | null;
-}
-
-export type BufferAction =
-  | {
-      type: "OPEN_BUFFER";
-      payload: {
-        path: string;
-        name: string;
-        content: string;
-        isSQLite: boolean;
-        isImage: boolean;
-        isDiff: boolean;
-        isVirtual: boolean;
-      };
-    }
-  | { type: "CLOSE_BUFFER"; payload: { id: string } }
-  | { type: "SET_ACTIVE_BUFFER"; payload: { id: string } }
-  | { type: "UPDATE_BUFFER_CONTENT"; payload: { id: string; content: string; markDirty?: boolean } }
-  | { type: "MARK_BUFFER_DIRTY"; payload: { id: string; isDirty: boolean } }
-  | { type: "UPDATE_BUFFER"; payload: { buffer: Buffer } }
-  | { type: "REORDER_BUFFERS"; payload: { fromIndex: number; toIndex: number } };

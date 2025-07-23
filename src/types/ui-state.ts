@@ -1,5 +1,3 @@
-export type RightPaneMode = "chat";
-
 export type BottomPaneTab = "terminal" | "diagnostics";
 
 export interface QuickEditSelection {

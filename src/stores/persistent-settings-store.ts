@@ -1,4 +1,4 @@
-import { create, type ExtractState } from "zustand";
+import { create } from "zustand";
 import { combine, persist } from "zustand/middleware";
 import type { CoreFeaturesState } from "../types/core-features";
 
@@ -42,5 +42,3 @@ export const usePersistentSettingsStore = create<ReturnType<typeof storeCreator>
     version: 1,
   }),
 );
-
-export type PersistentSettings = ExtractState<typeof usePersistentSettingsStore>;

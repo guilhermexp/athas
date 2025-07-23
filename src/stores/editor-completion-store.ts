@@ -1,5 +1,5 @@
 import type { CompletionItem } from "vscode-languageserver-protocol";
-import { create, type ExtractState } from "zustand";
+import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import type { CompletionResponse } from "../utils/ai-completion";
 
@@ -79,5 +79,3 @@ export const useEditorCompletionStore = create(
     },
   })),
 );
-
-export type EditorCompletionState = ExtractState<typeof useEditorCompletionStore>;

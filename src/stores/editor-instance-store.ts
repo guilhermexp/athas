@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { create, type ExtractState } from "zustand";
+import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
 const initialState = {
@@ -35,5 +35,3 @@ export const useEditorInstanceStore = create(
       set(props),
   })),
 );
-
-export type EditorInstanceState = ExtractState<typeof useEditorInstanceStore>;

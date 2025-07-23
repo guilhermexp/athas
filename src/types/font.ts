@@ -4,8 +4,3 @@ export interface FontInfo {
   style: string;
   is_monospace: boolean;
 }
-
-export interface FontSettings {
-  fontFamily: string;
-  fontFallbacks: string[];
-}

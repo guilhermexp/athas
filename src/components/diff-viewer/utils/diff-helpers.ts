@@ -12,13 +12,6 @@ export const createGitHunk = (
 export const getImgSrc = (base64: string | undefined) =>
   base64 ? `data:image/*;base64,${base64}` : undefined;
 
-export const getFileIcon = (diff: GitDiff) => {
-  if (diff.is_new) return { icon: "FilePlus", color: "text-green-500" };
-  if (diff.is_deleted) return { icon: "FileX", color: "text-red-500" };
-  if (diff.is_renamed) return { icon: "Edit3", color: "text-blue-500" };
-  return { icon: "FileIcon", color: "text-text" };
-};
-
 export const getFileStatus = (diff: GitDiff) => {
   if (diff.is_new) return "Added";
   if (diff.is_deleted) return "Deleted";

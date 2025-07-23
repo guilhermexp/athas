@@ -1,5 +1,5 @@
 // Map Rust Color enum to CSS color values using theme variables
-export type Color =
+type Color =
   | "Default"
   | "Black"
   | "Red"

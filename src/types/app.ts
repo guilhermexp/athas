@@ -15,10 +15,3 @@ export interface ContextMenuState {
   path: string;
   isDir: boolean;
 }
-
-export interface SearchState {
-  query: string;
-  currentMatch: number;
-  totalMatches: number;
-  matches: { start: number; end: number }[];
-}

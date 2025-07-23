@@ -2,7 +2,7 @@ import type React from "react";
 import type { FileEntry } from "../../types/app";
 import type { Buffer } from "../../types/buffer";
 
-export interface ToolCall {
+interface ToolCall {
   name: string;
   input: any;
   output?: any;
@@ -49,14 +49,6 @@ export interface AIChatProps {
   mode: "chat";
   // Buffer update functions
   onApplyCode?: (code: string) => void;
-}
-
-export interface BufferSelectorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  buffers: Buffer[];
-  selectedBufferIds: Set<string>;
-  onToggleBuffer: (bufferId: string) => void;
 }
 
 export interface ChatHistoryModalProps {

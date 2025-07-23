@@ -5,7 +5,7 @@ import type { AIProvider, ProviderConfig } from "./provider-interface";
 const providers = new Map<string, AIProvider>();
 
 // Initialize providers
-export function initializeProviders(): void {
+function initializeProviders(): void {
   const openAIConfig: ProviderConfig = {
     id: "openai",
     name: "OpenAI",
@@ -31,10 +31,3 @@ export function getProvider(providerId: string): AIProvider | undefined {
   }
   return providers.get(providerId);
 }
-
-export {
-  AIProvider,
-  type ProviderConfig,
-  type ProviderHeaders,
-  type StreamRequest,
-} from "./provider-interface";

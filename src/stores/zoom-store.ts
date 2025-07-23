@@ -81,5 +81,3 @@ export const useZoomStore = create(
     };
   }),
 );
-
-export type ZoomStore = ReturnType<typeof useZoomStore>;

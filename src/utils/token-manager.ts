@@ -65,11 +65,6 @@ export const removeProviderApiToken = async (providerId: string): Promise<void> 
   }
 };
 
-// Legacy function for backward compatibility
-export const getOpenAIToken = async (): Promise<string | null> => {
-  return getProviderApiToken("openai");
-};
-
 // Validate API key for a specific provider
 export const validateProviderApiKey = async (
   providerId: string,

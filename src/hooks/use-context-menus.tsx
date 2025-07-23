@@ -1,58 +1,10 @@
 import { ClockIcon } from "lucide-react";
-import type React from "react";
 import { useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { useFileSystemStore } from "../stores/file-system-store";
 import { useRecentFoldersStore } from "../stores/recent-folders-store";
 import { useUIState } from "../stores/ui-state-store";
 import type { RecentFolder } from "../types/recent-folders";
-
-interface UseContextMenusProps {
-  folderHeaderContextMenu: { x: number; y: number } | null;
-  projectNameMenu: { x: number; y: number } | null;
-  setFolderHeaderContextMenu: (menu: { x: number; y: number } | null) => void;
-  setProjectNameMenu: (menu: { x: number; y: number } | null) => void;
-}
-
-export const useContextMenus = ({
-  folderHeaderContextMenu,
-  projectNameMenu: _projectNameMenu,
-  setFolderHeaderContextMenu,
-  setProjectNameMenu,
-}: UseContextMenusProps) => {
-  // Handle clicking outside context menu to close it
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setFolderHeaderContextMenu(null);
-    };
-
-    if (folderHeaderContextMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [folderHeaderContextMenu, setFolderHeaderContextMenu]);
-
-  const handleProjectNameMenuOpen = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setProjectNameMenu({
-      x: event.currentTarget.getBoundingClientRect().left,
-      y: event.currentTarget.getBoundingClientRect().bottom + 5,
-    });
-  };
-
-  const closeAllMenus = () => {
-    setFolderHeaderContextMenu(null);
-    setProjectNameMenu(null);
-  };
-
-  return {
-    handleProjectNameMenuOpen,
-    closeAllMenus,
-  };
-};
 
 export const ProjectNameMenu = () => {
   // Get data from stores

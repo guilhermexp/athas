@@ -3,20 +3,20 @@
  * Used by AI providers that return streaming responses
  */
 
-export interface StreamHandlers {
+interface StreamHandlers {
   onChunk: (chunk: string) => void;
   onComplete: () => void;
   onError: (error: string) => void;
 }
 
-export interface SSEData {
+interface SSEData {
   choices?: Array<{
     delta?: { content?: string };
     message?: { content?: string };
   }>;
 }
 
-export class SSEStreamParser {
+class SSEStreamParser {
   private buffer = "";
   private decoder = new TextDecoder();
 

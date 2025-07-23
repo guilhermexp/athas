@@ -17,7 +17,7 @@ interface Action {
   action: () => void;
 }
 
-export interface CommandPaletteRef {
+interface CommandPaletteRef {
   focus: () => void;
 }
 

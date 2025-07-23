@@ -16,7 +16,7 @@ export async function readFileContent(path: string): Promise<string> {
   }
 }
 
-export async function writeFileContent(path: string, content: string): Promise<void> {
+async function writeFileContent(path: string, content: string): Promise<void> {
   try {
     await platformWriteFile(path, content);
   } catch (error) {
@@ -66,27 +66,5 @@ export async function readDirectoryContents(path: string): Promise<FileEntry[]> 
     }));
   } catch (error) {
     throw new Error(`Failed to read directory ${path}: ${error}`);
-  }
-}
-
-export async function loadFolderContents(folderEntry: FileEntry): Promise<FileEntry> {
-  if (!folderEntry.isDir) {
-    return folderEntry;
-  }
-
-  try {
-    const children = await readDirectoryContents(folderEntry.path);
-    return {
-      ...folderEntry,
-      expanded: true,
-      children,
-    };
-  } catch (error) {
-    console.error(`Error loading folder contents for ${folderEntry.path}:`, error);
-    return {
-      ...folderEntry,
-      expanded: true,
-      children: [],
-    };
   }
 }

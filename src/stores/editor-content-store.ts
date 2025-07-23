@@ -1,4 +1,4 @@
-import { create, type ExtractState } from "zustand";
+import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
 export const useEditorContentStore = create(
@@ -26,5 +26,3 @@ export const useEditorContentStore = create(
     }),
   ),
 );
-
-export type EditorContentState = ExtractState<typeof useEditorContentStore>;

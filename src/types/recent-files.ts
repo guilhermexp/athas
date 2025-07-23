@@ -6,12 +6,12 @@ export interface RecentFile {
   frecencyScore: number;
 }
 
-export interface RecentFilesState {
+interface RecentFilesState {
   recentFiles: RecentFile[];
   maxRecentFiles: number;
 }
 
-export interface RecentFilesActions {
+interface RecentFilesActions {
   addOrUpdateRecentFile: (path: string, name: string) => void;
   getRecentFilesOrderedByFrecency: () => RecentFile[];
   removeRecentFile: (path: string) => void;

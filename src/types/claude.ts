@@ -14,7 +14,7 @@ export interface InterceptorMessage {
   error?: string;
 }
 
-export interface InterceptedRequest {
+interface InterceptedRequest {
   id: string;
   timestamp: string;
   method: string;
@@ -29,7 +29,7 @@ export interface InterceptedRequest {
   error?: string;
 }
 
-export interface ParsedRequest {
+interface ParsedRequest {
   model: string;
   messages: ParsedMessage[];
   system?: SystemPrompt;
@@ -39,22 +39,22 @@ export interface ParsedRequest {
   stream?: boolean;
 }
 
-export interface ParsedMessage {
+interface ParsedMessage {
   role: "user" | "assistant";
   content: string | ContentBlock[];
 }
 
-export interface SystemPrompt {
+interface SystemPrompt {
   text?: string;
   blocks?: SystemBlock[];
 }
 
-export interface SystemBlock {
+interface SystemBlock {
   type: string;
   text: string;
 }
 
-export interface ParsedResponse {
+interface ParsedResponse {
   id?: string;
   type?: string;
   role?: string;
@@ -66,17 +66,17 @@ export interface ParsedResponse {
   error?: ErrorResponse;
 }
 
-export interface Usage {
+interface Usage {
   input_tokens: number;
   output_tokens: number;
 }
 
-export interface ErrorResponse {
+interface ErrorResponse {
   type: string;
   message: string;
 }
 
-export interface ContentBlock {
+interface ContentBlock {
   type: "text" | "tool_use" | "tool_result";
   text?: string;
   id?: string;
@@ -86,7 +86,7 @@ export interface ContentBlock {
   is_error?: boolean;
 }
 
-export interface ToolResultContent {
+interface ToolResultContent {
   type: "text" | "image";
   text?: string;
   source?: {
@@ -96,13 +96,13 @@ export interface ToolResultContent {
   };
 }
 
-export interface Tool {
+interface Tool {
   name: string;
   description?: string;
   input_schema?: any;
 }
 
-export interface StreamingChunk {
+interface StreamingChunk {
   type: string;
   index?: number;
   delta?: Delta;
@@ -111,7 +111,7 @@ export interface StreamingChunk {
   error?: ErrorResponse;
 }
 
-export interface Delta {
+interface Delta {
   type?: string;
   text?: string;
   partial_json?: string;
@@ -119,7 +119,7 @@ export interface Delta {
   stop_sequence?: string;
 }
 
-export interface StreamMessage {
+interface StreamMessage {
   id: string;
   type: string;
   role: string;
@@ -127,19 +127,4 @@ export interface StreamMessage {
   stop_reason?: string;
   stop_sequence?: string;
   usage: Usage;
-}
-
-// Helper functions
-export function isToolUseBlock(block: ContentBlock): block is ContentBlock & { type: "tool_use" } {
-  return block.type === "tool_use";
-}
-
-export function isTextBlock(block: ContentBlock): block is ContentBlock & { type: "text" } {
-  return block.type === "text";
-}
-
-export function isToolResultBlock(
-  block: ContentBlock,
-): block is ContentBlock & { type: "tool_result" } {
-  return block.type === "tool_result";
 }

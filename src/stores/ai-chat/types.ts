@@ -1,8 +1,6 @@
 import type { Chat, Message } from "../../components/ai-chat/types";
 import type { FileEntry } from "../../types/app";
 
-export type { Message } from "../../components/ai-chat/types";
-
 export interface AIChatState {
   // Input state
   input: string;

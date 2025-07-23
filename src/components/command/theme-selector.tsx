@@ -20,7 +20,7 @@ interface ThemeSelectorProps {
   currentTheme?: Theme;
 }
 
-export interface ThemeSelectorRef {
+interface ThemeSelectorRef {
   focus: () => void;
 }
 

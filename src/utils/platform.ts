@@ -102,64 +102,10 @@ export async function readDirectory(path: string): Promise<any[]> {
 }
 
 /**
- * Get platform-specific keyboard shortcut text
- * @param key The key (e.g., "w", "s", "a")
- * @param modifiers Array of modifiers (e.g., ["cmd"], ["ctrl", "shift"])
- */
-export function getShortcutText(key: string, modifiers: string[] = []): string {
-  if (isMac()) {
-    // Map modifiers to Mac symbols
-    const modifierMap: Record<string, string> = {
-      cmd: "⌘",
-      ctrl: "⌃",
-      alt: "⌥",
-      shift: "⇧",
-    };
-
-    // Convert modifiers to symbols
-    const modifierSymbols = modifiers.map(mod => modifierMap[mod.toLowerCase()] || mod).join("");
-
-    // Return combined shortcut
-    return modifierSymbols + key.toUpperCase();
-  } else {
-    // Windows/Linux style
-    const modifierMap: Record<string, string> = {
-      cmd: "Ctrl",
-      ctrl: "Ctrl",
-      alt: "Alt",
-      shift: "Shift",
-    };
-
-    // Convert modifiers
-    const modifierTexts = modifiers.map(mod => modifierMap[mod.toLowerCase()] || mod);
-
-    // Join with + and add the key
-    if (modifierTexts.length > 0) {
-      return `${modifierTexts.join("+")}+${key.toUpperCase()}`;
-    }
-    return key.toUpperCase();
-  }
-}
-
-/**
  * Cross-platform file move utility
  * @param sourcePath The path of the file to move
  * @param targetPath The destination path where the file should be moved
  */
 export async function moveFile(sourcePath: string, targetPath: string): Promise<void> {
   await invoke("move_file", { sourcePath, targetPath });
-}
-
-/**
- * Copy an external file to a directory
- * @param sourcePath The path of the external file to copy
- * @param targetDir The directory where the file should be copied
- * @param fileName The name for the copied file
- */
-export async function copyExternalFile(
-  sourcePath: string,
-  targetDir: string,
-  fileName: string,
-): Promise<void> {
-  await invoke("copy_external_file", { sourcePath, targetDir, fileName });
 }

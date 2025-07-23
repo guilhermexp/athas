@@ -47,20 +47,6 @@ export const getLanguageFromFilename = (filename: string): string => {
 };
 
 /**
- * Check if a file is an ERB template based on its extension
- */
-export const isERBFile = (path: string): boolean => {
-  const lowerPath = path.toLowerCase();
-  return (
-    lowerPath.endsWith(".erb") ||
-    lowerPath.endsWith(".html.erb") ||
-    lowerPath.endsWith(".js.erb") ||
-    lowerPath.endsWith(".css.erb") ||
-    lowerPath.endsWith(".xml.erb")
-  );
-};
-
-/**
  * Check if a file is a SQLite database based on its extension
  */
 export const isSQLiteFile = (path: string): boolean => {
@@ -107,7 +93,7 @@ export const getFilenameFromPath = (path: string): string => {
 /**
  * Get the directory path from a file path
  */
-export const getDirectoryFromPath = (filePath: string): string => {
+const getDirectoryFromPath = (filePath: string): string => {
   const pathParts = filePath.split("/");
   pathParts.pop(); // Remove the filename
   return pathParts.join("/");

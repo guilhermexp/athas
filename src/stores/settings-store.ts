@@ -5,7 +5,7 @@ import { immer } from "zustand/middleware/immer";
 
 type Theme = "auto" | "athas-light" | "athas-dark";
 
-export interface Settings {
+interface Settings {
   theme: Theme;
   autoThemeLight: Theme;
   autoThemeDark: Theme;

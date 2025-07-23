@@ -8,14 +8,12 @@ import { getProviderApiToken } from "./token-manager";
 import type { ContextInfo } from "./types";
 
 export {
-  getOpenAIToken,
   getProviderApiToken,
   removeProviderApiToken,
   storeProviderApiToken,
   validateProviderApiKey,
 } from "./token-manager";
-// Re-export types and legacy functions
-export type { ContextInfo } from "./types";
+// Re-export types and legacy functions;
 
 // Generic streaming chat completion function that works with any provider
 export const getChatCompletionStream = async (
