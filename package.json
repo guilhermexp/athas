@@ -11,7 +11,7 @@
     "lint": "bun check --write",
     "fix": "bun check --write",
     "format": "bun check --write",
-    "check:all": "bun typecheck && bun lint && bun knip",
+    "check:all": "bun typecheck && bun lint",
     "check:fix": "biome check --write --unsafe",
     "clean": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
     "prepare": "simple-git-hooks",

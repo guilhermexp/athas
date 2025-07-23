@@ -1,60 +1,38 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useEditorDecorations } from "../../hooks/use-editor-decorations";
+import { basicEditingExtension } from "../../extensions/basic-editing-extension";
+import { editorAPI } from "../../extensions/editor-api";
+import { extensionManager } from "../../extensions/extension-manager";
+import {
+  setSyntaxHighlightingFilePath,
+  syntaxHighlightingExtension,
+} from "../../extensions/syntax-highlighting-extension";
 import { useEditorContentStore } from "../../stores/editor-content-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
-import { cn } from "../../utils/cn";
-import "../../styles/editor-cursor.css";
-
-interface CursorPosition {
-  line: number;
-  column: number;
-  offset: number;
-}
-
-interface Selection {
-  start: CursorPosition;
-  end: CursorPosition;
-}
+import type { Position, Range } from "../../types/editor-types";
+import { EditorContentNew } from "./editor-content-new";
 
 export function VirtualTextEditor() {
-  const { fontSize, tabSize, wordWrap } = useEditorSettingsStore();
+  const { tabSize } = useEditorSettingsStore();
   const { bufferContent, setBufferContent } = useEditorContentStore();
-  const { onChange, disabled, placeholder, filePath, editorRef } = useEditorInstanceStore();
+  const { onChange, disabled, filePath, editorRef } = useEditorInstanceStore();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const displayRef = useRef<HTMLDivElement>(null);
-  const measurementRef = useRef<HTMLSpanElement>(null);
   const localRef = useRef<HTMLDivElement>(null);
 
-  const { tokens, fetchTokens, clearTokens } = useEditorDecorations();
-
-  const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
+  const [cursorPosition, setCursorPosition] = useState<Position>({
     line: 0,
     column: 0,
     offset: 0,
   });
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [cursorPixelPosition, setCursorPixelPosition] = useState({ x: 0, y: 0 });
+  const [selection, setSelection] = useState<Range | null>(null);
   const [desiredColumn, setDesiredColumn] = useState<number | null>(null);
 
   // Use the ref from the store or fallback to local ref
   const containerRef = editorRef || localRef;
 
-  // Clear tokens when file path changes
-  useEffect(() => {
-    clearTokens();
-  }, [filePath, clearTokens]);
-
-  // Fetch tokens when content or file changes
-  useEffect(() => {
-    if (filePath) {
-      fetchTokens(bufferContent, filePath);
-    }
-  }, [bufferContent, filePath, fetchTokens]);
-
   // Calculate cursor position from offset
-  const calculateCursorPosition = useCallback((offset: number, text: string): CursorPosition => {
+  const calculateCursorPosition = useCallback((offset: number, text: string): Position => {
     const lines = text.split("\n");
     let currentOffset = 0;
 
@@ -78,36 +56,6 @@ export function VirtualTextEditor() {
   }, []);
 
   // Measure text width using a hidden span
-  const measureText = useCallback((text: string): number => {
-    if (!measurementRef.current) return 0;
-    // Use innerHTML with nbsp to preserve spaces
-    const htmlText = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/ /g, "&nbsp;");
-    measurementRef.current.innerHTML = htmlText;
-    return measurementRef.current.getBoundingClientRect().width;
-  }, []);
-
-  // Calculate pixel position for cursor
-  const calculateCursorPixelPosition = useCallback(
-    (position: CursorPosition) => {
-      const lines = bufferContent.split("\n");
-      const lineHeight = fontSize * 1.4;
-
-      // Calculate Y position
-      const y = position.line * lineHeight + 8; // 8px padding
-
-      // Calculate X position
-      const currentLine = lines[position.line] || "";
-      const textBeforeCursor = currentLine.substring(0, position.column);
-      const x = measureText(textBeforeCursor) + 8; // 8px padding
-
-      return { x, y };
-    },
-    [bufferContent, fontSize, measureText],
-  );
 
   // Calculate offset from line and column
   const calculateOffsetFromPosition = useCallback(
@@ -133,6 +81,7 @@ export function VirtualTextEditor() {
     const newValue = e.target.value;
     setBufferContent(newValue);
     onChange?.(newValue);
+
     // Update selection after change
     setTimeout(() => handleSelectionChange(), 0);
   };
@@ -143,7 +92,26 @@ export function VirtualTextEditor() {
     const { selectionStart } = textarea;
     const currentPosition = calculateCursorPosition(selectionStart, bufferContent);
 
-    if (e.key === "Tab") {
+    // Check for extension keybindings first
+    const key = [
+      e.ctrlKey && "Ctrl",
+      e.metaKey && "Cmd",
+      e.altKey && "Alt",
+      e.shiftKey && "Shift",
+      e.key,
+    ]
+      .filter(Boolean)
+      .join("+");
+
+    const command = extensionManager.getCommandForKeybinding(key);
+    if (command && (!command.when || command.when())) {
+      e.preventDefault();
+      command.execute({ editor: editorAPI });
+      return;
+    }
+
+    // Default Tab handling (will be overridden by extension if loaded)
+    if (e.key === "Tab" && !command) {
       e.preventDefault();
       const { selectionEnd } = textarea;
       const spaces = " ".repeat(tabSize);
@@ -221,189 +189,100 @@ export function VirtualTextEditor() {
     }
   };
 
-  // Update cursor pixel position when cursor position changes
-  useEffect(() => {
-    const pixelPos = calculateCursorPixelPosition(cursorPosition);
-    setCursorPixelPosition(pixelPos);
-  }, [cursorPosition, calculateCursorPixelPosition]);
-
-  // Focus textarea on mount
+  // Focus textarea on mount and setup extension system
   useEffect(() => {
     if (textareaRef.current && !disabled) {
       textareaRef.current.focus();
       handleSelectionChange();
     }
-  }, []);
 
-  // Handle click on display to position cursor
-  const handleDisplayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!displayRef.current || !textareaRef.current) return;
+    // Initialize extension manager with editor API
+    extensionManager.setEditor(editorAPI);
 
-    const rect = displayRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Load core extensions only once per app lifecycle
+    const loadExtensions = async () => {
+      try {
+        // Initialize extension manager if not already done
+        if (!extensionManager.isInitialized()) {
+          extensionManager.initialize();
 
-    // Account for padding
-    const adjustedX = x - 8;
-    const adjustedY = y - 8;
-
-    // Calculate line from Y position
-    const lineHeight = fontSize * 1.4;
-    const clickedLine = Math.floor(adjustedY / lineHeight);
-
-    const lines = bufferContent.split("\n");
-    const actualLine = Math.min(Math.max(0, clickedLine), lines.length - 1);
-
-    // Calculate column from X position by measuring text
-    const lineText = lines[actualLine] || "";
-    let column = 0;
-
-    // Binary search for the closest character position
-    for (let i = 0; i <= lineText.length; i++) {
-      const textToMeasure = lineText.substring(0, i);
-      const width = measureText(textToMeasure);
-
-      if (width > adjustedX) {
-        // Check if we're closer to current or previous character
-        const prevWidth = i > 0 ? measureText(lineText.substring(0, i - 1)) : 0;
-        const currentDiff = Math.abs(width - adjustedX);
-        const prevDiff = Math.abs(prevWidth - adjustedX);
-
-        column = prevDiff < currentDiff ? i - 1 : i;
-        break;
-      }
-
-      column = i;
-    }
-
-    // Calculate offset and update textarea selection
-    const offset = calculateOffsetFromPosition(actualLine, column, bufferContent);
-    textareaRef.current.selectionStart = textareaRef.current.selectionEnd = offset;
-
-    // Focus and update visual cursor
-    textareaRef.current.focus();
-    handleSelectionChange();
-
-    // Reset desired column
-    setDesiredColumn(null);
-  };
-
-  // Render highlighted content
-  const renderHighlightedContent = () => {
-    const lines = bufferContent.split("\n");
-
-    return lines.map((line, lineIndex) => {
-      const lineStart = lines.slice(0, lineIndex).reduce((acc, l) => acc + l.length + 1, 0);
-      const lineEnd = lineStart + line.length;
-
-      // Find tokens for this line
-      const lineTokens = tokens.filter(token => token.start < lineEnd && token.end > lineStart);
-
-      // Build line content with highlighting
-      const lineElements: React.ReactNode[] = [];
-      let lastEnd = 0;
-
-      lineTokens.forEach(token => {
-        const tokenStart = Math.max(0, token.start - lineStart);
-        const tokenEnd = Math.min(line.length, token.end - lineStart);
-
-        // Add plain text before token
-        if (tokenStart > lastEnd) {
-          lineElements.push(
-            <span key={`plain-${lineIndex}-${lastEnd}`}>
-              {line.substring(lastEnd, tokenStart)}
-            </span>,
-          );
+          // Load core extensions
+          await extensionManager.loadExtension(syntaxHighlightingExtension);
+          await extensionManager.loadExtension(basicEditingExtension);
         }
 
-        // Add highlighted token
-        lineElements.push(
-          <span key={`token-${lineIndex}-${token.start}`} className={token.class_name}>
-            {line.substring(tokenStart, tokenEnd)}
-          </span>,
-        );
-
-        lastEnd = tokenEnd;
-      });
-
-      // Add remaining text
-      if (lastEnd < line.length) {
-        lineElements.push(
-          <span key={`plain-${lineIndex}-${lastEnd}`}>{line.substring(lastEnd)}</span>,
-        );
+        // Set file path for syntax highlighting
+        if (filePath) {
+          setSyntaxHighlightingFilePath(filePath);
+        }
+      } catch (error) {
+        console.error("Failed to load extensions:", error);
       }
+    };
 
-      return (
-        <div key={lineIndex} className="code-line" style={{ height: `${fontSize * 1.4}px` }}>
-          {lineElements.length > 0 ? lineElements : <span>&nbsp;</span>}
-        </div>
-      );
-    });
-  };
+    loadExtensions();
 
-  // Render selection overlay
-  const renderSelection = () => {
-    if (!selection) return null;
+    // No cleanup needed - extensions are managed globally
+  }, []); // Remove filePath dependency to prevent re-running
 
-    const lines = bufferContent.split("\n");
-    const lineHeight = fontSize * 1.4;
-    const selectionElements: React.ReactNode[] = [];
-
-    for (let i = selection.start.line; i <= selection.end.line; i++) {
-      const line = lines[i] || "";
-      const y = i * lineHeight + 8;
-
-      let startX = 8;
-      let width = 0;
-
-      if (i === selection.start.line && i === selection.end.line) {
-        // Single line selection
-        const beforeText = line.substring(0, selection.start.column);
-        const selectedText = line.substring(selection.start.column, selection.end.column);
-        startX = measureText(beforeText) + 8;
-        width = measureText(selectedText);
-      } else if (i === selection.start.line) {
-        // First line of multi-line selection
-        const beforeText = line.substring(0, selection.start.column);
-        const selectedText = line.substring(selection.start.column);
-        startX = measureText(beforeText) + 8;
-        width = measureText(selectedText);
-      } else if (i === selection.end.line) {
-        // Last line of multi-line selection
-        const selectedText = line.substring(0, selection.end.column);
-        width = measureText(selectedText);
-      } else {
-        // Middle lines of multi-line selection
-        width = measureText(line);
-      }
-
-      selectionElements.push(
-        <div
-          key={`selection-${i}`}
-          className="selection-overlay"
-          style={{
-            position: "absolute",
-            left: `${startX}px`,
-            top: `${y}px`,
-            width: `${width}px`,
-            height: `${lineHeight}px`,
-            backgroundColor: "rgba(0, 120, 215, 0.3)",
-          }}
-        />,
-      );
+  // Update syntax highlighting when file path changes
+  useEffect(() => {
+    if (filePath) {
+      setSyntaxHighlightingFilePath(filePath);
     }
+  }, [filePath]);
 
-    return selectionElements;
-  };
+  // Update editor API when cursor/selection changes
+  useEffect(() => {
+    editorAPI.updateCursorAndSelection(cursorPosition, selection);
+  }, [cursorPosition, selection]);
 
-  const getEditorStyles = {
-    fontSize: `${fontSize}px`,
-    lineHeight: `${fontSize * 1.4}px`,
-    fontFamily: "monospace",
-  };
+  // Emit content change events to extensions
+  useEffect(() => {
+    // Emit the event directly without going through setContent to avoid loops
+    const eventData = { content: bufferContent, changes: [] };
+    editorAPI.on("contentChange", () => {}); // Ensure event handler exists
+    // Use private emit method
+    (editorAPI as any).emit("contentChange", eventData);
+  }, [bufferContent]);
 
+  // Handlers for line-based rendering interactions
+  const handleLineBasedClick = useCallback(
+    (position: Position) => {
+      if (!textareaRef.current) return;
+
+      // Update textarea selection
+      textareaRef.current.selectionStart = textareaRef.current.selectionEnd = position.offset;
+
+      // Focus textarea
+      textareaRef.current.focus();
+
+      // Update cursor position
+      handleSelectionChange();
+    },
+    [handleSelectionChange],
+  );
+
+  const handleLineBasedSelection = useCallback(
+    (start: Position, end: Position) => {
+      if (!textareaRef.current) return;
+
+      // Update textarea selection
+      const startOffset = Math.min(start.offset, end.offset);
+      const endOffset = Math.max(start.offset, end.offset);
+
+      textareaRef.current.selectionStart = startOffset;
+      textareaRef.current.selectionEnd = endOffset;
+
+      // Update visual selection
+      handleSelectionChange();
+    },
+    [handleSelectionChange],
+  );
+
+  // Line-based rendering
   return (
-    <div ref={containerRef} className="virtual-editor-container relative h-full overflow-auto">
+    <div ref={containerRef} className="virtual-editor-container relative h-full overflow-hidden">
       {/* Hidden textarea for input */}
       <textarea
         ref={textareaRef}
@@ -421,56 +300,15 @@ export function VirtualTextEditor() {
         spellCheck={false}
       />
 
-      {/* Measurement helper */}
-      <span
-        ref={measurementRef}
-        className="invisible absolute"
-        style={{
-          ...getEditorStyles,
-          whiteSpace: wordWrap ? "pre-wrap" : "pre",
-        }}
+      {/* Line-based editor content */}
+      <EditorContentNew
+        cursorPosition={cursorPosition}
+        selection={selection}
+        viewportHeight={containerRef.current?.clientHeight || 600}
+        filePath={filePath}
+        onPositionClick={handleLineBasedClick}
+        onSelectionDrag={handleLineBasedSelection}
       />
-
-      {/* Display layer */}
-      <div
-        ref={displayRef}
-        className={cn("relative", "font-mono", "bg-transparent text-[var(--color-text)]")}
-        style={{
-          ...getEditorStyles,
-          padding: "8px 8px 50vh 8px",
-          whiteSpace: wordWrap ? "pre-wrap" : "pre",
-          wordBreak: wordWrap ? "break-word" : "normal",
-          overflowWrap: wordWrap ? "break-word" : "normal",
-          cursor: "text",
-        }}
-        onClick={handleDisplayClick}
-      >
-        {/* Selection overlay */}
-        {renderSelection()}
-
-        {/* Highlighted content */}
-        {renderHighlightedContent()}
-
-        {/* Cursor */}
-        {!selection && (
-          <div
-            className="cursor"
-            style={{
-              position: "absolute",
-              left: `${cursorPixelPosition.x}px`,
-              top: `${cursorPixelPosition.y}px`,
-              width: "2px",
-              height: `${fontSize * 1.4}px`,
-              backgroundColor: "var(--color-text)",
-            }}
-          />
-        )}
-
-        {/* Placeholder */}
-        {!bufferContent && placeholder && (
-          <div className="pointer-events-none absolute inset-0 p-2 opacity-50">{placeholder}</div>
-        )}
-      </div>
     </div>
   );
 }

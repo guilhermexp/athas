@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useEventCallback } from "usehooks-ts";
-import { getTokens, type Token } from "../lib/rust-api/tokens";
+import { getTokens } from "../lib/rust-api/tokens";
+import type { Token } from "../types/editor-types";
 
 const DEBOUNCE_TIME_MS = 300;
 
