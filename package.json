@@ -5,18 +5,22 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
+    "knip": "knip",
+
     "type-check": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
+
     "check": "biome check",
     "lint": "bun check --write",
     "fix": "bun check --write",
     "format": "bun check --write",
+
     "check:all": "bun typecheck && bun lint",
     "check:fix": "biome check --write --unsafe",
+
     "clean": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
     "prepare": "simple-git-hooks",
-    "commitlint": "commitlint --edit",
-    "knip": "knip"
+    "commitlint": "commitlint --edit"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
