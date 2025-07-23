@@ -15,11 +15,6 @@ const initialState = {
   editorRef: null as RefObject<HTMLDivElement | null> | null,
   lineNumbersRef: null as RefObject<HTMLDivElement | null> | null,
 
-  // Inline assistant state
-  isInlineAssistantVisible: false,
-  selectedText: "",
-  assistantCursorPosition: { x: 0, y: 0 },
-
   // UI props
   placeholder: undefined as string | undefined,
   disabled: false,
@@ -38,18 +33,6 @@ export const useEditorInstanceStore = create(
     setFileInfo: (filePath: string, filename: string) => set({ filePath, filename }),
     setUIProps: (props: { placeholder?: string; disabled: boolean; className?: string }) =>
       set(props),
-
-    // Inline assistant actions
-    setInlineAssistant: (
-      visible: boolean,
-      selectedText: string = "",
-      position: { x: number; y: number } = { x: 0, y: 0 },
-    ) =>
-      set({
-        isInlineAssistantVisible: visible,
-        selectedText,
-        assistantCursorPosition: position,
-      }),
   })),
 );
 

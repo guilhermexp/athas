@@ -101,9 +101,6 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // Cmd+K is now handled directly in the code editor to avoid conflicts
-      // Removed global handler to prevent duplicate inline assistants
-
       // Find is now handled by native menu accelerator on macOS
       // Only handle on non-macOS platforms
       if ((e.metaKey || e.ctrlKey) && e.key === "f" && !e.shiftKey && !isMac()) {

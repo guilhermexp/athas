@@ -14,11 +14,10 @@ import { useFileSystemStore } from "../../stores/file-system-store";
 import FindBar from "../find-bar";
 import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
 import { CompletionDropdown } from "./completion-dropdown";
-import { EditorContent } from "./editor-content";
 import { EditorStyles } from "./editor-styles";
 import { HoverTooltip } from "./hover-tooltip";
 import { LineNumbers } from "./line-numbers";
-import { QuickEditInline } from "./quick-edit-inline";
+import { TextEditor } from "./text-editor";
 
 // import type { VimCommandLineRef } from "../vim-command-line"; // Unused for now
 
@@ -207,13 +206,12 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
             {/* Editor content area */}
             <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
-              <EditorContent />
+              <div className="relative h-full flex-1 bg-primary-bg">
+                <TextEditor />
+              </div>
 
               {/* LSP Completion Dropdown - temporarily disabled */}
               <CompletionDropdown />
-
-              {/* Quick Edit Inline */}
-              <QuickEditInline />
             </div>
           </div>
         </div>
