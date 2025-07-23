@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "check": "biome check",
     "lint": "bun check",
-    "check:all": "bun typecheck && bun check:fix",
+    "check:all": "bun typecheck && bun check:fix && bun knip",
     "check:fix": "biome check --write --unsafe",
     "clean": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
     "prepare": "simple-git-hooks",
@@ -52,7 +52,7 @@
     "vite": "^7.0.5"
   },
   "simple-git-hooks": {
-    "pre-commit": "bunx concurrently --names \"rust,ts\" --prefix-colors \"yellow,cyan\" './scripts/format-staged-rust.sh' './scripts/format-staged-biome.sh && bun check:all'",
+    "pre-commit": "bunx concurrently --names \"rust,ts\" --prefix-colors \"yellow,cyan\" './scripts/format-staged-rust.sh' './scripts/format-staged-biome.sh && bun check:all && bun knip'",
     "commit-msg": "bun commitlint --edit $1"
   },
   "lint-staged": {

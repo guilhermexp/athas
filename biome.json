@@ -44,7 +44,8 @@
         "noArrayIndexKey": "off"
       },
       "correctness": {
-        "useExhaustiveDependencies": "off"
+        "useExhaustiveDependencies": "off",
+        "noUnusedVariables": "error"
       },
       "nursery": {
         "useSortedClasses": "warn"
