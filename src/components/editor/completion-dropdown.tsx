@@ -22,10 +22,6 @@ export function CompletionDropdown() {
     }
   };
 
-  // const handleClose = () => {
-  //   setIsLspCompletionVisible(false);
-  // };
-
   return (
     <div
       className="fixed z-50 min-w-[200px] max-w-[400px] rounded border border-border bg-primary-bg shadow-lg"

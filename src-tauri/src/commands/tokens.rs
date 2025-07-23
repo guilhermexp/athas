@@ -276,8 +276,28 @@ fn map_highlight_to_class(highlight_name: &str) -> (&str, &str) {
 }
 
 #[tauri::command]
-pub async fn get_tokens(content: String, language: String) -> Result<Vec<Token>, String> {
-    tokenize_content(&content, &language).map_err(|e| format!("Failed to tokenize: {e}"))
+pub async fn get_tokens(content: String, file_extension: String) -> Result<Vec<Token>, String> {
+    // Determine language from extension
+    let language = match file_extension.as_str() {
+        "js" | "jsx" => "javascript",
+        "ts" => "typescript",
+        "tsx" => "tsx",
+        "json" => "json",
+        "yml" | "yaml" => "yaml",
+        "go" => "go",
+        "rb" | "ruby" => "ruby",
+        "rs" => "rust",
+        "erb" | "html.erb" => "erb",
+        "py" => "python",
+        "html" | "htm" => "html",
+        "css" => "css",
+        "md" | "markdown" => "markdown",
+        "sh" | "bash" => "bash",
+        "toml" => "toml",
+        _ => return Err(format!("Unsupported file extension: {}", file_extension)),
+    };
+
+    tokenize_content(&content, language).map_err(|e| format!("Failed to tokenize: {e}"))
 }
 
 #[tauri::command]

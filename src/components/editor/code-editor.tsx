@@ -36,17 +36,14 @@ export interface CodeEditorRef {
   textarea: HTMLDivElement | null;
 }
 
-// Main CodeEditor Component
 const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, ref) => {
   // Refs - must be called unconditionally
   const editorRef = useRef<HTMLDivElement>(null as any);
   const lineNumbersRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
 
-  // Get store actions
   const { setRefs, setContent, setFileInfo } = useEditorInstanceStore();
 
-  // Get data from stores
   const activeBuffer = useBufferStore(state => state.getActiveBuffer());
   const { handleContentChange } = useAppStore();
   const { fontSize, fontFamily, tabSize, wordWrap, lineNumbers } = useEditorSettingsStore();
@@ -206,7 +203,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
           {/* Main editor layout */}
           <div className="flex h-full">
-            {/* Line numbers */}
             {lineNumbers && <LineNumbers />}
 
             {/* Editor content area */}

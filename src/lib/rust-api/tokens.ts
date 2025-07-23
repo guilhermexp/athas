@@ -7,8 +7,8 @@ export interface Token {
   class_name: string;
 }
 
-export async function getTokens(content: string, language: string): Promise<Token[]> {
-  return invoke<Token[]>("get_tokens", { content, language });
+export async function getTokens(content: string, fileExtension: string): Promise<Token[]> {
+  return invoke<Token[]>("get_tokens", { content, fileExtension });
 }
 
 export async function getTokensFromPath(filePath: string): Promise<Token[]> {

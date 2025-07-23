@@ -2,7 +2,6 @@ import { create, type ExtractState } from "zustand";
 import { combine } from "zustand/middleware";
 
 const initialState = {
-  // Core Editor State
   value: "",
   language: "text",
   filename: "",
