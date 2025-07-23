@@ -67,7 +67,19 @@ export function addFileToTree(
     return sortFileEntries([...files, newFile]);
   }
 
-  return files.map(file => {
+  // Check if parentPath matches the root folder (when files are direct children of parentPath)
+  // This happens when creating files in the root directory
+  if (files.length > 0 && files[0].path) {
+    const firstFilePath = files[0].path;
+    // Extract the parent directory of the first file
+    const rootDirFromFirstFile = firstFilePath.substring(0, firstFilePath.lastIndexOf("/"));
+    if (parentPath === rootDirFromFirstFile) {
+      // Add to top level since parentPath is the root directory
+      return sortFileEntries([...files, newFile]);
+    }
+  }
+
+  const result = files.map(file => {
     if (file.path === parentPath && file.isDir) {
       const children = sortFileEntries([...(file.children || []), newFile]);
       return { ...file, children, expanded: true };
@@ -80,6 +92,7 @@ export function addFileToTree(
     }
     return file;
   });
+  return result;
 }
 
 export function collapseAllFolders(files: FileEntry[]): FileEntry[] {
