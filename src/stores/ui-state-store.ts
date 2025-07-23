@@ -15,6 +15,10 @@ const initialState = {
   isRemoteViewActive: false,
   isGitHubCopilotSettingsVisible: false,
 
+  // Dialog States
+  isSettingsDialogVisible: false,
+  isThemeSelectorVisible: false,
+
   // Bottom Pane
   isBottomPaneVisible: false,
   bottomPaneActiveTab: "terminal" as BottomPaneTab,
@@ -51,6 +55,10 @@ export const useUIState = create(
     setIsRemoteViewActive: (v: boolean) => set({ isRemoteViewActive: v }),
     setIsGitHubCopilotSettingsVisible: (v: boolean) => set({ isGitHubCopilotSettingsVisible: v }),
 
+    // Dialog State actions
+    setIsSettingsDialogVisible: (v: boolean) => set({ isSettingsDialogVisible: v }),
+    setIsThemeSelectorVisible: (v: boolean) => set({ isThemeSelectorVisible: v }),
+
     // Bottom Pane actions
     setIsBottomPaneVisible: (v: boolean) => set({ isBottomPaneVisible: v }),
     setBottomPaneActiveTab: (tab: BottomPaneTab) => set({ bottomPaneActiveTab: tab }),
@@ -80,6 +88,8 @@ export const useUIState = create(
         isGitHubCopilotSettingsVisible: false,
         isQuickEditVisible: false,
         isFindVisible: false,
+        isSettingsDialogVisible: false,
+        isThemeSelectorVisible: false,
         folderHeaderContextMenu: null,
         projectNameMenu: null,
       }),

@@ -1,12 +1,17 @@
-import { Bot, Palette, Settings, X } from "lucide-react";
+import { Bot, Palette, Settings } from "lucide-react";
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { cn } from "@/utils/cn";
 import { useAppStore } from "../../stores/app-store";
-import { useBufferStore } from "../../stores/buffer-store";
 import { useSettingsStore } from "../../stores/settings-store";
 import { useUIState } from "../../stores/ui-state-store";
-import ThemeSelector from "./theme-selector";
+import Command, {
+  CommandEmpty,
+  CommandHeader,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
+import KeybindingBadge from "../ui/keybinding-badge";
 
 interface Action {
   id: string;
@@ -14,6 +19,7 @@ interface Action {
   description?: string;
   icon?: React.ReactNode;
   category: string;
+  keybinding?: string[];
   action: () => void;
 }
 
@@ -23,15 +29,19 @@ interface CommandPaletteRef {
 
 const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
   // Get data from stores
-  const { isCommandPaletteVisible, setIsCommandPaletteVisible } = useUIState();
+  const {
+    isCommandPaletteVisible,
+    setIsCommandPaletteVisible,
+    setIsSettingsDialogVisible,
+    setIsThemeSelectorVisible,
+  } = useUIState();
   const settingsStore = useSettingsStore();
-  const { openBuffer } = useBufferStore();
   const { openQuickEdit } = useAppStore();
 
   const isVisible = isCommandPaletteVisible;
   const onClose = () => setIsCommandPaletteVisible(false);
-  const currentTheme = settingsStore.settings.theme;
-  const onThemeChange = settingsStore.updateTheme;
+  const _currentTheme = settingsStore.settings.theme;
+  const _onThemeChange = settingsStore.updateTheme;
   const onQuickEditInline = () => {
     // TODO: Implement quick edit
     const selection = window.getSelection();
@@ -43,29 +53,9 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
       });
     }
   };
-  const onOpenSettings = () => {
-    // Create settings JSON buffer with current values
-    const settingsContent = JSON.stringify(
-      {
-        theme: currentTheme,
-        // Add other settings here
-      },
-      null,
-      2,
-    );
-    openBuffer(
-      "settings://user-settings.json",
-      "settings.json",
-      settingsContent,
-      false,
-      false,
-      false,
-      true,
-    );
-  };
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [isThemeSelectorVisible, setIsThemeSelectorVisible] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -83,8 +73,9 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
       id: "ai-quick-edit",
       label: "AI: Quick Edit Selection",
       description: "Edit selected text using AI inline",
-      icon: <Bot size={16} />,
+      icon: <Bot size={14} />,
       category: "AI",
+      keybinding: ["⌘", "E"],
       action: () => {
         if (onQuickEditInline) onQuickEditInline();
         onClose();
@@ -92,25 +83,25 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
     },
     {
       id: "open-settings",
-      label: "Preferences: Open Settings (JSON)",
-      description: "Edit settings as JSON file",
-      icon: <Settings size={16} />,
+      label: "Preferences: Open Settings",
+      description: "Open settings dialog",
+      icon: <Settings size={14} />,
       category: "Settings",
+      keybinding: ["⌘", ","],
       action: () => {
-        if (onOpenSettings) {
-          onOpenSettings();
-        }
         onClose();
+        setIsSettingsDialogVisible(true);
       },
     },
     {
       id: "color-theme",
       label: "Preferences: Color Theme",
       description: "Choose a color theme",
-      icon: <Palette size={16} />,
+      icon: <Palette size={14} />,
       category: "Theme",
+      keybinding: ["⌘", "T"],
       action: () => {
-        console.log("Opening theme selector...");
+        onClose();
         setIsThemeSelectorVisible(true);
       },
     },
@@ -160,7 +151,7 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
     if (isVisible) {
       setQuery("");
       setSelectedIndex(0);
-      setIsThemeSelectorVisible(false);
+      // Don't reset dialog states - they should persist when command palette closes
       // Immediate focus without delay for better UX
       requestAnimationFrame(() => {
         if (inputRef.current) {
@@ -191,70 +182,43 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
   if (!isVisible) return null;
 
   return (
-    <>
-      <div className="-translate-x-1/2 fixed top-12 left-1/2 z-[9999] transform">
-        <div className="flex max-h-[400px] w-[600px] flex-col overflow-hidden rounded-lg border border-border bg-primary-bg shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center gap-3 border-border border-b px-4 py-3">
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Type a command..."
-              className={cn(
-                "flex-1 border-none bg-transparent text-sm text-text",
-                "placeholder-text-lighter outline-none",
-                "focus:border-none focus:shadow-none focus:outline-none focus:ring-0",
-              )}
-              style={{
-                outline: "none !important",
-                boxShadow: "none !important",
-                border: "none !important",
-                WebkitAppearance: "none",
+    <Command isVisible={isVisible}>
+      <CommandHeader onClose={onClose}>
+        <CommandInput
+          ref={inputRef}
+          value={query}
+          onChange={setQuery}
+          placeholder="Type a command..."
+        />
+      </CommandHeader>
+
+      <CommandList ref={resultsRef}>
+        {filteredActions.length === 0 ? (
+          <CommandEmpty>No commands found</CommandEmpty>
+        ) : (
+          filteredActions.map((action, index) => (
+            <CommandItem
+              key={action.id}
+              onClick={() => {
+                console.log(`Executing action: ${action.id}`);
+                action.action();
               }}
-            />
-            <button onClick={onClose} className="rounded p-1 transition-colors hover:bg-hover">
-              <X size={14} className="text-text-lighter" />
-            </button>
-          </div>
-
-          {/* Results */}
-          <div ref={resultsRef} className="custom-scrollbar-thin flex-1 overflow-y-auto">
-            {filteredActions.length === 0 ? (
-              <div className="p-4 text-center text-sm text-text-lighter">No commands found</div>
-            ) : (
-              filteredActions.map((action, index) => (
-                <button
-                  key={action.id}
-                  onClick={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    action.action();
-                  }}
-                  className={cn(
-                    "flex w-full cursor-pointer items-center px-4 py-1.5 text-left transition-colors",
-                    index === selectedIndex ? "bg-selected text-text" : "text-text hover:bg-hover",
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm">{action.label}</div>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Theme Selector */}
-      <ThemeSelector
-        isVisible={isThemeSelectorVisible}
-        onClose={() => setIsThemeSelectorVisible(false)}
-        onThemeChange={onThemeChange}
-        currentTheme={currentTheme}
-      />
-    </>
+              isSelected={index === selectedIndex}
+              className="px-3 py-1.5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs">{action.label}</div>
+              </div>
+              {action.keybinding && (
+                <div className="flex-shrink-0">
+                  <KeybindingBadge keys={action.keybinding} />
+                </div>
+              )}
+            </CommandItem>
+          ))
+        )}
+      </CommandList>
+    </Command>
   );
 });
 

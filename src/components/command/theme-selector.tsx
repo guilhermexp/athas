@@ -1,7 +1,13 @@
-import { Monitor, Moon, Sun, X } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import type React from "react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { cn } from "@/utils/cn";
+import Command, {
+  CommandEmpty,
+  CommandHeader,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
 
 type Theme = "auto" | "athas-light" | "athas-dark";
 
@@ -32,7 +38,7 @@ const THEME_DEFINITIONS: ThemeInfo[] = [
     name: "Auto",
     description: "Follow system preference",
     category: "System",
-    icon: <Monitor size={16} />,
+    icon: <Monitor size={14} />,
   },
   // Light theme
   {
@@ -40,7 +46,7 @@ const THEME_DEFINITIONS: ThemeInfo[] = [
     name: "Athas Light",
     description: "Clean and bright theme",
     category: "Light",
-    icon: <Sun size={16} />,
+    icon: <Sun size={14} />,
   },
   // Dark theme
   {
@@ -48,7 +54,7 @@ const THEME_DEFINITIONS: ThemeInfo[] = [
     name: "Athas Dark",
     description: "Modern dark theme",
     category: "Dark",
-    icon: <Moon size={16} />,
+    icon: <Moon size={14} />,
   },
 ];
 
@@ -57,6 +63,7 @@ const ThemeSelector = forwardRef<ThemeSelectorRef, ThemeSelectorProps>(
     const [query, setQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [initialTheme, setInitialTheme] = useState(currentTheme);
+    const [previewTheme, setPreviewTheme] = useState<Theme | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -72,23 +79,12 @@ const ThemeSelector = forwardRef<ThemeSelectorRef, ThemeSelectorProps>(
         theme.category.toLowerCase().includes(query.toLowerCase()),
     );
 
-    // Group themes by category
-    const groupedThemes = filteredThemes.reduce(
-      (acc, theme) => {
-        if (!acc[theme.category]) {
-          acc[theme.category] = [];
-        }
-        acc[theme.category].push(theme);
-        return acc;
-      },
-      {} as Record<string, ThemeInfo[]>,
-    );
-
     // Handle keyboard navigation
     useEffect(() => {
       if (isVisible) {
         setInitialTheme(currentTheme);
         setQuery("");
+        setPreviewTheme(null);
 
         const initialIndex = THEME_DEFINITIONS.findIndex(t => t.id === currentTheme);
         setSelectedIndex(initialIndex >= 0 ? initialIndex : 0);
@@ -115,14 +111,21 @@ const ThemeSelector = forwardRef<ThemeSelectorRef, ThemeSelectorProps>(
           return;
         } else if (e.key === "Escape") {
           e.preventDefault();
-          onThemeChange(initialTheme!);
+          if (initialTheme) {
+            onThemeChange(initialTheme);
+          }
           onClose();
           return;
         }
 
         if (nextIndex !== selectedIndex) {
           setSelectedIndex(nextIndex);
-          onThemeChange(filteredThemes[nextIndex].id);
+          // Preview theme when navigating with keyboard
+          const theme = filteredThemes[nextIndex];
+          if (theme) {
+            setPreviewTheme(theme.id);
+            onThemeChange(theme.id);
+          }
         }
       },
       [selectedIndex, filteredThemes, onThemeChange, onClose, initialTheme],
@@ -150,90 +153,74 @@ const ThemeSelector = forwardRef<ThemeSelectorRef, ThemeSelectorProps>(
     if (!isVisible) return null;
 
     const handleClose = () => {
-      onThemeChange(initialTheme!);
+      if (initialTheme) {
+        onThemeChange(initialTheme);
+      }
       onClose();
     };
 
     return (
-      <div className="-translate-x-1/2 fixed top-12 left-1/2 z-[9999] transform">
-        <div
-          className={cn(
-            "flex max-h-[500px] w-[600px] flex-col overflow-hidden",
-            "rounded-lg border border-border bg-primary-bg shadow-lg",
-          )}
-        >
-          {/* Header */}
-          <div className="flex items-center gap-2 border-border border-b px-4 py-3">
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search themes..."
-              className="flex-1 bg-transparent text-sm text-text placeholder-text-lighter outline-none"
-            />
-            <button onClick={handleClose} className="rounded p-1 transition-colors hover:bg-hover">
-              <X size={14} className="text-text-lighter" />
-            </button>
-          </div>
+      <Command isVisible={isVisible}>
+        <CommandHeader onClose={handleClose}>
+          <CommandInput
+            ref={inputRef}
+            value={query}
+            onChange={setQuery}
+            placeholder="Search themes..."
+          />
+        </CommandHeader>
 
-          {/* Results */}
-          <div ref={resultsRef} className="custom-scrollbar-thin flex-1 overflow-y-auto">
-            {filteredThemes.length === 0 ? (
-              <div className="p-4 text-center text-sm text-text-lighter">No themes found</div>
-            ) : (
-              <div className="p-2">
-                {Object.entries(groupedThemes).map(([category, themes]) => (
-                  <div key={category} className="mb-4 last:mb-0">
-                    <div className="mb-2 px-2 font-medium text-text-lighter text-xs uppercase tracking-wide">
-                      {category}
-                    </div>
-                    {themes.map(theme => {
-                      const globalIndex = filteredThemes.indexOf(theme);
-                      const isSelected = globalIndex === selectedIndex;
-                      const isCurrent = theme.id === initialTheme;
+        <CommandList ref={resultsRef}>
+          {filteredThemes.length === 0 ? (
+            <CommandEmpty>No themes found</CommandEmpty>
+          ) : (
+            filteredThemes.map((theme, index) => {
+              const isSelected = index === selectedIndex;
+              const isCurrent = theme.id === initialTheme;
 
-                      return (
-                        <button
-                          key={theme.id}
-                          data-index={globalIndex}
-                          onClick={() => {
-                            onThemeChange(theme.id);
-                            onClose();
-                          }}
-                          onMouseEnter={() => {
-                            setSelectedIndex(globalIndex);
-                            onThemeChange(theme.id);
-                          }}
-                          className={cn(
-                            "flex w-full cursor-pointer items-center gap-3 rounded",
-                            "px-3 py-1.5 text-left transition-colors",
-                            isSelected ? "bg-selected text-text" : "text-text hover:bg-hover",
-                          )}
-                        >
-                          <div className="flex-shrink-0 text-text-lighter">
-                            {theme.icon || <Moon size={16} />}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="truncate text-sm">{theme.name}</span>
-                              {isCurrent && !isSelected && (
-                                <span className="rounded bg-accent/10 px-1.5 py-0.5 text-accent text-xs">
-                                  current
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+              return (
+                <CommandItem
+                  key={theme.id}
+                  data-index={index}
+                  onClick={() => {
+                    onThemeChange(theme.id);
+                    onClose();
+                  }}
+                  onMouseEnter={() => {
+                    setSelectedIndex(index);
+                    setPreviewTheme(theme.id);
+                    onThemeChange(theme.id);
+                  }}
+                  onMouseLeave={() => {
+                    if (previewTheme === theme.id) {
+                      setPreviewTheme(null);
+                      if (initialTheme) {
+                        onThemeChange(initialTheme);
+                      }
+                    }
+                  }}
+                  isSelected={isSelected}
+                  className="gap-3 px-2 py-1.5"
+                >
+                  <div className="flex-shrink-0 text-text-lighter">
+                    {theme.icon || <Moon size={14} />}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 truncate text-xs">
+                      <span className="truncate">{theme.name}</span>
+                      {isCurrent && !isSelected && (
+                        <span className="rounded bg-accent/10 px-1 py-0.5 font-medium text-[10px] text-accent">
+                          current
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </CommandItem>
+              );
+            })
+          )}
+        </CommandList>
+      </Command>
     );
   },
 );

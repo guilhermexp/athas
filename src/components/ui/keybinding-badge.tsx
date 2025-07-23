@@ -15,11 +15,11 @@ export default function KeybindingBadge({
     <div className={cn("flex items-center gap-0.5", className)}>
       {keys.map((key, index) => (
         <span key={index} className="flex items-center gap-0.5">
-          <kbd className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded border border-border bg-secondary-bg px-1 font-mono text-text-lighter text-xs">
+          <kbd className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded border border-border bg-secondary-bg px-0.5 font-mono text-[10px] text-text-lighter">
             {key}
           </kbd>
           {index < keys.length - 1 && (
-            <span className="text-text-lighter text-xs">{separator}</span>
+            <span className="text-[10px] text-text-lighter">{separator}</span>
           )}
         </span>
       ))}

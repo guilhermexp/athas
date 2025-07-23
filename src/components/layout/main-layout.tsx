@@ -13,6 +13,7 @@ import AIChat from "../ai-chat/ai-chat";
 import BottomPane from "../bottom-pane";
 import CommandBar from "../command/command-bar";
 import CommandPalette from "../command/command-palette";
+import ThemeSelector from "../command/theme-selector";
 import type { Diagnostic } from "../diagnostics/diagnostics-pane";
 import DiffViewer from "../diff-viewer/DiffViewer";
 import CodeEditor from "../editor/code-editor";
@@ -22,6 +23,7 @@ import FileReloadToast from "../file-reload-toast";
 import GitHubCopilotSettings from "../github-copilot-settings";
 import ResizableRightPane from "../resizable-right-pane";
 import ResizableSidebar from "../resizable-sidebar";
+import SettingsDialog from "../settings/settings-dialog";
 import TabBar from "../tab-bar/tab-bar";
 import CustomTitleBarWithSettings from "../window/custom-title-bar";
 import { MainSidebar } from "./main-sidebar";
@@ -29,7 +31,13 @@ import { MainSidebar } from "./main-sidebar";
 export function MainLayout() {
   const activeBuffer = useActiveBuffer();
 
-  const { isSidebarVisible } = useUIState();
+  const {
+    isSidebarVisible,
+    isSettingsDialogVisible,
+    isThemeSelectorVisible,
+    setIsSettingsDialogVisible,
+    setIsThemeSelectorVisible,
+  } = useUIState();
   const { isAIChatVisible, coreFeatures: persistentCoreFeatures } = usePersistentSettingsStore();
   const { settings, updateTheme } = useSettingsStore();
   const { rootFolderPath } = useFileSystemStore();
@@ -170,6 +178,18 @@ export function MainLayout() {
       <GitHubCopilotSettings />
       <ProjectNameMenu />
       <FileReloadToast />
+
+      {/* Dialog components */}
+      <SettingsDialog
+        isOpen={isSettingsDialogVisible}
+        onClose={() => setIsSettingsDialogVisible(false)}
+      />
+      <ThemeSelector
+        isVisible={isThemeSelectorVisible}
+        onClose={() => setIsThemeSelectorVisible(false)}
+        onThemeChange={handleThemeChange}
+        currentTheme={settings.theme}
+      />
     </div>
   );
 }

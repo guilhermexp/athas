@@ -1,11 +1,17 @@
-import { File, X } from "lucide-react";
+import { ClockIcon, File } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IGNORED_PATTERNS } from "@/constants/ignored-patterns";
-import { cn } from "@/utils/cn";
 import { useBufferStore } from "../../stores/buffer-store";
 import { useFileSystemStore } from "../../stores/file-system-store";
 import { useRecentFilesStore } from "../../stores/recent-files-store";
 import { useUIState } from "../../stores/ui-state-store";
+import Command, {
+  CommandEmpty,
+  CommandHeader,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
 
 // Function to check if a file should be ignored
 const shouldIgnoreFile = (filePath: string): boolean => {
@@ -364,163 +370,130 @@ const CommandBar = () => {
   }
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-20">
-      <div
-        data-command-bar
-        className="pointer-events-auto max-h-96 w-[600px] overflow-hidden rounded-lg border border-border bg-primary-bg shadow-2xl"
-      >
-        <div className="flex h-full w-full flex-col overflow-hidden">
-          {/* Minimal Header */}
-          <div className="flex items-center gap-3 px-4 py-3">
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Type to search files..."
-              className="h-auto flex-1 border-none bg-transparent py-0 font-mono text-sm text-text placeholder-text-lighter outline-none"
-            />
-            <button
-              onClick={onClose}
-              className="flex-shrink-0 rounded p-1 transition-colors duration-150 hover:bg-hover"
-            >
-              <X size={16} className="text-text-lighter" />
-            </button>
-          </div>
+    <Command isVisible={isVisible} className="max-h-80">
+      <CommandHeader onClose={onClose}>
+        <CommandInput
+          ref={inputRef}
+          value={query}
+          onChange={setQuery}
+          placeholder="Type to search files..."
+          className="font-mono"
+        />
+      </CommandHeader>
 
-          {/* Command List */}
-          <div
-            ref={scrollContainerRef}
-            className="custom-scrollbar max-h-80 overflow-y-auto bg-transparent"
-          >
-            {openBufferFiles.length === 0 &&
-            recentFilesInResults.length === 0 &&
-            otherFiles.length === 0 ? (
-              <div className="px-4 py-6 text-center font-mono text-sm text-text-lighter">
-                {query ? "No matching files found" : "No files available"}
+      <CommandList ref={scrollContainerRef}>
+        {openBufferFiles.length === 0 &&
+        recentFilesInResults.length === 0 &&
+        otherFiles.length === 0 ? (
+          <CommandEmpty>
+            <div className="font-mono">
+              {query ? "No matching files found" : "No files available"}
+            </div>
+          </CommandEmpty>
+        ) : (
+          <>
+            {/* Open Buffers Section */}
+            {openBufferFiles.length > 0 && (
+              <div className="p-0">
+                {openBufferFiles.map((file, index) => {
+                  const globalIndex = index;
+                  const isSelected = globalIndex === selectedIndex;
+                  return (
+                    <CommandItem
+                      key={`open-${file.path}`}
+                      data-item-index={globalIndex}
+                      onClick={() => handleItemSelect(file.path)}
+                      isSelected={isSelected}
+                      className="font-mono"
+                    >
+                      <File size={11} className="flex-shrink-0 text-accent" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs">
+                          <span className="text-text">{file.name}</span>
+                          {getDirectoryPath(file.path) && (
+                            <span className="ml-1.5 text-[10px] text-text-lighter opacity-60">
+                              {getDirectoryPath(file.path)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="rounded bg-accent/20 px-1 py-0.5 font-medium text-[10px] text-accent">
+                        open
+                      </span>
+                    </CommandItem>
+                  );
+                })}
               </div>
-            ) : (
-              <>
-                {/* Open Buffers Section */}
-                {openBufferFiles.length > 0 && (
-                  <div className="p-0">
-                    {openBufferFiles.map((file, index) => {
-                      const globalIndex = index;
-                      const isSelected = globalIndex === selectedIndex;
-                      return (
-                        <button
-                          key={`open-${file.path}`}
-                          data-item-index={globalIndex}
-                          onClick={() => handleItemSelect(file.path)}
-                          className={cn(
-                            "m-0 flex w-full cursor-pointer items-center gap-2",
-                            "rounded-none border-none px-3 py-1.5 font-mono",
-                            "transition-colors duration-150",
-                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover",
-                          )}
-                        >
-                          <File size={13} className="text-accent" />
-                          <div className="min-w-0 flex-1 text-left">
-                            <div className="truncate text-sm">
-                              <span className="text-text">{file.name}</span>
-                              {getDirectoryPath(file.path) && (
-                                <span className="ml-2 text-text-lighter text-xs opacity-60">
-                                  {getDirectoryPath(file.path)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="rounded bg-accent/20 px-1.5 py-0.5 font-medium text-accent text-xs">
-                              open
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Recent Files Section - Minimal */}
-                {recentFilesInResults.length > 0 && (
-                  <div className="p-0">
-                    {recentFilesInResults.map((file, index) => {
-                      const globalIndex = openBufferFiles.length + index;
-                      const isSelected = globalIndex === selectedIndex;
-                      return (
-                        <button
-                          key={`recent-${file.path}`}
-                          data-item-index={globalIndex}
-                          onClick={() => handleItemSelect(file.path)}
-                          className={cn(
-                            "m-0 flex w-full cursor-pointer items-center gap-2",
-                            "rounded-none border-none px-3 py-1.5 font-mono",
-                            "transition-colors duration-150",
-                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover",
-                          )}
-                        >
-                          <File size={13} className="text-accent" />
-                          <div className="min-w-0 flex-1 text-left">
-                            <div className="truncate text-sm">
-                              <span className="text-text">{file.name}</span>
-                              {getDirectoryPath(file.path) && (
-                                <span className="ml-2 text-text-lighter text-xs opacity-60">
-                                  {getDirectoryPath(file.path)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="rounded bg-accent/10 px-1.5 py-0.5 font-medium text-accent text-xs">
-                              recent
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Other Files Section - Minimal */}
-                {otherFiles.length > 0 && (
-                  <div className="p-0">
-                    {otherFiles.map((file, index) => {
-                      const globalIndex =
-                        openBufferFiles.length + recentFilesInResults.length + index;
-                      const isSelected = globalIndex === selectedIndex;
-                      return (
-                        <button
-                          key={`other-${file.path}`}
-                          data-item-index={globalIndex}
-                          onClick={() => handleItemSelect(file.path)}
-                          className={cn(
-                            "m-0 flex w-full cursor-pointer items-center gap-2",
-                            "rounded-none border-none px-3 py-1.5 font-mono",
-                            "transition-colors duration-150",
-                            isSelected ? "bg-selected" : "bg-transparent hover:bg-hover",
-                          )}
-                        >
-                          <File size={13} className="text-text-lighter" />
-                          <div className="min-w-0 flex-1 text-left">
-                            <div className="truncate text-sm">
-                              <span className="text-text">{file.name}</span>
-                              {getDirectoryPath(file.path) && (
-                                <span className="ml-2 text-text-lighter text-xs opacity-60">
-                                  {getDirectoryPath(file.path)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+
+            {/* Recent Files Section - Minimal */}
+            {recentFilesInResults.length > 0 && (
+              <div className="p-0">
+                {recentFilesInResults.map((file, index) => {
+                  const globalIndex = openBufferFiles.length + index;
+                  const isSelected = globalIndex === selectedIndex;
+                  return (
+                    <CommandItem
+                      key={`recent-${file.path}`}
+                      data-item-index={globalIndex}
+                      onClick={() => handleItemSelect(file.path)}
+                      isSelected={isSelected}
+                      className="font-mono"
+                    >
+                      <File size={11} className="flex-shrink-0 text-accent" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs">
+                          <span className="text-text">{file.name}</span>
+                          {getDirectoryPath(file.path) && (
+                            <span className="ml-1.5 text-[10px] text-text-lighter opacity-60">
+                              {getDirectoryPath(file.path)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="rounded px-1 py-0.5 font-medium text-[10px] text-text-lighter">
+                        <ClockIcon size={12} />
+                      </span>
+                    </CommandItem>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Other Files Section - Minimal */}
+            {otherFiles.length > 0 && (
+              <div className="p-0">
+                {otherFiles.map((file, index) => {
+                  const globalIndex = openBufferFiles.length + recentFilesInResults.length + index;
+                  const isSelected = globalIndex === selectedIndex;
+                  return (
+                    <CommandItem
+                      key={`other-${file.path}`}
+                      data-item-index={globalIndex}
+                      onClick={() => handleItemSelect(file.path)}
+                      isSelected={isSelected}
+                      className="font-mono"
+                    >
+                      <File size={11} className="flex-shrink-0 text-text-lighter" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs">
+                          <span className="text-text">{file.name}</span>
+                          {getDirectoryPath(file.path) && (
+                            <span className="ml-1.5 text-[10px] text-text-lighter opacity-60">
+                              {getDirectoryPath(file.path)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </CommandList>
+    </Command>
   );
 };
 
