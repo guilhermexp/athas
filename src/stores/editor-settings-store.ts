@@ -1,4 +1,4 @@
-import { create, type ExtractState } from "zustand";
+import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
 const initialState = {
@@ -27,18 +27,3 @@ export const useEditorSettingsStore = create(
     updateConfig: (config: Partial<typeof initialState>) => set(state => ({ ...state, ...config })),
   })),
 );
-
-export type EditorSettingsState = ExtractState<typeof useEditorSettingsStore>;
-
-// Export config type for compatibility
-export type EditorConfig = Omit<
-  EditorSettingsState,
-  | "setFontSize"
-  | "setFontFamily"
-  | "setTabSize"
-  | "setWordWrap"
-  | "setLineNumbers"
-  | "setDisabled"
-  | "setTheme"
-  | "updateConfig"
->;

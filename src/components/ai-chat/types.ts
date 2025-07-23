@@ -74,11 +74,6 @@ export interface MarkdownRendererProps {
   onApplyCode?: (code: string) => void;
 }
 
-export interface ModeSelectorProps {
-  mode: "chat";
-  onModeChange: (mode: "chat") => void;
-}
-
 export interface AIChatInputBarProps {
   buffers: Buffer[];
   allProjectFiles: FileEntry[];

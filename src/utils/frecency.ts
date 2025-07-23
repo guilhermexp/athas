@@ -33,31 +33,3 @@ export function calculateFrecencyScore(accessCount: number, lastAccessTime: Date
   // Normalize to 0-100 range for easier interpretation
   return Math.min(100, score * 100);
 }
-
-/**
- * Update frecency configuration (optional utility for testing/tuning)
- */
-export interface FrecencyConfig {
-  halfLifeDays?: number;
-  frequencyWeight?: number;
-}
-
-export function createCustomFrecencyCalculator(config: FrecencyConfig) {
-  const halfLife = config.halfLifeDays ?? HALF_LIFE_DAYS;
-  const freqWeight = config.frequencyWeight ?? FREQUENCY_WEIGHT;
-  const recWeight = 1 - freqWeight;
-
-  return (accessCount: number, lastAccessTime: Date | string): number => {
-    const now = new Date();
-    const lastAccess =
-      typeof lastAccessTime === "string" ? new Date(lastAccessTime) : lastAccessTime;
-    const daysSinceAccess = (now.getTime() - lastAccess.getTime()) / (1000 * 60 * 60 * 24);
-
-    const frequencyFactor = Math.log10(accessCount + 1);
-    const decayRate = Math.log(2) / halfLife;
-    const recencyFactor = Math.exp(-decayRate * daysSinceAccess);
-
-    const score = freqWeight * frequencyFactor + recWeight * recencyFactor;
-    return Math.min(100, score * 100);
-  };
-}

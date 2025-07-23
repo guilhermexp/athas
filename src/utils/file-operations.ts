@@ -76,32 +76,3 @@ export async function loadFolderContents(folderEntry: FileEntry): Promise<FileEn
     };
   }
 }
-
-export function getParentPath(path: string): string {
-  const separator = path.includes("\\") ? "\\" : "/";
-  const parts = path.split(separator);
-  parts.pop();
-  return parts.join(separator);
-}
-
-export function getFileName(path: string): string {
-  const separator = path.includes("\\") ? "\\" : "/";
-  const parts = path.split(separator);
-  return parts[parts.length - 1] || "";
-}
-
-export function joinPath(...parts: string[]): string {
-  // Detect separator from first part that contains one
-  let separator = "/";
-  for (const part of parts) {
-    if (part.includes("\\")) {
-      separator = "\\";
-      break;
-    }
-  }
-
-  return parts
-    .filter(Boolean)
-    .join(separator)
-    .replace(new RegExp(`\\${separator}+`, "g"), separator);
-}

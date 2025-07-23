@@ -165,13 +165,6 @@ const preparePromptForCompletion = (request: CompletionRequest): string => {
   return `${contextBefore}|CURSOR|${contextAfter}`;
 };
 
-// Legacy function for compatibility
-// @ts-ignore Ignoring this unused function for now in case it's needed later
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _preparePromptForCopilot = (request: CompletionRequest): string => {
-  return preparePromptForCompletion(request);
-};
-
 // Main function that tries Copilot first, then falls back
 export const getAICompletion = async (
   request: CompletionRequest,

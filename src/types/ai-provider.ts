@@ -1,4 +1,4 @@
-export interface ModelProvider {
+interface ModelProvider {
   id: string;
   name: string;
   apiUrl: string;
@@ -6,18 +6,12 @@ export interface ModelProvider {
   models: Model[];
 }
 
-export interface Model {
+interface Model {
   id: string;
   name: string;
   maxTokens: number;
   costPer1kTokens?: number;
   description?: string;
-}
-
-export interface ProviderConfig {
-  provider: ModelProvider;
-  model: Model;
-  apiKey?: string;
 }
 
 export const AI_PROVIDERS: ModelProvider[] = [

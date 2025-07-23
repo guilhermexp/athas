@@ -1,16 +1,9 @@
-import { Edit3, FileIcon, FilePlus, FileX, GitBranch, RefreshCw, RotateCcw } from "lucide-react";
+import { GitBranch, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import { useBufferStore } from "../../stores/buffer-store";
 import { useGitStore } from "../../stores/git-store";
-import {
-  type GitFile,
-  getBranches,
-  getCommitDiff,
-  getFileDiff,
-  getGitLog,
-  getGitStatus,
-} from "../../utils/git";
+import { getBranches, getCommitDiff, getFileDiff, getGitLog, getGitStatus } from "../../utils/git";
 
 // Import modular components
 import GitActionsMenu from "./git-actions-menu";
@@ -269,42 +262,6 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     } catch (error) {
       console.error("Error getting commit diff:", error);
       alert(`Failed to get diff for commit ${commitHash}:\n${error}`);
-    }
-  };
-
-  /* @ts-ignore */
-  const _getFileIcon = (file: GitFile) => {
-    switch (file.status) {
-      case "added":
-        return <FilePlus size={10} className="text-text" />;
-      case "deleted":
-        return <FileX size={10} className="text-text" />;
-      case "modified":
-        return <Edit3 size={10} className="text-text" />;
-      case "untracked":
-        return <FileIcon size={10} className="text-text-lighter" />;
-      case "renamed":
-        return <RotateCcw size={10} className="text-text" />;
-      default:
-        return <FileIcon size={10} className="text-text-lighter" />;
-    }
-  };
-
-  /* @ts-ignore */
-  const _getStatusText = (file: GitFile) => {
-    switch (file.status) {
-      case "added":
-        return "A";
-      case "deleted":
-        return "D";
-      case "modified":
-        return "M";
-      case "untracked":
-        return "U";
-      case "renamed":
-        return "R";
-      default:
-        return "?";
     }
   };
 

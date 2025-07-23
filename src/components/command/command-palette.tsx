@@ -77,15 +77,6 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
     },
   }));
 
-  // Theme management
-  // @ts-ignore wasn't me
-  const _setTheme = (theme: "auto" | "athas-light" | "athas-dark") => {
-    if (onThemeChange) {
-      onThemeChange(theme);
-    }
-    onClose();
-  };
-
   // Define available actions
   const actions: Action[] = [
     {

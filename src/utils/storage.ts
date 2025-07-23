@@ -5,7 +5,7 @@
 /**
  * Clears all localStorage items that match a prefix pattern
  */
-export const clearLocalStorageByPrefix = (prefix: string): void => {
+const clearLocalStorageByPrefix = (prefix: string): void => {
   const keysToRemove: string[] = [];
 
   for (let i = 0; i < localStorage.length; i++) {
@@ -17,25 +17,6 @@ export const clearLocalStorageByPrefix = (prefix: string): void => {
 
   keysToRemove.forEach(key => localStorage.removeItem(key));
   console.log(`Cleared ${keysToRemove.length} items with prefix "${prefix}"`);
-};
-
-/**
- * Gets the approximate size of localStorage usage in bytes
- */
-export const getLocalStorageSize = (): number => {
-  let total = 0;
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key) {
-      const value = localStorage.getItem(key);
-      if (value) {
-        total += key.length + value.length;
-      }
-    }
-  }
-
-  return total;
 };
 
 /**
@@ -111,70 +92,4 @@ export const safeLocalStorageSetItem = (
   }
 
   return false;
-};
-
-/**
- * Truncates a JSON string by limiting array elements
- */
-export const truncateJsonArrayData = (
-  jsonString: string,
-  maxArrayLength: number = 1000,
-): string => {
-  try {
-    const data = JSON.parse(jsonString);
-
-    // If the data has a 'lines' array (like our diff data), truncate it
-    if (data && typeof data === "object" && Array.isArray(data.lines)) {
-      return JSON.stringify({
-        ...data,
-        lines: data.lines.slice(0, maxArrayLength),
-        _truncated: true,
-        _originalLength: data.lines.length,
-      });
-    }
-
-    return jsonString;
-  } catch (error) {
-    console.error("Failed to truncate JSON data:", error);
-    return jsonString;
-  }
-};
-
-/**
- * Gets localStorage usage statistics
- */
-export const getStorageStats = (): {
-  totalSize: number;
-  itemCount: number;
-  diffContentSize: number;
-  diffContentCount: number;
-} => {
-  let totalSize = 0;
-  let itemCount = 0;
-  let diffContentSize = 0;
-  let diffContentCount = 0;
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key) {
-      const value = localStorage.getItem(key);
-      if (value) {
-        const size = key.length + value.length;
-        totalSize += size;
-        itemCount++;
-
-        if (key.startsWith("diff-content-")) {
-          diffContentSize += size;
-          diffContentCount++;
-        }
-      }
-    }
-  }
-
-  return {
-    totalSize,
-    itemCount,
-    diffContentSize,
-    diffContentCount,
-  };
 };

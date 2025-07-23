@@ -16,12 +16,3 @@ export interface CoreFeaturesState {
   diagnostics: boolean;
   aiChat: boolean;
 }
-
-export const DEFAULT_CORE_FEATURES: CoreFeaturesState = {
-  git: true,
-  remote: true,
-  terminal: true,
-  search: true,
-  diagnostics: true,
-  aiChat: true,
-};

@@ -52,18 +52,3 @@ export const createCoreFeaturesList = (coreFeatures: any): CoreFeature[] => [
     enabled: coreFeatures.aiChat,
   },
 ];
-
-export const handleCoreFeatureToggle = (
-  featureId: string,
-  enabled: boolean,
-  currentFeatures: any,
-  setFeatures: (features: any) => void,
-) => {
-  const newFeatures = { ...currentFeatures, [featureId]: enabled };
-  setFeatures(newFeatures);
-  try {
-    localStorage.setItem("athas-code-core-features", JSON.stringify(newFeatures));
-  } catch (error) {
-    console.error("Error saving core features:", error);
-  }
-};
