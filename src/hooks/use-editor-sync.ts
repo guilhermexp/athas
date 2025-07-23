@@ -21,7 +21,7 @@ interface UseEditorSyncProps {
 }
 
 export const useEditorSync = (props: UseEditorSyncProps) => {
-  const { setValue, setFilename, setFilePath } = useEditorContentStore();
+  const { setBufferContent: setValue } = useEditorContentStore();
   const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers, setDisabled } =
     useEditorSettingsStore();
   const { setSearchQuery, setSearchMatches, setCurrentMatchIndex } = useEditorSearchStore();
@@ -31,14 +31,6 @@ export const useEditorSync = (props: UseEditorSyncProps) => {
   useEffect(() => {
     setValue(props.value);
   }, [props.value, setValue]);
-
-  useEffect(() => {
-    setFilename(props.filename);
-  }, [props.filename, setFilename]);
-
-  useEffect(() => {
-    setFilePath(props.filePath);
-  }, [props.filePath, setFilePath]);
 
   useEffect(() => {
     setFontSize(props.fontSize);

@@ -68,8 +68,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   }, [value, onChange, setContent]);
 
   useEffect(() => {
-    setFileInfo(filePath, filename);
-  }, [filePath, filename, setFileInfo]);
+    setFileInfo(filePath);
+  }, [filePath, setFileInfo]);
 
   // Sync props with store
   useEditorSync({
