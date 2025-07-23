@@ -14,9 +14,15 @@ interface GitBranchManagerProps {
   currentBranch?: string;
   repoPath?: string;
   onBranchChange?: () => void;
+  compact?: boolean;
 }
 
-const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranchManagerProps) => {
+const GitBranchManager = ({
+  currentBranch,
+  repoPath,
+  onBranchChange,
+  compact = false,
+}: GitBranchManagerProps) => {
   const [branches, setBranches] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [newBranchName, setNewBranchName] = useState("");
@@ -155,13 +161,25 @@ const GitBranchManager = ({ currentBranch, repoPath, onBranchChange }: GitBranch
         onClick={() => setShowModal(true)}
         disabled={isLoading}
         className={cn(
-          "flex items-center gap-1 rounded px-2 py-1",
-          "font-medium text-text text-xs hover:bg-hover disabled:opacity-50",
+          "flex items-center",
+          compact
+            ? "gap-1 rounded px-1 py-0.5 text-text-lighter hover:bg-hover disabled:opacity-50"
+            : "gap-1 rounded px-2 py-1 font-medium text-text text-xs hover:bg-hover disabled:opacity-50",
         )}
       >
-        <GitBranch size={12} className="text-text-lighter" />
-        <span className="max-w-32 truncate">{currentBranch}</span>
-        <ChevronDown size={8} />
+        <GitBranch
+          size={compact ? 11 : 12}
+          className={compact ? "flex-shrink-0" : "text-text-lighter"}
+        />
+        <span
+          className={cn(
+            "flex items-center truncate font-mono",
+            compact ? "max-w-20 pt-0.5 text-xs" : "max-w-32",
+          )}
+        >
+          {currentBranch}
+        </span>
+        {!compact && <ChevronDown size={8} />}
       </button>
 
       {showModal && (

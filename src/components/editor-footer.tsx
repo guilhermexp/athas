@@ -1,16 +1,35 @@
 import { AlertCircle, Terminal as TerminalIcon } from "lucide-react";
 import { useActiveBuffer } from "../stores/buffer-store";
+import { useFileSystemStore } from "../stores/file-system-store";
+import { useGitStore } from "../stores/git-store";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
 import { useUIState } from "../stores/ui-state-store";
 import { getFilenameFromPath, getLanguageFromFilename } from "../utils/file-utils";
+import { getGitStatus } from "../utils/git";
+import GitBranchManager from "./git/git-branch-manager";
 
 const EditorFooter = () => {
   const activeBuffer = useActiveBuffer();
   const { coreFeatures } = usePersistentSettingsStore();
   const uiState = useUIState();
+  const { rootFolderPath } = useFileSystemStore();
+  const { gitStatus, setGitStatus } = useGitStore();
   return (
     <div className="flex min-h-[32px] items-center justify-between border-border border-t bg-secondary-bg px-2 py-1">
       <div className="flex items-center gap-0.5 font-mono text-text-lighter text-xs">
+        {/* Git branch manager */}
+        {rootFolderPath && gitStatus?.branch && (
+          <GitBranchManager
+            currentBranch={gitStatus.branch}
+            repoPath={rootFolderPath}
+            onBranchChange={async () => {
+              const status = await getGitStatus(rootFolderPath);
+              setGitStatus(status);
+            }}
+            compact={true}
+          />
+        )}
+
         {/* Terminal indicator */}
         {coreFeatures.terminal && (
           <button

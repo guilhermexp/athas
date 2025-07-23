@@ -70,6 +70,17 @@ export const useFileSystemActions = create(
               const { setProjectRoot } = useFileWatcherStore.getState();
               await setProjectRoot(selected);
 
+              // Initialize git status
+              const { useGitStore } = await import("./git-store");
+              const { getGitStatus } = await import("../utils/git");
+              const gitStore = useGitStore.getState();
+              try {
+                const gitStatus = await getGitStatus(selected);
+                gitStore.setGitStatus(gitStatus);
+              } catch (error) {
+                console.log("Not a git repository or git error:", error);
+              }
+
               return true;
             } else {
               set(state => {
@@ -127,6 +138,17 @@ export const useFileSystemActions = create(
             // Start file watching
             const { setProjectRoot } = useFileWatcherStore.getState();
             await setProjectRoot(path);
+
+            // Initialize git status
+            const { useGitStore } = await import("./git-store");
+            const { getGitStatus } = await import("../utils/git");
+            const gitStore = useGitStore.getState();
+            try {
+              const gitStatus = await getGitStatus(path);
+              gitStore.setGitStatus(gitStatus);
+            } catch (error) {
+              console.log("Not a git repository or git error:", error);
+            }
 
             return true;
           } catch (error) {
