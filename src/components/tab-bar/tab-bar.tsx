@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useBufferStore } from "../../stores/buffer-store";
-import { useFileWatcherStore } from "../../stores/file-watcher-store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import type { Buffer } from "../../types/buffer";
 
@@ -37,7 +36,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
     reorderBuffers,
   } = useBufferStore();
   const { maxOpenTabs } = usePersistentSettingsStore();
-  const { externallyModifiedPaths } = useFileWatcherStore();
 
   // Drag state
   const [dragState, setDragState] = useState<{
@@ -392,7 +390,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
         <div ref={tabBarRef} className="scrollbar-hidden flex overflow-x-auto bg-secondary-bg">
           {sortedBuffers.map((buffer, index) => {
             const isActive = buffer.id === activeBufferId;
-            const isExternallyModified = externallyModifiedPaths.has(buffer.path);
             const isDraggedTab = isDragging && draggedIndex === index;
             const showDropIndicatorBefore =
               isDragging && dropTargetIndex === index && draggedIndex !== index;
@@ -402,7 +399,6 @@ const TabBar = ({ paneId }: TabBarProps) => {
                 buffer={buffer}
                 index={index}
                 isActive={isActive}
-                isExternallyModified={isExternallyModified}
                 isDraggedTab={isDraggedTab}
                 showDropIndicatorBefore={showDropIndicatorBefore}
                 tabRef={el => {

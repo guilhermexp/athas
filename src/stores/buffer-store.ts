@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { readFileContent } from "../utils/file-operations";
 import type { GitDiff } from "../utils/git";
 import { useRecentFilesStore } from "./recent-files-store";
 
@@ -158,8 +159,8 @@ export const useBufferStore = create(
               if (diffData) {
                 buffer.diffData = diffData;
               }
-              if (markDirty && !buffer.isVirtual) {
-                buffer.isDirty = true;
+              if (!buffer.isVirtual) {
+                buffer.isDirty = markDirty;
               }
             }
           });
@@ -278,6 +279,23 @@ export const useBufferStore = create(
           set(state => {
             state.maxOpenTabs = max;
           });
+        },
+
+        // Reload buffer content from disk
+        reloadBufferFromDisk: async (bufferId: string): Promise<void> => {
+          const buffer = get().buffers.find(b => b.id === bufferId);
+          if (!buffer || buffer.isVirtual || buffer.isImage || buffer.isSQLite) {
+            return;
+          }
+
+          try {
+            const content = await readFileContent(buffer.path);
+            // Update buffer content and clear dirty flag
+            useBufferStore.getState().updateBufferContent(bufferId, content, false);
+            console.log(`[FileWatcher] Reloaded buffer from disk: ${buffer.path}`);
+          } catch (error) {
+            console.error(`[FileWatcher] Failed to reload buffer from disk: ${buffer.path}`, error);
+          }
         },
       }),
     ),

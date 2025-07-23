@@ -8,7 +8,6 @@ interface TabBarItemProps {
   buffer: Buffer;
   index: number;
   isActive: boolean;
-  isExternallyModified: boolean;
   isDraggedTab: boolean;
   showDropIndicatorBefore: boolean;
   tabRef: (el: HTMLDivElement | null) => void;
@@ -22,7 +21,6 @@ interface TabBarItemProps {
 const TabBarItem = memo(function TabBarItem({
   buffer,
   isActive,
-  isExternallyModified,
   isDraggedTab,
   showDropIndicatorBefore,
   tabRef,
@@ -79,11 +77,6 @@ const TabBarItem = memo(function TabBarItem({
         >
           {buffer.name}
           {buffer.isDirty && <span className="ml-1 text-text-lighter">•</span>}
-          {isExternallyModified && !buffer.isDirty && (
-            <span className="ml-1 text-yellow-400" title="Modified externally">
-              ⚠
-            </span>
-          )}
         </span>
         {!buffer.isPinned && (
           <button

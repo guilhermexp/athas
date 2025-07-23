@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
+import { useBufferStore } from "./buffer-store";
 
 interface FileChangeEvent {
   path: string;
@@ -14,7 +15,6 @@ let unlistenFileChanged: UnlistenFn | null = null;
 const initialState = {
   watchedPaths: new Set<string>(),
   pendingSaves: new Map<string, number>(), // path -> timestamp
-  externallyModifiedPaths: new Set<string>(), // tracks files modified externally
 };
 
 export const useFileWatcherStore = create(
@@ -102,7 +102,6 @@ export const useFileWatcherStore = create(
       set({
         watchedPaths: new Set(),
         pendingSaves: new Map(),
-        externallyModifiedPaths: new Set(),
       });
     },
   })),
@@ -114,9 +113,14 @@ export async function initializeFileWatcherListener() {
   await cleanupFileWatcherListener();
 
   // Listen for file changes
-  unlistenFileChanged = await listen<FileChangeEvent>("file-changed", event => {
+  unlistenFileChanged = await listen<FileChangeEvent>("file-changed", async event => {
     const { path, event_type } = event.payload;
     console.log(`📋 [FileWatcher] File change event: ${path}, type: ${event_type}`);
+
+    // Skip if file was deleted
+    if (event_type === "deleted") {
+      return;
+    }
 
     // Check if this file has a pending save
     const { pendingSaves } = useFileWatcherStore.getState();
@@ -126,12 +130,17 @@ export async function initializeFileWatcherListener() {
       return;
     }
 
-    // Emit a custom event that the App component can listen to
-    window.dispatchEvent(
-      new CustomEvent("file-external-change", {
-        detail: { path, changeType: event_type },
-      }),
-    );
+    // Handle the file change directly
+    const { buffers, reloadBufferFromDisk } = useBufferStore.getState();
+    const buffer = buffers.find(b => b.path === path);
+
+    if (buffer) {
+      // Reload buffer content from disk
+      await reloadBufferFromDisk(buffer.id);
+
+      // Dispatch custom event for file reload notification
+      window.dispatchEvent(new CustomEvent("file-reloaded", { detail: { path } }));
+    }
   });
 }
 
