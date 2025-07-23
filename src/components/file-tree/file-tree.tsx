@@ -922,7 +922,7 @@ const FileTree = ({
                       alert(
                         `File: ${fileName}\nPath: ${contextMenu.path}\nSize: ${size} bytes\nType: ${extension}`,
                       );
-                    } catch (_error) {
+                    } catch {
                       const fileName = contextMenu.path.split("/").pop() || "";
                       alert(`File: ${fileName}\nPath: ${contextMenu.path}`);
                     }

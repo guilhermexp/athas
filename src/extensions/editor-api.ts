@@ -5,7 +5,7 @@ import { useEditorSettingsStore } from "../stores/editor-settings-store";
 import type { Decoration, Position, Range } from "../types/editor-types";
 import type { EditorAPI, EditorEvent, EditorSettings, EventHandler } from "./extension-types";
 
-export class EditorAPIImpl implements EditorAPI {
+class EditorAPIImpl implements EditorAPI {
   private eventHandlers: Map<EditorEvent, Set<EventHandler>> = new Map();
   private cursorPosition: Position = { line: 0, column: 0, offset: 0 };
   private selection: Range | null = null;

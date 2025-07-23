@@ -91,7 +91,7 @@ export interface ExtensionContext {
   storage: ExtensionStorage;
 }
 
-export interface ExtensionStorage {
+interface ExtensionStorage {
   get: <T>(key: string) => T | undefined;
   set: <T>(key: string, value: T) => void;
   delete: (key: string) => void;

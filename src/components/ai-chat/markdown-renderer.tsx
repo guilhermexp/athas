@@ -49,7 +49,7 @@ export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRende
         if (language && Prism.languages[prismLanguage]) {
           try {
             highlightedCode = Prism.highlight(code, Prism.languages[prismLanguage], prismLanguage);
-          } catch (_e) {
+          } catch {
             // Fallback to plain text if highlighting fails
             highlightedCode = code;
           }

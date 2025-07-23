@@ -108,7 +108,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   });
 
   // Scroll management
-  const { handleScroll } = useEditorScroll(editorRef, null, lineNumbersRef);
+  const { handleScroll } = useEditorScroll(editorRef, lineNumbersRef);
 
   // Search functionality
   useEffect(() => {

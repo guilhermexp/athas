@@ -120,7 +120,7 @@ const ApiKeyModal = ({
         setValidationStatus("invalid");
         setErrorMessage("Invalid API key. Please check your key and try again.");
       }
-    } catch (_error) {
+    } catch {
       setValidationStatus("invalid");
       setErrorMessage("Failed to validate API key. Please try again.");
     } finally {
@@ -134,7 +134,7 @@ const ApiKeyModal = ({
       setApiKey("");
       setValidationStatus("idle");
       setErrorMessage("");
-    } catch (_error) {
+    } catch {
       setErrorMessage("Failed to remove API key");
     }
   };

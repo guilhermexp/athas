@@ -33,9 +33,3 @@ export interface Change {
   text: string;
   origin: string; // "user" | "paste" | "undo" | "redo" | extension name
 }
-
-export interface EditOperation {
-  changes: Change[];
-  selection?: Range;
-  timestamp: number;
-}

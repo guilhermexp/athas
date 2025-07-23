@@ -26,7 +26,6 @@ export const EditorContentNew: React.FC<EditorContentNewProps> = ({
   cursorPosition,
   selection,
   viewportHeight,
-  filePath: _filePath,
   onPositionClick,
   onSelectionDrag,
 }) => {

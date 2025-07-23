@@ -3,7 +3,6 @@ import { useCallback } from "react";
 
 export const useEditorScroll = (
   editorRef: React.RefObject<HTMLDivElement | null>,
-  _highlightRef: React.RefObject<HTMLPreElement | null> | null,
   lineNumbersRef: React.RefObject<HTMLDivElement | null>,
 ) => {
   // Sync scroll between contenteditable and line numbers

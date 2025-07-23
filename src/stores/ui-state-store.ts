@@ -42,7 +42,7 @@ const initialState = {
 };
 
 export const useUIState = create(
-  combine(initialState, (set, _get) => ({
+  combine(initialState, (set, get) => ({
     // UI State actions
     setIsSidebarVisible: (v: boolean) => set({ isSidebarVisible: v }),
     setIsCommandBarVisible: (v: boolean) => set({ isCommandBarVisible: v }),
@@ -104,7 +104,7 @@ export const useUIState = create(
     // Terminal Focus Management
     registerTerminalFocus: (callback: () => void) => set({ terminalFocusCallback: callback }),
     requestTerminalFocus: () => {
-      const state = _get();
+      const state = get();
       if (state.terminalFocusCallback) {
         state.terminalFocusCallback();
       }

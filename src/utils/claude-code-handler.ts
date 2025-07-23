@@ -55,7 +55,7 @@ export class ClaudeCodeStreamHandler {
 
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-    } catch (_error: any) {
+    } catch {
       throw new Error("Claude Code is currently unavailable");
     }
   }

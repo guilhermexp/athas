@@ -92,7 +92,7 @@ const GitHubCopilotSettings = () => {
         setValidationStatus("invalid");
         setErrorMessage("Invalid GitHub token. Please check your token and try again.");
       }
-    } catch (_error) {
+    } catch {
       setValidationStatus("invalid");
       setErrorMessage("Failed to validate token. Please try again.");
     } finally {
@@ -107,7 +107,7 @@ const GitHubCopilotSettings = () => {
       setApiKey("");
       setValidationStatus("idle");
       setErrorMessage("");
-    } catch (_error) {
+    } catch {
       setErrorMessage("Failed to remove token");
     }
   };

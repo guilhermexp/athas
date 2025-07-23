@@ -95,7 +95,7 @@ const GitBranchManager = ({
                     });
                   }
                 }
-              } catch (_error) {
+              } catch {
                 showToast({
                   message: "Failed to stash changes",
                   type: "error",

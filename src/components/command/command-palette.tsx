@@ -2,7 +2,6 @@ import { Bot, Palette, Settings } from "lucide-react";
 import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useAppStore } from "../../stores/app-store";
-import { useSettingsStore } from "../../stores/settings-store";
 import { useUIState } from "../../stores/ui-state-store";
 import Command, {
   CommandEmpty,
@@ -35,13 +34,10 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
     setIsSettingsDialogVisible,
     setIsThemeSelectorVisible,
   } = useUIState();
-  const settingsStore = useSettingsStore();
   const { openQuickEdit } = useAppStore();
 
   const isVisible = isCommandPaletteVisible;
   const onClose = () => setIsCommandPaletteVisible(false);
-  const _currentTheme = settingsStore.settings.theme;
-  const _onThemeChange = settingsStore.updateTheme;
   const onQuickEditInline = () => {
     // TODO: Implement quick edit
     const selection = window.getSelection();

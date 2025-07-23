@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-export interface Token {
+interface Token {
   start: number;
   end: number;
   token_type: string;

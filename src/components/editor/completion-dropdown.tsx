@@ -13,7 +13,7 @@ export function CompletionDropdown() {
 
   if (!isLspCompletionVisible) return null;
 
-  const handleSelect = (_completion: any) => {
+  const handleSelect = () => {
     // Apply LSP completion logic
     if (editorRef?.current) {
       // This would contain the actual completion application logic
@@ -37,7 +37,7 @@ export function CompletionDropdown() {
             className={`cursor-pointer px-3 py-2 text-sm hover:bg-hover ${
               index === selectedLspIndex ? "bg-accent text-primary-bg" : ""
             }`}
-            onClick={() => handleSelect(item)}
+            onClick={() => handleSelect()}
           >
             <div className="flex items-center gap-2">
               <span className="font-mono">{item.label}</span>

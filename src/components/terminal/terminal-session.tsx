@@ -50,7 +50,6 @@ interface TerminalConfig {
 const TerminalSession = ({
   terminal,
   isActive,
-  onDirectoryChange: _onDirectoryChange,
   onActivity,
   onRegisterRef,
 }: TerminalSessionProps) => {

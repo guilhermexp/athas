@@ -1,13 +1,7 @@
 import type React from "react";
 import { createContext, useContext, useMemo } from "react";
 
-export type LayerType = "base" | "decoration" | "selection" | "overlay";
-
-export interface Layer {
-  type: LayerType;
-  zIndex: number;
-  children: React.ReactNode;
-}
+type LayerType = "base" | "decoration" | "selection" | "overlay";
 
 interface LayerContextValue {
   registerLayer: (type: LayerType, zIndex: number) => void;
@@ -17,7 +11,7 @@ interface LayerContextValue {
 
 const LayerContext = createContext<LayerContextValue | null>(null);
 
-export const useLayerContext = () => {
+const useLayerContext = () => {
   const context = useContext(LayerContext);
   if (!context) {
     throw new Error("useLayerContext must be used within LayerProvider");
@@ -36,7 +30,7 @@ const DEFAULT_Z_INDICES: Record<LayerType, number> = {
   overlay: 30,
 };
 
-export const LayerProvider: React.FC<LayerProviderProps> = ({ children }) => {
+const LayerProvider: React.FC<LayerProviderProps> = ({ children }) => {
   const layerRegistry = useMemo(() => new Map<LayerType, number>(), []);
 
   const value = useMemo<LayerContextValue>(

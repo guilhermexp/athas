@@ -102,7 +102,7 @@ export default function AIChat({
             setAIProviderAndModel(firstProvider.id, firstProvider.models[0].id);
           }
         }
-      } catch (_error) {
+      } catch {
         // If we can't check status, assume it's not available
         setClaudeCodeAvailability(false);
 

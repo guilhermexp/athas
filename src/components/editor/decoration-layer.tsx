@@ -1,6 +1,6 @@
 import type React from "react";
 import { useMemo } from "react";
-import type { Decoration, Position, Range } from "../../types/editor-types";
+import type { Decoration, Position } from "../../types/editor-types";
 
 interface DecorationLayerProps {
   decorations: Decoration[];
@@ -24,27 +24,6 @@ interface RenderedDecoration {
 
 function isPositionBefore(a: Position, b: Position): boolean {
   return a.line < b.line || (a.line === b.line && a.column < b.column);
-}
-
-function _getCharactersInRange(lines: string[], range: Range): number {
-  if (range.start.line === range.end.line) {
-    return range.end.column - range.start.column;
-  }
-
-  let chars = 0;
-
-  // First line
-  chars += lines[range.start.line].length - range.start.column;
-
-  // Middle lines
-  for (let i = range.start.line + 1; i < range.end.line; i++) {
-    chars += lines[i].length;
-  }
-
-  // Last line
-  chars += range.end.column;
-
-  return chars;
 }
 
 export const DecorationLayer: React.FC<DecorationLayerProps> = ({

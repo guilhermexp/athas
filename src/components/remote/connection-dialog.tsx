@@ -105,7 +105,7 @@ const ConnectionDialog = ({
         setValidationStatus("invalid");
         setErrorMessage("Failed to save connection. Please try again.");
       }
-    } catch (_error) {
+    } catch {
       setValidationStatus("invalid");
       setErrorMessage("An error occurred while saving the connection.");
     } finally {

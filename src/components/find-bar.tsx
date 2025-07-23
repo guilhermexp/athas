@@ -22,7 +22,7 @@ const FindBar = () => {
   const onSearchQueryChange = setSearchQuery;
   const currentMatch = currentMatchIndex + 1;
   const totalMatches = searchMatches.length;
-  const onSearch = (_query: string, direction: "next" | "previous", _shouldFocus?: boolean) => {
+  const onSearch = (direction: "next" | "previous") => {
     if (direction === "next") {
       searchNext();
     } else {
@@ -60,9 +60,9 @@ const FindBar = () => {
     if (e.key === "Enter") {
       e.preventDefault();
       if (e.shiftKey) {
-        onSearch(searchQuery, "previous", true);
+        onSearch("previous");
       } else {
-        onSearch(searchQuery, "next", true);
+        onSearch("next");
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
@@ -74,7 +74,7 @@ const FindBar = () => {
     const value = e.target.value;
     onSearchQueryChange(value);
     if (value.trim()) {
-      onSearch(value, "next");
+      onSearch("next");
     }
   };
 
@@ -106,7 +106,7 @@ const FindBar = () => {
 
       <div className="flex items-center gap-0.5">
         <button
-          onClick={() => onSearch(searchQuery, "previous", true)}
+          onClick={() => onSearch("previous")}
           disabled={!searchQuery || totalMatches === 0}
           className={cn(
             "flex h-5 w-5 items-center justify-center p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text",
@@ -117,7 +117,7 @@ const FindBar = () => {
           <ChevronUp size={12} />
         </button>
         <button
-          onClick={() => onSearch(searchQuery, "next", true)}
+          onClick={() => onSearch("next")}
           disabled={!searchQuery || totalMatches === 0}
           className={cn(
             "flex h-5 w-5 items-center justify-center p-0 text-text-lighter transition-colors hover:bg-hover hover:text-text",

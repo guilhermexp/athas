@@ -15,7 +15,7 @@ export const getProviderApiToken = async (providerId: string): Promise<string | 
     try {
       const token = (await invoke(storageKey)) as string | null;
       return token;
-    } catch (_error) {
+    } catch {
       // Fallback to github token for backward compatibility
       if (providerId !== "openai") {
         const token = (await invoke("get_github_token")) as string | null;
@@ -37,7 +37,7 @@ export const storeProviderApiToken = async (providerId: string, token: string): 
 
     try {
       await invoke(storageKey, { token });
-    } catch (_error) {
+    } catch {
       // Fallback to github token storage for backward compatibility
       await invoke("store_github_token", { token });
     }
@@ -55,7 +55,7 @@ export const removeProviderApiToken = async (providerId: string): Promise<void> 
 
     try {
       await invoke(storageKey);
-    } catch (_error) {
+    } catch {
       // Fallback to github token removal for backward compatibility
       await invoke("remove_github_token");
     }

@@ -1,7 +1,7 @@
 import type { Decoration } from "../types/editor-types";
 import type { Command, EditorAPI, EditorExtension, ExtensionContext } from "./extension-types";
 
-export class ExtensionManager {
+class ExtensionManager {
   private extensions: Map<string, EditorExtension> = new Map();
   private contexts: Map<string, ExtensionContext> = new Map();
   private commands: Map<string, Command> = new Map();
@@ -56,7 +56,7 @@ export class ExtensionManager {
     // Register commands
     if (extension.commands) {
       for (const command of extension.commands) {
-        this.registerCommand(extensionId, command);
+        this.registerCommand(command);
       }
     }
 
@@ -78,7 +78,7 @@ export class ExtensionManager {
     }
 
     // Set up event handlers
-    this.setupEventHandlers(extensionId, extension);
+    this.setupEventHandlers(extension);
   }
 
   unloadExtension(extensionName: string): void {
@@ -157,7 +157,7 @@ export class ExtensionManager {
     return name.toLowerCase().replace(/\s+/g, "-");
   }
 
-  private registerCommand(_extensionId: string, command: Command): void {
+  private registerCommand(command: Command): void {
     if (this.commands.has(command.id)) {
       throw new Error(`Command ${command.id} is already registered`);
     }
@@ -196,7 +196,7 @@ export class ExtensionManager {
     };
   }
 
-  private setupEventHandlers(_extensionId: string, extension: EditorExtension): void {
+  private setupEventHandlers(extension: EditorExtension): void {
     if (!this.editor) return;
 
     const handlers: Array<[string, () => void]> = [];

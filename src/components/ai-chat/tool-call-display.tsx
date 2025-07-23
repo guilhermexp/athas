@@ -172,9 +172,7 @@ export default function ToolCallDisplay({
 
     // Default: show meaningful key-value pairs, skip very long values
     const entries = Object.entries(input)
-      .filter(
-        ([_k, v]) => v !== null && v !== undefined && (typeof v !== "string" || v.length < 100),
-      )
+      .filter(([, v]) => v !== null && v !== undefined && (typeof v !== "string" || v.length < 100))
       .slice(0, 3);
 
     if (entries.length === 0) {

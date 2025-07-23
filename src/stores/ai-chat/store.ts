@@ -228,7 +228,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
 
               const token = await getProviderApiToken(provider.id);
               newApiKeyMap.set(provider.id, !!token);
-            } catch (_error) {
+            } catch {
               newApiKeyMap.set(provider.id, false);
             }
           }
@@ -254,7 +254,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
                   }
                   const token = await getProviderApiToken(provider.id);
                   newApiKeyMap.set(provider.id, !!token);
-                } catch (_error) {
+                } catch {
                   newApiKeyMap.set(provider.id, false);
                 }
               }
@@ -297,7 +297,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
                 }
                 const token = await getProviderApiToken(provider.id);
                 newApiKeyMap.set(provider.id, !!token);
-              } catch (_error) {
+              } catch {
                 newApiKeyMap.set(provider.id, false);
               }
             }
