@@ -78,24 +78,67 @@ const FileTree = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // Much higher value for faster scrolling
-    const SCROLL_SPEED_MULTIPLIER = 1.5;
+    let animationId: number | null = null;
+    let currentVelocity = 0;
+    let targetScrollTop = container.scrollTop;
+
+    // Scrolling parameters
+    const SCROLL_SPEED_MULTIPLIER = 2;
+    const FRICTION = 0.92; // Higher = more momentum, lower = quicker stop
+    const MIN_VELOCITY = 0.5; // Minimum velocity before stopping
+    const ACCELERATION = 0.85; // How quickly we reach target velocity
+
+    const animate = () => {
+      if (Math.abs(currentVelocity) < MIN_VELOCITY) {
+        currentVelocity = 0;
+        animationId = null;
+        return;
+      }
+
+      // Apply velocity to scroll position
+      targetScrollTop += currentVelocity;
+
+      // Clamp to bounds
+      targetScrollTop = Math.max(
+        0,
+        Math.min(targetScrollTop, container.scrollHeight - container.clientHeight),
+      );
+
+      // Smooth interpolation to target
+      const currentScroll = container.scrollTop;
+      const diff = targetScrollTop - currentScroll;
+      container.scrollTop = currentScroll + diff * 0.15; // Easing factor
+
+      // Apply friction
+      currentVelocity *= FRICTION;
+
+      animationId = requestAnimationFrame(animate);
+    };
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
-      // Simplified calculation for better performance
-      const scrollAmount = e.deltaY * SCROLL_SPEED_MULTIPLIER;
+      // Calculate scroll velocity based on delta
+      const deltaVelocity = e.deltaY * SCROLL_SPEED_MULTIPLIER;
 
-      // Use direct scrollTop manipulation for smoother performance
-      container.scrollTop += scrollAmount;
+      // Blend with current velocity for smooth direction changes
+      currentVelocity = currentVelocity * ACCELERATION + deltaVelocity * (1 - ACCELERATION);
+
+      // Start animation if not running
+      if (!animationId) {
+        targetScrollTop = container.scrollTop;
+        animationId = requestAnimationFrame(animate);
+      }
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
       container.removeEventListener("wheel", handleWheel);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
     };
   }, []);
 
