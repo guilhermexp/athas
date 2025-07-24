@@ -4,7 +4,6 @@ import { extensionManager } from "../../extensions/extension-manager";
 import { useEditorInteractions } from "../../hooks/use-editor-interactions";
 import { useEditorContentStore } from "../../stores/editor-content-store";
 import { useEditorDecorationsStore } from "../../stores/editor-decorations-store";
-import { useEditorLinesStore } from "../../stores/editor-lines-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 import type { Decoration, Position } from "../../types/editor-types";
 import { DecorationLayer } from "./decoration-layer";
@@ -34,9 +33,8 @@ export const EditorContentNew: React.FC<EditorContentNewProps> = ({
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  const { lines, lineTokens, setContent } = useEditorLinesStore();
+  const { lines, lineTokens } = useEditorContentStore();
   const { fontSize, lineNumbers } = useEditorSettingsStore();
-  const { bufferContent } = useEditorContentStore();
   const { getDecorations } = useEditorDecorationsStore();
 
   const lineHeight = fontSize * 1.4;
@@ -54,10 +52,7 @@ export const EditorContentNew: React.FC<EditorContentNewProps> = ({
     onSelectionDrag,
   });
 
-  // Sync buffer content with lines store
-  useEffect(() => {
-    setContent(bufferContent);
-  }, [bufferContent, setContent]);
+  // No longer need to sync - content is already in the same store
 
   // Calculate selected lines
   const selectedLines = useMemo(() => {
@@ -74,11 +69,6 @@ export const EditorContentNew: React.FC<EditorContentNewProps> = ({
   const decorations = useMemo(() => {
     const storeDecorations = getDecorations();
     const extensionDecorations = extensionManager.getAllDecorations();
-
-    console.log(
-      `EditorContent: ${storeDecorations.length} store decorations, ${extensionDecorations.length} extension decorations`,
-    );
-
     const decs: Decoration[] = [...storeDecorations, ...extensionDecorations];
 
     // Add selection decoration

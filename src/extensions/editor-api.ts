@@ -1,6 +1,5 @@
 import { useEditorContentStore } from "../stores/editor-content-store";
 import { useEditorDecorationsStore } from "../stores/editor-decorations-store";
-import { useEditorLinesStore } from "../stores/editor-lines-store";
 import { useEditorSettingsStore } from "../stores/editor-settings-store";
 import type { Decoration, Position, Range } from "../types/editor-types";
 import type { EditorAPI, EditorEvent, EditorSettings, EventHandler } from "./extension-types";
@@ -27,12 +26,12 @@ class EditorAPIImpl implements EditorAPI {
 
   // Content operations
   getContent(): string {
-    return useEditorContentStore.getState().bufferContent;
+    return useEditorContentStore.getState().getContent();
   }
 
   setContent(content: string): void {
     console.log(`EditorAPI: Setting content, length: ${content.length}`);
-    useEditorContentStore.getState().setBufferContent(content);
+    useEditorContentStore.getState().setContent(content);
     this.emit("contentChange", { content, changes: [] });
   }
 
@@ -133,7 +132,7 @@ class EditorAPIImpl implements EditorAPI {
 
   // Line operations
   getLines(): string[] {
-    return useEditorLinesStore.getState().lines;
+    return useEditorContentStore.getState().lines;
   }
 
   getLine(lineNumber: number): string | undefined {

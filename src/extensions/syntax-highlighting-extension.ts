@@ -1,5 +1,5 @@
 import { getTokens } from "../lib/rust-api/tokens";
-import { useEditorLinesStore } from "../stores/editor-lines-store";
+import { useEditorContentStore } from "../stores/editor-content-store";
 import type { Decoration, LineToken } from "../types/editor-types";
 import type { EditorAPI, EditorExtension } from "./extension-types";
 
@@ -102,7 +102,7 @@ class SyntaxHighlighter {
 
   private updateLineTokens() {
     const lines = this.editor.getLines();
-    const { setLineTokens } = useEditorLinesStore.getState();
+    const { setLineTokens } = useEditorContentStore.getState();
 
     // Update tokens for each line
     for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {

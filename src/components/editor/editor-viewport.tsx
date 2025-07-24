@@ -43,24 +43,41 @@ export const EditorViewport = memo<EditorViewportProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const [, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [, forceUpdate] = useState({});
+    const isScrollingRef = useRef(false);
+
+    // Sync scroll position from prop only when not actively scrolling
+    useEffect(() => {
+      if (containerRef.current && !isScrollingRef.current) {
+        containerRef.current.scrollTop = scrollTop;
+      }
+    }, [scrollTop]);
 
     const visibleRange = useMemo(() => {
-      const startLine = Math.floor(scrollTop / lineHeight);
-      const endLine = Math.ceil((scrollTop + viewportHeight) / lineHeight);
-      const overscan = 5;
+      // Use the actual scroll position from the DOM element if available
+      const actualScrollTop = containerRef.current?.scrollTop ?? scrollTop;
+      const startLine = Math.floor(actualScrollTop / lineHeight);
+      const endLine = Math.ceil((actualScrollTop + viewportHeight) / lineHeight);
+      // Dynamic overscan based on viewport size - 25% of visible lines
+      const visibleLineCount = endLine - startLine;
+      const overscan = Math.max(3, Math.ceil(visibleLineCount * 0.25));
 
       return {
         start: Math.max(0, startLine - overscan),
         end: Math.min(lines.length, endLine + overscan),
       };
-    }, [scrollTop, lineHeight, viewportHeight, lines.length]);
+    }, [scrollTop, lineHeight, viewportHeight, lines.length, forceUpdate]);
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.currentTarget;
       const newScrollTop = target.scrollTop;
       const newScrollLeft = target.scrollLeft;
 
+      isScrollingRef.current = true;
       setIsScrolling(true);
+
+      // Force re-render to update visible range
+      forceUpdate({});
 
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
@@ -68,8 +85,10 @@ export const EditorViewport = memo<EditorViewportProps>(
 
       scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
+        isScrollingRef.current = false;
       }, 150);
 
+      // Still notify parent component
       onScroll?.(newScrollTop, newScrollLeft);
     };
 

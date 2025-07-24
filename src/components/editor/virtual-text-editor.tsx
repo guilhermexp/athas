@@ -14,7 +14,7 @@ import { EditorContentNew } from "./editor-content-new";
 
 export function VirtualTextEditor() {
   const { tabSize } = useEditorSettingsStore();
-  const { bufferContent, setBufferContent } = useEditorContentStore();
+  const { lines, getContent, setContent } = useEditorContentStore();
   const { onChange, disabled, filePath, editorRef } = useEditorInstanceStore();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,8 +32,7 @@ export function VirtualTextEditor() {
   const containerRef = editorRef || localRef;
 
   // Calculate cursor position from offset
-  const calculateCursorPosition = useCallback((offset: number, text: string): Position => {
-    const lines = text.split("\n");
+  const calculateCursorPosition = useCallback((offset: number, lines: string[]): Position => {
     let currentOffset = 0;
 
     for (let i = 0; i < lines.length; i++) {
@@ -51,7 +50,10 @@ export function VirtualTextEditor() {
     return {
       line: lines.length - 1,
       column: lines[lines.length - 1].length,
-      offset: text.length,
+      offset: lines.reduce(
+        (sum, line, idx) => sum + line.length + (idx < lines.length - 1 ? 1 : 0),
+        0,
+      ),
     };
   }, []);
 
@@ -59,8 +61,7 @@ export function VirtualTextEditor() {
 
   // Calculate offset from line and column
   const calculateOffsetFromPosition = useCallback(
-    (line: number, column: number, text: string): number => {
-      const lines = text.split("\n");
+    (line: number, column: number, lines: string[]): number => {
       let offset = 0;
 
       for (let i = 0; i < line && i < lines.length; i++) {
@@ -76,10 +77,13 @@ export function VirtualTextEditor() {
     [],
   );
 
+  // Get content as string when needed
+  const content = getContent();
+
   // Handle textarea input
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    setBufferContent(newValue);
+    setContent(newValue);
     onChange?.(newValue);
 
     // Update selection after change
@@ -90,7 +94,7 @@ export function VirtualTextEditor() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.currentTarget;
     const { selectionStart } = textarea;
-    const currentPosition = calculateCursorPosition(selectionStart, bufferContent);
+    const currentPosition = calculateCursorPosition(selectionStart, lines);
 
     // Check for extension keybindings first
     const key = [
@@ -115,11 +119,13 @@ export function VirtualTextEditor() {
       e.preventDefault();
       const { selectionEnd } = textarea;
       const spaces = " ".repeat(tabSize);
-
+      const currentContent = getContent();
       const newValue =
-        bufferContent.substring(0, selectionStart) + spaces + bufferContent.substring(selectionEnd);
+        currentContent.substring(0, selectionStart) +
+        spaces +
+        currentContent.substring(selectionEnd);
 
-      setBufferContent(newValue);
+      setContent(newValue);
       onChange?.(newValue);
 
       // Update cursor position after tab
@@ -133,7 +139,6 @@ export function VirtualTextEditor() {
     } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
 
-      const lines = bufferContent.split("\n");
       const targetLine = e.key === "ArrowUp" ? currentPosition.line - 1 : currentPosition.line + 1;
 
       // Check bounds
@@ -148,7 +153,7 @@ export function VirtualTextEditor() {
       const actualColumn = Math.min(targetColumn, lines[targetLine].length);
 
       // Calculate new offset
-      const newOffset = calculateOffsetFromPosition(targetLine, actualColumn, bufferContent);
+      const newOffset = calculateOffsetFromPosition(targetLine, actualColumn, lines);
 
       // Update textarea selection
       textarea.selectionStart = textarea.selectionEnd = newOffset;
@@ -176,13 +181,13 @@ export function VirtualTextEditor() {
     if (!textareaRef.current) return;
 
     const { selectionStart, selectionEnd } = textareaRef.current;
-    const newCursorPosition = calculateCursorPosition(selectionStart, bufferContent);
+    const newCursorPosition = calculateCursorPosition(selectionStart, lines);
     setCursorPosition(newCursorPosition);
 
     if (selectionStart !== selectionEnd) {
       setSelection({
-        start: calculateCursorPosition(selectionStart, bufferContent),
-        end: calculateCursorPosition(selectionEnd, bufferContent),
+        start: calculateCursorPosition(selectionStart, lines),
+        end: calculateCursorPosition(selectionEnd, lines),
       });
     } else {
       setSelection(null);
@@ -240,11 +245,11 @@ export function VirtualTextEditor() {
   // Emit content change events to extensions
   useEffect(() => {
     // Emit the event directly without going through setContent to avoid loops
-    const eventData = { content: bufferContent, changes: [] };
+    const eventData = { content, changes: [] };
     editorAPI.on("contentChange", () => {}); // Ensure event handler exists
     // Use private emit method
     (editorAPI as any).emit("contentChange", eventData);
-  }, [bufferContent]);
+  }, [content]);
 
   // Handlers for line-based rendering interactions
   const handleLineBasedClick = useCallback(
@@ -286,7 +291,7 @@ export function VirtualTextEditor() {
       {/* Hidden textarea for input */}
       <textarea
         ref={textareaRef}
-        value={bufferContent}
+        value={content}
         onChange={handleTextareaChange}
         onKeyDown={handleKeyDown}
         onSelect={handleSelectionChange}
