@@ -1,6 +1,6 @@
 import { getTokens } from "../lib/rust-api/tokens";
 import { useEditorContentStore } from "../stores/editor-content-store";
-import type { Decoration, LineToken } from "../types/editor-types";
+import type { LineToken } from "../types/editor-types";
 import type { EditorAPI, EditorExtension } from "./extension-types";
 
 // Import Token from rust-api instead of editor-types
@@ -16,7 +16,6 @@ const DEBOUNCE_TIME_MS = 300;
 class SyntaxHighlighter {
   private editor: EditorAPI;
   private tokens: Token[] = [];
-  private decorationIds: string[] = [];
   private timeoutId: NodeJS.Timeout | null = null;
   private filePath: string | null = null;
 
@@ -72,32 +71,13 @@ class SyntaxHighlighter {
       } catch (error) {
         console.error("Syntax highlighting error:", error);
         this.tokens = [];
-        this.clearDecorations();
       }
     }, DEBOUNCE_TIME_MS);
   }
 
   private applyDecorations() {
-    // Clear existing decorations
-    this.clearDecorations();
-
-    // Convert tokens to decorations
-    const decorations = this.createDecorationsFromTokens();
-
-    console.log(`Syntax highlighting: Created ${decorations.length} decorations`);
-
-    // Add new decorations
-    this.decorationIds = decorations.map(decoration => this.editor.addDecoration(decoration));
-
-    console.log(`Syntax highlighting: Applied ${this.decorationIds.length} decorations`);
-
     // Update line tokens in the store
     this.updateLineTokens();
-  }
-
-  private clearDecorations() {
-    this.decorationIds.forEach(id => this.editor.removeDecoration(id));
-    this.decorationIds = [];
   }
 
   private updateLineTokens() {
@@ -111,53 +91,6 @@ class SyntaxHighlighter {
     }
 
     console.log(`Syntax highlighting: Updated tokens for ${lines.length} lines`);
-  }
-
-  private createDecorationsFromTokens(): Decoration[] {
-    const lines = this.editor.getLines();
-    const decorations: Decoration[] = [];
-
-    let currentOffset = 0;
-
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-      const line = lines[lineIndex];
-      const lineLength = line.length;
-      const lineStart = currentOffset;
-      const lineEnd = currentOffset + lineLength;
-
-      // Find tokens that overlap with this line
-      for (const token of this.tokens) {
-        if (token.start >= lineEnd) continue;
-        if (token.end <= lineStart) continue;
-
-        // Calculate token position within the line
-        const tokenStartInLine = Math.max(0, token.start - lineStart);
-        const tokenEndInLine = Math.min(lineLength, token.end - lineStart);
-
-        if (tokenStartInLine < tokenEndInLine) {
-          decorations.push({
-            range: {
-              start: {
-                line: lineIndex,
-                column: tokenStartInLine,
-                offset: lineStart + tokenStartInLine,
-              },
-              end: {
-                line: lineIndex,
-                column: tokenEndInLine,
-                offset: lineStart + tokenEndInLine,
-              },
-            },
-            type: "inline",
-            className: token.class_name,
-          });
-        }
-      }
-
-      currentOffset += lineLength + 1; // +1 for newline
-    }
-
-    return decorations;
   }
 
   getLineTokens(lineNumber: number): LineToken[] {
@@ -202,7 +135,6 @@ class SyntaxHighlighter {
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }
-    this.clearDecorations();
   }
 }
 
