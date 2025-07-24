@@ -1,4 +1,5 @@
-import { Clock, Folder, FolderOpen } from "lucide-react";
+import { Folder } from "lucide-react";
+import Button from "@/components/ui/button";
 import { cn } from "@/utils/cn";
 
 interface RecentFolder {
@@ -30,13 +31,13 @@ const WelcomeScreen = ({
     <div
       className={cn(
         "paper-texture paper-noise",
-        "flex h-screen w-screen flex-col items-center justify-center",
+        "flex h-screen w-screen select-none flex-col items-center justify-center",
       )}
     >
       {/* Logo Section */}
       <div className={cn("mb-6 flex flex-col items-center")}>
         <div className={cn("mb-1 flex justify-center")}>
-          <img src="/athas-industries-logo.svg" alt="athas industries" className={cn("h-28")} />
+          <img src="/athas-industries-logo.svg" alt="athas industries" className={cn("h-12")} />
         </div>
         <p className={cn("paper-text-light font-mono font-normal text-xs")}>v0.1.0</p>
       </div>
@@ -45,60 +46,37 @@ const WelcomeScreen = ({
       <div className={cn("flex w-full max-w-sm flex-col items-center px-4")}>
         {/* Open Folder Button */}
         <div className={cn("mb-6 w-full")}>
-          <button
+          <Button
             onClick={onOpenFolder}
-            className={cn(
-              "paper-button",
-              "flex w-full items-center justify-center gap-2",
-              "rounded-md px-4 py-2",
-              "font-mono text-sm",
-              "transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]",
-            )}
+            variant="ghost"
+            className={cn("paper-button w-full gap-2 py-2 text-sm", "transition-all duration-200")}
+            size="sm"
           >
-            <Folder size={16} />
+            <Folder size={14} />
             Open Folder
-          </button>
+          </Button>
         </div>
 
         {/* Recent Folders */}
         {recentFolders.length > 0 && (
           <div className={cn("w-full")}>
-            <h3
-              className={cn(
-                "paper-text-secondary",
-                "mb-2 flex items-center gap-2",
-                "font-mono text-xs",
-              )}
-            >
-              <Clock size={14} />
-              Recent
-            </h3>
+            <h3 className={cn("paper-text-secondary", "mb-2 font-mono text-xs")}>Recent</h3>
             <div className={cn("space-y-1.5")}>
               {recentFolders.map((folder, index) => (
-                <button
+                <Button
                   key={index}
                   onClick={() => handleRecentFolderClick(folder.path)}
+                  variant="ghost"
                   className={cn(
-                    "paper-recent-item group",
-                    "w-full cursor-pointer rounded-md p-2 text-left",
-                    "transition-all duration-200 active:scale-[0.99]",
+                    "paper-recent-item group h-auto w-full justify-start p-2",
+                    "transition-all duration-200",
                   )}
+                  size="sm"
                 >
-                  <div className={cn("flex items-center gap-2")}>
-                    <FolderOpen
-                      size={14}
-                      className={cn(
-                        "paper-text-light group-hover:paper-text-secondary",
-                        "flex-shrink-0 transition-colors",
-                      )}
-                    />
-                    <div className={cn("min-w-0 flex-1")}>
-                      <div className={cn("paper-text-primary", "truncate font-mono text-xs")}>
-                        {folder.name}
-                      </div>
-                    </div>
+                  <div className={cn("paper-text-primary truncate font-mono text-xs")}>
+                    {folder.name}
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           </div>
