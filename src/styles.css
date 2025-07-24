@@ -46,6 +46,14 @@
         --tw-warning: #d69e2e;
         --tw-info: #3182ce;
 
+        /* Git status colors */
+        --tw-git-modified: #d69e2e;
+        --tw-git-modified-staged: #e67e22;
+        --tw-git-added: #28a745;
+        --tw-git-deleted: #dc3545;
+        --tw-git-untracked: #17a2b8;
+        --tw-git-renamed: #6f42c1;
+
         /* Syntax highlighting */
         --tw-syntax-comment: #6a737d;
         --tw-syntax-keyword: #d73a49;
@@ -112,6 +120,14 @@
         --tw-error: #f87171;
         --tw-warning: #fbbf24;
         --tw-info: #60a5fa;
+
+        /* Git status colors - Dark */
+        --tw-git-modified: #fbbf24;
+        --tw-git-modified-staged: #f59e0b;
+        --tw-git-added: #10b981;
+        --tw-git-deleted: #ef4444;
+        --tw-git-untracked: #06b6d4;
+        --tw-git-renamed: #8b5cf6;
 
         /* Syntax highlighting colors - Dark theme */
         --tw-syntax-comment: #8b949e;
@@ -181,6 +197,14 @@
     --color-error: var(--tw-error);
     --color-warning: var(--tw-warning);
     --color-info: var(--tw-info);
+
+    /* Git status colors */
+    --color-git-modified: var(--tw-git-modified);
+    --color-git-modified-staged: var(--tw-git-modified-staged);
+    --color-git-added: var(--tw-git-added);
+    --color-git-deleted: var(--tw-git-deleted);
+    --color-git-untracked: var(--tw-git-untracked);
+    --color-git-renamed: var(--tw-git-renamed);
 
     /* Syntax highlighting colors */
     --color-syntax-comment: var(--tw-syntax-comment);
@@ -322,6 +346,14 @@ button {
         --tw-warning: #d69e2e;
         --tw-info: #3182ce;
 
+        /* Git status colors */
+        --tw-git-modified: #d69e2e;
+        --tw-git-modified-staged: #e67e22;
+        --tw-git-added: #28a745;
+        --tw-git-deleted: #dc3545;
+        --tw-git-untracked: #17a2b8;
+        --tw-git-renamed: #6f42c1;
+
         /* Syntax highlighting */
         --tw-syntax-comment: #6a737d;
         --tw-syntax-keyword: #d73a49;
@@ -390,6 +422,14 @@ button {
             --tw-error: #f87171;
             --tw-warning: #fbbf24;
             --tw-info: #60a5fa;
+
+            /* Git status colors - Dark */
+            --tw-git-modified: #fbbf24;
+            --tw-git-modified-staged: #f59e0b;
+            --tw-git-added: #10b981;
+            --tw-git-deleted: #ef4444;
+            --tw-git-untracked: #06b6d4;
+            --tw-git-renamed: #8b5cf6;
 
             /* Syntax highlighting colors - Dark theme */
             --tw-syntax-comment: #8b949e;

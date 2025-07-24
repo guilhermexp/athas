@@ -199,9 +199,9 @@ export const useFileSystemActions = create(
 
           // Handle special file types
           if (isSQLiteFile(path)) {
-            openBuffer(path, fileName, "", true, false, false, false);
-          } else if (isImageFile(path)) {
             openBuffer(path, fileName, "", false, true, false, false);
+          } else if (isImageFile(path)) {
+            openBuffer(path, fileName, "", true, false, false, false);
           } else {
             try {
               const content = await readFileContent(path);

@@ -115,7 +115,7 @@ export const MainSidebar = () => {
 
       {/* File Tree Header */}
       {showFileTreeHeader && (
-        <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-2 py-1.5">
+        <div className="flex items-center justify-between bg-secondary-bg px-2 py-1.5">
           <h3
             className="cursor-pointer rounded px-2 py-1 font-medium font-mono text-text text-xs tracking-wide hover:bg-hover"
             onClick={onProjectNameMenuOpen}

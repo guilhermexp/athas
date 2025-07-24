@@ -21,6 +21,7 @@ import EditorFooter from "../editor-footer";
 import ExtensionsView from "../extensions-view";
 import FileReloadToast from "../file-reload-toast";
 import GitHubCopilotSettings from "../github-copilot-settings";
+import { ImageViewer } from "../image-viewer/image-viewer";
 import ResizableRightPane from "../resizable-right-pane";
 import ResizableSidebar from "../resizable-sidebar";
 import SettingsDialog from "../settings/settings-dialog";
@@ -135,6 +136,8 @@ export function MainLayout() {
             }
             if (activeBuffer.isDiff) {
               return <DiffViewer onStageHunk={handleStageHunk} onUnstageHunk={handleUnstageHunk} />;
+            } else if (activeBuffer.isImage) {
+              return <ImageViewer filePath={activeBuffer.path} fileName={activeBuffer.name} />;
             } else if (activeBuffer.path === "extensions://marketplace") {
               return (
                 <ExtensionsView

@@ -72,75 +72,43 @@ const FileTree = ({
 
   const [gitIgnore, setGitIgnore] = useState<ReturnType<typeof ignore> | null>(null);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
+  const [deepestStickyFolder, setDeepestStickyFolder] = useState<string | null>(null);
 
-  // Add a speed multiplier to the scrolling
+  // Track scroll for deepest sticky folder detection
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    let animationId: number | null = null;
-    let currentVelocity = 0;
-    let targetScrollTop = container.scrollTop;
+    const handleScroll = () => {
+      // Find all sticky folders currently visible
+      const stickyFolders = container.querySelectorAll(".file-tree-item-dir");
+      let deepest = null;
+      let maxDepth = -1;
 
-    // Scrolling parameters
-    const SCROLL_SPEED_MULTIPLIER = 2;
-    const FRICTION = 0.92; // Higher = more momentum, lower = quicker stop
-    const MIN_VELOCITY = 0.5; // Minimum velocity before stopping
-    const ACCELERATION = 0.85; // How quickly we reach target velocity
+      stickyFolders.forEach(folder => {
+        const rect = folder.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
 
-    const animate = () => {
-      if (Math.abs(currentVelocity) < MIN_VELOCITY) {
-        currentVelocity = 0;
-        animationId = null;
-        return;
-      }
+        // Check if folder is sticky (at its sticky position)
+        if (rect.top <= containerRect.top + 100) {
+          // 100px buffer for nested folders
+          const depth = parseInt(folder.getAttribute("data-depth") || "0");
+          if (depth > maxDepth) {
+            maxDepth = depth;
+            deepest = folder.getAttribute("data-path");
+          }
+        }
+      });
 
-      // Apply velocity to scroll position
-      targetScrollTop += currentVelocity;
-
-      // Clamp to bounds
-      targetScrollTop = Math.max(
-        0,
-        Math.min(targetScrollTop, container.scrollHeight - container.clientHeight),
-      );
-
-      // Smooth interpolation to target
-      const currentScroll = container.scrollTop;
-      const diff = targetScrollTop - currentScroll;
-      container.scrollTop = currentScroll + diff * 0.15; // Easing factor
-
-      // Apply friction
-      currentVelocity *= FRICTION;
-
-      animationId = requestAnimationFrame(animate);
+      setDeepestStickyFolder(deepest);
     };
 
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+    container.addEventListener("scroll", handleScroll);
+    // Also run on mount
+    handleScroll();
 
-      // Calculate scroll velocity based on delta
-      const deltaVelocity = e.deltaY * SCROLL_SPEED_MULTIPLIER;
-
-      // Blend with current velocity for smooth direction changes
-      currentVelocity = currentVelocity * ACCELERATION + deltaVelocity * (1 - ACCELERATION);
-
-      // Start animation if not running
-      if (!animationId) {
-        targetScrollTop = container.scrollTop;
-        animationId = requestAnimationFrame(animate);
-      }
-    };
-
-    container.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      container.removeEventListener("wheel", handleWheel);
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }, []);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [files]);
 
   useEffect(() => {
     const loadGitignore = async () => {
@@ -266,15 +234,17 @@ const FileTree = ({
       if (gitFile) {
         switch (gitFile.status) {
           case "modified":
-            return gitFile.staged ? "text-orange-400" : "text-yellow-400";
+            return gitFile.staged
+              ? "text-[var(--color-git-modified-staged)]"
+              : "text-[var(--color-git-modified)]";
           case "added":
-            return "text-green-400";
+            return "text-[var(--color-git-added)]";
           case "deleted":
-            return "text-red-400";
+            return "text-[var(--color-git-deleted)]";
           case "untracked":
-            return "text-green-300";
+            return "text-[var(--color-git-untracked)]";
           case "renamed":
-            return "text-blue-400";
+            return "text-[var(--color-git-renamed)]";
           default:
             return "";
         }
@@ -286,15 +256,17 @@ const FileTree = ({
         if (dirChange) {
           switch (dirChange.status) {
             case "modified":
-              return dirChange.staged ? "text-orange-400" : "text-yellow-400";
+              return dirChange.staged
+                ? "text-[var(--color-git-modified-staged)]"
+                : "text-[var(--color-git-modified)]";
             case "added":
-              return "text-green-400";
+              return "text-[var(--color-git-added)]";
             case "deleted":
-              return "text-red-400";
+              return "text-[var(--color-git-deleted)]";
             case "untracked":
-              return "text-green-300";
+              return "text-[var(--color-git-untracked)]";
             case "renamed":
-              return "text-blue-400";
+              return "text-[var(--color-git-renamed)]";
             default:
               return "";
           }
@@ -368,7 +340,10 @@ const FileTree = ({
           const children = [...(item.children || []), newItem];
           return { ...item, children, expanded: true };
         } else if (item.children) {
-          return { ...item, children: addNewItemToTree(item.children, targetPath) };
+          return {
+            ...item,
+            children: addNewItemToTree(item.children, targetPath),
+          };
         }
         return item;
       });
@@ -511,15 +486,13 @@ const FileTree = ({
     [onFileSelect],
   );
 
-  // Native HTML5 drag-and-drop handlers removed - using custom drag-and-drop instead
-
   const renderFileTree = (items: FileEntry[], depth = 0) => {
     return items.map(file => (
-      <div key={file.path}>
+      <div key={file.path} className="file-tree-item" data-depth={depth}>
         {file.isEditing ? (
           <div
             className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
-            style={{ paddingLeft: `${12 + depth * 16}px` }}
+            style={{ paddingLeft: `${12 + depth * 20}px`, paddingRight: "8px" }}
           >
             <FileIcon
               fileName={file.isDir ? "folder" : "file"}
@@ -603,10 +576,18 @@ const FileTree = ({
                 "!bg-accent !bg-opacity-20 !border-2 !border-accent !border-dashed",
               dragState.isDragging && "cursor-move",
               file.ignored && "opacity-50",
+              file.isDir && "file-tree-item-dir",
+              file.isDir && deepestStickyFolder === file.path && "border-white/5 border-b",
             )}
-            style={{
-              paddingLeft: `${12 + depth * 20}px`,
-            }}
+            data-path={file.path}
+            data-depth={depth}
+            style={
+              {
+                paddingLeft: `${14 + depth * 20}px`,
+                paddingRight: "8px",
+                "--depth": depth,
+              } as React.CSSProperties & { "--depth": number }
+            }
           >
             <FileIcon
               fileName={file.name}
@@ -717,7 +698,7 @@ const FileTree = ({
     <div
       className={cn(
         "file-tree-container flex flex-1 select-none",
-        "flex-col gap-0 overflow-auto p-2",
+        "flex-col gap-0 overflow-auto",
         dragState.dragOverPath === "__ROOT__" &&
           "!bg-accent !bg-opacity-10 !border-2 !border-accent !border-dashed",
       )}
@@ -956,7 +937,9 @@ const FileTree = ({
                     e.preventDefault();
                     e.stopPropagation();
                     try {
-                      const stats = await fetch(`file://${contextMenu.path}`, { method: "HEAD" });
+                      const stats = await fetch(`file://${contextMenu.path}`, {
+                        method: "HEAD",
+                      });
                       const size = stats.headers.get("content-length") || "Unknown";
                       const fileName = contextMenu.path.split("/").pop() || "";
                       const extension = fileName.includes(".")
