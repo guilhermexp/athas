@@ -3,19 +3,13 @@ import { useCallback } from "react";
 
 export const useEditorScroll = (
   editorRef: React.RefObject<HTMLDivElement | null>,
-  lineNumbersRef: React.RefObject<HTMLDivElement | null> | null,
+  _lineNumbersRef: React.RefObject<HTMLDivElement | null> | null,
 ) => {
-  // Sync scroll between contenteditable and line numbers
-  const handleScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      const scrollingElement = e.currentTarget;
-      if (lineNumbersRef?.current) {
-        const scrollTop = scrollingElement.scrollTop;
-        lineNumbersRef.current.scrollTop = scrollTop;
-      }
-    },
-    [lineNumbersRef],
-  );
+  // Handle scroll events
+  const handleScroll = useCallback((_e: React.UIEvent<HTMLDivElement>) => {
+    // Currently no-op as line numbers are handled differently
+    // This hook can be extended for future scroll-related functionality
+  }, []);
 
   // Handle cursor position changes
   const handleCursorPositionChange = useCallback(

@@ -105,7 +105,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   });
 
   // Scroll management
-  const { handleScroll } = useEditorScroll(editorRef, null);
+  useEditorScroll(editorRef, null);
 
   // Search functionality
   useEffect(() => {
@@ -197,7 +197,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
           {/* Main editor layout */}
           <div className="flex h-full">
             {/* Editor content area */}
-            <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
+            <div className="editor-wrapper relative flex-1 overflow-hidden">
               <div className="relative h-full flex-1 bg-primary-bg">
                 <VirtualTextEditor />
               </div>

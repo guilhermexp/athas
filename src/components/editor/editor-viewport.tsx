@@ -31,7 +31,7 @@ export const EditorViewport = memo<EditorViewportProps>(
     gutterWidth,
     lineHeight,
     scrollTop,
-    scrollLeft,
+    scrollLeft: _scrollLeft,
     viewportHeight,
     selectedLines,
     onScroll,
@@ -41,7 +41,7 @@ export const EditorViewport = memo<EditorViewportProps>(
     onMouseUp,
   }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isScrolling, setIsScrolling] = useState(false);
+    const [, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const visibleRange = useMemo(() => {
@@ -118,8 +118,7 @@ export const EditorViewport = memo<EditorViewportProps>(
               className="editor-line-content-wrapper"
               style={{
                 flex: 1,
-                transform: `translateX(-${scrollLeft}px)`,
-                willChange: isScrolling ? "transform" : "auto",
+                paddingLeft: showLineNumbers ? 0 : `16px`,
               }}
             >
               <LineRenderer

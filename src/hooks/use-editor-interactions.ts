@@ -1,6 +1,5 @@
 import { useCallback, useRef } from "react";
 import type { Position } from "../types/editor-types";
-import { measureText } from "../utils/text-operations";
 
 interface UseEditorInteractionsProps {
   lines: string[];
@@ -44,31 +43,21 @@ export const useEditorInteractions = ({
         return { line, column: 0, offset: 0 };
       }
 
-      // Calculate column using binary search with text measurement
-      let left = 0;
-      let right = lineContent.length;
-      let column = 0;
+      // Calculate column using fixed character width for monospace font
+      const charWidth = fontSize * 0.6;
+      const column = Math.round(relativeX / charWidth);
 
-      while (left <= right) {
-        const mid = Math.floor((left + right) / 2);
-        const textWidth = measureText(lineContent.substring(0, mid), `${fontSize}px monospace`);
-
-        if (textWidth <= relativeX) {
-          column = mid;
-          left = mid + 1;
-        } else {
-          right = mid - 1;
-        }
-      }
+      // Clamp column to line bounds
+      const clampedColumn = Math.max(0, Math.min(column, lineContent.length));
 
       // Calculate offset
       let offset = 0;
       for (let i = 0; i < line; i++) {
         offset += lines[i].length + 1; // +1 for newline
       }
-      offset += column;
+      offset += clampedColumn;
 
-      return { line, column, offset };
+      return { line, column: clampedColumn, offset };
     },
     [lines, lineHeight, fontSize, gutterWidth, scrollTop, scrollLeft],
   );
