@@ -9,6 +9,7 @@ pub mod theme;
 pub mod tokens;
 pub mod watcher;
 pub mod window;
+pub mod xterm;
 
 pub use claude::*;
 pub use database::*;
@@ -21,3 +22,4 @@ pub use theme::*;
 pub use tokens::*;
 pub use watcher::*;
 pub use window::*;
+pub use xterm::*;

@@ -1,0 +1,77 @@
+/* Terminal-specific styles to contain xterm.js */
+.xterm-container {
+  position: relative;
+  overflow: hidden;
+  padding-left: 16px; /* Only add left padding */
+  padding-right: 8px;
+}
+
+/* Ensure xterm doesn't overflow its container */
+.xterm-container .xterm {
+  height: 100%;
+  width: 100%;
+}
+
+/* Override any xterm styles that might cause full-screen issues */
+.xterm-container .xterm-screen {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Style the terminal viewport for better appearance */
+.xterm-container .xterm-viewport {
+  /* Keep default background */
+}
+
+/* Improve scrollbar styling */
+.xterm-container .xterm-viewport::-webkit-scrollbar {
+  width: 12px;
+  background-color: transparent;
+}
+
+.xterm-container .xterm-viewport::-webkit-scrollbar-track {
+  background-color: var(--color-hover);
+  border-radius: 6px;
+  margin: 4px;
+}
+
+.xterm-container .xterm-viewport::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 6px;
+  border: 2px solid var(--color-hover);
+}
+
+.xterm-container .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-lighter);
+}
+
+/* Terminal cursor improvements */
+.xterm-container .xterm-cursor-layer {
+  /* Cursor will use theme colors */
+}
+
+/* Better selection styling */
+.xterm-container .xterm-selection-layer {
+  /* Selection will use theme colors */
+}
+
+/* Ensure terminal search stays on top */
+.terminal-search {
+  z-index: 100;
+}
+
+/* xterm.js WebLinksAddon creates a canvas layer for links */
+.xterm .xterm-link-layer {
+  z-index: 10;
+}
+
+/* When hovering over a link, xterm applies this class */
+.xterm-screen .xterm-decoration-overview-ruler {
+  display: none;
+}
+
+/* Override xterm cursor when hovering links */
+.xterm.xterm-cursor-pointer {
+  cursor: pointer !important;
+}

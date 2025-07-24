@@ -47,6 +47,14 @@ const TerminalContainer = ({
     createTerminal(dirName, currentDirectory);
   }, [createTerminal, currentDirectory]);
 
+  // Create initial terminal on mount if none exist
+  useEffect(() => {
+    if (!hasInitializedRef.current && terminals.length === 0) {
+      hasInitializedRef.current = true;
+      handleNewTerminal();
+    }
+  }, [terminals.length, handleNewTerminal]);
+
   const handleTabClick = useCallback(
     (terminalId: string) => {
       setActiveTerminal(terminalId);
