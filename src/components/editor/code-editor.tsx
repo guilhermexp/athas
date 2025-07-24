@@ -16,7 +16,6 @@ import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
 import { CompletionDropdown } from "./completion-dropdown";
 import { EditorStyles } from "./editor-styles";
 import { HoverTooltip } from "./hover-tooltip";
-import { LineNumbers } from "./line-numbers";
 import { VirtualTextEditor } from "./virtual-text-editor";
 
 interface CodeEditorProps {
@@ -35,7 +34,6 @@ export interface CodeEditorRef {
 
 const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null as any);
-  const lineNumbersRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
 
   const { setRefs, setContent, setFileInfo } = useEditorInstanceStore();
@@ -58,7 +56,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   useEffect(() => {
     setRefs({
       editorRef,
-      lineNumbersRef,
     });
   }, [setRefs]);
 
@@ -108,7 +105,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
   });
 
   // Scroll management
-  const { handleScroll } = useEditorScroll(editorRef, lineNumbersRef);
+  const { handleScroll } = useEditorScroll(editorRef, null);
 
   // Search functionality
   useEffect(() => {
@@ -199,8 +196,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
           {/* Main editor layout */}
           <div className="flex h-full">
-            {lineNumbers && <LineNumbers />}
-
             {/* Editor content area */}
             <div className="editor-wrapper relative flex-1 overflow-auto" onScroll={handleScroll}>
               <div className="relative h-full flex-1 bg-primary-bg">

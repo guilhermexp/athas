@@ -12,7 +12,6 @@ const initialState = {
 
   // Refs - these are set per editor instance
   editorRef: null as RefObject<HTMLDivElement | null> | null,
-  lineNumbersRef: null as RefObject<HTMLDivElement | null> | null,
 
   // UI props
   placeholder: undefined as string | undefined,
@@ -23,10 +22,7 @@ const initialState = {
 export const useEditorInstanceStore = create(
   combine(initialState, set => ({
     // Actions
-    setRefs: (refs: {
-      editorRef: RefObject<HTMLDivElement | null>;
-      lineNumbersRef: RefObject<HTMLDivElement | null>;
-    }) => set(refs),
+    setRefs: (refs: { editorRef: RefObject<HTMLDivElement | null> }) => set(refs),
     setContent: (value: string, onChange: (value: string) => void) => set({ value, onChange }),
     setFileInfo: (filePath: string) => set({ filePath }),
     setPlaceholder: (placeholder: string | undefined) => set({ placeholder }),

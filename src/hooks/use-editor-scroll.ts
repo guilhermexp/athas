@@ -3,13 +3,13 @@ import { useCallback } from "react";
 
 export const useEditorScroll = (
   editorRef: React.RefObject<HTMLDivElement | null>,
-  lineNumbersRef: React.RefObject<HTMLDivElement | null>,
+  lineNumbersRef: React.RefObject<HTMLDivElement | null> | null,
 ) => {
   // Sync scroll between contenteditable and line numbers
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const scrollingElement = e.currentTarget;
-      if (lineNumbersRef.current) {
+      if (lineNumbersRef?.current) {
         const scrollTop = scrollingElement.scrollTop;
         lineNumbersRef.current.scrollTop = scrollTop;
       }
