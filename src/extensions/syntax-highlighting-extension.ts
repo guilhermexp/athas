@@ -1,6 +1,15 @@
 import { getTokens } from "../lib/rust-api/tokens";
-import type { Decoration, LineToken, Token } from "../types/editor-types";
+import { useEditorLinesStore } from "../stores/editor-lines-store";
+import type { Decoration, LineToken } from "../types/editor-types";
 import type { EditorAPI, EditorExtension } from "./extension-types";
+
+// Import Token from rust-api instead of editor-types
+type Token = {
+  start: number;
+  end: number;
+  token_type: string;
+  class_name: string;
+};
 
 const DEBOUNCE_TIME_MS = 300;
 
@@ -46,6 +55,18 @@ class SyntaxHighlighter {
 
         console.log(`Syntax highlighting: Received ${this.tokens.length} tokens`);
 
+        // Log the first few tokens to see what class names we're getting
+        if (this.tokens.length > 0) {
+          console.log(
+            "Sample tokens from Rust API:",
+            this.tokens.slice(0, 5).map(t => ({
+              text: content.slice(t.start, t.end),
+              class_name: t.class_name,
+              token_type: t.token_type,
+            })),
+          );
+        }
+
         // Update decorations
         this.applyDecorations();
       } catch (error) {
@@ -69,11 +90,27 @@ class SyntaxHighlighter {
     this.decorationIds = decorations.map(decoration => this.editor.addDecoration(decoration));
 
     console.log(`Syntax highlighting: Applied ${this.decorationIds.length} decorations`);
+
+    // Update line tokens in the store
+    this.updateLineTokens();
   }
 
   private clearDecorations() {
     this.decorationIds.forEach(id => this.editor.removeDecoration(id));
     this.decorationIds = [];
+  }
+
+  private updateLineTokens() {
+    const lines = this.editor.getLines();
+    const { setLineTokens } = useEditorLinesStore.getState();
+
+    // Update tokens for each line
+    for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+      const lineTokens = this.getLineTokens(lineNumber);
+      setLineTokens(lineNumber, lineTokens);
+    }
+
+    console.log(`Syntax highlighting: Updated tokens for ${lines.length} lines`);
   }
 
   private createDecorationsFromTokens(): Decoration[] {
@@ -112,7 +149,7 @@ class SyntaxHighlighter {
               },
             },
             type: "inline",
-            className: `token-${token.class_name}`,
+            className: token.class_name,
           });
         }
       }
@@ -153,7 +190,7 @@ class SyntaxHighlighter {
         lineTokens.push({
           startColumn: tokenStartInLine,
           endColumn: tokenEndInLine,
-          className: token.class_name,
+          className: token.class_name, // Rust API already includes 'token-' prefix
         });
       }
     }

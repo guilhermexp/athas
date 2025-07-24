@@ -9,12 +9,6 @@ export interface Range {
   end: Position;
 }
 
-export interface Token {
-  start: number;
-  end: number;
-  class_name: string;
-}
-
 export interface LineToken {
   startColumn: number;
   endColumn: number;

@@ -12,6 +12,7 @@ import { EditorLayer, EditorLayers } from "./editor-layers";
 import { CursorOverlay } from "./editor-overlay";
 import { EditorViewport } from "./editor-viewport";
 import "../../styles/editor-line-based.css";
+import "../../styles/token-theme.css";
 
 interface EditorContentNewProps {
   cursorPosition: Position;
