@@ -35,7 +35,7 @@ export const CursorOverlay: React.FC<CursorOverlayProps> = ({
         top: `${y}px`,
         width: "2px",
         height: `${lineHeight}px`,
-        backgroundColor: "var(--cursor-color, #000)",
+        backgroundColor: "var(--cursor-color, var(--color-cursor))",
         pointerEvents: "none",
       }}
     />

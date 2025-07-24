@@ -37,6 +37,9 @@
 
         /* Accent color */
         --tw-accent: #3b82f6;
+        
+        /* Cursor color */
+        --tw-cursor: #1a1a1a;
 
         /* Diagnostic colors */
         --tw-error: #c53030;
@@ -101,6 +104,9 @@
 
         /* Accent color - Dark */
         --tw-accent: #60a5fa;
+        
+        /* Cursor color - Dark */
+        --tw-cursor: #e5e5e5;
 
         /* Diagnostic colors */
         --tw-error: #f87171;
@@ -167,6 +173,9 @@
 
     /* Accent color */
     --color-accent: var(--tw-accent);
+    
+    /* Cursor color */
+    --color-cursor: var(--tw-cursor);
 
     /* Diagnostic colors */
     --color-error: var(--tw-error);
@@ -304,6 +313,9 @@ button {
 
         /* Accent color */
         --tw-accent: #3b82f6;
+        
+        /* Cursor color */
+        --tw-cursor: #1a1a1a;
 
         /* Diagnostic colors */
         --tw-error: #c53030;
@@ -370,6 +382,9 @@ button {
 
             /* Accent color - Dark */
             --tw-accent: #60a5fa;
+            
+            /* Cursor color - Dark */
+            --tw-cursor: #e5e5e5;
 
             /* Diagnostic colors */
             --tw-error: #f87171;
