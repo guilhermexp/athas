@@ -15,6 +15,7 @@ mod lsp;
 mod menu;
 mod ssh;
 mod terminal;
+mod xterm_terminal;
 use claude_bridge::ClaudeCodeBridge;
 use commands::*;
 use file_watcher::FileWatcher;
@@ -27,6 +28,7 @@ use ssh::{
     ssh_write_file,
 };
 use terminal::TerminalManager;
+use xterm_terminal::XtermManager;
 
 fn main() {
     tauri::Builder::default()
@@ -188,6 +190,7 @@ fn main() {
         })
         .manage(LSPState::new())
         .manage(Arc::new(TerminalManager::new()))
+        .manage(Arc::new(XtermManager::new()))
         .invoke_handler(tauri::generate_handler![
             // File system commands
             read_directory_custom,
@@ -260,6 +263,11 @@ fn main() {
             send_terminal_ctrl_c,
             send_terminal_ctrl_d,
             get_available_terminal_types,
+            // Xterm commands
+            create_xterm_terminal,
+            terminal_write,
+            terminal_resize,
+            close_xterm_terminal,
             // SSH commands
             ssh_connect,
             ssh_disconnect,

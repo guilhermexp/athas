@@ -7,6 +7,10 @@ export interface Terminal {
   shell?: string;
   createdAt: Date;
   lastActivity?: Date;
+  connectionId?: string;
+  selection?: string;
+  title?: string;
+  ref?: any;
 }
 
 export interface TerminalState {
