@@ -3,7 +3,7 @@ import { cn } from "../../utils/cn";
 import { copyLineContent, createGitHunk } from "./utils/diff-helpers";
 import type { DiffHunkHeaderProps } from "./utils/types";
 
-export const DiffHunkHeader: React.FC<DiffHunkHeaderProps> = ({
+export function DiffHunkHeader({
   hunk,
   isCollapsed,
   onToggleCollapse,
@@ -11,7 +11,7 @@ export const DiffHunkHeader: React.FC<DiffHunkHeaderProps> = ({
   filePath,
   onStageHunk,
   onUnstageHunk,
-}) => {
+}: DiffHunkHeaderProps) {
   const addedCount = hunk.lines.filter(l => l.line_type === "added").length;
   const removedCount = hunk.lines.filter(l => l.line_type === "removed").length;
 
@@ -90,4 +90,4 @@ export const DiffHunkHeader: React.FC<DiffHunkHeaderProps> = ({
       </div>
     </div>
   );
-};
+}

@@ -1,16 +1,11 @@
-import { FileIcon, FilePlus, FileX, X } from "lucide-react";
+import { FileIcon, FilePlus, FileX, Minus, Plus, RotateCcw, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../../utils/cn";
+import Button from "../ui/button";
 import { getImgSrc } from "./utils/diff-helpers";
 import type { ImageContainerProps, ImageDiffViewerProps } from "./utils/types";
 
-const ImageContainer: React.FC<ImageContainerProps> = ({
-  label,
-  labelColor,
-  base64,
-  alt,
-  zoom,
-}) => {
+function ImageContainer({ label, labelColor, base64, alt, zoom }: ImageContainerProps) {
   const containerBase = "flex flex-col items-center justify-center p-4";
   return (
     <div className={containerBase}>
@@ -30,13 +25,26 @@ const ImageContainer: React.FC<ImageContainerProps> = ({
       )}
     </div>
   );
-};
+}
 
-const statusBadge = (text: string, color: string) => (
-  <span className={`ml-2 rounded px-2 py-0.5 font-bold text-xs ${color}`}>{text}</span>
-);
+function StatusBadge({
+  text,
+  variant,
+}: {
+  text: string;
+  variant: "added" | "deleted" | "modified";
+}) {
+  const colors = {
+    added: "bg-green-600 text-white",
+    deleted: "bg-red-600 text-white",
+    modified: "bg-blue-600 text-white",
+  };
+  return (
+    <span className={`ml-2 rounded px-2 py-0.5 font-bold text-xs ${colors[variant]}`}>{text}</span>
+  );
+}
 
-export const ImageDiffViewer: React.FC<ImageDiffViewerProps> = ({ diff, fileName, onClose }) => {
+export function ImageDiffViewer({ diff, fileName, onClose }: ImageDiffViewerProps) {
   const [zoom, setZoom] = useState<number>(1);
 
   const fileLabel = fileName || diff.file_path.split("/").pop();
@@ -64,44 +72,38 @@ export const ImageDiffViewer: React.FC<ImageDiffViewerProps> = ({ diff, fileName
           <span className="font-mono text-text text-xs">
             {fileLabel} {ext && <>• {ext}</>}
           </span>
-          {diff.is_new && statusBadge("ADDED", "bg-green-600 text-white")}
-          {diff.is_deleted && statusBadge("DELETED", "bg-red-600 text-white")}
-          {!diff.is_new && !diff.is_deleted && statusBadge("MODIFIED", "bg-blue-600 text-white")}
+          {diff.is_new && <StatusBadge text="ADDED" variant="added" />}
+          {diff.is_deleted && <StatusBadge text="DELETED" variant="deleted" />}
+          {!diff.is_new && !diff.is_deleted && <StatusBadge text="MODIFIED" variant="modified" />}
         </div>
-        <div className="flex items-center gap-1">
-          <button
+        <div className="flex items-center gap-2">
+          <Button
             onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
-            className="p-1 text-text-lighter hover:text-text"
+            variant="ghost"
+            size="xs"
             title="Zoom out"
           >
-            -
-          </button>
+            <Minus size={12} />
+          </Button>
           <span
             className={cn("min-w-[50px] px-2 text-center font-mono", "text-text-lighter text-xs")}
           >
             {Math.round(zoom * 100)}%
           </span>
-          <button
+          <Button
             onClick={() => setZoom(z => Math.min(3, z + 0.1))}
-            className="p-1 text-text-lighter hover:text-text"
+            variant="ghost"
+            size="xs"
             title="Zoom in"
           >
-            +
-          </button>
-          <button
-            onClick={() => setZoom(1)}
-            className="p-1 text-text-lighter hover:text-text"
-            title="Reset zoom"
-          >
-            Reset
-          </button>
-          <button
-            onClick={onClose}
-            className="ml-2 p-1 text-text-lighter hover:text-text"
-            title="Close diff viewer"
-          >
-            <X size={14} />
-          </button>
+            <Plus size={12} />
+          </Button>
+          <Button onClick={() => setZoom(1)} variant="ghost" size="xs" title="Reset zoom">
+            <RotateCcw size={12} />
+          </Button>
+          <Button onClick={onClose} variant="ghost" size="xs" title="Close diff viewer">
+            <X size={12} />
+          </Button>
         </div>
       </div>
       {/* Image Diff Content */}
@@ -163,4 +165,4 @@ export const ImageDiffViewer: React.FC<ImageDiffViewerProps> = ({ diff, fileName
       </div>
     </div>
   );
-};
+}

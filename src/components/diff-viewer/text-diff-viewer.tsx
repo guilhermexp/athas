@@ -1,18 +1,18 @@
 import { FileIcon } from "lucide-react";
 import { cn } from "../../utils/cn";
-import { DiffHunkHeader } from "./DiffHunkHeader";
-import { DiffLine } from "./DiffLine";
+import { DiffHunkHeader } from "./diff-hunk-header";
+import { DiffLine } from "./diff-line";
 import { useDiffViewState } from "./hooks/useDiffViewState";
 import { groupLinesIntoHunks } from "./utils/diff-helpers";
 import type { TextDiffViewerProps } from "./utils/types";
 
-export const TextDiffViewer: React.FC<TextDiffViewerProps> = ({
+export function TextDiffViewer({
   diff,
   isStaged,
   onStageHunk,
   onUnstageHunk,
   viewMode,
-}) => {
+}: TextDiffViewerProps) {
   const { isHunkCollapsed, toggleHunkCollapse } = useDiffViewState();
 
   const hunks = groupLinesIntoHunks(diff.lines);
@@ -101,4 +101,4 @@ export const TextDiffViewer: React.FC<TextDiffViewerProps> = ({
       </div>
     </>
   );
-};
+}

@@ -2,14 +2,14 @@ import { RefreshCw, X } from "lucide-react";
 import { useState } from "react";
 import { useActiveBuffer, useBufferStore } from "../../stores/buffer-store";
 import { cn } from "../../utils/cn";
-import { DiffHeader } from "./DiffHeader";
+import { DiffHeader } from "./diff-header";
 import { useDiffData } from "./hooks/useDiffData";
 import { useDiffViewState } from "./hooks/useDiffViewState";
-import { ImageDiffViewer } from "./ImageDiffViewer";
-import { TextDiffViewer } from "./TextDiffViewer";
+import { ImageDiffViewer } from "./image-diff-viewer";
+import { TextDiffViewer } from "./text-diff-viewer";
 import type { DiffViewerProps } from "./utils/types";
 
-const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) => {
+function DiffViewer({ onStageHunk, onUnstageHunk }: DiffViewerProps) {
   const activeBuffer = useActiveBuffer();
   const { closeBuffer } = useBufferStore();
   const { diff, isStaged, isLoading, error, refresh } = useDiffData();
@@ -99,6 +99,6 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ onStageHunk, onUnstageHunk }) =
       />
     </div>
   );
-};
+}
 
 export default DiffViewer;

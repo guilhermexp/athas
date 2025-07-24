@@ -15,7 +15,7 @@ import CommandBar from "../command/command-bar";
 import CommandPalette from "../command/command-palette";
 import ThemeSelector from "../command/theme-selector";
 import type { Diagnostic } from "../diagnostics/diagnostics-pane";
-import DiffViewer from "../diff-viewer/DiffViewer";
+import DiffViewer from "../diff-viewer/diff-viewer";
 import CodeEditor from "../editor/code-editor";
 import EditorFooter from "../editor-footer";
 import ExtensionsView from "../extensions-view";

@@ -3,13 +3,13 @@ import { cn } from "../../utils/cn";
 import { getFileStatus } from "./utils/diff-helpers";
 import type { DiffHeaderProps } from "./utils/types";
 
-export const DiffHeader: React.FC<DiffHeaderProps> = ({
+export function DiffHeader({
   fileName,
   diff,
   viewMode,
   onViewModeChange,
   onClose,
-}) => {
+}: DiffHeaderProps) {
   const getFileIcon = () => {
     if (diff.is_new) return <FilePlus size={14} className="text-green-500" />;
     if (diff.is_deleted) return <FileX size={14} className="text-red-500" />;
@@ -73,4 +73,4 @@ export const DiffHeader: React.FC<DiffHeaderProps> = ({
       </div>
     </div>
   );
-};
+}

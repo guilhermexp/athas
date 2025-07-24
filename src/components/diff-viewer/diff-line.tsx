@@ -3,7 +3,7 @@ import { cn } from "../../utils/cn";
 import { copyLineContent } from "./utils/diff-helpers";
 import type { DiffLineProps } from "./utils/types";
 
-export const DiffLine: React.FC<DiffLineProps> = ({ line, index, hunkId, viewMode }) => {
+export function DiffLine({ line, index, hunkId, viewMode }: DiffLineProps) {
   const getLineClasses = () => {
     const base = "group hover:bg-hover/50 transition-colors border-l-2";
     switch (line.line_type) {
@@ -167,4 +167,4 @@ export const DiffLine: React.FC<DiffLineProps> = ({ line, index, hunkId, viewMod
       </div>
     </div>
   );
-};
+}
