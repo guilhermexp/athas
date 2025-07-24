@@ -42,11 +42,8 @@ export function MainLayout() {
   const { settings, updateTheme } = useSettingsStore();
   const { rootFolderPath } = useFileSystemStore();
 
-  // TODO: Replace with actual diagnostics from language server or linter
   const [diagnostics] = useState<Diagnostic[]>([]);
-
-  // TODO: Get sidebar position from settings
-  const sidebarPosition = "left" as "left" | "right"; // Default to left for now
+  const sidebarPosition = "left" as "left" | "right";
 
   // Create core features list
   const coreFeaturesList = createCoreFeaturesList(persistentCoreFeatures);

@@ -1,5 +1,5 @@
 import type React from "react";
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useEditorScroll } from "../../hooks/use-editor-scroll";
 import { useEditorSync } from "../../hooks/use-editor-sync";
 import { useHover } from "../../hooks/use-hover";
@@ -32,7 +32,7 @@ export interface CodeEditorRef {
   textarea: HTMLDivElement | null;
 }
 
-const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, ref) => {
+const CodeEditor = ({ className }: CodeEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null as any);
 
   const { setRefs, setContent, setFileInfo } = useEditorInstanceStore();
@@ -155,16 +155,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
 
   // Cleanup effect removed - mountedRef was not being used
 
-  // Imperative handle
-  useImperativeHandle(
-    ref,
-    () => ({
-      editor: editorRef.current,
-      textarea: editorRef.current?.querySelector('[contenteditable="true"]') as HTMLDivElement,
-    }),
-    [],
-  );
-
   // Early return if no active buffer or file tree is loading - must be after all hooks
   if (!activeBuffer || isFileTreeLoading) {
     return <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>;
@@ -203,7 +193,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
       </div>
     </>
   );
-});
+};
 
 CodeEditor.displayName = "CodeEditor";
 

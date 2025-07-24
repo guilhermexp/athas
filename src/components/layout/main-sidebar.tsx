@@ -1,6 +1,6 @@
 import { FilePlus, FolderOpen, FolderPlus, Server } from "lucide-react";
 import type React from "react";
-import { forwardRef, useMemo } from "react";
+import { useMemo } from "react";
 import { cn } from "@/utils/cn";
 import { useBufferStore } from "../../stores/buffer-store";
 import { useFileSystemStore } from "../../stores/file-system-store";
@@ -11,7 +11,7 @@ import type { FileEntry } from "../../types/app";
 import FileTree from "../file-tree/file-tree";
 import GitView from "../git/git-view";
 import RemoteConnectionView from "../remote/remote-connection-view";
-import SearchView, { type SearchViewRef } from "../search-view";
+import SearchView from "../search-view";
 import Button from "../ui/button";
 import { SidebarPaneSelector } from "./sidebar-pane-selector";
 
@@ -32,7 +32,7 @@ const flattenFileTree = (files: FileEntry[]): FileEntry[] => {
   return result;
 };
 
-export const MainSidebar = forwardRef<SearchViewRef>((_, ref) => {
+export const MainSidebar = () => {
   // Get state from stores
   const {
     isGitViewActive,
@@ -175,7 +175,6 @@ export const MainSidebar = forwardRef<SearchViewRef>((_, ref) => {
           <GitView repoPath={rootFolderPath} onFileSelect={handleFileSelect} />
         ) : isSearchViewActive && coreFeatures.search ? (
           <SearchView
-            ref={ref}
             rootFolderPath={rootFolderPath}
             allProjectFiles={allProjectFiles}
             onFileSelect={(path, line, column) => handleFileSelect(path, false, line, column)}
@@ -203,4 +202,4 @@ export const MainSidebar = forwardRef<SearchViewRef>((_, ref) => {
       </div>
     </div>
   );
-});
+};

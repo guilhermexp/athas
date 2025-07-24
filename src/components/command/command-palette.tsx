@@ -1,6 +1,6 @@
 import { Bot, Palette, Settings } from "lucide-react";
 import type React from "react";
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppStore } from "../../stores/app-store";
 import { useUIState } from "../../stores/ui-state-store";
 import Command, {
@@ -22,11 +22,7 @@ interface Action {
   action: () => void;
 }
 
-interface CommandPaletteRef {
-  focus: () => void;
-}
-
-const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
+const CommandPalette = () => {
   // Get data from stores
   const {
     isCommandPaletteVisible,
@@ -55,13 +51,7 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  useImperativeHandle(ref, () => ({
-    focus: () => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    },
-  }));
+  // Focus is handled internally when the palette becomes visible
 
   // Define available actions
   const actions: Action[] = [
@@ -216,7 +206,7 @@ const CommandPalette = forwardRef<CommandPaletteRef>((_, ref) => {
       </CommandList>
     </Command>
   );
-});
+};
 
 CommandPalette.displayName = "CommandPalette";
 

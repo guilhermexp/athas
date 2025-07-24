@@ -1,6 +1,5 @@
 import { X } from "lucide-react";
 import type React from "react";
-import { forwardRef } from "react";
 import { cn } from "@/utils/cn";
 
 interface CommandProps {
@@ -9,26 +8,23 @@ interface CommandProps {
   className?: string;
 }
 
-const Command = forwardRef<HTMLDivElement, CommandProps>(
-  ({ isVisible, children, className }, ref) => {
-    if (!isVisible) return null;
+const Command = ({ isVisible, children, className }: CommandProps) => {
+  if (!isVisible) return null;
 
-    return (
-      <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-16">
-        <div
-          ref={ref}
-          className={cn(
-            "pointer-events-auto flex max-h-[320px] w-[520px] flex-col overflow-hidden",
-            "rounded-md border border-border bg-primary-bg shadow-2xl",
-            className,
-          )}
-        >
-          {children}
-        </div>
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-16">
+      <div
+        className={cn(
+          "pointer-events-auto flex max-h-[320px] w-[520px] flex-col overflow-hidden",
+          "rounded-md border border-border bg-primary-bg shadow-2xl",
+          className,
+        )}
+      >
+        {children}
       </div>
-    );
-  },
-);
+    </div>
+  );
+};
 
 Command.displayName = "Command";
 
@@ -50,13 +46,14 @@ export const CommandHeader = ({ children, onClose }: CommandHeaderProps) => (
 
 interface CommandListProps {
   children: React.ReactNode;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export const CommandList = forwardRef<HTMLDivElement, CommandListProps>(({ children }, ref) => (
+export const CommandList = ({ children, ref }: CommandListProps) => (
   <div ref={ref} className="custom-scrollbar-thin flex-1 overflow-y-auto p-1">
     {children}
   </div>
-));
+);
 
 CommandList.displayName = "CommandList";
 
@@ -65,22 +62,27 @@ interface CommandInputProps {
   onChange: (value: string) => void;
   placeholder: string;
   className?: string;
+  ref?: React.Ref<HTMLInputElement>;
 }
 
-export const CommandInput = forwardRef<HTMLInputElement, CommandInputProps>(
-  ({ value, onChange, placeholder, className }, ref) => (
-    <input
-      ref={ref}
-      type="text"
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={cn(
-        "flex-1 bg-transparent text-text text-xs placeholder-text-lighter outline-none",
-        className,
-      )}
-    />
-  ),
+export const CommandInput = ({
+  value,
+  onChange,
+  placeholder,
+  className,
+  ref,
+}: CommandInputProps) => (
+  <input
+    ref={ref}
+    type="text"
+    value={value}
+    onChange={e => onChange(e.target.value)}
+    placeholder={placeholder}
+    className={cn(
+      "flex-1 bg-transparent text-text text-xs placeholder-text-lighter outline-none",
+      className,
+    )}
+  />
 );
 
 CommandInput.displayName = "CommandInput";
@@ -95,26 +97,28 @@ interface CommandItemProps {
   [key: string]: any;
 }
 
-export const CommandItem = forwardRef<HTMLButtonElement, CommandItemProps>(
-  (
-    { children, isSelected = false, onClick, onMouseEnter, onMouseLeave, className, ...props },
-    ref,
-  ) => (
-    <button
-      ref={ref}
-      onClick={onClick}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      {...props}
-      className={cn(
-        "mb-1 flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors",
-        isSelected ? "bg-selected text-text" : "bg-transparent text-text hover:bg-hover",
-        className,
-      )}
-    >
-      {children}
-    </button>
-  ),
+export const CommandItem = ({
+  children,
+  isSelected = false,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+  className,
+  ...props
+}: CommandItemProps) => (
+  <button
+    onClick={onClick}
+    onMouseEnter={onMouseEnter}
+    onMouseLeave={onMouseLeave}
+    {...props}
+    className={cn(
+      "mb-1 flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors",
+      isSelected ? "bg-selected text-text" : "bg-transparent text-text hover:bg-hover",
+      className,
+    )}
+  >
+    {children}
+  </button>
 );
 
 CommandItem.displayName = "CommandItem";
