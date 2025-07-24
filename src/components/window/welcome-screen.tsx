@@ -36,7 +36,7 @@ const WelcomeScreen = ({
       {/* Logo Section */}
       <div className={cn("mb-6 flex flex-col items-center")}>
         <div className={cn("mb-1 flex justify-center")}>
-          <img src="/industry.png" alt="athas industries" className={cn("h-48")} />
+          <img src="/athas-industries-logo.svg" alt="athas industries" className={cn("h-28")} />
         </div>
         <p className={cn("paper-text-light font-mono font-normal text-xs")}>v0.1.0</p>
       </div>
