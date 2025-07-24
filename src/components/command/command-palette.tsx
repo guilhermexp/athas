@@ -1,4 +1,4 @@
-import { Bot, Palette, Settings } from "lucide-react";
+import { Palette, Settings, Sparkles } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useAppStore } from "../../stores/app-store";
@@ -59,7 +59,7 @@ const CommandPalette = () => {
       id: "ai-quick-edit",
       label: "AI: Quick Edit Selection",
       description: "Edit selected text using AI inline",
-      icon: <Bot size={14} />,
+      icon: <Sparkles size={14} />,
       category: "AI",
       keybinding: ["⌘", "E"],
       action: () => {

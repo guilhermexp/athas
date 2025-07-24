@@ -1,6 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
-import { Bot, Maximize2, Minimize2, Minus, Settings, X } from "lucide-react";
+import { Maximize2, Minimize2, Minus, Settings, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import SettingsDialog from "@/components/settings/settings-dialog";
 import { usePersistentSettingsStore } from "@/stores/persistent-settings-store";
@@ -178,7 +178,7 @@ const CustomTitleBar = ({
             style={{ minHeight: 0, minWidth: 0 }}
             title="Toggle AI Chat"
           >
-            <Bot size={14} />
+            <Sparkles size={14} />
           </button>
           <button
             onClick={onOpenSettings}
@@ -227,7 +227,7 @@ const CustomTitleBar = ({
           style={{ minHeight: 0, minWidth: 0 }}
           title="Toggle AI Chat"
         >
-          <Bot size={12} />
+          <Sparkles size={12} />
         </button>
         {/* Settings button */}
         <button

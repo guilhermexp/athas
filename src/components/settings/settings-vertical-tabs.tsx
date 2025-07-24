@@ -1,4 +1,4 @@
-import { Bot, Keyboard, Languages, Monitor, PenTool, Settings2, Wrench } from "lucide-react";
+import { Keyboard, Languages, Monitor, PenTool, Settings2, Sparkles, Wrench } from "lucide-react";
 import { cn } from "@/utils/cn";
 import type { SettingsTab } from "./settings-dialog";
 
@@ -32,7 +32,7 @@ const tabs: TabItem[] = [
   {
     id: "ai",
     label: "AI",
-    icon: Bot,
+    icon: Sparkles,
   },
   {
     id: "keyboard",

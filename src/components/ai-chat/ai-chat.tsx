@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Bot, MessageSquare, Plus } from "lucide-react";
+import { MessageSquare, Plus, Sparkles } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat/store";
@@ -298,7 +298,9 @@ export default function AIChat({
         },
         // onComplete - mark streaming as finished
         () => {
-          updateMessage(chatId, currentAssistantMessageId, { isStreaming: false });
+          updateMessage(chatId, currentAssistantMessageId, {
+            isStreaming: false,
+          });
           setIsTyping(false);
           setStreamingMessageId(null);
           abortControllerRef.current = null;
@@ -430,7 +432,7 @@ export default function AIChat({
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center p-4 text-center">
             <div>
-              <Bot size={24} className="mx-auto mb-2 opacity-50" />
+              <Sparkles size={24} className="mx-auto mb-2 opacity-50" />
               <div className="text-sm">AI Assistant</div>
               <div className="mt-1" style={{ color: "var(--color-text-lighter)" }}>
                 Ask me anything about your code

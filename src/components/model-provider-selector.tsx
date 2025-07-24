@@ -1,4 +1,4 @@
-import { Bot, Check, ChevronDown, Key } from "lucide-react";
+import { Check, ChevronDown, Key } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { getAvailableProviders, getModelById } from "../types/ai-provider";
@@ -61,7 +61,6 @@ const ModelProviderSelector = ({
         onClick={() => setIsOpen(!isOpen)}
         className="flex min-w-[160px] items-center gap-1.5 rounded bg-transparent px-2 py-1 font-mono text-xs transition-colors hover:bg-hover"
       >
-        <Bot size={10} className="text-text-lighter" />
         <div className="min-w-0 flex-1 text-left">
           <div className="truncate text-text text-xs">{currentModel?.name || "Select Model"}</div>
         </div>
