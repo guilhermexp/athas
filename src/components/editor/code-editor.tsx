@@ -34,7 +34,6 @@ export interface CodeEditorRef {
 
 const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null as any);
-  const mountedRef = useRef(true);
 
   const { setRefs, setContent, setFileInfo } = useEditorInstanceStore();
 
@@ -154,13 +153,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ className }, re
     }
   }, [currentMatchIndex, searchMatches]);
 
-  // Cleanup
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  // Cleanup effect removed - mountedRef was not being used
 
   // Imperative handle
   useImperativeHandle(

@@ -1,5 +1,6 @@
 import type React from "react";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, memo, useContext, useMemo } from "react";
+import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
 
 type LayerType = "base" | "decoration" | "selection" | "overlay";
 
@@ -24,13 +25,13 @@ interface LayerProviderProps {
 }
 
 const DEFAULT_Z_INDICES: Record<LayerType, number> = {
-  base: 0,
-  decoration: 10,
-  selection: 20,
-  overlay: 30,
+  base: EDITOR_CONSTANTS.Z_INDEX.BASE,
+  decoration: EDITOR_CONSTANTS.Z_INDEX.DECORATION,
+  selection: EDITOR_CONSTANTS.Z_INDEX.SELECTION,
+  overlay: EDITOR_CONSTANTS.Z_INDEX.OVERLAY,
 };
 
-const LayerProvider: React.FC<LayerProviderProps> = ({ children }) => {
+const LayerProvider = memo<LayerProviderProps>(({ children }) => {
   const layerRegistry = useMemo(() => new Map<LayerType, number>(), []);
 
   const value = useMemo<LayerContextValue>(
@@ -49,7 +50,9 @@ const LayerProvider: React.FC<LayerProviderProps> = ({ children }) => {
   );
 
   return <LayerContext.Provider value={value}>{children}</LayerContext.Provider>;
-};
+});
+
+LayerProvider.displayName = "LayerProvider";
 
 interface EditorLayerProps {
   type: LayerType;
@@ -57,7 +60,7 @@ interface EditorLayerProps {
   className?: string;
 }
 
-export const EditorLayer: React.FC<EditorLayerProps> = ({ type, children, className = "" }) => {
+export const EditorLayer = memo<EditorLayerProps>(({ type, children, className = "" }) => {
   const { getZIndex } = useLayerContext();
   const zIndex = getZIndex(type);
 
@@ -77,13 +80,15 @@ export const EditorLayer: React.FC<EditorLayerProps> = ({ type, children, classN
       {children}
     </div>
   );
-};
+});
+
+EditorLayer.displayName = "EditorLayer";
 
 interface EditorLayersProps {
   children: React.ReactNode;
 }
 
-export const EditorLayers: React.FC<EditorLayersProps> = ({ children }) => {
+export const EditorLayers = memo<EditorLayersProps>(({ children }) => {
   return (
     <LayerProvider>
       <div
@@ -94,4 +99,6 @@ export const EditorLayers: React.FC<EditorLayersProps> = ({ children }) => {
       </div>
     </LayerProvider>
   );
-};
+});
+
+EditorLayers.displayName = "EditorLayers";

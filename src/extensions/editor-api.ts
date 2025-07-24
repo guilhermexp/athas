@@ -216,6 +216,11 @@ class EditorAPIImpl implements EditorAPI {
     }
   }
 
+  // Public method to safely emit events (for extensions)
+  emitEvent(event: EditorEvent, data?: any): void {
+    this.emit(event, data);
+  }
+
   private offsetToPosition(offset: number): Position {
     const content = this.getContent();
     const lines = content.split("\n");

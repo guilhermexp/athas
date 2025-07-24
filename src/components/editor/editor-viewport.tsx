@@ -1,13 +1,10 @@
 import type React from "react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import type { Decoration, LineToken } from "../../types/editor-types";
-import { LineGutter } from "./line-gutter";
-import { LineRenderer } from "./line-renderer";
+import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
+import { LineWithContent } from "./line-with-content";
 
 interface EditorViewportProps {
-  lines: string[];
-  lineTokens: Map<number, LineToken[]>;
-  decorations: Decoration[];
+  lineCount: number;
   showLineNumbers: boolean;
   gutterWidth: number;
   lineHeight: number;
@@ -24,9 +21,7 @@ interface EditorViewportProps {
 
 export const EditorViewport = memo<EditorViewportProps>(
   ({
-    lines,
-    lineTokens,
-    decorations,
+    lineCount,
     showLineNumbers,
     gutterWidth,
     lineHeight,
@@ -58,15 +53,18 @@ export const EditorViewport = memo<EditorViewportProps>(
       const actualScrollTop = containerRef.current?.scrollTop ?? scrollTop;
       const startLine = Math.floor(actualScrollTop / lineHeight);
       const endLine = Math.ceil((actualScrollTop + viewportHeight) / lineHeight);
-      // Dynamic overscan based on viewport size - 25% of visible lines
+      // Dynamic overscan based on viewport size
       const visibleLineCount = endLine - startLine;
-      const overscan = Math.max(3, Math.ceil(visibleLineCount * 0.25));
+      const overscan = Math.max(
+        EDITOR_CONSTANTS.MIN_OVERSCAN_LINES,
+        Math.ceil(visibleLineCount * EDITOR_CONSTANTS.VIEWPORT_OVERSCAN_RATIO),
+      );
 
       return {
         start: Math.max(0, startLine - overscan),
-        end: Math.min(lines.length, endLine + overscan),
+        end: Math.min(lineCount, endLine + overscan),
       };
-    }, [scrollTop, lineHeight, viewportHeight, lines.length, forceUpdate]);
+    }, [scrollTop, lineHeight, viewportHeight, lineCount, forceUpdate]);
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.currentTarget;
@@ -100,55 +98,21 @@ export const EditorViewport = memo<EditorViewportProps>(
       };
     }, []);
 
-    const totalHeight = lines.length * lineHeight;
+    const totalHeight = lineCount * lineHeight;
 
     const renderVisibleLines = () => {
       const elements: React.ReactNode[] = [];
 
       for (let i = visibleRange.start; i < visibleRange.end; i++) {
-        const line = lines[i];
-        const tokens = lineTokens.get(i) || [];
-        const lineDecorations = decorations.filter(
-          d => d.range.start.line <= i && d.range.end.line >= i,
-        );
-
         elements.push(
-          <div
+          <LineWithContent
             key={i}
-            className="editor-line-wrapper"
-            style={{
-              position: "absolute",
-              top: `${i * lineHeight}px`,
-              left: 0,
-              right: 0,
-              height: `${lineHeight}px`,
-              display: "flex",
-            }}
-          >
-            {showLineNumbers && (
-              <LineGutter
-                lineNumber={i}
-                showLineNumbers={showLineNumbers}
-                gutterWidth={gutterWidth}
-                decorations={lineDecorations}
-              />
-            )}
-            <div
-              className="editor-line-content-wrapper"
-              style={{
-                flex: 1,
-                paddingLeft: showLineNumbers ? 0 : `16px`,
-              }}
-            >
-              <LineRenderer
-                lineNumber={i}
-                content={line}
-                tokens={tokens}
-                decorations={lineDecorations}
-                isSelected={selectedLines.has(i)}
-              />
-            </div>
-          </div>,
+            lineNumber={i}
+            showLineNumbers={showLineNumbers}
+            gutterWidth={gutterWidth}
+            lineHeight={lineHeight}
+            isSelected={selectedLines.has(i)}
+          />,
         );
       }
 

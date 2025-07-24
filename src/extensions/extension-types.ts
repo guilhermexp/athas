@@ -45,6 +45,7 @@ export interface EditorAPI {
   // Events
   on: (event: EditorEvent, handler: EventHandler) => () => void;
   off: (event: EditorEvent, handler: EventHandler) => void;
+  emitEvent: (event: EditorEvent, data?: any) => void;
 }
 
 export interface EditorSettings {

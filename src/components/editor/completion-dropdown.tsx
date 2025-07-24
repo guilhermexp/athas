@@ -1,7 +1,9 @@
+import { memo } from "react";
+import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
 import { useEditorCompletionStore } from "../../stores/editor-completion-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
-export function CompletionDropdown() {
+export const CompletionDropdown = memo(() => {
   const {
     isLspCompletionVisible,
     lspCompletions,
@@ -24,10 +26,13 @@ export function CompletionDropdown() {
 
   return (
     <div
-      className="fixed z-50 min-w-[200px] max-w-[400px] rounded border border-border bg-primary-bg shadow-lg"
+      className="fixed rounded border border-border bg-primary-bg shadow-lg"
       style={{
         left: completionPosition.left,
         top: completionPosition.top,
+        zIndex: EDITOR_CONSTANTS.Z_INDEX.DROPDOWN,
+        minWidth: `${EDITOR_CONSTANTS.DROPDOWN_MIN_WIDTH}px`,
+        maxWidth: `${EDITOR_CONSTANTS.DROPDOWN_MAX_WIDTH}px`,
       }}
     >
       <div className="max-h-[300px] overflow-y-auto">
@@ -55,4 +60,6 @@ export function CompletionDropdown() {
       </div>
     </div>
   );
-}
+});
+
+CompletionDropdown.displayName = "CompletionDropdown";

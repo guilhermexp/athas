@@ -1,10 +1,13 @@
-import type React from "react";
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { extensionManager } from "../../extensions/extension-manager";
+import { useEditorContentStore } from "../../stores/editor-content-store";
+import { useEditorCursorStore } from "../../stores/editor-cursor-store";
+import { useEditorDecorationsStore } from "../../stores/editor-decorations-store";
 import type { Decoration, Position } from "../../types/editor-types";
+import { getCharWidth } from "../../utils/editor-position";
 
 interface DecorationLayerProps {
-  decorations: Decoration[];
-  lines: string[];
   lineHeight: number;
   fontSize: number;
   gutterWidth: number;
@@ -26,21 +29,38 @@ function isPositionBefore(a: Position, b: Position): boolean {
   return a.line < b.line || (a.line === b.line && a.column < b.column);
 }
 
-export const DecorationLayer: React.FC<DecorationLayerProps> = ({
-  decorations,
-  lines,
+export const DecorationLayer = ({
   lineHeight,
   fontSize,
   gutterWidth,
   scrollTop,
   scrollLeft,
-}) => {
-  const charWidth = fontSize * 0.6;
+}: DecorationLayerProps) => {
+  const storeDecorations = useEditorDecorationsStore(useShallow(state => state.getDecorations()));
+  const selection = useEditorCursorStore(state => state.selection);
+  const charWidth = getCharWidth(fontSize);
+
+  const decorations = useMemo(() => {
+    const allDecorations = [...storeDecorations];
+
+    // Add extension decorations
+    const extensionDecorations = extensionManager.getAllDecorations();
+    allDecorations.push(...extensionDecorations);
+
+    // Add selection decoration
+    if (selection) {
+      allDecorations.push({
+        range: selection,
+        type: "inline" as const,
+        className: "selection",
+      });
+    }
+    return allDecorations;
+  }, [storeDecorations, selection]);
 
   const renderedDecorations = useMemo<RenderedDecoration[]>(() => {
     const rendered: RenderedDecoration[] = [];
-
-    console.log(`DecorationLayer: Processing ${decorations.length} decorations`);
+    const lines = useEditorContentStore.getState().lines;
 
     decorations.forEach((decoration, index) => {
       const { range, className = "", type } = decoration;
@@ -139,7 +159,7 @@ export const DecorationLayer: React.FC<DecorationLayerProps> = ({
     });
 
     return rendered;
-  }, [decorations, lines, lineHeight, charWidth, gutterWidth, scrollTop, scrollLeft]);
+  }, [decorations, lineHeight, charWidth, gutterWidth, scrollTop, scrollLeft]);
 
   return (
     <>
@@ -160,3 +180,5 @@ export const DecorationLayer: React.FC<DecorationLayerProps> = ({
     </>
   );
 };
+
+DecorationLayer.displayName = "DecorationLayer";

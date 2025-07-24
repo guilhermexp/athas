@@ -1,8 +1,8 @@
 import { useCallback, useRef } from "react";
+import { useEditorContentStore } from "../stores/editor-content-store";
 import type { Position } from "../types/editor-types";
 
 interface UseEditorInteractionsProps {
-  lines: string[];
   lineHeight: number;
   fontSize: number;
   gutterWidth: number;
@@ -13,7 +13,6 @@ interface UseEditorInteractionsProps {
 }
 
 export const useEditorInteractions = ({
-  lines,
   lineHeight,
   fontSize,
   gutterWidth,
@@ -33,12 +32,13 @@ export const useEditorInteractions = ({
 
       // Calculate line number
       const line = Math.floor(relativeY / lineHeight);
-      if (line < 0 || line >= lines.length) {
+      const currentLines = useEditorContentStore.getState().lines;
+      if (line < 0 || line >= currentLines.length) {
         return null;
       }
 
       // Get line content
-      const lineContent = lines[line];
+      const lineContent = currentLines[line];
       if (!lineContent) {
         return { line, column: 0, offset: 0 };
       }
@@ -53,13 +53,13 @@ export const useEditorInteractions = ({
       // Calculate offset
       let offset = 0;
       for (let i = 0; i < line; i++) {
-        offset += lines[i].length + 1; // +1 for newline
+        offset += currentLines[i].length + 1; // +1 for newline
       }
       offset += clampedColumn;
 
       return { line, column: clampedColumn, offset };
     },
-    [lines, lineHeight, fontSize, gutterWidth, scrollTop, scrollLeft],
+    [lineHeight, fontSize, gutterWidth, scrollTop, scrollLeft],
   );
 
   const handleClick = useCallback(

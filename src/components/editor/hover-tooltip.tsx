@@ -1,7 +1,9 @@
+import { memo } from "react";
+import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
 import { useEditorCompletionStore } from "../../stores/editor-completion-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 
-export function HoverTooltip() {
+export const HoverTooltip = memo(() => {
   const fontSize = useEditorSettingsStore(state => state.fontSize);
   const fontFamily = useEditorSettingsStore(state => state.fontFamily);
   const { hoverInfo, setIsHovering } = useEditorCompletionStore();
@@ -13,12 +15,13 @@ export function HoverTooltip() {
 
   return (
     <div
-      className="fixed z-50 max-w-md rounded border border-border bg-primary-bg p-3 shadow-lg"
+      className="fixed max-w-md rounded border border-border bg-primary-bg p-3 shadow-lg"
       style={{
         left: hoverInfo.position?.left || 0,
         top: hoverInfo.position?.top || 0,
         fontSize: `${fontSize * 0.9}px`,
         fontFamily: fontFamily,
+        zIndex: EDITOR_CONSTANTS.Z_INDEX.TOOLTIP,
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -26,4 +29,6 @@ export function HoverTooltip() {
       {hoverInfo.content && <div className="text-sm text-text">{hoverInfo.content}</div>}
     </div>
   );
-}
+});
+
+HoverTooltip.displayName = "HoverTooltip";

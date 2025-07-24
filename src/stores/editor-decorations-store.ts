@@ -16,6 +16,7 @@ interface EditorDecorationsStore {
   getDecorations: () => Decoration[];
   getDecorationsInRange: (range: Range) => Decoration[];
   getDecorationsAtPosition: (position: Position) => Decoration[];
+  getDecorationsForLine: (lineNumber: number) => Decoration[];
 }
 
 function isPositionInRange(position: Position, range: Range): boolean {
@@ -112,6 +113,14 @@ export const useEditorDecorationsStore = create<EditorDecorationsStore>((set, ge
     const { decorations } = get();
     return Array.from(decorations.values()).filter(decoration =>
       isPositionInRange(position, decoration.range),
+    );
+  },
+
+  getDecorationsForLine: lineNumber => {
+    const { decorations } = get();
+    return Array.from(decorations.values()).filter(
+      decoration =>
+        decoration.range.start.line <= lineNumber && decoration.range.end.line >= lineNumber,
     );
   },
 }));

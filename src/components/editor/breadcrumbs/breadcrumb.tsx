@@ -1,6 +1,7 @@
 import { ArrowLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
 import type { FileEntry } from "../../../types/app";
 import { readDirectory } from "../../../utils/platform";
 import FileIcon from "../../file-icon";
@@ -212,8 +213,11 @@ export default function Breadcrumb({
       {dropdown &&
         createPortal(
           <div
-            className="breadcrumb-dropdown fixed z-50 max-h-[300px] min-w-[200px] overflow-y-auto rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
+            className="breadcrumb-dropdown fixed overflow-y-auto rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
             style={{
+              zIndex: EDITOR_CONSTANTS.Z_INDEX.DROPDOWN,
+              maxHeight: `${EDITOR_CONSTANTS.BREADCRUMB_DROPDOWN_MAX_HEIGHT}px`,
+              minWidth: `${EDITOR_CONSTANTS.DROPDOWN_MIN_WIDTH}px`,
               left: `${dropdown.x}px`,
               top: `${dropdown.y}px`,
             }}

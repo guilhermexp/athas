@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
 import { basicEditingExtension } from "../../extensions/basic-editing-extension";
 import { editorAPI } from "../../extensions/editor-api";
 import { extensionManager } from "../../extensions/extension-manager";
@@ -6,10 +7,13 @@ import {
   setSyntaxHighlightingFilePath,
   syntaxHighlightingExtension,
 } from "../../extensions/syntax-highlighting-extension";
+import { useCursorActions } from "../../hooks/use-cursor-actions";
 import { useEditorContentStore } from "../../stores/editor-content-store";
+import { useEditorCursorStore } from "../../stores/editor-cursor-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
-import type { Position, Range } from "../../types/editor-types";
+import type { Position } from "../../types/editor-types";
+import { calculateCursorPosition, calculateOffsetFromPosition } from "../../utils/editor-position";
 import { EditorContentNew } from "./editor-content-new";
 
 export function VirtualTextEditor() {
@@ -20,62 +24,11 @@ export function VirtualTextEditor() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const localRef = useRef<HTMLDivElement>(null);
 
-  const [cursorPosition, setCursorPosition] = useState<Position>({
-    line: 0,
-    column: 0,
-    offset: 0,
-  });
-  const [selection, setSelection] = useState<Range | null>(null);
-  const [desiredColumn, setDesiredColumn] = useState<number | null>(null);
+  const { setCursorPosition, setSelection, setDesiredColumn, getDesiredColumn } =
+    useCursorActions();
 
   // Use the ref from the store or fallback to local ref
   const containerRef = editorRef || localRef;
-
-  // Calculate cursor position from offset
-  const calculateCursorPosition = useCallback((offset: number, lines: string[]): Position => {
-    let currentOffset = 0;
-
-    for (let i = 0; i < lines.length; i++) {
-      const lineLength = lines[i].length + (i < lines.length - 1 ? 1 : 0); // +1 for newline
-      if (currentOffset + lineLength >= offset) {
-        return {
-          line: i,
-          column: offset - currentOffset,
-          offset,
-        };
-      }
-      currentOffset += lineLength;
-    }
-
-    return {
-      line: lines.length - 1,
-      column: lines[lines.length - 1].length,
-      offset: lines.reduce(
-        (sum, line, idx) => sum + line.length + (idx < lines.length - 1 ? 1 : 0),
-        0,
-      ),
-    };
-  }, []);
-
-  // Measure text width using a hidden span
-
-  // Calculate offset from line and column
-  const calculateOffsetFromPosition = useCallback(
-    (line: number, column: number, lines: string[]): number => {
-      let offset = 0;
-
-      for (let i = 0; i < line && i < lines.length; i++) {
-        offset += lines[i].length + 1; // +1 for newline
-      }
-
-      if (line < lines.length) {
-        offset += Math.min(column, lines[line].length);
-      }
-
-      return offset;
-    },
-    [],
-  );
 
   // Get content as string when needed
   const content = getContent();
@@ -147,7 +100,9 @@ export function VirtualTextEditor() {
       }
 
       // Use desired column if set, otherwise use current column
-      const targetColumn = desiredColumn !== null ? desiredColumn : currentPosition.column;
+      const currentDesiredColumn = getDesiredColumn();
+      const targetColumn =
+        currentDesiredColumn !== null ? currentDesiredColumn : currentPosition.column;
 
       // Ensure column doesn't exceed line length
       const actualColumn = Math.min(targetColumn, lines[targetLine].length);
@@ -164,7 +119,7 @@ export function VirtualTextEditor() {
       }, 0);
 
       // Maintain desired column for subsequent arrow key presses
-      if (desiredColumn === null) {
+      if (currentDesiredColumn === null) {
         setDesiredColumn(currentPosition.column);
       }
     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -237,18 +192,22 @@ export function VirtualTextEditor() {
     }
   }, [filePath]);
 
-  // Update editor API when cursor/selection changes
+  // Update editor API by subscribing to cursor store changes
   useEffect(() => {
-    editorAPI.updateCursorAndSelection(cursorPosition, selection);
-  }, [cursorPosition, selection]);
+    const unsubscribe = useEditorCursorStore.subscribe(
+      state => ({ cursor: state.cursorPosition, selection: state.selection }),
+      ({ cursor, selection }) => {
+        editorAPI.updateCursorAndSelection(cursor, selection);
+      },
+    );
+    return unsubscribe;
+  }, []);
 
   // Emit content change events to extensions
   useEffect(() => {
     // Emit the event directly without going through setContent to avoid loops
     const eventData = { content, changes: [] };
-    editorAPI.on("contentChange", () => {}); // Ensure event handler exists
-    // Use private emit method
-    (editorAPI as any).emit("contentChange", eventData);
+    editorAPI.emitEvent("contentChange", eventData);
   }, [content]);
 
   // Handlers for line-based rendering interactions
@@ -298,7 +257,8 @@ export function VirtualTextEditor() {
         onKeyUp={handleSelectionChange}
         onMouseUp={handleSelectionChange}
         disabled={disabled}
-        className="absolute top-0 left-[-9999px]"
+        className="absolute top-0"
+        style={{ left: `${EDITOR_CONSTANTS.HIDDEN_TEXTAREA_POSITION}px` }}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
@@ -307,9 +267,9 @@ export function VirtualTextEditor() {
 
       {/* Line-based editor content */}
       <EditorContentNew
-        cursorPosition={cursorPosition}
-        selection={selection}
-        viewportHeight={containerRef.current?.clientHeight || 600}
+        viewportHeight={
+          containerRef.current?.clientHeight || EDITOR_CONSTANTS.DEFAULT_VIEWPORT_HEIGHT
+        }
         filePath={filePath}
         onPositionClick={handleLineBasedClick}
         onSelectionDrag={handleLineBasedSelection}
