@@ -24,6 +24,7 @@
     "@tauri-apps/plugin-fs": "^2",
     "@tauri-apps/plugin-os": "^2",
     "@tauri-apps/plugin-process": "^2",
+    "@tauri-apps/plugin-shell": "^2.3.0",
     "@types/prismjs": "^1.26.5",
     "clsx": "^2.1.1",
     "ignore": "^7.0.5",

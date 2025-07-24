@@ -60,3 +60,18 @@
 .terminal-search {
   z-index: 100;
 }
+
+/* xterm.js WebLinksAddon creates a canvas layer for links */
+.xterm .xterm-link-layer {
+  z-index: 10;
+}
+
+/* When hovering over a link, xterm applies this class */
+.xterm-screen .xterm-decoration-overview-ruler {
+  display: none;
+}
+
+/* Override xterm cursor when hovering links */
+.xterm.xterm-cursor-pointer {
+  cursor: pointer !important;
+}

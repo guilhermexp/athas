@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { ask } from "@tauri-apps/plugin-dialog";
+import { open } from "@tauri-apps/plugin-shell";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
@@ -142,24 +144,72 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
       // Initialize addons
       const fitAddon = new FitAddon();
       const searchAddon = new SearchAddon();
-      const webLinksAddon = new WebLinksAddon();
+      // WebLinksAddon with custom handler
+      const webLinksAddon = new WebLinksAddon(async (_event: MouseEvent, uri: string) => {
+        console.log("WebLinksAddon: Opening link", uri);
+
+        try {
+          // Show confirmation dialog
+          const confirmed = await ask(`Do you want to open this link in your browser?\n\n${uri}`, {
+            title: "Open External Link",
+            kind: "warning",
+            okLabel: "Open",
+            cancelLabel: "Cancel",
+          });
+
+          if (confirmed) {
+            await open(uri);
+            console.log("Successfully opened link");
+          } else {
+            console.log("User cancelled opening link");
+          }
+        } catch (error) {
+          console.error("Failed to open link:", error);
+        }
+      });
       const serializeAddon = new SerializeAddon();
       const unicode11Addon = new Unicode11Addon();
 
       terminal.loadAddon(fitAddon);
       terminal.loadAddon(searchAddon);
-      terminal.loadAddon(webLinksAddon);
       terminal.loadAddon(serializeAddon);
       terminal.loadAddon(unicode11Addon);
 
       // Open terminal in DOM
       terminal.open(terminalRef.current);
 
+      // Load WebLinksAddon after terminal is open
+      terminal.loadAddon(webLinksAddon);
+
       // Skip WebGL for now to avoid renderer issues
       console.log("Using default canvas renderer");
 
       // Activate unicode version 11
       terminal.unicode.activeVersion = "11";
+
+      // Inject CSS for link styling
+      const styleId = `terminal-link-style-${sessionId}`;
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement("style");
+        style.id = styleId;
+        const accentColor = getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-accent")
+          .trim();
+        style.textContent = `
+          #${terminalRef.current.id || `terminal-${sessionId}`} .xterm-screen a,
+          #${terminalRef.current.id || `terminal-${sessionId}`} .xterm-link,
+          #${terminalRef.current.id || `terminal-${sessionId}`} [style*="text-decoration"] {
+            color: ${accentColor} !important;
+            text-decoration: underline !important;
+            cursor: pointer !important;
+          }
+          #${terminalRef.current.id || `terminal-${sessionId}`} .xterm-screen a:hover,
+          #${terminalRef.current.id || `terminal-${sessionId}`} .xterm-link:hover {
+            opacity: 0.8 !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
 
       // Fit terminal to container after a short delay
       setTimeout(() => {
@@ -298,6 +348,13 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
       mounted = false;
       clearTimeout(initTimer);
 
+      // Clean up injected styles
+      const styleId = `terminal-link-style-${sessionId}`;
+      const style = document.getElementById(styleId);
+      if (style) {
+        style.remove();
+      }
+
       if (xtermRef.current) {
         // Close backend connection
         const session = getSession(sessionId);
@@ -375,38 +432,44 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    if (!xtermRef.current || !isActive) return;
+    if (!isActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+F or Cmd+F for search
-      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+      // Check if the event is from the terminal element or its children
+      const isTerminalFocused = terminalRef.current?.contains(e.target as Node);
+
+      // Ctrl+F or Cmd+F for search - only when terminal is focused or already searching
+      if ((e.ctrlKey || e.metaKey) && e.key === "f" && (isTerminalFocused || isSearchVisible)) {
         e.preventDefault();
+        e.stopPropagation();
         setIsSearchVisible(true);
       }
       // Escape to close search
       if (e.key === "Escape" && isSearchVisible) {
+        e.preventDefault();
         setIsSearchVisible(false);
         xtermRef.current?.focus();
       }
       // Ctrl/Cmd + Plus for zoom in
-      if ((e.ctrlKey || e.metaKey) && (e.key === "+" || e.key === "=")) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "+" || e.key === "=") && isTerminalFocused) {
         e.preventDefault();
         handleZoomIn();
       }
       // Ctrl/Cmd + Minus for zoom out
-      if ((e.ctrlKey || e.metaKey) && e.key === "-") {
+      if ((e.ctrlKey || e.metaKey) && e.key === "-" && isTerminalFocused) {
         e.preventDefault();
         handleZoomOut();
       }
       // Ctrl/Cmd + 0 for reset zoom
-      if ((e.ctrlKey || e.metaKey) && e.key === "0") {
+      if ((e.ctrlKey || e.metaKey) && e.key === "0" && isTerminalFocused) {
         e.preventDefault();
         handleZoomReset();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // Use capture phase to ensure we get the event before other handlers
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [isActive, isSearchVisible, handleZoomIn, handleZoomOut, handleZoomReset]);
 
   // Search handlers
@@ -461,6 +524,7 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
       />
       <div
         ref={terminalRef}
+        id={`terminal-${sessionId}`}
         className={cn("xterm-container", "h-full w-full", "text-text", !isActive && "opacity-60")}
       />
     </div>
