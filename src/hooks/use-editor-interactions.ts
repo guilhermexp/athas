@@ -6,8 +6,6 @@ interface UseEditorInteractionsProps {
   lineHeight: number;
   fontSize: number;
   gutterWidth: number;
-  scrollTop: number;
-  scrollLeft: number;
   onPositionClick?: (position: Position) => void;
   onSelectionDrag?: (start: Position, end: Position) => void;
 }
@@ -16,8 +14,6 @@ export const useEditorInteractions = ({
   lineHeight,
   fontSize,
   gutterWidth,
-  scrollTop,
-  scrollLeft,
   onPositionClick,
   onSelectionDrag,
 }: UseEditorInteractionsProps) => {
@@ -27,8 +23,8 @@ export const useEditorInteractions = ({
   const getPositionFromCoordinates = useCallback(
     (clientX: number, clientY: number, containerRect: DOMRect): Position | null => {
       // Calculate relative position
-      const relativeX = clientX - containerRect.left - gutterWidth + scrollLeft;
-      const relativeY = clientY - containerRect.top + scrollTop;
+      const relativeX = clientX - containerRect.left - gutterWidth;
+      const relativeY = clientY - containerRect.top;
 
       // Calculate line number
       const line = Math.floor(relativeY / lineHeight);
@@ -59,7 +55,7 @@ export const useEditorInteractions = ({
 
       return { line, column: clampedColumn, offset };
     },
-    [lineHeight, fontSize, gutterWidth, scrollTop, scrollLeft],
+    [lineHeight, fontSize, gutterWidth],
   );
 
   const handleClick = useCallback(

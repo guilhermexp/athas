@@ -44,8 +44,6 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
       lineHeight,
       fontSize,
       gutterWidth,
-      scrollTop,
-      scrollLeft,
       onPositionClick,
       onSelectionDrag,
     });
