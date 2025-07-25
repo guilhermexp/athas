@@ -10,28 +10,9 @@ assignees: ''
 ### Environment
 
 * **OS**: 
-* **Node/Python/Ruby/etc. version**: 
+* **Version**: 
 
-### Steps to Reproduce
-
-
-
-### Expected Behavior
-
-
-
-### Actual Behavior
-
-
-
-### Logs
-```
-
-```
-
-### Possible Solution (optional)
-
-
+### Problem
 
 ---
 
@@ -39,4 +20,3 @@ assignees: ''
 
 * [ ] I have searched the existing issues
 * [ ] I have reproduced this issue with the latest version
-* [ ] I am using a supported version
