@@ -37,9 +37,15 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
 
   const { setRefs, setContent, setFileInfo } = useEditorInstanceStore();
 
-  const activeBuffer = useBufferStore((state) => state.getActiveBuffer());
-  const { handleContentChange } = useAppStore();
-  const { fontSize, fontFamily, tabSize, wordWrap, lineNumbers } = useEditorSettingsStore();
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
+  const { handleContentChange } = useAppStore.use.actions();
+  const fontSize = useEditorSettingsStore.use.fontSize();
+  const fontFamily = useEditorSettingsStore.use.fontFamily();
+  const tabSize = useEditorSettingsStore.use.tabSize();
+  const wordWrap = useEditorSettingsStore.use.wordWrap();
+  const lineNumbers = useEditorSettingsStore.use.lineNumbers();
   const { aiCompletion } = useEditorCompletionStore();
   const { searchQuery, searchMatches, currentMatchIndex, setSearchMatches, setCurrentMatchIndex } =
     useEditorSearchStore();

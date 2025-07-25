@@ -26,12 +26,12 @@ class EditorAPIImpl implements EditorAPI {
 
   // Content operations
   getContent(): string {
-    return useEditorContentStore.getState().getContent();
+    return useEditorContentStore.getState().actions.getContent();
   }
 
   setContent(content: string): void {
     console.log(`EditorAPI: Setting content, length: ${content.length}`);
-    useEditorContentStore.getState().setContent(content);
+    useEditorContentStore.getState().actions.setContent(content);
     this.emit("contentChange", { content, changes: [] });
   }
 
@@ -176,16 +176,16 @@ class EditorAPIImpl implements EditorAPI {
     const store = useEditorSettingsStore.getState();
 
     if (settings.fontSize !== undefined) {
-      store.setFontSize(settings.fontSize);
+      store.actions.setFontSize(settings.fontSize);
     }
     if (settings.tabSize !== undefined) {
-      store.setTabSize(settings.tabSize);
+      store.actions.setTabSize(settings.tabSize);
     }
     if (settings.lineNumbers !== undefined) {
-      store.setLineNumbers(settings.lineNumbers);
+      store.actions.setLineNumbers(settings.lineNumbers);
     }
     if (settings.wordWrap !== undefined) {
-      store.setWordWrap(settings.wordWrap);
+      store.actions.setWordWrap(settings.wordWrap);
     }
 
     this.emit("settingsChange", settings);

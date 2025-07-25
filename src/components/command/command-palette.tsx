@@ -30,7 +30,7 @@ const CommandPalette = () => {
     setIsSettingsDialogVisible,
     setIsThemeSelectorVisible,
   } = useUIState();
-  const { openQuickEdit } = useAppStore();
+  const { openQuickEdit } = useAppStore.use.actions();
 
   const isVisible = isCommandPaletteVisible;
   const onClose = () => setIsCommandPaletteVisible(false);

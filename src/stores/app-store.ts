@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
-import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { createSelectors } from "@/utils/zustand-selectors";
 import { writeFile } from "../utils/platform";
 
 interface AppState {
@@ -15,22 +15,32 @@ interface AppState {
     cursorPosition: { x: number; y: number };
     selectionRange: { start: number; end: number };
   };
+
+  actions: AppActions;
 }
 
-export const useAppStore = create(
-  immer(
-    combine(
-      {
-        autoSaveTimeoutId: null,
-        quickEditState: {
-          isOpen: false,
-          selectedText: "",
-          cursorPosition: { x: 0, y: 0 },
-          selectionRange: { start: 0, end: 0 },
-        },
-      } as AppState,
-      (set, get) => ({
-        // Content change handler - no more recreation on every render!
+interface AppActions {
+  handleContentChange: (content: string) => Promise<void>;
+  handleSave: () => Promise<void>;
+  openQuickEdit: (params: {
+    text: string;
+    cursorPosition: { x: number; y: number };
+    selectionRange: { start: number; end: number };
+  }) => void;
+  cleanup: () => void;
+}
+
+export const useAppStore = createSelectors(
+  create<AppState>()(
+    immer((set, get) => ({
+      autoSaveTimeoutId: null,
+      quickEditState: {
+        isOpen: false,
+        selectedText: "",
+        cursorPosition: { x: 0, y: 0 },
+        selectionRange: { start: 0, end: 0 },
+      },
+      actions: {
         handleContentChange: async (content: string) => {
           // Import stores dynamically to avoid circular dependencies
           const { useBufferStore } = await import("./buffer-store");
@@ -38,14 +48,12 @@ export const useAppStore = create(
           const { useSettingsStore } = await import("./settings-store");
 
           // Get dependencies from other stores
-          const { activeBufferId, updateBufferContent, markBufferDirty } =
-            useBufferStore.getState();
+          const { activeBufferId, buffers } = useBufferStore.getState();
+          const { updateBufferContent, markBufferDirty } = useBufferStore.getState().actions;
           const { settings } = useSettingsStore.getState();
           const { markPendingSave } = useFileWatcherStore.getState();
 
-          const activeBuffer = useBufferStore
-            .getState()
-            .buffers.find((b) => b.id === activeBufferId);
+          const activeBuffer = buffers.find((b) => b.id === activeBufferId);
           if (!activeBuffer) return;
 
           const isRemoteFile = activeBuffer.path.startsWith("remote://");
@@ -82,20 +90,18 @@ export const useAppStore = create(
           }
         },
 
-        // Save handler
         handleSave: async () => {
           // Import stores dynamically to avoid circular dependencies
           const { useBufferStore } = await import("./buffer-store");
           const { useSettingsStore } = await import("./settings-store");
           const { useFileWatcherStore } = await import("./file-watcher-store");
 
-          const { activeBufferId, markBufferDirty } = useBufferStore.getState();
+          const { activeBufferId, buffers } = useBufferStore.getState();
+          const { markBufferDirty } = useBufferStore.getState().actions;
           const { updateSettingsFromJSON } = useSettingsStore.getState();
           const { markPendingSave } = useFileWatcherStore.getState();
 
-          const activeBuffer = useBufferStore
-            .getState()
-            .buffers.find((b) => b.id === activeBufferId);
+          const activeBuffer = buffers.find((b) => b.id === activeBufferId);
           if (!activeBuffer) return;
 
           if (activeBuffer.isVirtual) {
@@ -138,7 +144,6 @@ export const useAppStore = create(
           }
         },
 
-        // Quick edit handlers
         openQuickEdit: (params: {
           text: string;
           cursorPosition: { x: number; y: number };
@@ -160,7 +165,7 @@ export const useAppStore = create(
             clearTimeout(autoSaveTimeoutId);
           }
         },
-      }),
-    ),
+      },
+    })),
   ),
 );

@@ -1,19 +1,12 @@
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { extensionManager } from "../../../extensions/extension-manager";
+import { useEditorLayout } from "../../../hooks/use-editor-layout";
 import { useEditorContentStore } from "../../../stores/editor-content-store";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
 import { useEditorDecorationsStore } from "../../../stores/editor-decorations-store";
+import { useEditorLayoutStore } from "../../../stores/editor-layout-store";
 import type { Decoration, Position } from "../../../types/editor-types";
-import { getCharWidth } from "../../../utils/editor-position";
-
-interface DecorationLayerProps {
-  lineHeight: number;
-  fontSize: number;
-  gutterWidth: number;
-  scrollTop: number;
-  scrollLeft: number;
-}
 
 interface RenderedDecoration {
   key: string;
@@ -29,16 +22,11 @@ function isPositionBefore(a: Position, b: Position): boolean {
   return a.line < b.line || (a.line === b.line && a.column < b.column);
 }
 
-export const DecorationLayer = ({
-  lineHeight,
-  fontSize,
-  gutterWidth,
-  scrollTop,
-  scrollLeft,
-}: DecorationLayerProps) => {
+export const DecorationLayer = () => {
   const storeDecorations = useEditorDecorationsStore(useShallow((state) => state.getDecorations()));
-  const selection = useEditorCursorStore((state) => state.selection);
-  const charWidth = getCharWidth(fontSize);
+  const selection = useEditorCursorStore.use.selection?.() ?? undefined;
+  const { scrollTop, scrollLeft } = useEditorLayoutStore();
+  const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
 
   const decorations = useMemo(() => {
     const allDecorations = [...storeDecorations];

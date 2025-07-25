@@ -1,11 +1,10 @@
-import { memo, useEffect, useRef, useState } from "react";
-import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
+import { memo, useEffect, useRef } from "react";
 import { useEditorInteractions } from "../../../hooks/use-editor-interactions";
-import { useEditorContentStore } from "../../../stores/editor-content-store";
+import { useEditorLayout } from "../../../hooks/use-editor-layout";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
+import { useEditorLayoutStore } from "../../../stores/editor-layout-store";
 import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
 import type { Position } from "../../../types/editor-types";
-import { getLineHeight } from "../../../utils/editor-position";
 import { Cursor } from "../overlays/cursor";
 import { DebugOverlay } from "../overlays/debug-overlay";
 import { DecorationLayer } from "../overlays/decoration-layer";
@@ -15,29 +14,18 @@ import "../../../styles/editor-line-based.css";
 import "../../../styles/token-theme.css";
 
 interface LineBasedEditorProps {
-  viewportHeight: number;
-  filePath?: string;
   onPositionClick?: (position: Position) => void;
   onSelectionDrag?: (start: Position, end: Position) => void;
 }
 
 export const LineBasedEditor = memo<LineBasedEditorProps>(
-  ({ viewportHeight, onPositionClick, onSelectionDrag }) => {
+  ({ onPositionClick, onSelectionDrag }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [scrollTop, setScrollTop] = useState(0);
-    const [scrollLeft, setScrollLeft] = useState(0);
 
-    const lineCount = useEditorContentStore((state) => state.lines.length);
-    const { fontSize, lineNumbers } = useEditorSettingsStore();
-
-    const lineHeight = getLineHeight(fontSize);
-    const gutterWidth = lineNumbers
-      ? Math.max(
-          EDITOR_CONSTANTS.MIN_GUTTER_WIDTH,
-          String(lineCount).length * EDITOR_CONSTANTS.GUTTER_CHAR_WIDTH +
-            EDITOR_CONSTANTS.GUTTER_PADDING,
-        )
-      : 0;
+    const fontSize = useEditorSettingsStore.use.fontSize();
+    const { scrollTop, scrollLeft, viewportHeight } = useEditorLayoutStore();
+    const { setScroll } = useEditorLayoutStore.use.actions();
+    const { lineHeight, gutterWidth } = useEditorLayout();
 
     // Setup interaction handlers
     const { handleClick, handleMouseDown, handleMouseMove, handleMouseUp } = useEditorInteractions({
@@ -59,18 +47,17 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
           const cursorBottom = cursorTop + lineHeight;
 
           if (cursorTop < scrollTop) {
-            setScrollTop(cursorTop);
+            setScroll(cursorTop, scrollLeft);
           } else if (cursorBottom > scrollTop + viewportHeight) {
-            setScrollTop(cursorBottom - viewportHeight);
+            setScroll(cursorBottom - viewportHeight, scrollLeft);
           }
         },
       );
       return unsubscribe;
-    }, [lineHeight, scrollTop, viewportHeight]);
+    }, [lineHeight, scrollTop, scrollLeft, viewportHeight, setScroll]);
 
     const handleScroll = (newScrollTop: number, newScrollLeft: number) => {
-      setScrollTop(newScrollTop);
-      setScrollLeft(newScrollLeft);
+      setScroll(newScrollTop, newScrollLeft);
     };
 
     return (
@@ -89,12 +76,6 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
         <EditorLayers>
           <EditorLayer type="base">
             <EditorViewport
-              showLineNumbers={lineNumbers}
-              gutterWidth={gutterWidth}
-              lineHeight={lineHeight}
-              scrollTop={scrollTop}
-              scrollLeft={scrollLeft}
-              viewportHeight={viewportHeight}
               onScroll={handleScroll}
               onClick={handleClick}
               onMouseDown={handleMouseDown}
@@ -103,29 +84,11 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
             />
           </EditorLayer>
           <EditorLayer type="decoration">
-            <DecorationLayer
-              lineHeight={lineHeight}
-              fontSize={fontSize}
-              gutterWidth={gutterWidth}
-              scrollTop={scrollTop}
-              scrollLeft={scrollLeft}
-            />
+            <DecorationLayer />
           </EditorLayer>
           <EditorLayer type="overlay">
-            <Cursor
-              lineHeight={lineHeight}
-              fontSize={fontSize}
-              gutterWidth={gutterWidth}
-              scrollTop={scrollTop}
-              scrollLeft={scrollLeft}
-            />
-            <DebugOverlay
-              lineHeight={lineHeight}
-              fontSize={fontSize}
-              gutterWidth={gutterWidth}
-              scrollTop={scrollTop}
-              scrollLeft={scrollLeft}
-            />
+            <Cursor />
+            <DebugOverlay />
           </EditorLayer>
         </EditorLayers>
       </div>

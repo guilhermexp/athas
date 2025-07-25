@@ -207,7 +207,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         const displayName = `${actualFilePath.split("/").pop()} (${staged ? "staged" : "unstaged"})`;
 
         // Open buffer with diff data directly
-        useBufferStore.getState().openBuffer(
+        useBufferStore.getState().actions.openBuffer(
           virtualPath,
           displayName,
           JSON.stringify(diff), // Keep for backwards compatibility
@@ -239,7 +239,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
         const virtualPath = `diff://commit/${commitHash}/${diffFileName}`;
 
         // Open buffer with diff data directly
-        useBufferStore.getState().openBuffer(
+        useBufferStore.getState().actions.openBuffer(
           virtualPath,
           diffFileName,
           JSON.stringify(diff), // Keep for backwards compatibility

@@ -1,6 +1,6 @@
 import { RefreshCw, X } from "lucide-react";
 import { useState } from "react";
-import { useActiveBuffer, useBufferStore } from "../../stores/buffer-store";
+import { useBufferStore } from "../../stores/buffer-store";
 import { cn } from "../../utils/cn";
 import { DiffHeader } from "./diff-header";
 import { useDiffData } from "./hooks/useDiffData";
@@ -10,8 +10,10 @@ import { TextDiffViewer } from "./text-diff-viewer";
 import type { DiffViewerProps } from "./utils/types";
 
 function DiffViewer({ onStageHunk, onUnstageHunk }: DiffViewerProps) {
-  const activeBuffer = useActiveBuffer();
-  const { closeBuffer } = useBufferStore();
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
+  const { closeBuffer } = useBufferStore.use.actions();
   const { diff, isStaged, isLoading, error, refresh } = useDiffData();
   const { viewMode, setViewMode } = useDiffViewState();
   const [isRefreshing, setIsRefreshing] = useState(false);

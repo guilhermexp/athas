@@ -24,9 +24,9 @@ interface TabPosition {
 
 const TabBar = ({ paneId }: TabBarProps) => {
   // Get everything from stores
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
   const {
-    buffers,
-    activeBufferId,
     handleTabClick,
     handleTabClose,
     handleTabPin,
@@ -34,7 +34,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
     handleCloseAllTabs,
     handleCloseTabsToRight,
     reorderBuffers,
-  } = useBufferStore();
+  } = useBufferStore.use.actions();
   const { maxOpenTabs } = usePersistentSettingsStore();
 
   // Drag state
@@ -455,7 +455,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
           // Reload the buffer by closing and reopening it
           const buffer = buffers.find((b) => b.id === bufferId);
           if (buffer && buffer.path !== "extensions://marketplace") {
-            const { closeBuffer, openBuffer } = useBufferStore.getState();
+            const { closeBuffer, openBuffer } = useBufferStore.getState().actions;
             closeBuffer(bufferId);
             // Re-read the file and open it again
             setTimeout(async () => {

@@ -6,8 +6,12 @@ import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
 
 export function useKeyboardShortcutsWrapper() {
   const uiState = useUIState();
-  const bufferStore = useBufferStore();
-  const appStore = useAppStore();
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
+  const { closeBuffer, switchToNextBuffer, switchToPreviousBuffer, setActiveBuffer } =
+    useBufferStore.use.actions();
+  const { handleSave, openQuickEdit } = useAppStore.use.actions();
   const { coreFeatures, isAIChatVisible, setIsAIChatVisible } = usePersistentSettingsStore();
 
   const searchViewRef = { current: null }; // Placeholder for search view ref
@@ -73,19 +77,19 @@ export function useKeyboardShortcutsWrapper() {
       uiState.requestTerminalFocus();
     },
     requestTerminalFocus: uiState.requestTerminalFocus,
-    activeBuffer: bufferStore.getActiveBuffer(),
-    closeBuffer: bufferStore.closeBuffer,
-    switchToNextBuffer: bufferStore.switchToNextBuffer,
-    switchToPreviousBuffer: bufferStore.switchToPreviousBuffer,
-    buffers: bufferStore.buffers,
-    setActiveBuffer: bufferStore.setActiveBuffer,
+    activeBuffer,
+    closeBuffer,
+    switchToNextBuffer,
+    switchToPreviousBuffer,
+    buffers,
+    setActiveBuffer,
     isBottomPaneVisible: uiState.isBottomPaneVisible,
     bottomPaneActiveTab: uiState.bottomPaneActiveTab,
-    onSave: appStore.handleSave,
+    onSave: handleSave,
     onQuickEdit: () => {
       const selection = window.getSelection();
       if (selection?.toString()) {
-        appStore.openQuickEdit({
+        openQuickEdit({
           text: selection.toString(),
           cursorPosition: { x: 0, y: 0 },
           selectionRange: { start: 0, end: selection.toString().length },

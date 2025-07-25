@@ -2,7 +2,8 @@ import { useZoomStore } from "../stores/zoom-store";
 import { cn } from "../utils/cn";
 
 export function ZoomIndicator() {
-  const { showZoomIndicator, getZoomPercentage } = useZoomStore();
+  const showZoomIndicator = useZoomStore.use.showZoomIndicator();
+  const { getZoomPercentage } = useZoomStore.use.actions();
 
   if (!showZoomIndicator) {
     return null;

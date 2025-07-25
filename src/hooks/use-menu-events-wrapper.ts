@@ -9,20 +9,22 @@ import { useMenuEvents } from "./use-menu-events";
 export function useMenuEventsWrapper() {
   const uiState = useUIState();
   const fileSystemStore = useFileSystemStore();
-  const appStore = useAppStore();
-  const bufferStore = useBufferStore();
   const settingsStore = useSettingsStore();
   const { isAIChatVisible, setIsAIChatVisible } = usePersistentSettingsStore();
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
+  const { closeBuffer, switchToNextBuffer, switchToPreviousBuffer } = useBufferStore.use.actions();
+  const { handleSave } = useAppStore.use.actions();
 
   useMenuEvents({
     onNewFile: fileSystemStore.handleCreateNewFile,
     onOpenFolder: fileSystemStore.handleOpenFolder,
-    onSave: appStore.handleSave,
+    onSave: handleSave,
     onSaveAs: () => console.log("Save As not implemented"),
     onCloseTab: () => {
-      const activeBuffer = bufferStore.getActiveBuffer();
       if (activeBuffer) {
-        bufferStore.closeBuffer(activeBuffer.id);
+        closeBuffer(activeBuffer.id);
       }
     },
     onUndo: () => console.log("Undo not implemented"),
@@ -49,8 +51,8 @@ export function useMenuEventsWrapper() {
     onToggleVim: () => console.log("Toggle Vim not implemented"),
     onGoToFile: () => uiState.setIsCommandBarVisible(true),
     onGoToLine: () => console.log("Go to Line not implemented"),
-    onNextTab: bufferStore.switchToNextBuffer,
-    onPrevTab: bufferStore.switchToPreviousBuffer,
+    onNextTab: switchToNextBuffer,
+    onPrevTab: switchToPreviousBuffer,
     onThemeChange: (theme: string) => settingsStore.updateTheme(theme as any),
     onAbout: () => console.log("About not implemented"),
     onHelp: () => console.log("Help not implemented"),

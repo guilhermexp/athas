@@ -6,7 +6,7 @@ import { useSettingsStore } from "../stores/settings-store";
 export const useSettingsSync = () => {
   const { settings } = useSettingsStore();
   const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers } =
-    useEditorSettingsStore();
+    useEditorSettingsStore.use.actions();
   const { actions: completionActions } = useEditorCompletionStore();
 
   // Sync font size

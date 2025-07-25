@@ -16,15 +16,11 @@ export const FontSelector = ({
   className = "",
   monospaceOnly = false,
 }: FontSelectorProps) => {
-  const {
-    availableFonts,
-    monospaceFonts,
-    isLoading,
-    error,
-    loadAvailableFonts,
-    loadMonospaceFonts,
-    clearError,
-  } = useFontStore();
+  const availableFonts = useFontStore.use.availableFonts();
+  const monospaceFonts = useFontStore.use.monospaceFonts();
+  const isLoading = useFontStore.use.isLoading();
+  const error = useFontStore.use.error();
+  const { loadAvailableFonts, loadMonospaceFonts, clearError } = useFontStore.use.actions();
 
   const [selectedFont, setSelectedFont] = useState(value);
 

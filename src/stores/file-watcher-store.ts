@@ -131,7 +131,8 @@ export async function initializeFileWatcherListener() {
     }
 
     // Handle the file change directly
-    const { buffers, reloadBufferFromDisk } = useBufferStore.getState();
+    const { buffers } = useBufferStore.getState();
+    const { reloadBufferFromDisk } = useBufferStore.getState().actions;
     const buffer = buffers.find((b) => b.path === path);
 
     if (buffer) {

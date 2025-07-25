@@ -21,9 +21,9 @@ interface UseEditorSyncProps {
 }
 
 export const useEditorSync = (props: UseEditorSyncProps) => {
-  const { setContent: setValue } = useEditorContentStore();
+  const { setContent: setValue } = useEditorContentStore.use.actions();
   const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers, setDisabled } =
-    useEditorSettingsStore();
+    useEditorSettingsStore.use.actions();
   const { setSearchQuery, setSearchMatches, setCurrentMatchIndex } = useEditorSearchStore();
   const { actions: completionActions } = useEditorCompletionStore();
 

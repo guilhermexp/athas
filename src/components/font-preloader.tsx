@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useFontStore } from "@/stores/font-store";
 
 export const FontPreloader = () => {
-  const { monospaceFonts, loadMonospaceFonts } = useFontStore();
+  const monospaceFonts = useFontStore.use.monospaceFonts();
+  const { loadMonospaceFonts } = useFontStore.use.actions();
 
   useEffect(() => {
     // Load fonts on component mount

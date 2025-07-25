@@ -24,10 +24,11 @@ function App() {
   enableMapSet();
 
   const { files, rootFolderPath, handleOpenFolder } = useFileSystemStore();
-  const { cleanup } = useAppStore();
+  const { cleanup } = useAppStore.use.actions();
   const { recentFolders, openRecentFolder } = useRecentFoldersStore();
-  const { loadAvailableFonts } = useFontStore();
-  const { zoomLevel, zoomIn, zoomOut } = useZoomStore();
+  const { loadAvailableFonts } = useFontStore.use.actions();
+  const zoomLevel = useZoomStore.use.zoomLevel();
+  const { zoomIn, zoomOut } = useZoomStore.use.actions();
   const { settings } = useSettingsStore();
 
   // Platform-specific setup

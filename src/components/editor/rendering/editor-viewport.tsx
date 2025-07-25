@@ -1,17 +1,14 @@
 import type React from "react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
+import { useEditorLayout } from "../../../hooks/use-editor-layout";
 import { useEditorContentStore } from "../../../stores/editor-content-store";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
+import { useEditorLayoutStore } from "../../../stores/editor-layout-store";
+import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
 import { LineWithContent } from "./line-with-content";
 
 interface EditorViewportProps {
-  showLineNumbers: boolean;
-  gutterWidth: number;
-  lineHeight: number;
-  scrollTop: number;
-  scrollLeft: number;
-  viewportHeight: number;
   onScroll?: (scrollTop: number, scrollLeft: number) => void;
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   onMouseDown?: (e: React.MouseEvent<HTMLElement>) => void;
@@ -20,21 +17,13 @@ interface EditorViewportProps {
 }
 
 export const EditorViewport = memo<EditorViewportProps>(
-  ({
-    showLineNumbers,
-    gutterWidth,
-    lineHeight,
-    scrollTop,
-    scrollLeft: _scrollLeft,
-    viewportHeight,
-    onScroll,
-    onClick,
-    onMouseDown,
-    onMouseMove,
-    onMouseUp,
-  }) => {
-    const selection = useEditorCursorStore((state) => state.selection);
+  ({ onScroll, onClick, onMouseDown, onMouseMove, onMouseUp }) => {
+    const selection = useEditorCursorStore.use.selection?.() ?? undefined;
     const lineCount = useEditorContentStore((state) => state.lines.length);
+    const showLineNumbers = useEditorSettingsStore.use.lineNumbers();
+    const scrollTop = useEditorLayoutStore.use.scrollTop();
+    const viewportHeight = useEditorLayoutStore.use.viewportHeight();
+    const { lineHeight, gutterWidth } = useEditorLayout();
 
     const selectedLines = useMemo(() => {
       const lines = new Set<number>();

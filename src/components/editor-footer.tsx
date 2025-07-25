@@ -1,5 +1,5 @@
 import { AlertCircle, Terminal as TerminalIcon } from "lucide-react";
-import { useActiveBuffer } from "../stores/buffer-store";
+import { useBufferStore } from "../stores/buffer-store";
 import { useFileSystemStore } from "../stores/file-system/store";
 import { useGitStore } from "../stores/git-store";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
@@ -9,7 +9,9 @@ import { getGitStatus } from "../utils/git";
 import GitBranchManager from "./git/git-branch-manager";
 
 const EditorFooter = () => {
-  const activeBuffer = useActiveBuffer();
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
   const { coreFeatures } = usePersistentSettingsStore();
   const uiState = useUIState();
   const { rootFolderPath } = useFileSystemStore();

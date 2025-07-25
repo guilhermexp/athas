@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { createSelectors } from "@/utils/zustand-selectors";
 import { readFileContent } from "../utils/file-operations";
 import type { GitDiff } from "../utils/git";
 import { useRecentFilesStore } from "./recent-files-store";
@@ -25,22 +25,55 @@ interface BufferState {
   buffers: Buffer[];
   activeBufferId: string | null;
   maxOpenTabs: number;
+  actions: BufferActions;
+}
+
+interface BufferActions {
+  openBuffer: (
+    path: string,
+    name: string,
+    content: string,
+    isImage?: boolean,
+    isSQLite?: boolean,
+    isDiff?: boolean,
+    isVirtual?: boolean,
+    diffData?: GitDiff,
+  ) => string;
+  closeBuffer: (bufferId: string) => void;
+  setActiveBuffer: (bufferId: string) => void;
+  updateBufferContent: (
+    bufferId: string,
+    content: string,
+    markDirty?: boolean,
+    diffData?: GitDiff,
+  ) => void;
+  markBufferDirty: (bufferId: string, isDirty: boolean) => void;
+  updateBuffer: (updatedBuffer: Buffer) => void;
+  handleTabClick: (bufferId: string) => void;
+  handleTabClose: (bufferId: string) => void;
+  handleTabPin: (bufferId: string) => void;
+  handleCloseOtherTabs: (keepBufferId: string) => void;
+  handleCloseAllTabs: () => void;
+  handleCloseTabsToRight: (bufferId: string) => void;
+  reorderBuffers: (startIndex: number, endIndex: number) => void;
+  switchToNextBuffer: () => void;
+  switchToPreviousBuffer: () => void;
+  getActiveBuffer: () => Buffer | null;
+  setMaxOpenTabs: (max: number) => void;
+  reloadBufferFromDisk: (bufferId: string) => Promise<void>;
 }
 
 const generateBufferId = (path: string): string => {
   return `buffer_${path.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
 };
 
-export const useBufferStore = create(
-  immer(
-    combine(
-      {
-        buffers: [],
-        activeBufferId: null,
-        maxOpenTabs: 10,
-      } as BufferState,
-      (set, get) => ({
-        // Core buffer operations
+export const useBufferStore = createSelectors(
+  create<BufferState>()(
+    immer((set, get) => ({
+      buffers: [],
+      activeBufferId: null,
+      maxOpenTabs: 10,
+      actions: {
         openBuffer: (
           path: string,
           name: string,
@@ -184,7 +217,6 @@ export const useBufferStore = create(
           });
         },
 
-        // Tab operations - all in one place!
         handleTabClick: (bufferId: string) => {
           set((state) => {
             state.activeBufferId = bufferId;
@@ -196,7 +228,7 @@ export const useBufferStore = create(
         },
 
         handleTabClose: (bufferId: string) => {
-          useBufferStore.getState().closeBuffer(bufferId);
+          get().actions.closeBuffer(bufferId);
         },
 
         handleTabPin: (bufferId: string) => {
@@ -211,13 +243,13 @@ export const useBufferStore = create(
         handleCloseOtherTabs: (keepBufferId: string) => {
           const { buffers } = get();
           const buffersToClose = buffers.filter((b) => b.id !== keepBufferId && !b.isPinned);
-          buffersToClose.forEach((buffer) => useBufferStore.getState().closeBuffer(buffer.id));
+          buffersToClose.forEach((buffer) => get().actions.closeBuffer(buffer.id));
         },
 
         handleCloseAllTabs: () => {
           const { buffers } = get();
           const buffersToClose = buffers.filter((b) => !b.isPinned);
-          buffersToClose.forEach((buffer) => useBufferStore.getState().closeBuffer(buffer.id));
+          buffersToClose.forEach((buffer) => get().actions.closeBuffer(buffer.id));
         },
 
         handleCloseTabsToRight: (bufferId: string) => {
@@ -226,7 +258,7 @@ export const useBufferStore = create(
           if (bufferIndex === -1) return;
 
           const buffersToClose = buffers.slice(bufferIndex + 1).filter((b) => !b.isPinned);
-          buffersToClose.forEach((buffer) => useBufferStore.getState().closeBuffer(buffer.id));
+          buffersToClose.forEach((buffer) => get().actions.closeBuffer(buffer.id));
         },
 
         reorderBuffers: (startIndex: number, endIndex: number) => {
@@ -238,7 +270,6 @@ export const useBufferStore = create(
           });
         },
 
-        // Navigation
         switchToNextBuffer: () => {
           const { buffers, activeBufferId } = get();
           if (buffers.length === 0) return;
@@ -269,7 +300,6 @@ export const useBufferStore = create(
           });
         },
 
-        // Helpers
         getActiveBuffer: (): Buffer | null => {
           const { buffers, activeBufferId } = get();
           return buffers.find((b) => b.id === activeBufferId) || null;
@@ -281,7 +311,6 @@ export const useBufferStore = create(
           });
         },
 
-        // Reload buffer content from disk
         reloadBufferFromDisk: async (bufferId: string): Promise<void> => {
           const buffer = get().buffers.find((b) => b.id === bufferId);
           if (!buffer || buffer.isVirtual || buffer.isImage || buffer.isSQLite) {
@@ -291,20 +320,13 @@ export const useBufferStore = create(
           try {
             const content = await readFileContent(buffer.path);
             // Update buffer content and clear dirty flag
-            useBufferStore.getState().updateBufferContent(bufferId, content, false);
+            useBufferStore.getState().actions.updateBufferContent(bufferId, content, false);
             console.log(`[FileWatcher] Reloaded buffer from disk: ${buffer.path}`);
           } catch (error) {
             console.error(`[FileWatcher] Failed to reload buffer from disk: ${buffer.path}`, error);
           }
         },
-      }),
-    ),
+      },
+    })),
   ),
 );
-
-// Selectors
-export const useActiveBuffer = () => {
-  return useBufferStore(
-    (state) => state.buffers.find((b) => b.id === state.activeBufferId) || null,
-  );
-};

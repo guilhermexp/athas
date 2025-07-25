@@ -82,7 +82,7 @@ class SyntaxHighlighter {
 
   private updateLineTokens() {
     const lines = this.editor.getLines();
-    const { setLineTokens } = useEditorContentStore.getState();
+    const { setLineTokens } = useEditorContentStore.getState().actions;
 
     // Update tokens for each line
     for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {

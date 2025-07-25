@@ -10,7 +10,9 @@ import { readDirectory } from "../../utils/platform";
 import FileIcon from "../file-icon";
 
 export default function Breadcrumb() {
-  const activeBuffer = useBufferStore((state) => state.getActiveBuffer());
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
   const { rootFolderPath, handleFileSelect } = useFileSystemStore();
   const { isFindVisible, setIsFindVisible } = useUIState();
 

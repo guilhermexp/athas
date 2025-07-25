@@ -1,6 +1,6 @@
 import type { CompletionItem } from "vscode-languageserver-protocol";
 import { create } from "zustand";
-import { combine } from "zustand/middleware";
+import { createSelectors } from "@/utils/zustand-selectors";
 
 // Types
 type HoverInfo = {
@@ -13,32 +13,44 @@ type CompletionPosition = {
   left: number;
 };
 
-const initialState = {
+interface EditorCompletionState {
   // LSP State
-  lspCompletions: [] as CompletionItem[],
-  selectedLspIndex: 0,
-  isLspCompletionVisible: false,
-  completionPosition: { top: 0, left: 0 } as CompletionPosition,
-  hoverInfo: null as HoverInfo | null,
-  isHovering: false,
+  lspCompletions: CompletionItem[];
+  selectedLspIndex: number;
+  isLspCompletionVisible: boolean;
+  completionPosition: CompletionPosition;
+  hoverInfo: HoverInfo | null;
+  isHovering: boolean;
 
   // AI Completion State
-  aiCompletion: false,
+  aiCompletion: boolean;
 
   // Actions
-  actions: {} as {
-    setLspCompletions: (completions: CompletionItem[]) => void;
-    setSelectedLspIndex: (index: number) => void;
-    setIsLspCompletionVisible: (visible: boolean) => void;
-    setCompletionPosition: (position: CompletionPosition) => void;
-    setHoverInfo: (info: HoverInfo | null) => void;
-    setIsHovering: (hovering: boolean) => void;
-    setAiCompletion: (enabled: boolean) => void;
-  },
-};
+  actions: EditorCompletionActions;
+}
 
-export const useEditorCompletionStore = create(
-  combine(initialState, (set) => ({
+interface EditorCompletionActions {
+  setLspCompletions: (completions: CompletionItem[]) => void;
+  setSelectedLspIndex: (index: number) => void;
+  setIsLspCompletionVisible: (visible: boolean) => void;
+  setCompletionPosition: (position: CompletionPosition) => void;
+  setHoverInfo: (info: HoverInfo | null) => void;
+  setIsHovering: (hovering: boolean) => void;
+  setAiCompletion: (enabled: boolean) => void;
+}
+
+export const useEditorCompletionStore = createSelectors(
+  create<EditorCompletionState>()((set) => ({
+    // LSP State
+    lspCompletions: [],
+    selectedLspIndex: 0,
+    isLspCompletionVisible: false,
+    completionPosition: { top: 0, left: 0 },
+    hoverInfo: null,
+    isHovering: false,
+
+    // AI Completion State
+    aiCompletion: false,
     actions: {
       setLspCompletions: (completions: CompletionItem[]) => set({ lspCompletions: completions }),
       setSelectedLspIndex: (index: number) => set({ selectedLspIndex: index }),

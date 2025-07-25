@@ -22,6 +22,7 @@ export const useEditorInteractions = ({
 
   const getPositionFromCoordinates = useCallback(
     (clientX: number, clientY: number, containerRect: DOMRect): Position | null => {
+      // console.log("firing getPositionFromCoordinates")
       // Calculate relative position
       const relativeX = clientX - containerRect.left - gutterWidth;
       const relativeY = clientY - containerRect.top;

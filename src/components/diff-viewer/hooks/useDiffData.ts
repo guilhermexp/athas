@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useActiveBuffer, useBufferStore } from "../../../stores/buffer-store";
+import { useBufferStore } from "../../../stores/buffer-store";
 import { useFileSystemStore } from "../../../stores/file-system/store";
 import type { GitDiff } from "../../../utils/git";
 import { getFileDiff } from "../../../utils/git";
@@ -15,8 +15,10 @@ interface UseDiffDataReturn {
 }
 
 export const useDiffData = (): UseDiffDataReturn => {
-  const activeBuffer = useActiveBuffer();
-  const { updateBufferContent, closeBuffer } = useBufferStore();
+  const buffers = useBufferStore.use.buffers();
+  const activeBufferId = useBufferStore.use.activeBufferId();
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
+  const { updateBufferContent, closeBuffer } = useBufferStore.use.actions();
   const { rootFolderPath } = useFileSystemStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +60,7 @@ export const useDiffData = (): UseDiffDataReturn => {
         if (newDiff && newDiff.lines.length > 0) {
           useBufferStore
             .getState()
-            .openBuffer(
+            .actions.openBuffer(
               newVirtualPath,
               displayName,
               JSON.stringify(newDiff),

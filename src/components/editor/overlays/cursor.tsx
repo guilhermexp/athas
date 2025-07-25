@@ -1,27 +1,17 @@
 import { useEffect, useRef } from "react";
+import { useEditorLayout } from "../../../hooks/use-editor-layout";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
-import { getCharWidth } from "../../../utils/editor-position";
+import { useEditorLayoutStore } from "../../../stores/editor-layout-store";
 
 interface CursorRendererProps {
-  lineHeight: number;
-  fontSize: number;
-  gutterWidth: number;
-  scrollTop: number;
-  scrollLeft: number;
   visible?: boolean;
 }
 
-export function Cursor({
-  lineHeight,
-  fontSize,
-  gutterWidth,
-  scrollTop,
-  scrollLeft,
-  visible = true,
-}: CursorRendererProps) {
+export function Cursor({ visible = true }: CursorRendererProps) {
   const cursorRef = useRef<HTMLDivElement>(null);
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const charWidth = getCharWidth(fontSize);
+  const { scrollTop, scrollLeft } = useEditorLayoutStore();
+  const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
 
   // Update position without re-rendering
   useEffect(() => {
@@ -67,7 +57,7 @@ export function Cursor({
         clearTimeout(movementTimeoutRef.current);
       }
     };
-  }, [lineHeight, fontSize, gutterWidth, scrollTop, scrollLeft, charWidth, visible]);
+  }, [lineHeight, gutterWidth, scrollTop, scrollLeft, charWidth, visible]);
 
   if (!visible) return null;
 

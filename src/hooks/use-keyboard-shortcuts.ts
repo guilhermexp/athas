@@ -58,7 +58,7 @@ export const useKeyboardShortcuts = ({
   onToggleSidebarPosition,
   coreFeatures,
 }: UseKeyboardShortcutsProps) => {
-  const { zoomIn, zoomOut, resetZoom } = useZoomStore();
+  const { zoomIn, zoomOut, resetZoom } = useZoomStore.use.actions();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

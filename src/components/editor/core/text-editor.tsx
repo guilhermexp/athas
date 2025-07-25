@@ -11,6 +11,7 @@ import { useEditorContentStore } from "../../../stores/editor-content-store";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
 import { useEditorDebugStore } from "../../../stores/editor-debug-store";
 import { useEditorInstanceStore } from "../../../stores/editor-instance-store";
+import { useEditorLayoutStore } from "../../../stores/editor-layout-store";
 import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
 import type { Position } from "../../../types/editor-types";
 import {
@@ -20,16 +21,18 @@ import {
 import { LineBasedEditor } from "./line-based-editor";
 
 export function TextEditor() {
-  const { tabSize } = useEditorSettingsStore();
-  const { lines, getContent, setContent } = useEditorContentStore();
+  const tabSize = useEditorSettingsStore.use.tabSize();
+  const lines = useEditorContentStore.use.lines();
+  const { getContent, setContent } = useEditorContentStore.use.actions();
   const { onChange, disabled, filePath, editorRef } = useEditorInstanceStore();
+  const { setViewportHeight } = useEditorLayoutStore.use.actions();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const localRef = useRef<HTMLDivElement>(null);
 
   const { setCursorPosition, setSelection, setDesiredColumn } = useEditorCursorStore.use.actions();
-  const currentDesiredColumn = useEditorCursorStore((state) => state.desiredColumn);
-  const { addKeystroke, addTextChange, addCursorPosition } = useEditorDebugStore();
+  const currentDesiredColumn = useEditorCursorStore.use.desiredColumn?.() ?? undefined;
+  const { addKeystroke, addTextChange, addCursorPosition } = useEditorDebugStore.use.actions();
 
   // Use the ref from the store or fallback to local ref
   const containerRef = editorRef || localRef;
@@ -263,6 +266,20 @@ export function TextEditor() {
     return unsubscribe;
   }, []);
 
+  // Update viewport height when container size changes
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setViewportHeight(entry.contentRect.height);
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, [setViewportHeight]);
+
   // Emit content change events to extensions
   useEffect(() => {
     // Emit the event directly without going through setContent to avoid loops
@@ -327,10 +344,6 @@ export function TextEditor() {
 
       {/* Line-based editor content */}
       <LineBasedEditor
-        viewportHeight={
-          containerRef.current?.clientHeight || EDITOR_CONSTANTS.DEFAULT_VIEWPORT_HEIGHT
-        }
-        filePath={filePath}
         onPositionClick={handleLineBasedClick}
         onSelectionDrag={handleLineBasedSelection}
       />

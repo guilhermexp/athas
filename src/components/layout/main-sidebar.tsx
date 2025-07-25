@@ -71,7 +71,7 @@ export const MainSidebar = () => {
 
   // Handlers
   const onOpenExtensions = () => {
-    const { openBuffer } = useBufferStore.getState();
+    const { openBuffer } = useBufferStore.getState().actions;
     openBuffer(
       "extensions://marketplace",
       "Extensions",

@@ -179,7 +179,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
       }
 
       const fileName = getFilenameFromPath(path);
-      const { openBuffer } = useBufferStore.getState();
+      const { openBuffer } = useBufferStore.getState().actions;
 
       // Handle virtual diff files
       if (path.startsWith("diff://")) {
@@ -473,7 +473,8 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
       });
 
       // Update open buffers
-      const { buffers, updateBuffer } = useBufferStore.getState();
+      const { buffers } = useBufferStore.getState();
+      const { updateBuffer } = useBufferStore.getState().actions;
       const buffer = buffers.find((b) => b.path === oldPath);
       if (buffer) {
         const fileName = newPath.split("/").pop() || buffer.name;
@@ -649,7 +650,8 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
         });
 
         // Close any open buffers for this file
-        const { buffers, closeBuffer } = useBufferStore.getState();
+        const { buffers } = useBufferStore.getState();
+        const { closeBuffer } = useBufferStore.getState().actions;
 
         // Find and close any buffers with matching path
         const buffersToClose = buffers.filter((buffer) => buffer.path === path);
