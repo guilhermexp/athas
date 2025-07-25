@@ -28,7 +28,7 @@ export function TextEditor() {
   const localRef = useRef<HTMLDivElement>(null);
 
   const { setCursorPosition, setSelection, setDesiredColumn } = useEditorCursorStore.use.actions();
-  const currentDesiredColumn = useEditorCursorStore.use.desiredColumn?.();
+  const currentDesiredColumn = useEditorCursorStore((state) => state.desiredColumn);
   const { addKeystroke, addTextChange, addCursorPosition } = useEditorDebugStore();
 
   // Use the ref from the store or fallback to local ref
@@ -138,7 +138,7 @@ export function TextEditor() {
       }, 0);
 
       // Maintain desired column for subsequent arrow key presses
-      if (currentDesiredColumn === null) {
+      if (currentDesiredColumn === undefined) {
         setDesiredColumn(currentPosition.column);
       }
     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
