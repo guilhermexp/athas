@@ -76,7 +76,7 @@ export const CommandInput = ({
     ref={ref}
     type="text"
     value={value}
-    onChange={e => onChange(e.target.value)}
+    onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
     className={cn(
       "flex-1 bg-transparent text-text text-xs placeholder-text-lighter outline-none",

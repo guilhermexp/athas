@@ -54,7 +54,7 @@ export const useDiffData = (): UseDiffDataReturn => {
       const displayName = `${filePath.split("/").pop()} (${viewType})`;
 
       // Get the diff data for the new view
-      getFileDiff(rootFolderPath!, filePath, viewType === "staged").then(newDiff => {
+      getFileDiff(rootFolderPath!, filePath, viewType === "staged").then((newDiff) => {
         if (newDiff && newDiff.lines.length > 0) {
           useBufferStore
             .getState()

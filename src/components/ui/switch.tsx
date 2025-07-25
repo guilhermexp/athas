@@ -32,7 +32,7 @@ export default function Switch({
         type="checkbox"
         className="peer sr-only"
         checked={checked}
-        onChange={e => !disabled && onChange(e.target.checked)}
+        onChange={(e) => !disabled && onChange(e.target.checked)}
         disabled={disabled}
       />
       <div

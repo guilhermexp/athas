@@ -192,7 +192,7 @@ const GitBranchManager = ({
               "flex max-h-[60vh] w-120 flex-col rounded-lg",
               "border border-border bg-primary-bg shadow-xl",
             )}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div
@@ -228,13 +228,13 @@ const GitBranchManager = ({
                     type="text"
                     placeholder="Enter branch name..."
                     value={newBranchName}
-                    onChange={e => setNewBranchName(e.target.value)}
+                    onChange={(e) => setNewBranchName(e.target.value)}
                     className={cn(
                       "flex-1 rounded border border-border bg-secondary-bg",
                       "px-2 py-1.5 text-text text-xs",
                       "focus:border-blue-500 focus:outline-none",
                     )}
-                    onKeyDown={e => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter" && newBranchName.trim()) {
                         e.preventDefault();
                         handleCreateBranch();
@@ -276,7 +276,7 @@ const GitBranchManager = ({
                   </div>
                 ) : (
                   <div className="p-1">
-                    {branches.map(branch => (
+                    {branches.map((branch) => (
                       <div
                         key={branch}
                         className={cn(

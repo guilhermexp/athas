@@ -18,7 +18,7 @@ const shouldIgnoreFile = (filePath: string): boolean => {
   const fileName = filePath.split("/").pop() || "";
   const fullPath = filePath.toLowerCase();
 
-  return IGNORED_PATTERNS.some(pattern => {
+  return IGNORED_PATTERNS.some((pattern) => {
     if (pattern.includes("*")) {
       // Handle glob patterns like *.log
       const regex = new RegExp(pattern.replace(/\*/g, ".*"));
@@ -85,7 +85,7 @@ const CommandBar = () => {
   // Get data from stores
   const { isCommandBarVisible, setIsCommandBarVisible } = useUIState();
   const { getAllProjectFiles, rootFolderPath } = useFileSystemStore();
-  const handleFileSelect = useFileSystemStore(state => state.handleFileSelect);
+  const handleFileSelect = useFileSystemStore((state) => state.handleFileSelect);
 
   const isVisible = isCommandBarVisible;
   const onClose = () => setIsCommandBarVisible(false);
@@ -97,14 +97,14 @@ const CommandBar = () => {
 
   // Get data from stores
   const { buffers, activeBufferId } = useBufferStore();
-  const activeBuffer = buffers.find(b => b.id === activeBufferId);
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId);
   const { addOrUpdateRecentFile, getRecentFilesOrderedByFrecency } = useRecentFilesStore();
   const recentFiles = getRecentFilesOrderedByFrecency();
 
   // Load all project files when component mounts
   useEffect(() => {
-    getAllProjectFiles().then(allFiles => {
-      const formattedFiles = allFiles.map(file => ({
+    getAllProjectFiles().then((allFiles) => {
+      const formattedFiles = allFiles.map((file) => ({
         name: file.name,
         path: file.path,
         isDir: file.isDir,
@@ -193,33 +193,35 @@ const CommandBar = () => {
 
   // Memoize file filtering and sorting
   const { openBufferFiles, recentFilesInResults, otherFiles } = useMemo(() => {
-    const allFiles = files.filter(entry => !entry.isDir && !shouldIgnoreFile(entry.path));
+    const allFiles = files.filter((entry) => !entry.isDir && !shouldIgnoreFile(entry.path));
 
     // Get open buffers (excluding active buffer)
     const openBufferPaths = buffers
-      .filter(buffer => buffer.id !== activeBufferId && !buffer.isVirtual)
-      .map(buffer => buffer.path);
+      .filter((buffer) => buffer.id !== activeBufferId && !buffer.isVirtual)
+      .map((buffer) => buffer.path);
 
-    const openBufferFilesData = allFiles.filter(file => openBufferPaths.includes(file.path));
+    const openBufferFilesData = allFiles.filter((file) => openBufferPaths.includes(file.path));
 
     // Get recent file paths (excluding active buffer)
     const recentFilePaths = recentFiles
-      .filter(rf => !activeBuffer || rf.path !== activeBuffer.path)
-      .map(rf => rf.path);
+      .filter((rf) => !activeBuffer || rf.path !== activeBuffer.path)
+      .map((rf) => rf.path);
 
     if (!query.trim()) {
       // No search query - show open buffers, then recent files by frecency, then alphabetical
       const recent = allFiles
-        .filter(file => recentFilePaths.includes(file.path) && !openBufferPaths.includes(file.path))
+        .filter(
+          (file) => recentFilePaths.includes(file.path) && !openBufferPaths.includes(file.path),
+        )
         .sort((a, b) => {
-          const aIndex = recentFiles.findIndex(rf => rf.path === a.path);
-          const bIndex = recentFiles.findIndex(rf => rf.path === b.path);
+          const aIndex = recentFiles.findIndex((rf) => rf.path === a.path);
+          const bIndex = recentFiles.findIndex((rf) => rf.path === b.path);
           return aIndex - bIndex; // Already sorted by frecency
         });
 
       const others = allFiles
         .filter(
-          file =>
+          (file) =>
             !recentFilePaths.includes(file.path) &&
             !openBufferPaths.includes(file.path) &&
             (!activeBuffer || file.path !== activeBuffer.path),
@@ -235,7 +237,7 @@ const CommandBar = () => {
 
     // With search query - use fuzzy search
     const scoredFiles = allFiles
-      .map(file => {
+      .map((file) => {
         // Score both filename and full path, take the higher score
         const nameScore = fuzzyScore(file.name, query);
         const pathScore = fuzzyScore(file.path, query);
@@ -261,8 +263,8 @@ const CommandBar = () => {
         if (!aIsRecent && bIsRecent) return 1;
 
         if (aIsRecent && bIsRecent) {
-          const aIndex = recentFiles.findIndex(rf => rf.path === a.file.path);
-          const bIndex = recentFiles.findIndex(rf => rf.path === b.file.path);
+          const aIndex = recentFiles.findIndex((rf) => rf.path === a.file.path);
+          const bIndex = recentFiles.findIndex((rf) => rf.path === b.file.path);
           return aIndex - bIndex;
         }
 
@@ -339,10 +341,10 @@ const CommandBar = () => {
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex(prev => (prev + 1) % totalItems); // Circular navigation
+        setSelectedIndex((prev) => (prev + 1) % totalItems); // Circular navigation
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex(prev => (prev - 1 + totalItems) % totalItems); // Circular navigation
+        setSelectedIndex((prev) => (prev - 1 + totalItems) % totalItems); // Circular navigation
       } else if (e.key === "Enter") {
         e.preventDefault();
         if (allResults[selectedIndex]) {

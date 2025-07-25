@@ -85,7 +85,7 @@ const FileTree = ({
       let deepest = null;
       let maxDepth = -1;
 
-      stickyFolders.forEach(folder => {
+      stickyFolders.forEach((folder) => {
         const rect = folder.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
@@ -125,8 +125,8 @@ const FileTree = ({
         ig.add(
           content
             .split(/\r?\n/)
-            .map(l => l.trim())
-            .filter(l => l && !l.startsWith("#")),
+            .map((l) => l.trim())
+            .filter((l) => l && !l.startsWith("#")),
         );
         setGitIgnore(ig);
       } catch {
@@ -195,7 +195,7 @@ const FileTree = ({
         relativePath = relativePath.slice(1);
       }
 
-      return gitStatus.files.find(file => file.path === relativePath) || null;
+      return gitStatus.files.find((file) => file.path === relativePath) || null;
     },
     [gitStatus, rootFolderPath],
   );
@@ -217,7 +217,7 @@ const FileTree = ({
       }
 
       // Find any file within this directory that has changes
-      const fileWithChanges = gitStatus.files.find(file => {
+      const fileWithChanges = gitStatus.files.find((file) => {
         const filePath = file.path;
         return filePath.startsWith(`${relativeDirPath}/`) || filePath === relativeDirPath;
       });
@@ -283,7 +283,7 @@ const FileTree = ({
   // ─────────────────────────────────────────────────────────────────
   const filteredFiles = useMemo(() => {
     const process = (items: FileEntry[]): FileEntry[] =>
-      items.map(item => {
+      items.map((item) => {
         const ignored = isGitIgnored(item.path, item.isDir);
         return {
           ...item,
@@ -334,7 +334,7 @@ const FileTree = ({
 
     // Add the new item to the file tree
     const addNewItemToTree = (items: FileEntry[], targetPath: string): FileEntry[] => {
-      return items.map(item => {
+      return items.map((item) => {
         if (item.path === targetPath && item.isDir) {
           // Add the new item to this directory
           const children = [...(item.children || []), newItem];
@@ -388,8 +388,8 @@ const FileTree = ({
     // Remove the temporary item from the tree
     const removeNewItemFromTree = (items: FileEntry[]): FileEntry[] => {
       return items
-        .filter(i => !(i.isNewItem && i.isEditing))
-        .map(i => ({
+        .filter((i) => !(i.isNewItem && i.isEditing))
+        .map((i) => ({
           ...i,
           children: i.children ? removeNewItemFromTree(i.children) : undefined,
         }));
@@ -406,8 +406,8 @@ const FileTree = ({
     // Remove the temporary item from the tree
     const removeNewItemFromTree = (items: FileEntry[]): FileEntry[] => {
       return items
-        .filter(i => !(i.isNewItem && i.isEditing))
-        .map(i => ({
+        .filter((i) => !(i.isNewItem && i.isEditing))
+        .map((i) => ({
           ...i,
           children: i.children ? removeNewItemFromTree(i.children) : undefined,
         }));
@@ -487,7 +487,7 @@ const FileTree = ({
   );
 
   const renderFileTree = (items: FileEntry[], depth = 0) => {
-    return items.map(file => (
+    return items.map((file) => (
       <div key={file.path} className="file-tree-item" data-depth={depth}>
         {file.isEditing ? (
           <div
@@ -503,8 +503,8 @@ const FileTree = ({
             <input
               type="text"
               value={editingValue}
-              onChange={e => setEditingValue(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setEditingValue(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   finishInlineEditing(file, editingValue);
                 } else if (e.key === "Escape") {
@@ -530,7 +530,7 @@ const FileTree = ({
             type="button"
             data-file-path={file.path}
             data-is-dir={file.isDir}
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               // Track initial mouse position for drag threshold
               if (e.button === 0) {
                 setMouseDownInfo({
@@ -540,7 +540,7 @@ const FileTree = ({
                 });
               }
             }}
-            onMouseMove={e => {
+            onMouseMove={(e) => {
               // Check if we should start dragging based on movement threshold
               if (mouseDownInfo && !dragState.isDragging) {
                 const deltaX = e.clientX - mouseDownInfo.x;
@@ -562,8 +562,8 @@ const FileTree = ({
               // Clear mouse down info if mouse leaves the button
               setMouseDownInfo(null);
             }}
-            onClick={e => handleFileClick(e, file.path, file.isDir)}
-            onContextMenu={e => handleContextMenu(e, file.path, file.isDir)}
+            onClick={(e) => handleFileClick(e, file.path, file.isDir)}
+            onContextMenu={(e) => handleContextMenu(e, file.path, file.isDir)}
             className={cn(
               "flex min-h-[22px] w-full cursor-pointer",
               "select-none items-center gap-1.5 overflow-hidden",
@@ -663,7 +663,7 @@ const FileTree = ({
 
         if (onRefreshDirectory) {
           // Small delay to ensure file system operation is complete
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
 
           await onRefreshDirectory(targetPath);
           if (targetPath !== sourceParentPath) {
@@ -707,7 +707,7 @@ const FileTree = ({
         scrollBehavior: "auto", // Disable smooth scrolling
         overscrollBehavior: "contain",
       }}
-      onDragOver={e => {
+      onDragOver={(e) => {
         e.preventDefault();
         if (draggedItem) {
           e.dataTransfer.dropEffect = "move";
@@ -736,7 +736,7 @@ const FileTree = ({
               <>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     startInlineEditing(contextMenu.path, false);
@@ -752,7 +752,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (onCreateNewFolderInDirectory) {
@@ -772,7 +772,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (onUploadFile) {
@@ -792,7 +792,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (onRefreshDirectory) {
@@ -812,7 +812,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     // Use the Terminal app on macOS
@@ -833,7 +833,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     console.log("Find in folder:", contextMenu.path);
@@ -850,7 +850,7 @@ const FileTree = ({
                 {onGenerateImage && (
                   <button
                     type="button"
-                    onClick={e => {
+                    onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       onGenerateImage(contextMenu.path);
@@ -873,7 +873,7 @@ const FileTree = ({
               <>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     console.log("Open file:", contextMenu.path);
@@ -890,7 +890,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={async e => {
+                  onClick={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     try {
@@ -913,7 +913,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (onDuplicatePath) {
@@ -933,7 +933,7 @@ const FileTree = ({
                 </button>
                 <button
                   type="button"
-                  onClick={async e => {
+                  onClick={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     try {
@@ -968,7 +968,7 @@ const FileTree = ({
 
             <button
               type="button"
-              onClick={async e => {
+              onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 try {
@@ -990,7 +990,7 @@ const FileTree = ({
 
             <button
               type="button"
-              onClick={async e => {
+              onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 try {
@@ -1016,7 +1016,7 @@ const FileTree = ({
 
             <button
               type="button"
-              onClick={e => {
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (onCutPath) {
@@ -1037,7 +1037,7 @@ const FileTree = ({
 
             <button
               type="button"
-              onClick={e => {
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 const newName = prompt("Enter new name:", contextMenu.path.split("/").pop() || "");
@@ -1061,7 +1061,7 @@ const FileTree = ({
 
             <button
               type="button"
-              onClick={e => {
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (onRevealInFinder) {
@@ -1090,7 +1090,7 @@ const FileTree = ({
             <div className="my-1 border-border border-t" />
             <button
               type="button"
-              onClick={e => {
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (onDeletePath) {

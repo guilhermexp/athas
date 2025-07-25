@@ -26,7 +26,7 @@ export const EditorContentNew = memo<EditorContentNewProps>(
     const [scrollTop, setScrollTop] = useState(0);
     const [scrollLeft, setScrollLeft] = useState(0);
 
-    const lineCount = useEditorContentStore(state => state.lines.length);
+    const lineCount = useEditorContentStore((state) => state.lines.length);
     const { fontSize, lineNumbers } = useEditorSettingsStore();
 
     const lineHeight = getLineHeight(fontSize);
@@ -54,8 +54,8 @@ export const EditorContentNew = memo<EditorContentNewProps>(
     // Subscribe to cursor line changes only
     useEffect(() => {
       const unsubscribe = useEditorCursorStore.subscribe(
-        state => state.cursorPosition.line,
-        cursorLine => {
+        (state) => state.cursorPosition.line,
+        (cursorLine) => {
           const cursorTop = cursorLine * lineHeight;
           const cursorBottom = cursorTop + lineHeight;
 

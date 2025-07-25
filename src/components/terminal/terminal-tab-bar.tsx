@@ -400,7 +400,7 @@ const TerminalTabBar = ({
                   </div>
                 )}
                 <div
-                  ref={el => {
+                  ref={(el) => {
                     tabRefs.current[index] = el;
                   }}
                   className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-3 py-1 transition-all duration-150 ${
@@ -409,13 +409,13 @@ const TerminalTabBar = ({
                       : "bg-transparent text-text-lighter hover:text-text"
                   } ${terminal.isPinned ? "border-l-2 border-l-blue-500" : ""}`}
                   style={{ minWidth: "120px", maxWidth: "200px" }}
-                  onMouseDown={e => handleMouseDown(e, index)}
+                  onMouseDown={(e) => handleMouseDown(e, index)}
                   onClick={() => {
                     if (!isDragging) {
                       onTabClick(terminal.id);
                     }
                   }}
-                  onContextMenu={e => handleContextMenu(e, terminal)}
+                  onContextMenu={(e) => handleContextMenu(e, terminal)}
                   title={`${terminal.name}\n${terminal.currentDirectory}`}
                 >
                   {/* Active tab indicator */}
@@ -442,7 +442,7 @@ const TerminalTabBar = ({
                   {/* Close Button */}
                   {!terminal.isPinned && (
                     <button
-                      onClick={e => {
+                      onClick={(e) => {
                         e.stopPropagation();
                         onTabClose(terminal.id, e);
                       }}
@@ -532,7 +532,7 @@ const TerminalTabBar = ({
         {/* Floating tab name while dragging */}
         {isDragging && draggedIndex !== null && dragCurrentPosition && (
           <div
-            ref={el => {
+            ref={(el) => {
               if (el && window) {
                 // Center the floating tab on the cursor
                 const rect = el.getBoundingClientRect();
@@ -567,10 +567,10 @@ const TerminalTabBar = ({
         position={contextMenu.position}
         terminal={contextMenu.terminal}
         onClose={closeContextMenu}
-        onPin={terminalId => {
+        onPin={(terminalId) => {
           onTabPin?.(terminalId);
         }}
-        onCloseTab={terminalId => {
+        onCloseTab={(terminalId) => {
           onTabClose(terminalId, {} as React.MouseEvent);
         }}
         onCloseOthers={onCloseOtherTabs || (() => {})}

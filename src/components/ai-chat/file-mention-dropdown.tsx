@@ -144,7 +144,7 @@ export const FileMentionDropdown = React.memo(function FileMentionDropdown({
           className={`flex cursor-pointer items-center gap-2 border-border border-b px-2 py-1.5 text-xs transition-all duration-100 last:border-b-0 ${
             index === selectedIndex ? "bg-selected text-text shadow-sm" : "text-text hover:bg-hover"
           }`}
-          onClick={e => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             onSelect(file);

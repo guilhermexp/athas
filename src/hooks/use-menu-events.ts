@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 function cleanupMenuListeners() {
   if (!listenersAreSetup) return;
 
-  cleanupFunctions.forEach(cleanup => cleanup());
+  cleanupFunctions.forEach((cleanup) => cleanup());
 
   cleanupFunctions = [];
   listenersAreSetup = false;
@@ -44,7 +44,7 @@ async function setupMenuListeners(handlers: any) {
     listen("menu_go_to_line", () => currentHandlers.current.onGoToLine()),
     listen("menu_next_tab", () => currentHandlers.current.onNextTab()),
     listen("menu_prev_tab", () => currentHandlers.current.onPrevTab()),
-    listen("menu_theme_change", event => {
+    listen("menu_theme_change", (event) => {
       currentHandlers.current.onThemeChange(event.payload as string);
     }),
     listen("menu_about", () => {

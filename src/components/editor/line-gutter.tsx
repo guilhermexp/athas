@@ -21,7 +21,7 @@ export const LineGutter = ({
   hasWarning = false,
 }: LineGutterProps) => {
   const gutterDecorations = decorations.filter(
-    d => d.type === "gutter" && d.range.start.line === lineNumber,
+    (d) => d.type === "gutter" && d.range.start.line === lineNumber,
   );
 
   const renderGutterContent = () => {

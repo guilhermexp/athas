@@ -114,7 +114,7 @@ const ConnectionDialog = ({
   };
 
   const updateFormData = (updates: Partial<RemoteConnectionFormData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
+    setFormData((prev) => ({ ...prev, ...updates }));
     setValidationStatus("idle");
     setErrorMessage("");
   };
@@ -155,7 +155,7 @@ const ConnectionDialog = ({
                 id="connection-name"
                 type="text"
                 value={formData.name}
-                onChange={e => updateFormData({ name: e.target.value })}
+                onChange={(e) => updateFormData({ name: e.target.value })}
                 placeholder="My Server"
                 className={cn(
                   "w-full rounded border border-border bg-secondary-bg",
@@ -176,7 +176,7 @@ const ConnectionDialog = ({
                   id="host"
                   type="text"
                   value={formData.host}
-                  onChange={e => updateFormData({ host: e.target.value })}
+                  onChange={(e) => updateFormData({ host: e.target.value })}
                   placeholder="192.168.1.100"
                   className={cn(
                     "w-full rounded border border-border bg-secondary-bg",
@@ -194,7 +194,7 @@ const ConnectionDialog = ({
                   id="port"
                   type="number"
                   value={formData.port}
-                  onChange={e => updateFormData({ port: parseInt(e.target.value) || 22 })}
+                  onChange={(e) => updateFormData({ port: parseInt(e.target.value) || 22 })}
                   placeholder="22"
                   min="1"
                   max="65535"
@@ -213,7 +213,7 @@ const ConnectionDialog = ({
                 <Dropdown
                   value={formData.type}
                   options={connectionTypeOptions}
-                  onChange={value => updateFormData({ type: value as "ssh" | "sftp" })}
+                  onChange={(value) => updateFormData({ type: value as "ssh" | "sftp" })}
                   className="text-xs"
                 />
               </div>
@@ -228,7 +228,7 @@ const ConnectionDialog = ({
                 id="username"
                 type="text"
                 value={formData.username}
-                onChange={e => updateFormData({ username: e.target.value })}
+                onChange={(e) => updateFormData({ username: e.target.value })}
                 placeholder="root"
                 className={cn(
                   "w-full rounded border border-border bg-secondary-bg",
@@ -249,7 +249,7 @@ const ConnectionDialog = ({
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={e => updateFormData({ password: e.target.value })}
+                  onChange={(e) => updateFormData({ password: e.target.value })}
                   placeholder="Leave empty to use key authentication"
                   className={cn(
                     "w-full rounded border border-border bg-secondary-bg",
@@ -280,7 +280,7 @@ const ConnectionDialog = ({
                 id="keypath"
                 type="text"
                 value={formData.keyPath}
-                onChange={e => updateFormData({ keyPath: e.target.value })}
+                onChange={(e) => updateFormData({ keyPath: e.target.value })}
                 placeholder="~/.ssh/id_rsa"
                 className={cn(
                   "w-full rounded border border-border bg-secondary-bg",

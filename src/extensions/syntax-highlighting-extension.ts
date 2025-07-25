@@ -58,7 +58,7 @@ class SyntaxHighlighter {
         if (this.tokens.length > 0) {
           console.log(
             "Sample tokens from Rust API:",
-            this.tokens.slice(0, 5).map(t => ({
+            this.tokens.slice(0, 5).map((t) => ({
               text: content.slice(t.start, t.end),
               class_name: t.class_name,
               token_type: t.token_type,

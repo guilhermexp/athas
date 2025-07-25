@@ -6,9 +6,9 @@ import { useEditorCursorStore } from "../stores/editor-cursor-store";
  * This prevents rerenders when cursor position changes
  */
 export function useCursorActions() {
-  const setCursorPosition = useEditorCursorStore(state => state.setCursorPosition);
-  const setSelection = useEditorCursorStore(state => state.setSelection);
-  const setDesiredColumn = useEditorCursorStore(state => state.setDesiredColumn);
+  const setCursorPosition = useEditorCursorStore((state) => state.setCursorPosition);
+  const setSelection = useEditorCursorStore((state) => state.setSelection);
+  const setDesiredColumn = useEditorCursorStore((state) => state.setDesiredColumn);
 
   // Get current values without subscribing
   const getCursorPosition = useCallback(() => {

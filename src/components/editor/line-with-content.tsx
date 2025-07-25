@@ -15,12 +15,12 @@ interface LineWithContentProps {
 
 export const LineWithContent = memo<LineWithContentProps>(
   ({ lineNumber, showLineNumbers, gutterWidth, lineHeight, isSelected }) => {
-    const content = useEditorContentStore(state => state.lines[lineNumber]);
-    const tokens = useEditorContentStore(state => state.lineTokens.get(lineNumber)) ?? [];
+    const content = useEditorContentStore((state) => state.lines[lineNumber]);
+    const tokens = useEditorContentStore((state) => state.lineTokens.get(lineNumber)) ?? [];
 
     // Subscribe only to decorations for this line with shallow comparison
     const decorations = useEditorDecorationsStore(
-      useShallow(state => state.getDecorationsForLine(lineNumber)),
+      useShallow((state) => state.getDecorationsForLine(lineNumber)),
     );
 
     return (

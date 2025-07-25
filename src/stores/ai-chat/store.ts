@@ -43,20 +43,20 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
         // ─────────────────────────────────────────────────────────────────
         // Input actions
         // ─────────────────────────────────────────────────────────────────
-        setInput: input =>
-          set(state => {
+        setInput: (input) =>
+          set((state) => {
             state.input = input;
           }),
-        setIsTyping: isTyping =>
-          set(state => {
+        setIsTyping: (isTyping) =>
+          set((state) => {
             state.isTyping = isTyping;
           }),
-        setStreamingMessageId: streamingMessageId =>
-          set(state => {
+        setStreamingMessageId: (streamingMessageId) =>
+          set((state) => {
             state.streamingMessageId = streamingMessageId;
           }),
-        toggleBufferSelection: bufferId =>
-          set(state => {
+        toggleBufferSelection: (bufferId) =>
+          set((state) => {
             // Create new Set for immutability
             state.selectedBufferIds = new Set(state.selectedBufferIds);
             if (state.selectedBufferIds.has(bufferId)) {
@@ -65,28 +65,28 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
               state.selectedBufferIds.add(bufferId);
             }
           }),
-        setIsContextDropdownOpen: isContextDropdownOpen =>
-          set(state => {
+        setIsContextDropdownOpen: (isContextDropdownOpen) =>
+          set((state) => {
             state.isContextDropdownOpen = isContextDropdownOpen;
           }),
-        setIsSendAnimating: isSendAnimating =>
-          set(state => {
+        setIsSendAnimating: (isSendAnimating) =>
+          set((state) => {
             state.isSendAnimating = isSendAnimating;
           }),
-        setHasApiKey: hasApiKey =>
-          set(state => {
+        setHasApiKey: (hasApiKey) =>
+          set((state) => {
             state.hasApiKey = hasApiKey;
           }),
         clearSelectedBuffers: () =>
-          set(state => {
+          set((state) => {
             state.selectedBufferIds = new Set<string>();
           }),
-        setSelectedBufferIds: selectedBufferIds =>
-          set(state => {
+        setSelectedBufferIds: (selectedBufferIds) =>
+          set((state) => {
             state.selectedBufferIds = selectedBufferIds;
           }),
-        autoSelectBuffer: bufferId =>
-          set(state => {
+        autoSelectBuffer: (bufferId) =>
+          set((state) => {
             if (!state.selectedBufferIds.has(bufferId)) {
               state.selectedBufferIds = new Set(state.selectedBufferIds);
               state.selectedBufferIds.add(bufferId);
@@ -104,7 +104,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
             createdAt: new Date(),
             lastMessageAt: new Date(),
           };
-          set(state => {
+          set((state) => {
             state.chats.unshift(newChat);
             state.currentChatId = newChat.id;
             state.isChatHistoryVisible = false;
@@ -112,24 +112,24 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
           return newChat.id;
         },
 
-        switchToChat: chatId => {
-          set(state => {
+        switchToChat: (chatId) => {
+          set((state) => {
             state.currentChatId = chatId;
             state.isChatHistoryVisible = false;
           });
           // Stop any streaming when switching chats
           const state = get();
           if (state.streamingMessageId) {
-            set(state => {
+            set((state) => {
               state.isTyping = false;
               state.streamingMessageId = null;
             });
           }
         },
 
-        deleteChat: chatId => {
-          set(state => {
-            const chatIndex = state.chats.findIndex(chat => chat.id === chatId);
+        deleteChat: (chatId) => {
+          set((state) => {
+            const chatIndex = state.chats.findIndex((chat) => chat.id === chatId);
             if (chatIndex !== -1) {
               state.chats.splice(chatIndex, 1);
             }
@@ -149,8 +149,8 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
         },
 
         updateChatTitle: (chatId, title) => {
-          set(state => {
-            const chat = state.chats.find(c => c.id === chatId);
+          set((state) => {
+            const chat = state.chats.find((c) => c.id === chatId);
             if (chat) {
               chat.title = title;
             }
@@ -158,8 +158,8 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
         },
 
         addMessage: (chatId, message) => {
-          set(state => {
-            const chat = state.chats.find(c => c.id === chatId);
+          set((state) => {
+            const chat = state.chats.find((c) => c.id === chatId);
             if (chat) {
               chat.messages.push(message);
               chat.lastMessageAt = new Date();
@@ -168,10 +168,10 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
         },
 
         updateMessage: (chatId, messageId, updates) => {
-          set(state => {
-            const chat = state.chats.find(c => c.id === chatId);
+          set((state) => {
+            const chat = state.chats.find((c) => c.id === chatId);
             if (chat) {
-              const message = chat.messages.find(m => m.id === messageId);
+              const message = chat.messages.find((m) => m.id === messageId);
               if (message) {
                 Object.assign(message, updates);
                 chat.lastMessageAt = new Date();
@@ -180,36 +180,36 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
           });
         },
 
-        setIsChatHistoryVisible: isChatHistoryVisible =>
-          set(state => {
+        setIsChatHistoryVisible: (isChatHistoryVisible) =>
+          set((state) => {
             state.isChatHistoryVisible = isChatHistoryVisible;
           }),
 
         // ─────────────────────────────────────────────────────────────────
         // Provider API key actions
         // ─────────────────────────────────────────────────────────────────
-        setApiKeyModalState: apiKeyModalState =>
-          set(state => {
+        setApiKeyModalState: (apiKeyModalState) =>
+          set((state) => {
             state.apiKeyModalState = apiKeyModalState;
           }),
 
-        checkApiKey: async providerId => {
+        checkApiKey: async (providerId) => {
           try {
             // Claude Code doesn't require an API key in the frontend
             if (providerId === "claude-code") {
-              set(state => {
+              set((state) => {
                 state.hasApiKey = true;
               });
               return;
             }
 
             const token = await getProviderApiToken(providerId);
-            set(state => {
+            set((state) => {
               state.hasApiKey = !!token;
             });
           } catch (error) {
             console.error("Error checking API key:", error);
-            set(state => {
+            set((state) => {
               state.hasApiKey = false;
             });
           }
@@ -233,7 +233,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
             }
           }
 
-          set(state => {
+          set((state) => {
             state.providerApiKeys = newApiKeyMap;
           });
         },
@@ -258,18 +258,18 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
                   newApiKeyMap.set(provider.id, false);
                 }
               }
-              set(state => {
+              set((state) => {
                 state.providerApiKeys = newApiKeyMap;
               });
 
               // Update hasApiKey for current provider
               if (providerId === "claude-code") {
-                set(state => {
+                set((state) => {
                   state.hasApiKey = true;
                 });
               } else {
                 const token = await getProviderApiToken(providerId);
-                set(state => {
+                set((state) => {
                   state.hasApiKey = !!token;
                 });
               }
@@ -283,7 +283,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
           }
         },
 
-        removeApiKey: async providerId => {
+        removeApiKey: async (providerId) => {
           try {
             await removeProviderApiToken(providerId);
 
@@ -301,17 +301,17 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
                 newApiKeyMap.set(provider.id, false);
               }
             }
-            set(state => {
+            set((state) => {
               state.providerApiKeys = newApiKeyMap;
             });
 
             // Update hasApiKey for current provider
             if (providerId === "claude-code") {
-              set(state => {
+              set((state) => {
                 state.hasApiKey = true;
               });
             } else {
-              set(state => {
+              set((state) => {
                 state.hasApiKey = false;
               });
             }
@@ -321,7 +321,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
           }
         },
 
-        hasProviderApiKey: providerId => {
+        hasProviderApiKey: (providerId) => {
           return get().providerApiKeys.get(providerId) || false;
         },
 
@@ -329,7 +329,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
         // Mention actions
         // ─────────────────────────────────────────────────────────────────
         showMention: (position, search, startIndex) =>
-          set(state => {
+          set((state) => {
             state.mentionState = {
               active: true,
               position,
@@ -340,7 +340,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
           }),
 
         hideMention: () =>
-          set(state => {
+          set((state) => {
             state.mentionState = {
               active: false,
               position: { top: 0, left: 0 },
@@ -350,33 +350,33 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
             };
           }),
 
-        updateSearch: search =>
-          set(state => {
+        updateSearch: (search) =>
+          set((state) => {
             state.mentionState.search = search;
             state.mentionState.selectedIndex = 0;
           }),
 
-        updatePosition: position =>
-          set(state => {
+        updatePosition: (position) =>
+          set((state) => {
             state.mentionState.position = position;
           }),
 
         selectNext: () =>
-          set(state => {
+          set((state) => {
             state.mentionState.selectedIndex = Math.min(state.mentionState.selectedIndex + 1, 4);
           }),
 
         selectPrevious: () =>
-          set(state => {
+          set((state) => {
             state.mentionState.selectedIndex = Math.max(state.mentionState.selectedIndex - 1, 0);
           }),
 
-        setSelectedIndex: index =>
-          set(state => {
+        setSelectedIndex: (index) =>
+          set((state) => {
             state.mentionState.selectedIndex = index;
           }),
 
-        getFilteredFiles: allFiles => {
+        getFilteredFiles: (allFiles) => {
           const { search } = get().mentionState;
           const query = search.toLowerCase();
 
@@ -411,36 +411,36 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
         // ─────────────────────────────────────────────────────────────────
         getCurrentChat: () => {
           const state = get();
-          return state.chats.find(chat => chat.id === state.currentChatId);
+          return state.chats.find((chat) => chat.id === state.currentChatId);
         },
 
         getCurrentMessages: () => {
           const state = get();
-          const chat = state.chats.find(chat => chat.id === state.currentChatId);
+          const chat = state.chats.find((chat) => chat.id === state.currentChatId);
           return chat?.messages || [];
         },
       }),
       {
         name: "athas-ai-chat-v2",
         version: 1,
-        partialize: state => ({
+        partialize: (state) => ({
           // Only persist chats and currentChatId
           chats: state.chats,
           currentChatId: state.currentChatId,
         }),
         merge: (persistedState, currentState) =>
-          produce(currentState, draft => {
+          produce(currentState, (draft) => {
             // Merge persisted state into draft
             Object.assign(draft, persistedState);
             // Convert date strings back to Date objects
             if (draft.chats) {
-              draft.chats.forEach(chat => {
+              draft.chats.forEach((chat) => {
                 chat.createdAt = new Date(chat.createdAt);
                 chat.lastMessageAt = new Date(chat.lastMessageAt);
-                chat.messages.forEach(msg => {
+                chat.messages.forEach((msg) => {
                   msg.timestamp = new Date(msg.timestamp);
                   if (msg.toolCalls) {
-                    msg.toolCalls.forEach(tc => {
+                    msg.toolCalls.forEach((tc) => {
                       tc.timestamp = new Date(tc.timestamp);
                     });
                   }

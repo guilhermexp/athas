@@ -4,12 +4,12 @@ import { useEditorCompletionStore } from "../../stores/editor-completion-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 
 export const HoverTooltip = memo(() => {
-  const fontSize = useEditorSettingsStore(state => state.fontSize);
-  const fontFamily = useEditorSettingsStore(state => state.fontFamily);
-  const { hoverInfo, setIsHovering } = useEditorCompletionStore();
+  const fontSize = useEditorSettingsStore((state) => state.fontSize);
+  const fontFamily = useEditorSettingsStore((state) => state.fontFamily);
+  const { hoverInfo, actions } = useEditorCompletionStore();
 
-  const handleMouseEnter = () => setIsHovering(true);
-  const handleMouseLeave = () => setIsHovering(false);
+  const handleMouseEnter = () => actions.setIsHovering(true);
+  const handleMouseLeave = () => actions.setIsHovering(false);
 
   if (!hoverInfo) return null;
 

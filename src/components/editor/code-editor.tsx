@@ -37,13 +37,13 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
 
   const { setRefs, setContent, setFileInfo } = useEditorInstanceStore();
 
-  const activeBuffer = useBufferStore(state => state.getActiveBuffer());
+  const activeBuffer = useBufferStore((state) => state.getActiveBuffer());
   const { handleContentChange } = useAppStore();
   const { fontSize, fontFamily, tabSize, wordWrap, lineNumbers } = useEditorSettingsStore();
   const { aiCompletion } = useEditorCompletionStore();
   const { searchQuery, searchMatches, currentMatchIndex, setSearchMatches, setCurrentMatchIndex } =
     useEditorSearchStore();
-  const isFileTreeLoading = useFileSystemStore(state => state.isFileTreeLoading);
+  const isFileTreeLoading = useFileSystemStore((state) => state.isFileTreeLoading);
 
   // Extract values from active buffer or use defaults
   const value = activeBuffer?.content || "";

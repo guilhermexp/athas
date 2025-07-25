@@ -19,7 +19,7 @@ export const FontPreloader = () => {
       preloadDiv.style.opacity = "0";
       preloadDiv.style.pointerEvents = "none";
 
-      monospaceFonts.forEach(font => {
+      monospaceFonts.forEach((font) => {
         const span = document.createElement("span");
         span.style.fontFamily = `"${font.family}", monospace`;
         span.textContent = "Font loading test";
@@ -45,7 +45,7 @@ export const FontPreloader = () => {
 
       const fontFaces = monospaceFonts
         .map(
-          font => `
+          (font) => `
         @font-face {
           font-family: "${font.family}";
           font-display: swap;

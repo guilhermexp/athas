@@ -36,7 +36,7 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
       onSuccess: () => {
         setConnections(conns);
       },
-      onQuotaExceeded: error => {
+      onQuotaExceeded: (error) => {
         console.error("Failed to save remote connections due to quota:", error);
         // Still update the state even if localStorage fails
         setConnections(conns);
@@ -65,7 +65,7 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
 
       if (editingConnection) {
         // Update existing connection
-        updatedConnections = connections.map(conn =>
+        updatedConnections = connections.map((conn) =>
           conn.id === editingConnection.id
             ? {
                 ...conn,
@@ -95,7 +95,7 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
   };
 
   const handleConnect = async (connectionId: string) => {
-    const connection = connections.find(conn => conn.id === connectionId);
+    const connection = connections.find((conn) => conn.id === connectionId);
     if (!connection) return;
 
     try {
@@ -104,7 +104,7 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
         await invoke("ssh_disconnect", { connectionId });
 
         setConnections(
-          connections.map(conn =>
+          connections.map((conn) =>
             conn.id === connectionId ? { ...conn, isConnected: false } : conn,
           ),
         );
@@ -122,7 +122,7 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
 
         // Update connection status
         setConnections(
-          connections.map(conn =>
+          connections.map((conn) =>
             conn.id === connectionId
               ? {
                   ...conn,
@@ -162,7 +162,7 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
   };
 
   const handleDeleteConnection = (connectionId: string) => {
-    saveConnections(connections.filter(conn => conn.id !== connectionId));
+    saveConnections(connections.filter((conn) => conn.id !== connectionId));
   };
 
   const handleAddNew = () => {

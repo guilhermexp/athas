@@ -127,7 +127,7 @@ export const useKeyboardShortcuts = ({
       // Only handle on non-macOS platforms
       if ((e.metaKey || e.ctrlKey) && e.key === "f" && !e.shiftKey && !isMac()) {
         e.preventDefault();
-        setIsFindVisible(prev => !prev);
+        setIsFindVisible((prev) => !prev);
         return;
       }
 
@@ -177,7 +177,7 @@ export const useKeyboardShortcuts = ({
       // Only handle on non-macOS platforms
       if ((e.metaKey || e.ctrlKey) && e.key === "b" && !e.shiftKey && !isMac()) {
         e.preventDefault();
-        setIsSidebarVisible(prev => !prev);
+        setIsSidebarVisible((prev) => !prev);
         return;
       }
 
@@ -194,7 +194,7 @@ export const useKeyboardShortcuts = ({
       // Only handle on non-macOS platforms
       if ((e.metaKey || e.ctrlKey) && e.key === "r" && coreFeatures.aiChat && !isMac()) {
         e.preventDefault();
-        setIsRightPaneVisible(prev => !prev);
+        setIsRightPaneVisible((prev) => !prev);
         return;
       }
 
@@ -202,7 +202,7 @@ export const useKeyboardShortcuts = ({
       // Only handle on non-macOS platforms
       if ((e.metaKey || e.ctrlKey) && e.key === "p" && !e.shiftKey && !isMac()) {
         e.preventDefault();
-        setIsCommandBarVisible(prev => !prev);
+        setIsCommandBarVisible((prev) => !prev);
         return;
       }
 
@@ -210,7 +210,7 @@ export const useKeyboardShortcuts = ({
       // Only handle on non-macOS platforms
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P" && !isMac()) {
         e.preventDefault();
-        setIsCommandPaletteVisible(prev => !prev);
+        setIsCommandPaletteVisible((prev) => !prev);
         // Focus the command palette after a short delay to ensure it's rendered
         setTimeout(() => {
           focusCommandPalette();

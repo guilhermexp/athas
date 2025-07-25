@@ -5,7 +5,7 @@ interface ThemeStore {
   setTheme: (theme: "light" | "dark") => void;
 }
 
-export const useThemeStore = create<ThemeStore>(set => ({
+export const useThemeStore = create<ThemeStore>((set) => ({
   currentTheme: document.documentElement.classList.contains("force-athas-light") ? "light" : "dark",
 
   setTheme: (theme: "light" | "dark") => {

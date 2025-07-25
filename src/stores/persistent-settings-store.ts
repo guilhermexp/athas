@@ -23,7 +23,7 @@ const initialState = {
   } as CoreFeaturesState,
 };
 
-const storeCreator = combine(initialState, set => ({
+const storeCreator = combine(initialState, (set) => ({
   // Actions
   setAIProvider: (providerId: string) => set({ aiProviderId: providerId }),
   setAIModel: (modelId: string) => set({ aiModelId: modelId }),

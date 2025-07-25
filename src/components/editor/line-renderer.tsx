@@ -58,7 +58,7 @@ export const LineRenderer = ({
 
   const applyDecorations = (baseContent: React.ReactNode) => {
     const inlineDecorations = decorations.filter(
-      d => d.type === "inline" && d.range.start.line === lineNumber,
+      (d) => d.type === "inline" && d.range.start.line === lineNumber,
     );
 
     if (inlineDecorations.length === 0 && searchHighlight.length === 0) {

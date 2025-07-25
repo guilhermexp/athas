@@ -78,7 +78,7 @@ export function ImageDiffViewer({ diff, fileName, onClose }: ImageDiffViewerProp
         </div>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
+            onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))}
             variant="ghost"
             size="xs"
             title="Zoom out"
@@ -91,7 +91,7 @@ export function ImageDiffViewer({ diff, fileName, onClose }: ImageDiffViewerProp
             {Math.round(zoom * 100)}%
           </span>
           <Button
-            onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+            onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
             variant="ghost"
             size="xs"
             title="Zoom in"

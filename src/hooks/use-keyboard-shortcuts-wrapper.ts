@@ -14,7 +14,7 @@ export function useKeyboardShortcutsWrapper() {
   const commandPaletteRef = { current: null }; // Placeholder for command palette ref
 
   useKeyboardShortcuts({
-    setIsBottomPaneVisible: value => {
+    setIsBottomPaneVisible: (value) => {
       if (typeof value === "function") {
         uiState.setIsBottomPaneVisible(value(uiState.isBottomPaneVisible));
       } else {
@@ -22,35 +22,35 @@ export function useKeyboardShortcutsWrapper() {
       }
     },
     setBottomPaneActiveTab: uiState.setBottomPaneActiveTab,
-    setIsFindVisible: value => {
+    setIsFindVisible: (value) => {
       if (typeof value === "function") {
         uiState.setIsFindVisible(value(uiState.isFindVisible));
       } else {
         uiState.setIsFindVisible(value);
       }
     },
-    setIsSidebarVisible: value => {
+    setIsSidebarVisible: (value) => {
       if (typeof value === "function") {
         uiState.setIsSidebarVisible(value(uiState.isSidebarVisible));
       } else {
         uiState.setIsSidebarVisible(value);
       }
     },
-    setIsRightPaneVisible: value => {
+    setIsRightPaneVisible: (value) => {
       if (typeof value === "function") {
         setIsAIChatVisible(value(isAIChatVisible));
       } else {
         setIsAIChatVisible(value);
       }
     },
-    setIsCommandBarVisible: value => {
+    setIsCommandBarVisible: (value) => {
       if (typeof value === "function") {
         uiState.setIsCommandBarVisible(value(uiState.isCommandBarVisible));
       } else {
         uiState.setIsCommandBarVisible(value);
       }
     },
-    setIsCommandPaletteVisible: value => {
+    setIsCommandPaletteVisible: (value) => {
       if (typeof value === "function") {
         uiState.setIsCommandPaletteVisible(value(uiState.isCommandPaletteVisible));
       } else {

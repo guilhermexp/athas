@@ -4,13 +4,8 @@ import { useEditorCompletionStore } from "../../stores/editor-completion-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 
 export const CompletionDropdown = memo(() => {
-  const {
-    isLspCompletionVisible,
-    lspCompletions,
-    selectedLspIndex,
-    completionPosition,
-    setIsLspCompletionVisible,
-  } = useEditorCompletionStore();
+  const { isLspCompletionVisible, lspCompletions, selectedLspIndex, completionPosition, actions } =
+    useEditorCompletionStore();
   const { editorRef } = useEditorInstanceStore();
 
   if (!isLspCompletionVisible) return null;
@@ -20,7 +15,7 @@ export const CompletionDropdown = memo(() => {
     if (editorRef?.current) {
       // This would contain the actual completion application logic
       // For now, just close the dropdown
-      setIsLspCompletionVisible(false);
+      actions.setIsLspCompletionVisible(false);
     }
   };
 

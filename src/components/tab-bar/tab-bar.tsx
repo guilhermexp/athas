@@ -82,7 +82,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
   useEffect(() => {
     if (maxOpenTabs > 0 && buffers.length > maxOpenTabs && handleTabClose) {
-      const closableBuffers = buffers.filter(b => !b.isPinned && b.id !== activeBufferId);
+      const closableBuffers = buffers.filter((b) => !b.isPinned && b.id !== activeBufferId);
 
       let tabsToClose = buffers.length - maxOpenTabs;
       for (let i = 0; i < closableBuffers.length && tabsToClose > 0; i++) {
@@ -94,7 +94,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
   // Auto-scroll active tab into view
   useEffect(() => {
-    const activeIndex = sortedBuffers.findIndex(buffer => buffer.id === activeBufferId);
+    const activeIndex = sortedBuffers.findIndex((buffer) => buffer.id === activeBufferId);
     if (activeIndex !== -1 && tabRefs.current[activeIndex] && tabBarRef.current) {
       const activeTab = tabRefs.current[activeIndex];
       const container = tabBarRef.current;
@@ -193,7 +193,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      setDragState(prev => {
+      setDragState((prev) => {
         if (prev.draggedIndex === null || !prev.startPosition) return prev;
         const currentPosition = { x: e.clientX, y: e.clientY };
         const distance = Math.sqrt(
@@ -401,12 +401,12 @@ const TabBar = ({ paneId }: TabBarProps) => {
                 isActive={isActive}
                 isDraggedTab={isDraggedTab}
                 showDropIndicatorBefore={showDropIndicatorBefore}
-                tabRef={el => {
+                tabRef={(el) => {
                   tabRefs.current[index] = el;
                 }}
-                onMouseDown={e => handleMouseDown(e, index)}
-                onContextMenu={e => handleContextMenu(e, buffer)}
-                onDragStart={e => handleDragStart(e, index)}
+                onMouseDown={(e) => handleMouseDown(e, index)}
+                onContextMenu={(e) => handleContextMenu(e, buffer)}
+                onDragStart={(e) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
                 handleTabClose={handleTabClose}
               />
@@ -435,8 +435,8 @@ const TabBar = ({ paneId }: TabBarProps) => {
         buffer={contextMenu.buffer}
         onClose={closeContextMenu}
         onPin={handleTabPin || (() => {})}
-        onCloseTab={bufferId => {
-          const buffer = buffers.find(b => b.id === bufferId);
+        onCloseTab={(bufferId) => {
+          const buffer = buffers.find((b) => b.id === bufferId);
           if (buffer) {
             handleTabClose(bufferId);
           }
@@ -453,7 +453,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
         }}
         onReload={(bufferId: string) => {
           // Reload the buffer by closing and reopening it
-          const buffer = buffers.find(b => b.id === bufferId);
+          const buffer = buffers.find((b) => b.id === bufferId);
           if (buffer && buffer.path !== "extensions://marketplace") {
             const { closeBuffer, openBuffer } = useBufferStore.getState();
             closeBuffer(bufferId);

@@ -14,22 +14,22 @@ export const AISettings = () => {
   const { settings, updateSetting } = useSettingsStore();
   const [apiKeysVisible, setApiKeysVisible] = useState(false);
 
-  const currentProvider = getAvailableProviders().find(p => p.id === aiProviderId);
+  const currentProvider = getAvailableProviders().find((p) => p.id === aiProviderId);
   const currentModel = getModelById(aiProviderId, aiModelId);
 
-  const providerOptions = getAvailableProviders().map(provider => ({
+  const providerOptions = getAvailableProviders().map((provider) => ({
     value: provider.id,
     label: provider.name,
   }));
 
   const modelOptions =
-    currentProvider?.models.map(model => ({
+    currentProvider?.models.map((model) => ({
       value: model.id,
       label: model.name,
     })) || [];
 
   const handleProviderChange = (providerId: string) => {
-    const provider = getAvailableProviders().find(p => p.id === providerId);
+    const provider = getAvailableProviders().find((p) => p.id === providerId);
     if (provider && provider.models.length > 0) {
       setAIProviderAndModel(providerId, provider.models[0].id);
     }
@@ -80,7 +80,7 @@ export const AISettings = () => {
         <SettingRow label="AI Chat" description="Enable AI-powered chat assistant">
           <Switch
             checked={coreFeatures.aiChat}
-            onChange={checked => setCoreFeatures({ ...coreFeatures, aiChat: checked })}
+            onChange={(checked) => setCoreFeatures({ ...coreFeatures, aiChat: checked })}
             size="sm"
           />
         </SettingRow>
@@ -88,7 +88,7 @@ export const AISettings = () => {
         <SettingRow label="AI Completion" description="Enable AI code completion in editor">
           <Switch
             checked={settings.aiCompletion}
-            onChange={checked => updateSetting("aiCompletion", checked)}
+            onChange={(checked) => updateSetting("aiCompletion", checked)}
             size="sm"
           />
         </SettingRow>
@@ -103,8 +103,8 @@ export const AISettings = () => {
 
         {apiKeysVisible &&
           getAvailableProviders()
-            .filter(provider => provider.requiresApiKey)
-            .map(provider => (
+            .filter((provider) => provider.requiresApiKey)
+            .map((provider) => (
               <SettingRow
                 key={provider.id}
                 label={`${provider.name} API Key`}

@@ -25,7 +25,7 @@ export const groupLinesIntoHunks = (lines: GitDiffLine[]): ParsedHunk[] => {
   let currentHeader: GitDiffLine | null = null;
   let hunkId = 0;
 
-  lines.forEach(line => {
+  lines.forEach((line) => {
     if (line.line_type === "header") {
       if (currentHeader && currentHunk.length > 0) {
         hunks.push({ header: currentHeader, lines: [...currentHunk], id: hunkId++ });

@@ -73,7 +73,7 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
   ) => {
     if (!repoPath) return;
 
-    setActionLoading(prev => new Set(prev).add(stashIndex));
+    setActionLoading((prev) => new Set(prev).add(stashIndex));
     try {
       const success = await action();
       if (success) {
@@ -86,7 +86,7 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
     } catch (error) {
       console.error(`${actionName} error:`, error);
     } finally {
-      setActionLoading(prev => {
+      setActionLoading((prev) => {
         const newSet = new Set(prev);
         newSet.delete(stashIndex);
         return newSet;
@@ -167,13 +167,13 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
               type="text"
               placeholder="Stash message (optional)..."
               value={newStashMessage}
-              onChange={e => setNewStashMessage(e.target.value)}
+              onChange={(e) => setNewStashMessage(e.target.value)}
               className={cn(
                 "w-full rounded border border-border bg-primary-bg",
                 "px-2 py-1 text-text text-xs",
                 "focus:border-blue-500 focus:outline-none",
               )}
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleCreateStash();
                 }
@@ -185,7 +185,7 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
                 <input
                   type="checkbox"
                   checked={includeUntracked}
-                  onChange={e => setIncludeUntracked(e.target.checked)}
+                  onChange={(e) => setIncludeUntracked(e.target.checked)}
                   className="h-3 w-3"
                 />
                 Include untracked files
@@ -214,7 +214,7 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
             <div className="p-4 text-center text-text-lighter text-xs">No stashes found</div>
           ) : (
             <div className="space-y-0">
-              {stashes.map(stash => {
+              {stashes.map((stash) => {
                 const isActionLoading = actionLoading.has(stash.index);
 
                 return (

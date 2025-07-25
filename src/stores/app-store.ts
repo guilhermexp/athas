@@ -43,7 +43,9 @@ export const useAppStore = create(
           const { settings } = useSettingsStore.getState();
           const { markPendingSave } = useFileWatcherStore.getState();
 
-          const activeBuffer = useBufferStore.getState().buffers.find(b => b.id === activeBufferId);
+          const activeBuffer = useBufferStore
+            .getState()
+            .buffers.find((b) => b.id === activeBufferId);
           if (!activeBuffer) return;
 
           const isRemoteFile = activeBuffer.path.startsWith("remote://");
@@ -73,7 +75,7 @@ export const useAppStore = create(
                 }
               }, 150);
 
-              set(state => {
+              set((state) => {
                 state.autoSaveTimeoutId = newTimeoutId;
               });
             }
@@ -91,7 +93,9 @@ export const useAppStore = create(
           const { updateSettingsFromJSON } = useSettingsStore.getState();
           const { markPendingSave } = useFileWatcherStore.getState();
 
-          const activeBuffer = useBufferStore.getState().buffers.find(b => b.id === activeBufferId);
+          const activeBuffer = useBufferStore
+            .getState()
+            .buffers.find((b) => b.id === activeBufferId);
           if (!activeBuffer) return;
 
           if (activeBuffer.isVirtual) {
@@ -140,7 +144,7 @@ export const useAppStore = create(
           cursorPosition: { x: number; y: number };
           selectionRange: { start: number; end: number };
         }) => {
-          set(state => {
+          set((state) => {
             state.quickEditState = {
               isOpen: true,
               selectedText: params.text,

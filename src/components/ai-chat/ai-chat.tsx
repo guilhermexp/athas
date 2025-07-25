@@ -38,34 +38,34 @@ export default function AIChat({
   const { aiProviderId, aiModelId, setAIProviderAndModel } = usePersistentSettingsStore();
 
   // Get store state selectively to avoid re-renders
-  const input = useAIChatStore(state => state.input);
-  const selectedBufferIds = useAIChatStore(state => state.selectedBufferIds);
-  const hasApiKey = useAIChatStore(state => state.hasApiKey);
-  const chats = useAIChatStore(state => state.chats);
-  const currentChatId = useAIChatStore(state => state.currentChatId);
-  const isChatHistoryVisible = useAIChatStore(state => state.isChatHistoryVisible);
-  const apiKeyModalState = useAIChatStore(state => state.apiKeyModalState);
+  const input = useAIChatStore((state) => state.input);
+  const selectedBufferIds = useAIChatStore((state) => state.selectedBufferIds);
+  const hasApiKey = useAIChatStore((state) => state.hasApiKey);
+  const chats = useAIChatStore((state) => state.chats);
+  const currentChatId = useAIChatStore((state) => state.currentChatId);
+  const isChatHistoryVisible = useAIChatStore((state) => state.isChatHistoryVisible);
+  const apiKeyModalState = useAIChatStore((state) => state.apiKeyModalState);
 
   // Get store actions (these are stable references)
-  const autoSelectBuffer = useAIChatStore(state => state.autoSelectBuffer);
-  const checkApiKey = useAIChatStore(state => state.checkApiKey);
-  const checkAllProviderApiKeys = useAIChatStore(state => state.checkAllProviderApiKeys);
-  const setInput = useAIChatStore(state => state.setInput);
-  const setIsTyping = useAIChatStore(state => state.setIsTyping);
-  const setStreamingMessageId = useAIChatStore(state => state.setStreamingMessageId);
-  const createNewChat = useAIChatStore(state => state.createNewChat);
-  const deleteChat = useAIChatStore(state => state.deleteChat);
-  const updateChatTitle = useAIChatStore(state => state.updateChatTitle);
-  const addMessage = useAIChatStore(state => state.addMessage);
-  const updateMessage = useAIChatStore(state => state.updateMessage);
-  const setIsChatHistoryVisible = useAIChatStore(state => state.setIsChatHistoryVisible);
-  const setApiKeyModalState = useAIChatStore(state => state.setApiKeyModalState);
-  const saveApiKey = useAIChatStore(state => state.saveApiKey);
-  const removeApiKey = useAIChatStore(state => state.removeApiKey);
-  const hasProviderApiKey = useAIChatStore(state => state.hasProviderApiKey);
-  const getCurrentChat = useAIChatStore(state => state.getCurrentChat);
-  const getCurrentMessages = useAIChatStore(state => state.getCurrentMessages);
-  const switchToChat = useAIChatStore(state => state.switchToChat);
+  const autoSelectBuffer = useAIChatStore((state) => state.autoSelectBuffer);
+  const checkApiKey = useAIChatStore((state) => state.checkApiKey);
+  const checkAllProviderApiKeys = useAIChatStore((state) => state.checkAllProviderApiKeys);
+  const setInput = useAIChatStore((state) => state.setInput);
+  const setIsTyping = useAIChatStore((state) => state.setIsTyping);
+  const setStreamingMessageId = useAIChatStore((state) => state.setStreamingMessageId);
+  const createNewChat = useAIChatStore((state) => state.createNewChat);
+  const deleteChat = useAIChatStore((state) => state.deleteChat);
+  const updateChatTitle = useAIChatStore((state) => state.updateChatTitle);
+  const addMessage = useAIChatStore((state) => state.addMessage);
+  const updateMessage = useAIChatStore((state) => state.updateMessage);
+  const setIsChatHistoryVisible = useAIChatStore((state) => state.setIsChatHistoryVisible);
+  const setApiKeyModalState = useAIChatStore((state) => state.setApiKeyModalState);
+  const saveApiKey = useAIChatStore((state) => state.saveApiKey);
+  const removeApiKey = useAIChatStore((state) => state.removeApiKey);
+  const hasProviderApiKey = useAIChatStore((state) => state.hasProviderApiKey);
+  const getCurrentChat = useAIChatStore((state) => state.getCurrentChat);
+  const getCurrentMessages = useAIChatStore((state) => state.getCurrentMessages);
+  const switchToChat = useAIChatStore((state) => state.switchToChat);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -153,7 +153,7 @@ export default function AIChat({
 
   // Build context information for the AI (simplified, no memoization needed)
   const buildContext = (): ContextInfo => {
-    const selectedBuffers = buffers.filter(buffer => selectedBufferIds.has(buffer.id));
+    const selectedBuffers = buffers.filter((buffer) => selectedBufferIds.has(buffer.id));
     const context: ContextInfo = {
       activeBuffer: activeBuffer || undefined,
       openBuffers: selectedBuffers,
@@ -271,8 +271,8 @@ export default function AIChat({
       // Build conversation context - include previous messages for continuity
       // Filter out system messages to avoid the linter error
       const conversationContext = messages
-        .filter(msg => msg.role !== "system")
-        .map(msg => ({
+        .filter((msg) => msg.role !== "system")
+        .map((msg) => ({
           role: msg.role as "user" | "assistant",
           content: msg.content,
         }));
@@ -289,7 +289,7 @@ export default function AIChat({
         // onChunk - update the streaming message
         (chunk: string) => {
           const currentMessages = getCurrentMessages();
-          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          const currentMsg = currentMessages.find((m) => m.id === currentAssistantMessageId);
           updateMessage(chatId, currentAssistantMessageId, {
             content: (currentMsg?.content || "") + chunk,
           });
@@ -309,7 +309,7 @@ export default function AIChat({
         (error: string) => {
           console.error("Streaming error:", error);
           const currentMessages = getCurrentMessages();
-          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          const currentMsg = currentMessages.find((m) => m.id === currentAssistantMessageId);
           updateMessage(chatId, currentAssistantMessageId, {
             content: currentMsg?.content || `Error: ${error}`,
             isStreaming: false,
@@ -340,7 +340,7 @@ export default function AIChat({
         // onToolUse - mark the current message as tool use
         (toolName: string, toolInput?: any) => {
           const currentMessages = getCurrentMessages();
-          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          const currentMsg = currentMessages.find((m) => m.id === currentAssistantMessageId);
           updateMessage(chatId, currentAssistantMessageId, {
             isToolUse: true,
             toolName,
@@ -357,9 +357,9 @@ export default function AIChat({
         // onToolComplete - mark tool as complete
         (toolName: string) => {
           const currentMessages = getCurrentMessages();
-          const currentMsg = currentMessages.find(m => m.id === currentAssistantMessageId);
+          const currentMsg = currentMessages.find((m) => m.id === currentAssistantMessageId);
           updateMessage(chatId, currentAssistantMessageId, {
-            toolCalls: currentMsg?.toolCalls?.map(tc =>
+            toolCalls: currentMsg?.toolCalls?.map((tc) =>
               tc.name === toolName && !tc.isComplete ? { ...tc, isComplete: true } : tc,
             ),
           });

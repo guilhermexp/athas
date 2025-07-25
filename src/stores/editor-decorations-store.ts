@@ -57,7 +57,7 @@ function rangesOverlap(a: Range, b: Range): boolean {
 export const useEditorDecorationsStore = create<EditorDecorationsStore>((set, get) => ({
   decorations: new Map(),
 
-  addDecoration: decoration => {
+  addDecoration: (decoration) => {
     const id = `decoration-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const decorationWithId: DecorationWithId = { ...decoration, id };
 
@@ -65,7 +65,7 @@ export const useEditorDecorationsStore = create<EditorDecorationsStore>((set, ge
       `DecorationsStore: Adding decoration ${decoration.type} with class ${decoration.className}`,
     );
 
-    set(state => {
+    set((state) => {
       const newDecorations = new Map(state.decorations);
       newDecorations.set(id, decorationWithId);
       return { decorations: newDecorations };
@@ -74,8 +74,8 @@ export const useEditorDecorationsStore = create<EditorDecorationsStore>((set, ge
     return id;
   },
 
-  removeDecoration: id => {
-    set(state => {
+  removeDecoration: (id) => {
+    set((state) => {
       const newDecorations = new Map(state.decorations);
       newDecorations.delete(id);
       return { decorations: newDecorations };
@@ -83,7 +83,7 @@ export const useEditorDecorationsStore = create<EditorDecorationsStore>((set, ge
   },
 
   updateDecoration: (id, updates) => {
-    set(state => {
+    set((state) => {
       const existing = state.decorations.get(id);
       if (!existing) return state;
 
@@ -102,24 +102,24 @@ export const useEditorDecorationsStore = create<EditorDecorationsStore>((set, ge
     return Array.from(decorations.values());
   },
 
-  getDecorationsInRange: range => {
+  getDecorationsInRange: (range) => {
     const { decorations } = get();
-    return Array.from(decorations.values()).filter(decoration =>
+    return Array.from(decorations.values()).filter((decoration) =>
       rangesOverlap(decoration.range, range),
     );
   },
 
-  getDecorationsAtPosition: position => {
+  getDecorationsAtPosition: (position) => {
     const { decorations } = get();
-    return Array.from(decorations.values()).filter(decoration =>
+    return Array.from(decorations.values()).filter((decoration) =>
       isPositionInRange(position, decoration.range),
     );
   },
 
-  getDecorationsForLine: lineNumber => {
+  getDecorationsForLine: (lineNumber) => {
     const { decorations } = get();
     return Array.from(decorations.values()).filter(
-      decoration =>
+      (decoration) =>
         decoration.range.start.line <= lineNumber && decoration.range.end.line >= lineNumber,
     );
   },

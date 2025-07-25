@@ -62,7 +62,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     try {
       await Promise.all([
         loadGitData(),
-        new Promise(resolve => setTimeout(resolve, 500)), // Minimum display time
+        new Promise((resolve) => setTimeout(resolve, 500)), // Minimum display time
       ]);
     } finally {
       setIsRefreshing(false);
@@ -190,7 +190,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
       }
 
       // Find the file in gitStatus to check its status
-      const file = gitStatus?.files.find(f => f.path === actualFilePath);
+      const file = gitStatus?.files.find((f) => f.path === actualFilePath);
 
       // For untracked files, open the file directly instead of trying to show a diff
       if (file && file.status === "untracked" && !staged) {
@@ -234,7 +234,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
       const diffs = await getCommitDiff(repoPath, commitHash);
 
       if (diffs && diffs.length > 0) {
-        const diff = filePath ? diffs.find(d => d.file_path === filePath) || diffs[0] : diffs[0]; // Show specific file or first diff
+        const diff = filePath ? diffs.find((d) => d.file_path === filePath) || diffs[0] : diffs[0]; // Show specific file or first diff
         const diffFileName = `${diff.file_path.split("/").pop()}.diff`;
         const virtualPath = `diff://commit/${commitHash}/${diffFileName}`;
 
@@ -260,7 +260,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
   const renderGitButton = () => (
     <button
-      onClick={e => {
+      onClick={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setGitActionsMenuPosition({
           x: rect.left,
@@ -342,7 +342,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     );
   }
 
-  const stagedFiles = gitStatus.files.filter(f => f.staged);
+  const stagedFiles = gitStatus.files.filter((f) => f.staged);
 
   return (
     <>

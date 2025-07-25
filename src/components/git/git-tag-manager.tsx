@@ -66,7 +66,7 @@ const GitTagManager = ({ isOpen, onClose, repoPath, onRefresh }: GitTagManagerPr
   const handleDeleteTag = async (tagName: string) => {
     if (!repoPath) return;
 
-    setActionLoading(prev => new Set(prev).add(tagName));
+    setActionLoading((prev) => new Set(prev).add(tagName));
     try {
       const success = await deleteTag(repoPath, tagName);
       if (success) {
@@ -76,7 +76,7 @@ const GitTagManager = ({ isOpen, onClose, repoPath, onRefresh }: GitTagManagerPr
     } catch (error) {
       console.error("Failed to delete tag:", error);
     } finally {
-      setActionLoading(prev => {
+      setActionLoading((prev) => {
         const newSet = new Set(prev);
         newSet.delete(tagName);
         return newSet;
@@ -132,7 +132,7 @@ const GitTagManager = ({ isOpen, onClose, repoPath, onRefresh }: GitTagManagerPr
               type="text"
               placeholder="Tag name (e.g., v1.0.0)"
               value={newTagName}
-              onChange={e => setNewTagName(e.target.value)}
+              onChange={(e) => setNewTagName(e.target.value)}
               className={cn(
                 "w-full rounded border border-border bg-primary-bg",
                 "px-2 py-1 text-text text-xs",
@@ -144,7 +144,7 @@ const GitTagManager = ({ isOpen, onClose, repoPath, onRefresh }: GitTagManagerPr
               type="text"
               placeholder="Tag message (optional)"
               value={newTagMessage}
-              onChange={e => setNewTagMessage(e.target.value)}
+              onChange={(e) => setNewTagMessage(e.target.value)}
               className={cn(
                 "w-full rounded border border-border bg-primary-bg",
                 "px-2 py-1 text-text text-xs",
@@ -156,13 +156,13 @@ const GitTagManager = ({ isOpen, onClose, repoPath, onRefresh }: GitTagManagerPr
               type="text"
               placeholder="Commit SHA (optional, defaults to HEAD)"
               value={newTagCommit}
-              onChange={e => setNewTagCommit(e.target.value)}
+              onChange={(e) => setNewTagCommit(e.target.value)}
               className={cn(
                 "w-full rounded border border-border bg-primary-bg",
                 "px-2 py-1 text-text text-xs",
                 "focus:border-blue-500 focus:outline-none",
               )}
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleCreateTag();
                 }
@@ -191,7 +191,7 @@ const GitTagManager = ({ isOpen, onClose, repoPath, onRefresh }: GitTagManagerPr
             <div className="p-4 text-center text-text-lighter text-xs">No tags found</div>
           ) : (
             <div className="space-y-0">
-              {tags.map(tag => {
+              {tags.map((tag) => {
                 const isActionLoading = actionLoading.has(tag.name);
 
                 return (

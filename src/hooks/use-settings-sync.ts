@@ -7,7 +7,7 @@ export const useSettingsSync = () => {
   const { settings } = useSettingsStore();
   const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers } =
     useEditorSettingsStore();
-  const { setAiCompletion } = useEditorCompletionStore();
+  const { actions: completionActions } = useEditorCompletionStore();
 
   // Sync font size
   useEffect(() => {
@@ -37,6 +37,6 @@ export const useSettingsSync = () => {
 
   // Sync AI completion
   useEffect(() => {
-    setAiCompletion(settings.aiCompletion);
-  }, [settings.aiCompletion, setAiCompletion]);
+    completionActions.setAiCompletion(settings.aiCompletion);
+  }, [settings.aiCompletion, completionActions.setAiCompletion]);
 };

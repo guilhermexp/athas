@@ -15,8 +15,8 @@ export const useRecentFilesStore = create<RecentFilesStore>()(
         maxRecentFiles: MAX_RECENT_FILES,
 
         addOrUpdateRecentFile: (path: string, name: string) => {
-          set(state => {
-            const existingIndex = state.recentFiles.findIndex(f => f.path === path);
+          set((state) => {
+            const existingIndex = state.recentFiles.findIndex((f) => f.path === path);
             const now = new Date().toISOString();
 
             if (existingIndex >= 0) {
@@ -49,7 +49,7 @@ export const useRecentFilesStore = create<RecentFilesStore>()(
           const { recentFiles } = get();
 
           // Recalculate frecency scores before sorting
-          const filesWithUpdatedScores = recentFiles.map(file => ({
+          const filesWithUpdatedScores = recentFiles.map((file) => ({
             ...file,
             frecencyScore: calculateFrecencyScore(file.accessCount, file.lastAccessed),
           }));
@@ -59,26 +59,26 @@ export const useRecentFilesStore = create<RecentFilesStore>()(
         },
 
         removeRecentFile: (path: string) => {
-          set(state => {
-            state.recentFiles = state.recentFiles.filter(f => f.path !== path);
+          set((state) => {
+            state.recentFiles = state.recentFiles.filter((f) => f.path !== path);
           });
         },
 
         clearRecentFiles: () => {
-          set(state => {
+          set((state) => {
             state.recentFiles = [];
           });
         },
 
         pruneOldFiles: () => {
-          set(state => {
+          set((state) => {
             // Recalculate scores and remove files below threshold
             state.recentFiles = state.recentFiles
-              .map(file => ({
+              .map((file) => ({
                 ...file,
                 frecencyScore: calculateFrecencyScore(file.accessCount, file.lastAccessed),
               }))
-              .filter(file => file.frecencyScore >= PRUNE_THRESHOLD_SCORE);
+              .filter((file) => file.frecencyScore >= PRUNE_THRESHOLD_SCORE);
           });
         },
       }),

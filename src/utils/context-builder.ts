@@ -58,13 +58,15 @@ export const buildContextPrompt = (context: ContextInfo): string => {
 
   // Other open files
   if (context.openBuffers && context.openBuffers.length > 1) {
-    const otherFiles = context.openBuffers.filter(buffer => buffer.id !== context.activeBuffer?.id);
+    const otherFiles = context.openBuffers.filter(
+      (buffer) => buffer.id !== context.activeBuffer?.id,
+    );
 
     if (otherFiles.length > 0) {
       if (context.providerId === "claude-code") {
         // For Claude Code, list paths relative to project root
         const filePaths = otherFiles
-          .map(buffer => {
+          .map((buffer) => {
             const relativePath =
               context.projectRoot && buffer.path.startsWith(context.projectRoot)
                 ? buffer.path.slice(context.projectRoot.length + 1)
@@ -73,14 +75,14 @@ export const buildContextPrompt = (context: ContextInfo): string => {
           })
           .slice(0, 10);
 
-        contextPrompt += `\n\nOther open files:\n${filePaths.map(p => `- ${p}`).join("\n")}`;
+        contextPrompt += `\n\nOther open files:\n${filePaths.map((p) => `- ${p}`).join("\n")}`;
         if (otherFiles.length > 10) {
           contextPrompt += `\n... and ${otherFiles.length - 10} more`;
         }
       } else {
         // For other providers, keep the original behavior
         const fileNames = otherFiles
-          .map(buffer => `${buffer.name}${buffer.isDirty ? " [modified]" : ""}`)
+          .map((buffer) => `${buffer.name}${buffer.isDirty ? " [modified]" : ""}`)
           .slice(0, 10);
 
         contextPrompt += `\n\nOther open files: ${fileNames.join(", ")}`;

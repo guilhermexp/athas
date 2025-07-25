@@ -13,7 +13,7 @@ export const EditorSettings = () => {
         <SettingRow label="Font Family" description="Editor font family">
           <FontSelector
             value={settings.fontFamily}
-            onChange={fontFamily => updateSetting("fontFamily", fontFamily)}
+            onChange={(fontFamily) => updateSetting("fontFamily", fontFamily)}
             className="w-48"
             monospaceOnly={true}
           />
@@ -25,7 +25,7 @@ export const EditorSettings = () => {
             min="8"
             max="32"
             value={settings.fontSize}
-            onChange={e => updateSetting("fontSize", parseInt(e.target.value))}
+            onChange={(e) => updateSetting("fontSize", parseInt(e.target.value))}
             className="w-16"
             size="xs"
           />
@@ -37,7 +37,7 @@ export const EditorSettings = () => {
             min="1"
             max="8"
             value={settings.tabSize}
-            onChange={e => updateSetting("tabSize", parseInt(e.target.value))}
+            onChange={(e) => updateSetting("tabSize", parseInt(e.target.value))}
             className="w-16"
             size="xs"
           />
@@ -48,7 +48,7 @@ export const EditorSettings = () => {
         <SettingRow label="Word Wrap" description="Wrap lines that exceed viewport width">
           <Switch
             checked={settings.wordWrap}
-            onChange={checked => updateSetting("wordWrap", checked)}
+            onChange={(checked) => updateSetting("wordWrap", checked)}
             size="sm"
           />
         </SettingRow>
@@ -56,7 +56,7 @@ export const EditorSettings = () => {
         <SettingRow label="Line Numbers" description="Show line numbers in the editor">
           <Switch
             checked={settings.lineNumbers}
-            onChange={checked => updateSetting("lineNumbers", checked)}
+            onChange={(checked) => updateSetting("lineNumbers", checked)}
             size="sm"
           />
         </SettingRow>
@@ -66,7 +66,7 @@ export const EditorSettings = () => {
         <SettingRow label="AI Completion" description="Enable AI-powered code completion">
           <Switch
             checked={settings.aiCompletion}
-            onChange={checked => updateSetting("aiCompletion", checked)}
+            onChange={(checked) => updateSetting("aiCompletion", checked)}
             size="sm"
           />
         </SettingRow>

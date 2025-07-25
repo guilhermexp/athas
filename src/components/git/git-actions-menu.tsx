@@ -122,7 +122,7 @@ const GitActionsMenu = ({
         left: position.x,
         top: position.y,
       }}
-      onMouseDown={e => {
+      onMouseDown={(e) => {
         e.stopPropagation();
       }}
     >
@@ -130,7 +130,7 @@ const GitActionsMenu = ({
         <>
           {/* Basic Git Operations */}
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handlePush();
@@ -146,7 +146,7 @@ const GitActionsMenu = ({
           </button>
 
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handlePull();
@@ -162,7 +162,7 @@ const GitActionsMenu = ({
           </button>
 
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleFetch();
@@ -181,7 +181,7 @@ const GitActionsMenu = ({
 
           {/* Advanced Operations */}
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleStashManager();
@@ -196,7 +196,7 @@ const GitActionsMenu = ({
           </button>
 
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleRemoteManager();
@@ -211,7 +211,7 @@ const GitActionsMenu = ({
           </button>
 
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleTagManager();
@@ -229,7 +229,7 @@ const GitActionsMenu = ({
 
           {/* Refresh */}
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleRefresh();
@@ -248,7 +248,7 @@ const GitActionsMenu = ({
 
           {/* Destructive Operations */}
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleDiscardAllChanges();
@@ -267,7 +267,7 @@ const GitActionsMenu = ({
         <>
           {/* No Git Repository */}
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleInitRepository();
@@ -285,7 +285,7 @@ const GitActionsMenu = ({
           <div className="my-1 border-border border-t"></div>
 
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleRefresh();

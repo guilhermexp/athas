@@ -66,7 +66,7 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
 
   // Filter themes based on query
   const filteredThemes = THEME_DEFINITIONS.filter(
-    theme =>
+    (theme) =>
       theme.name.toLowerCase().includes(query.toLowerCase()) ||
       theme.description?.toLowerCase().includes(query.toLowerCase()) ||
       theme.category.toLowerCase().includes(query.toLowerCase()),
@@ -79,7 +79,7 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
       setQuery("");
       setPreviewTheme(null);
 
-      const initialIndex = THEME_DEFINITIONS.findIndex(t => t.id === currentTheme);
+      const initialIndex = THEME_DEFINITIONS.findIndex((t) => t.id === currentTheme);
       setSelectedIndex(initialIndex >= 0 ? initialIndex : 0);
 
       requestAnimationFrame(() => inputRef.current?.focus());

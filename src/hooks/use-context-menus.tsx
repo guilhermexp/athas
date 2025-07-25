@@ -52,7 +52,7 @@ export const ProjectNameMenu = () => {
       }}
     >
       <button
-        onMouseDown={e => {
+        onMouseDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
           onOpenFolder();
@@ -67,7 +67,7 @@ export const ProjectNameMenu = () => {
       </button>
 
       <button
-        onMouseDown={e => {
+        onMouseDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
           onCollapseAllFolders();
@@ -91,7 +91,7 @@ export const ProjectNameMenu = () => {
           {recentFolders.slice(0, 5).map((folder: RecentFolder) => (
             <button
               key={folder.path}
-              onMouseDown={e => {
+              onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 onOpenRecentFolder(folder.path);

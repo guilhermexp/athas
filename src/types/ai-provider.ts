@@ -451,14 +451,14 @@ export const getAvailableProviders = (): ModelProvider[] => {
     return AI_PROVIDERS;
   }
   // Filter out Claude Code if not available
-  return AI_PROVIDERS.filter(provider => provider.id !== "claude-code");
+  return AI_PROVIDERS.filter((provider) => provider.id !== "claude-code");
 };
 
 export const getProviderById = (id: string): ModelProvider | undefined => {
-  return AI_PROVIDERS.find(provider => provider.id === id);
+  return AI_PROVIDERS.find((provider) => provider.id === id);
 };
 
 export const getModelById = (providerId: string, modelId: string): Model | undefined => {
   const provider = getProviderById(providerId);
-  return provider?.models.find(model => model.id === modelId);
+  return provider?.models.find((model) => model.id === modelId);
 };

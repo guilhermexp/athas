@@ -22,7 +22,7 @@ const initialState: GitState = {
 };
 
 export const useGitStore = create(
-  combine(initialState, set => ({
+  combine(initialState, (set) => ({
     actions: {
       setGitStatus: (gitStatus: GitStatus | null) => set({ gitStatus }),
       setIsLoadingGitData: (isLoadingGitData: boolean) => set({ isLoadingGitData }),

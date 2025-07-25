@@ -20,7 +20,7 @@ export const GeneralSettings = () => {
         <SettingRow label="Auto Save" description="Automatically save files when editing">
           <Switch
             checked={settings.autoSave}
-            onChange={checked => updateSetting("autoSave", checked)}
+            onChange={(checked) => updateSetting("autoSave", checked)}
             size="sm"
           />
         </SettingRow>
@@ -31,7 +31,7 @@ export const GeneralSettings = () => {
           <Dropdown
             value={settings.sidebarPosition}
             options={sidebarOptions}
-            onChange={value => updateSetting("sidebarPosition", value as "left" | "right")}
+            onChange={(value) => updateSetting("sidebarPosition", value as "left" | "right")}
             className="w-20"
             size="xs"
           />
@@ -42,7 +42,7 @@ export const GeneralSettings = () => {
         <SettingRow label="Mouse Wheel Zoom" description="Use mouse wheel to zoom in/out">
           <Switch
             checked={settings.mouseWheelZoom}
-            onChange={checked => updateSetting("mouseWheelZoom", checked)}
+            onChange={(checked) => updateSetting("mouseWheelZoom", checked)}
             size="sm"
           />
         </SettingRow>

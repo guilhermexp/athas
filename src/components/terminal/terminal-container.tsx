@@ -72,7 +72,7 @@ const TerminalContainer = ({
 
   const handleTabPin = useCallback(
     (terminalId: string) => {
-      const terminal = terminals.find(t => t.id === terminalId);
+      const terminal = terminals.find((t) => t.id === terminalId);
       if (terminal) {
         pinTerminal(terminalId, !terminal.isPinned);
       }
@@ -82,7 +82,7 @@ const TerminalContainer = ({
 
   const handleCloseOtherTabs = useCallback(
     (terminalId: string) => {
-      terminals.forEach(terminal => {
+      terminals.forEach((terminal) => {
         if (terminal.id !== terminalId && !terminal.isPinned) {
           closeTerminal(terminal.id);
         }
@@ -92,7 +92,7 @@ const TerminalContainer = ({
   );
 
   const handleCloseAllTabs = useCallback(() => {
-    terminals.forEach(terminal => {
+    terminals.forEach((terminal) => {
       if (!terminal.isPinned) {
         closeTerminal(terminal.id);
       }
@@ -101,10 +101,10 @@ const TerminalContainer = ({
 
   const handleCloseTabsToRight = useCallback(
     (terminalId: string) => {
-      const targetIndex = terminals.findIndex(t => t.id === terminalId);
+      const targetIndex = terminals.findIndex((t) => t.id === terminalId);
       if (targetIndex === -1) return;
 
-      terminals.slice(targetIndex + 1).forEach(terminal => {
+      terminals.slice(targetIndex + 1).forEach((terminal) => {
         if (!terminal.isPinned) {
           closeTerminal(terminal.id);
         }
@@ -129,7 +129,7 @@ const TerminalContainer = ({
   const handleSplitView = useCallback(() => {
     // Only allow split view if there are at least 2 terminals
     if (terminals.length >= 2) {
-      setIsSplitView(prev => !prev);
+      setIsSplitView((prev) => !prev);
     } else {
       // Create a new terminal if there's only one
       const dirName = currentDirectory.split("/").pop() || "terminal";
@@ -364,7 +364,7 @@ const TerminalContainer = ({
           <div className="flex h-full">
             <div className="w-1/2 border-border border-r">
               {terminals.map(
-                terminal =>
+                (terminal) =>
                   terminal.id === activeTerminalId && (
                     <TerminalSession
                       key={terminal.id}
@@ -379,7 +379,7 @@ const TerminalContainer = ({
             </div>
             <div className="w-1/2">
               {(() => {
-                const nextTerminal = terminals.find(t => t.id !== activeTerminalId);
+                const nextTerminal = terminals.find((t) => t.id !== activeTerminalId);
                 if (!nextTerminal) return null;
                 return (
                   <TerminalSession
@@ -396,7 +396,7 @@ const TerminalContainer = ({
           </div>
         ) : (
           // Normal view: Show only active terminal
-          terminals.map(terminal => (
+          terminals.map((terminal) => (
             <TerminalSession
               key={terminal.id}
               terminal={terminal}
@@ -417,8 +417,8 @@ const TerminalContainer = ({
             <input
               type="text"
               value={newTerminalName}
-              onChange={e => setNewTerminalName(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setNewTerminalName(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   confirmRename();
                 } else if (e.key === "Escape") {

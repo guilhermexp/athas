@@ -135,7 +135,7 @@ export default function ExtensionsView({
   const [searchQuery, setSearchQuery] = useState("");
   const [extensions, setExtensions] = useState<Extension[]>(() => {
     // Initialize extensions with the current theme state
-    return AVAILABLE_EXTENSIONS.map(ext => ({
+    return AVAILABLE_EXTENSIONS.map((ext) => ({
       ...ext,
       status: ext.category === "theme" && ext.themeId === currentTheme ? "active" : "inactive",
     }));
@@ -143,8 +143,8 @@ export default function ExtensionsView({
 
   // Update extension states when currentTheme changes
   useEffect(() => {
-    setExtensions(prev =>
-      prev.map(ext => ({
+    setExtensions((prev) =>
+      prev.map((ext) => ({
         ...ext,
         status: ext.category === "theme" && ext.themeId === currentTheme ? "active" : "inactive",
       })),
@@ -169,7 +169,7 @@ export default function ExtensionsView({
     }
   };
 
-  const filteredExtensions = extensions.filter(extension => {
+  const filteredExtensions = extensions.filter((extension) => {
     const matchesSearch =
       extension.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       extension.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -178,7 +178,7 @@ export default function ExtensionsView({
   });
 
   const filteredCoreFeatures =
-    coreFeatures?.filter(feature => {
+    coreFeatures?.filter((feature) => {
       const matchesSearch =
         feature.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         feature.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -198,7 +198,7 @@ export default function ExtensionsView({
             type="text"
             placeholder="Search extensions..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className={cn(
               "w-full rounded border border-border bg-secondary-bg",
               "py-1.5 pr-4 pl-8 text-text text-xs placeholder-text-lighter",
@@ -284,7 +284,7 @@ export default function ExtensionsView({
                 </h3>
               )}
               <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredCoreFeatures.map(feature => (
+                {filteredCoreFeatures.map((feature) => (
                   <CoreFeatureCard
                     key={feature.id}
                     feature={feature}
@@ -305,7 +305,7 @@ export default function ExtensionsView({
               </h3>
             )}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredExtensions.map(extension => (
+              {filteredExtensions.map((extension) => (
                 <ExtensionCard
                   key={extension.id}
                   extension={extension}

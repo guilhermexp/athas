@@ -195,7 +195,7 @@ export function VirtualTextEditor() {
   // Update editor API by subscribing to cursor store changes
   useEffect(() => {
     const unsubscribe = useEditorCursorStore.subscribe(
-      state => ({ cursor: state.cursorPosition, selection: state.selection }),
+      (state) => ({ cursor: state.cursorPosition, selection: state.selection }),
       ({ cursor, selection }) => {
         editorAPI.updateCursorAndSelection(cursor, selection);
       },

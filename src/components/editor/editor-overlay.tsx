@@ -13,7 +13,7 @@ interface CursorOverlayProps {
 
 export const CursorOverlay = memo<CursorOverlayProps>(
   ({ lineHeight, fontSize, gutterWidth, scrollTop, scrollLeft, visible = true }) => {
-    const position = useEditorCursorStore(state => state.cursorPosition);
+    const position = useEditorCursorStore((state) => state.cursorPosition);
 
     if (!visible) return null;
 

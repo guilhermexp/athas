@@ -26,11 +26,11 @@ const FileReloadToast = () => {
         timestamp: Date.now(),
       };
 
-      setToasts(prev => [...prev, newToast]);
+      setToasts((prev) => [...prev, newToast]);
 
       // Remove this specific toast after 3 seconds
       setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== newToast.id));
+        setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
       }, 3000);
     };
 
@@ -45,7 +45,7 @@ const FileReloadToast = () => {
 
   return (
     <div className="pointer-events-none fixed right-4 bottom-4 z-40 space-y-2">
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <div
           key={toast.id}
           className={cn(

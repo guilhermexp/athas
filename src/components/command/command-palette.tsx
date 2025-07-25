@@ -95,7 +95,7 @@ const CommandPalette = () => {
 
   // Filter actions based on query
   const filteredActions = actions.filter(
-    action =>
+    (action) =>
       action.label.toLowerCase().includes(query.toLowerCase()) ||
       action.description?.toLowerCase().includes(query.toLowerCase()) ||
       action.category.toLowerCase().includes(query.toLowerCase()),
@@ -109,11 +109,11 @@ const CommandPalette = () => {
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          setSelectedIndex(prev => (prev < filteredActions.length - 1 ? prev + 1 : prev));
+          setSelectedIndex((prev) => (prev < filteredActions.length - 1 ? prev + 1 : prev));
           break;
         case "ArrowUp":
           e.preventDefault();
-          setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
           break;
         case "Enter":
           e.preventDefault();

@@ -41,14 +41,14 @@ export const TerminalSearch: React.FC<TerminalSearchProps> = ({
   const handleNext = () => {
     if (searchTerm) {
       onNext(searchTerm);
-      setCurrentMatch(prev => (prev < totalMatches ? prev + 1 : prev));
+      setCurrentMatch((prev) => (prev < totalMatches ? prev + 1 : prev));
     }
   };
 
   const handlePrevious = () => {
     if (searchTerm) {
       onPrevious(searchTerm);
-      setCurrentMatch(prev => (prev > 1 ? prev - 1 : prev));
+      setCurrentMatch((prev) => (prev > 1 ? prev - 1 : prev));
     }
   };
 

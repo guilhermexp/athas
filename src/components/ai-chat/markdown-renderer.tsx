@@ -128,7 +128,7 @@ export default function MarkdownRenderer({ content, onApplyCode }: MarkdownRende
       }
     };
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const trimmedLine = line.trim();
 
       // Check for numbered lists (e.g., "1. ", "2. ", etc.)

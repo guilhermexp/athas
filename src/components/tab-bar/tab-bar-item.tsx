@@ -81,7 +81,7 @@ const TabBarItem = memo(function TabBarItem({
         {!buffer.isPinned && (
           <button
             type="button"
-            onClick={e => {
+            onClick={(e) => {
               e.stopPropagation();
               handleTabClose(buffer.id);
             }}

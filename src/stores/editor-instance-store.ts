@@ -20,7 +20,7 @@ const initialState = {
 
 // Current editor instance store
 export const useEditorInstanceStore = create(
-  combine(initialState, set => ({
+  combine(initialState, (set) => ({
     // Actions
     setRefs: (refs: { editorRef: RefObject<HTMLDivElement | null> }) => set(refs),
     setContent: (value: string, onChange: (value: string) => void) => set({ value, onChange }),

@@ -27,7 +27,7 @@ export const ThemeSettings = () => {
           <Dropdown
             value={settings.theme}
             options={themeOptions}
-            onChange={value => updateTheme(value as Theme)}
+            onChange={(value) => updateTheme(value as Theme)}
             className="w-40"
             size="xs"
           />

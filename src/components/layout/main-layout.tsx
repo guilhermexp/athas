@@ -141,8 +141,8 @@ export function MainLayout() {
             } else if (activeBuffer.path === "extensions://marketplace") {
               return (
                 <ExtensionsView
-                  onServerInstall={server => console.log("Install server:", server)}
-                  onServerUninstall={serverId => console.log("Uninstall server:", serverId)}
+                  onServerInstall={(server) => console.log("Install server:", server)}
+                  onServerUninstall={(serverId) => console.log("Uninstall server:", serverId)}
                   onThemeChange={handleThemeChange}
                   currentTheme={settings.theme}
                   coreFeatures={coreFeaturesList}

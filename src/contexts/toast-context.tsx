@@ -24,7 +24,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const dismissToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
   const showToast = useCallback(
@@ -32,7 +32,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const id = Date.now().toString();
       const newToast = { ...toast, id };
 
-      setToasts(prev => [...prev, newToast]);
+      setToasts((prev) => [...prev, newToast]);
 
       if (toast.duration !== 0) {
         setTimeout(() => {

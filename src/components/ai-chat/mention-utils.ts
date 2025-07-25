@@ -18,7 +18,7 @@ export async function parseMentionsAndLoadFiles(
   // Load content for each mentioned file
   for (const match of mentions) {
     const fileName = match[1];
-    const file = allProjectFiles.find(f => !f.isDir && f.name === fileName);
+    const file = allProjectFiles.find((f) => !f.isDir && f.name === fileName);
 
     if (file) {
       try {

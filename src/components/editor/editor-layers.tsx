@@ -39,10 +39,10 @@ const LayerProvider = memo<LayerProviderProps>(({ children }) => {
       registerLayer: (type, zIndex) => {
         layerRegistry.set(type, zIndex);
       },
-      unregisterLayer: type => {
+      unregisterLayer: (type) => {
         layerRegistry.delete(type);
       },
-      getZIndex: type => {
+      getZIndex: (type) => {
         return layerRegistry.get(type) ?? DEFAULT_Z_INDICES[type];
       },
     }),

@@ -25,7 +25,7 @@ export const useEditorSync = (props: UseEditorSyncProps) => {
   const { setFontSize, setFontFamily, setTabSize, setWordWrap, setLineNumbers, setDisabled } =
     useEditorSettingsStore();
   const { setSearchQuery, setSearchMatches, setCurrentMatchIndex } = useEditorSearchStore();
-  const { setAiCompletion } = useEditorCompletionStore();
+  const { actions: completionActions } = useEditorCompletionStore();
 
   // Sync all props with store
   useEffect(() => {
@@ -57,8 +57,8 @@ export const useEditorSync = (props: UseEditorSyncProps) => {
   }, [props.disabled, setDisabled]);
 
   useEffect(() => {
-    setAiCompletion(props.aiCompletion);
-  }, [props.aiCompletion, setAiCompletion]);
+    completionActions.setAiCompletion(props.aiCompletion);
+  }, [props.aiCompletion, completionActions.setAiCompletion]);
 
   useEffect(() => {
     setSearchQuery(props.searchQuery);

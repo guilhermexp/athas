@@ -55,7 +55,7 @@ const Dropdown = ({
     }
   }, [isOpen]);
 
-  const selectedOption = options.find(option => option.value === value);
+  const selectedOption = options.find((option) => option.value === value);
 
   const sizeClasses = {
     xs: "px-2 py-1 text-xs h-6",
@@ -86,7 +86,7 @@ const Dropdown = ({
           minWidth: dropdownPosition.width,
         }}
       >
-        {options.map(option => (
+        {options.map((option) => (
           <button
             key={option.value}
             type="button"

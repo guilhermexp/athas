@@ -3,7 +3,7 @@ import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useSettingsStore } from "@/stores/settings-store";
 
 export const FontStyleInjector = () => {
-  const codeEditorFontFamily = useEditorSettingsStore(state => state.fontFamily);
+  const codeEditorFontFamily = useEditorSettingsStore((state) => state.fontFamily);
   const { settings } = useSettingsStore();
 
   useEffect(() => {

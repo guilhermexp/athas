@@ -32,9 +32,9 @@ export const useRecentFoldersStore = create<RecentFoldersState & RecentFoldersAc
             lastOpened: timeString,
           };
 
-          set(state => {
+          set((state) => {
             // Remove existing entry if it exists
-            state.recentFolders = state.recentFolders.filter(f => f.path !== folderPath);
+            state.recentFolders = state.recentFolders.filter((f) => f.path !== folderPath);
             // Add new entry at the beginning
             state.recentFolders.unshift(newFolder);
             // Keep only 5 most recent
@@ -54,13 +54,13 @@ export const useRecentFoldersStore = create<RecentFoldersState & RecentFoldersAc
         },
 
         removeFromRecents: (folderPath: string) => {
-          set(state => {
-            state.recentFolders = state.recentFolders.filter(f => f.path !== folderPath);
+          set((state) => {
+            state.recentFolders = state.recentFolders.filter((f) => f.path !== folderPath);
           });
         },
 
         clearRecents: () => {
-          set(state => {
+          set((state) => {
             state.recentFolders = [];
           });
         },

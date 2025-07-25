@@ -89,7 +89,7 @@ export async function readDirectory(path: string): Promise<any[]> {
 
     // Use the appropriate path separator based on the input path
     const separator = normalizedPath.includes("\\") ? "\\" : "/";
-    return entries.map(entry => ({
+    return entries.map((entry) => ({
       name: entry.name,
       path: `${normalizedPath}${separator}${entry.name}`,
       is_dir: entry.isDirectory,

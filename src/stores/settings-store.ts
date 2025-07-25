@@ -43,7 +43,7 @@ const applyTheme = (theme: Theme) => {
   if (typeof window === "undefined") return;
 
   // Remove all existing theme classes
-  ALL_THEME_CLASSES.forEach(cls => document.documentElement.classList.remove(cls));
+  ALL_THEME_CLASSES.forEach((cls) => document.documentElement.classList.remove(cls));
 
   // Apply new theme if not auto
   if (theme && theme !== "auto") {
@@ -87,7 +87,7 @@ const getInitialSettings = (): Settings => {
 
   // Also detect OS theme asynchronously for more accurate detection
   invoke<string>("get_system_theme")
-    .then(detectedTheme => {
+    .then((detectedTheme) => {
       const theme = detectedTheme === "dark" ? "dark" : "light";
       if (theme !== systemTheme && !localStorage.getItem("athas-code-settings")) {
         // Update to more accurate theme if user hasn't set preferences yet
@@ -128,7 +128,7 @@ export const useSettingsStore = create(
             const parsedSettings = JSON.parse(jsonString);
             const validatedSettings = { ...defaultSettings, ...parsedSettings };
 
-            set(state => {
+            set((state) => {
               state.settings = validatedSettings;
             });
 
@@ -144,7 +144,7 @@ export const useSettingsStore = create(
         // Update individual setting
         updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => {
           console.log(`Updating setting ${key} to:`, value);
-          set(state => {
+          set((state) => {
             state.settings[key] = value;
           });
 
@@ -160,7 +160,7 @@ export const useSettingsStore = create(
 
         // Save settings
         saveSettings: (newSettings: Settings) => {
-          set(state => {
+          set((state) => {
             state.settings = newSettings;
           });
           localStorage.setItem("athas-code-settings", JSON.stringify(newSettings, null, 2));
@@ -168,7 +168,7 @@ export const useSettingsStore = create(
 
         // Update theme
         updateTheme: (theme: Theme) => {
-          set(state => {
+          set((state) => {
             state.settings.theme = theme;
           });
           localStorage.setItem("athas-code-settings", JSON.stringify(get().settings, null, 2));

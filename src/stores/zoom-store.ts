@@ -30,7 +30,7 @@ export const useZoomStore = create(
     return {
       zoomIn: () => {
         const current = get().zoomLevel;
-        const currentIndex = ZOOM_LEVELS.findIndex(level => level >= current);
+        const currentIndex = ZOOM_LEVELS.findIndex((level) => level >= current);
         const nextIndex = Math.min(currentIndex + 1, ZOOM_LEVELS.length - 1);
         const newZoom = ZOOM_LEVELS[nextIndex];
 
@@ -42,7 +42,7 @@ export const useZoomStore = create(
 
       zoomOut: () => {
         const current = get().zoomLevel;
-        const currentIndex = ZOOM_LEVELS.findIndex(level => level >= current);
+        const currentIndex = ZOOM_LEVELS.findIndex((level) => level >= current);
         const prevIndex = Math.max(currentIndex - 1, 0);
         const newZoom = ZOOM_LEVELS[prevIndex];
 

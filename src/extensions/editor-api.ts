@@ -19,7 +19,7 @@ class EditorAPIImpl implements EditorAPI {
       "decorationChange",
     ];
 
-    events.forEach(event => {
+    events.forEach((event) => {
       this.eventHandlers.set(event, new Set());
     });
   }
@@ -212,7 +212,7 @@ class EditorAPIImpl implements EditorAPI {
   private emit(event: EditorEvent, data?: any): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
-      handlers.forEach(handler => handler(data));
+      handlers.forEach((handler) => handler(data));
     }
   }
 

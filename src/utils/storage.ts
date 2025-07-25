@@ -15,7 +15,7 @@ const clearLocalStorageByPrefix = (prefix: string): void => {
     }
   }
 
-  keysToRemove.forEach(key => localStorage.removeItem(key));
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
   console.log(`Cleared ${keysToRemove.length} items with prefix "${prefix}"`);
 };
 

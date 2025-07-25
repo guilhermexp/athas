@@ -11,7 +11,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       const { name, currentDirectory, shell } = action.payload;
 
       // Generate a unique name if needed
-      const existingNames = state.terminals.map(t => t.name);
+      const existingNames = state.terminals.map((t) => t.name);
       let terminalName = name;
       let counter = 0;
       while (existingNames.includes(terminalName)) {
@@ -32,7 +32,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
 
       return {
         terminals: state.terminals
-          .map(terminal => ({ ...terminal, isActive: false }))
+          .map((terminal) => ({ ...terminal, isActive: false }))
           .concat(newTerminal),
         activeTerminalId: newTerminal.id,
       };
@@ -40,11 +40,11 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
 
     case "CLOSE_TERMINAL": {
       const { id } = action.payload;
-      const terminalIndex = state.terminals.findIndex(terminal => terminal.id === id);
+      const terminalIndex = state.terminals.findIndex((terminal) => terminal.id === id);
 
       if (terminalIndex === -1) return state;
 
-      const newTerminals = state.terminals.filter(terminal => terminal.id !== id);
+      const newTerminals = state.terminals.filter((terminal) => terminal.id !== id);
 
       // If we're closing the active terminal, switch to another one
       let newActiveTerminalId = state.activeTerminalId;
@@ -59,7 +59,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       }
 
       return {
-        terminals: newTerminals.map(terminal => ({
+        terminals: newTerminals.map((terminal) => ({
           ...terminal,
           isActive: terminal.id === newActiveTerminalId,
         })),
@@ -72,7 +72,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       return {
         ...state,
         activeTerminalId: id,
-        terminals: state.terminals.map(terminal => ({
+        terminals: state.terminals.map((terminal) => ({
           ...terminal,
           isActive: terminal.id === id,
         })),
@@ -83,7 +83,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       const { id, name } = action.payload;
       return {
         ...state,
-        terminals: state.terminals.map(terminal =>
+        terminals: state.terminals.map((terminal) =>
           terminal.id === id ? { ...terminal, name } : terminal,
         ),
       };
@@ -93,7 +93,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       const { id, currentDirectory } = action.payload;
       return {
         ...state,
-        terminals: state.terminals.map(terminal =>
+        terminals: state.terminals.map((terminal) =>
           terminal.id === id
             ? { ...terminal, currentDirectory, lastActivity: new Date() }
             : terminal,
@@ -105,7 +105,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       const { id } = action.payload;
       return {
         ...state,
-        terminals: state.terminals.map(terminal =>
+        terminals: state.terminals.map((terminal) =>
           terminal.id === id ? { ...terminal, lastActivity: new Date() } : terminal,
         ),
       };
@@ -115,7 +115,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       const { id, isPinned } = action.payload;
       return {
         ...state,
-        terminals: state.terminals.map(terminal =>
+        terminals: state.terminals.map((terminal) =>
           terminal.id === id ? { ...terminal, isPinned } : terminal,
         ),
       };
@@ -177,14 +177,14 @@ export const useTerminalTabs = () => {
   }, []);
 
   const getActiveTerminal = useCallback((): Terminal | null => {
-    return state.terminals.find(terminal => terminal.id === state.activeTerminalId) || null;
+    return state.terminals.find((terminal) => terminal.id === state.activeTerminalId) || null;
   }, [state.terminals, state.activeTerminalId]);
 
   const switchToNextTerminal = useCallback(() => {
     if (state.terminals.length <= 1) return;
 
     const currentIndex = state.terminals.findIndex(
-      terminal => terminal.id === state.activeTerminalId,
+      (terminal) => terminal.id === state.activeTerminalId,
     );
     const nextIndex = (currentIndex + 1) % state.terminals.length;
     const nextTerminal = state.terminals[nextIndex];
@@ -198,7 +198,7 @@ export const useTerminalTabs = () => {
     if (state.terminals.length <= 1) return;
 
     const currentIndex = state.terminals.findIndex(
-      terminal => terminal.id === state.activeTerminalId,
+      (terminal) => terminal.id === state.activeTerminalId,
     );
     const prevIndex = currentIndex === 0 ? state.terminals.length - 1 : currentIndex - 1;
     const prevTerminal = state.terminals[prevIndex];

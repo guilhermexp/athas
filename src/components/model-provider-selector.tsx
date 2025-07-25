@@ -82,7 +82,7 @@ const ModelProviderSelector = ({
             "rounded-lg border border-border bg-primary-bg shadow-xl",
           )}
         >
-          {getAvailableProviders().map(provider => (
+          {getAvailableProviders().map((provider) => (
             <div key={provider.id} className="border-border border-b last:border-b-0">
               {/* Provider Header */}
               <div
@@ -106,7 +106,7 @@ const ModelProviderSelector = ({
                 {/* API Key Status */}
                 {provider.requiresApiKey ? (
                   <button
-                    onClick={e => handleApiKeyClick(e, provider.id)}
+                    onClick={(e) => handleApiKeyClick(e, provider.id)}
                     className={cn(
                       "flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors",
                       hasApiKey(provider.id)
@@ -127,7 +127,7 @@ const ModelProviderSelector = ({
               {/* Models List */}
               {selectedProviderId === provider.id && (
                 <div className="border-border border-t bg-secondary-bg">
-                  {provider.models.map(model => (
+                  {provider.models.map((model) => (
                     <div
                       key={model.id}
                       className={cn(
@@ -177,8 +177,8 @@ const ModelProviderSelector = ({
         isOpen &&
         (() => {
           const model = getAvailableProviders()
-            .flatMap(p => p.models)
-            .find(m => m.id === hoveredModel);
+            .flatMap((p) => p.models)
+            .find((m) => m.id === hoveredModel);
           return model?.description ? (
             <div
               className="pointer-events-none fixed z-[10000] max-w-xs rounded border border-border bg-primary-bg px-2 py-1 shadow-lg"

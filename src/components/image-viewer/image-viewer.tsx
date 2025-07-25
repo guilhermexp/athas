@@ -48,7 +48,7 @@ export function ImageViewer({ filePath, fileName, onClose }: ImageViewerProps) {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
+            onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))}
             variant="ghost"
             size="xs"
             title="Zoom out"
@@ -61,7 +61,7 @@ export function ImageViewer({ filePath, fileName, onClose }: ImageViewerProps) {
             {Math.round(zoom * 100)}%
           </span>
           <Button
-            onClick={() => setZoom(z => Math.min(5, z + 0.1))}
+            onClick={() => setZoom((z) => Math.min(5, z + 0.1))}
             variant="ghost"
             size="xs"
             title="Zoom in"

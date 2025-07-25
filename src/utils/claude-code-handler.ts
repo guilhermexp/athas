@@ -53,7 +53,7 @@ export class ClaudeCodeStreamHandler {
           throw new Error("Claude Code is currently unavailable");
         }
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     } catch {
       throw new Error("Claude Code is currently unavailable");
@@ -66,7 +66,7 @@ export class ClaudeCodeStreamHandler {
   }
 
   private async setupListeners(): Promise<void> {
-    this.listeners.interceptor = await listen<InterceptorMessage>("claude-message", event => {
+    this.listeners.interceptor = await listen<InterceptorMessage>("claude-message", (event) => {
       this.handleInterceptorMessage(event.payload);
     });
   }
@@ -209,7 +209,7 @@ export class ClaudeCodeStreamHandler {
       this.timeout = undefined;
     }
 
-    Object.values(this.listeners).forEach(unlisten => {
+    Object.values(this.listeners).forEach((unlisten) => {
       if (unlisten) unlisten();
     });
 

@@ -55,9 +55,9 @@ const DiagnosticsPane = ({
 
   // Group diagnostics by severity for better organization
   const groupedDiagnostics = {
-    error: diagnostics.filter(d => d.severity === "error"),
-    warning: diagnostics.filter(d => d.severity === "warning"),
-    info: diagnostics.filter(d => d.severity === "info"),
+    error: diagnostics.filter((d) => d.severity === "error"),
+    warning: diagnostics.filter((d) => d.severity === "warning"),
+    info: diagnostics.filter((d) => d.severity === "info"),
   };
 
   const errorCount = groupedDiagnostics.error.length;
@@ -79,7 +79,7 @@ const DiagnosticsPane = ({
             { severity: "warning" as const, items: groupedDiagnostics.warning },
             { severity: "info" as const, items: groupedDiagnostics.info },
           ].map(
-            group =>
+            (group) =>
               group.items.length > 0 && (
                 <div key={group.severity}>
                   {group.items.map((diagnostic, index) => (

@@ -111,7 +111,7 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
     isInitializingRef.current = true;
 
     // Add a small delay to ensure DOM is ready
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     if (!terminalRef.current) {
       console.warn("Terminal ref is not available after delay");
@@ -248,7 +248,7 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
         }
 
         // Handle terminal input
-        terminal.onData(data => {
+        terminal.onData((data) => {
           invoke("terminal_write", { id: connectionId, data });
         });
 
@@ -266,7 +266,7 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
         });
 
         // Handle title changes
-        terminal.onTitleChange(title => {
+        terminal.onTitleChange((title) => {
           updateSession(sessionId, { title });
         });
 
@@ -302,13 +302,13 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
     const session = getSession(sessionId);
     if (!session?.connectionId) return;
 
-    const unlisten = listen(`pty-output-${session.connectionId}`, event => {
+    const unlisten = listen(`pty-output-${session.connectionId}`, (event) => {
       const data = event.payload as { data: string };
       xtermRef.current?.write(data.data);
     });
 
     return () => {
-      unlisten.then(fn => fn());
+      unlisten.then((fn) => fn());
     };
   }, [sessionId, isInitialized, getSession]);
 

@@ -17,9 +17,9 @@ export function DiffHeader({
     return <FileIcon size={14} className="text-text" />;
   };
 
-  const addedLines = diff.lines.filter(line => line.line_type === "added").length;
-  const removedLines = diff.lines.filter(line => line.line_type === "removed").length;
-  const hunks = diff.lines.filter(line => line.line_type === "header").length;
+  const addedLines = diff.lines.filter((line) => line.line_type === "added").length;
+  const removedLines = diff.lines.filter((line) => line.line_type === "removed").length;
+  const hunks = diff.lines.filter((line) => line.line_type === "header").length;
 
   return (
     <div

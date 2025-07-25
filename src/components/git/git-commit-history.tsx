@@ -25,17 +25,17 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
       newExpanded.add(commitHash);
 
       if (!commitFiles[commitHash] && repoPath) {
-        setLoadingCommits(prev => new Set(prev).add(commitHash));
+        setLoadingCommits((prev) => new Set(prev).add(commitHash));
         try {
           const diffs = await getCommitDiff(repoPath, commitHash);
-          setCommitFiles(prev => ({
+          setCommitFiles((prev) => ({
             ...prev,
             [commitHash]: diffs || [],
           }));
         } catch (error) {
           console.error("Failed to load commit files:", error);
         } finally {
-          setLoadingCommits(prev => {
+          setLoadingCommits((prev) => {
             const newSet = new Set(prev);
             newSet.delete(commitHash);
             return newSet;
@@ -49,9 +49,9 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
 
   const copyCommitHash = (hash: string) => {
     navigator.clipboard.writeText(hash);
-    setCopiedHashes(prev => new Set(prev).add(hash));
+    setCopiedHashes((prev) => new Set(prev).add(hash));
     setTimeout(() => {
-      setCopiedHashes(prev => {
+      setCopiedHashes((prev) => {
         const newSet = new Set(prev);
         newSet.delete(hash);
         return newSet;
@@ -122,7 +122,7 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
       </div>
 
       <div className="max-h-96 overflow-y-auto bg-primary-bg">
-        {commits.map(commit => {
+        {commits.map((commit) => {
           const isExpanded = expandedCommits.has(commit.hash);
           const files = commitFiles[commit.hash] || [];
           const isLoading = loadingCommits.has(commit.hash);
@@ -136,7 +136,7 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
               >
                 <div className="flex items-start gap-2">
                   <button
-                    onClick={e => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       toggleCommitExpansion(commit.hash);
                     }}

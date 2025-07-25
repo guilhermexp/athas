@@ -74,7 +74,7 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
         <div className="space-y-2">
           <textarea
             value={commitMessage}
-            onChange={e => setCommitMessage(e.target.value)}
+            onChange={(e) => setCommitMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter commit message..."
             className={cn(

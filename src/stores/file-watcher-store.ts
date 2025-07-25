@@ -38,7 +38,7 @@ export const useFileWatcherStore = create(
 
       try {
         await invoke("start_watching", { path });
-        set(state => ({
+        set((state) => ({
           watchedPaths: new Set(state.watchedPaths).add(path),
         }));
       } catch (error) {
@@ -55,7 +55,7 @@ export const useFileWatcherStore = create(
 
       try {
         await invoke("stop_watching", { path });
-        set(state => {
+        set((state) => {
           const newSet = new Set(state.watchedPaths);
           newSet.delete(path);
           return { watchedPaths: newSet };
@@ -67,7 +67,7 @@ export const useFileWatcherStore = create(
 
     // Clear pending save status for a file
     clearPendingSave: (path: string) => {
-      set(state => {
+      set((state) => {
         const newPendingSaves = new Map(state.pendingSaves);
         newPendingSaves.delete(path);
         return { pendingSaves: newPendingSaves };
@@ -76,7 +76,7 @@ export const useFileWatcherStore = create(
 
     // Mark a file as having a pending save
     markPendingSave: (path: string) => {
-      set(state => {
+      set((state) => {
         const newPendingSaves = new Map(state.pendingSaves);
         newPendingSaves.set(path, Date.now());
         return { pendingSaves: newPendingSaves };
@@ -88,7 +88,7 @@ export const useFileWatcherStore = create(
         const timestamp = pendingSaves.get(path);
         if (timestamp && Date.now() - timestamp >= 800) {
           // Clear the pending save using set directly
-          set(state => {
+          set((state) => {
             const newPendingSaves = new Map(state.pendingSaves);
             newPendingSaves.delete(path);
             return { pendingSaves: newPendingSaves };
@@ -113,7 +113,7 @@ export async function initializeFileWatcherListener() {
   await cleanupFileWatcherListener();
 
   // Listen for file changes
-  unlistenFileChanged = await listen<FileChangeEvent>("file-changed", async event => {
+  unlistenFileChanged = await listen<FileChangeEvent>("file-changed", async (event) => {
     const { path, event_type } = event.payload;
     console.log(`📋 [FileWatcher] File change event: ${path}, type: ${event_type}`);
 
@@ -132,7 +132,7 @@ export async function initializeFileWatcherListener() {
 
     // Handle the file change directly
     const { buffers, reloadBufferFromDisk } = useBufferStore.getState();
-    const buffer = buffers.find(b => b.path === path);
+    const buffer = buffers.find((b) => b.path === path);
 
     if (buffer) {
       // Reload buffer content from disk

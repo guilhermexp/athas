@@ -21,12 +21,7 @@ export const useLspCompletion = ({
 }: UseLspCompletionProps) => {
   const mountedRef = useRef(true);
 
-  const {
-    setLspCompletions,
-    setSelectedLspIndex,
-    setIsLspCompletionVisible,
-    setCompletionPosition,
-  } = useEditorCompletionStore();
+  const { actions } = useEditorCompletionStore();
 
   const handleLspCompletion = useCallback(
     async (cursorPos: number, editorRef: React.RefObject<HTMLDivElement | null>) => {
@@ -51,9 +46,9 @@ export const useLspCompletion = ({
         const completions = await getCompletions(filePath, line, character);
         if (!mountedRef.current) return;
         if (completions.length > 0) {
-          setLspCompletions(completions);
-          setSelectedLspIndex(0);
-          setIsLspCompletionVisible(true);
+          actions.setLspCompletions(completions);
+          actions.setSelectedLspIndex(0);
+          actions.setIsLspCompletionVisible(true);
 
           // Calculate completion position
           const editor = editorRef.current;
@@ -82,7 +77,7 @@ export const useLspCompletion = ({
             finalY = Math.max(10, y - dropdownHeight - lineHeight);
           }
 
-          setCompletionPosition({ top: finalY, left: finalX });
+          actions.setCompletionPosition({ top: finalY, left: finalX });
         }
       } catch (error) {
         console.error("LSP completion error:", error);
@@ -95,10 +90,10 @@ export const useLspCompletion = ({
       value,
       fontSize,
       lineNumbers,
-      setLspCompletions,
-      setSelectedLspIndex,
-      setIsLspCompletionVisible,
-      setCompletionPosition,
+      actions.setLspCompletions,
+      actions.setSelectedLspIndex,
+      actions.setIsLspCompletionVisible,
+      actions.setCompletionPosition,
     ],
   );
 
@@ -135,14 +130,14 @@ export const useLspCompletion = ({
           editorRef.current.focus();
         }
       });
-      setIsLspCompletionVisible(false);
+      actions.setIsLspCompletionVisible(false);
     },
-    [value, setIsLspCompletionVisible],
+    [value, actions.setIsLspCompletionVisible],
   );
 
   const handleCompletionClose = useCallback(() => {
-    setIsLspCompletionVisible(false);
-  }, [setIsLspCompletionVisible]);
+    actions.setIsLspCompletionVisible(false);
+  }, [actions.setIsLspCompletionVisible]);
 
   return {
     handleLspCompletion,

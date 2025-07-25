@@ -62,7 +62,7 @@ const GitRemoteManager = ({ isOpen, onClose, repoPath, onRefresh }: GitRemoteMan
     const confirmed = confirm(`Are you sure you want to remove remote '${remoteName}'?`);
     if (!confirmed) return;
 
-    setActionLoading(prev => new Set(prev).add(remoteName));
+    setActionLoading((prev) => new Set(prev).add(remoteName));
     try {
       const success = await removeRemote(repoPath, remoteName);
       if (success) {
@@ -72,7 +72,7 @@ const GitRemoteManager = ({ isOpen, onClose, repoPath, onRefresh }: GitRemoteMan
     } catch (error) {
       console.error("Failed to remove remote:", error);
     } finally {
-      setActionLoading(prev => {
+      setActionLoading((prev) => {
         const newSet = new Set(prev);
         newSet.delete(remoteName);
         return newSet;
@@ -115,7 +115,7 @@ const GitRemoteManager = ({ isOpen, onClose, repoPath, onRefresh }: GitRemoteMan
               type="text"
               placeholder="Remote name (e.g., origin)"
               value={newRemoteName}
-              onChange={e => setNewRemoteName(e.target.value)}
+              onChange={(e) => setNewRemoteName(e.target.value)}
               className={cn(
                 "w-full rounded border border-border bg-primary-bg",
                 "px-2 py-1 text-text text-xs",
@@ -127,13 +127,13 @@ const GitRemoteManager = ({ isOpen, onClose, repoPath, onRefresh }: GitRemoteMan
               type="text"
               placeholder="Remote URL (e.g., https://github.com/user/repo.git)"
               value={newRemoteUrl}
-              onChange={e => setNewRemoteUrl(e.target.value)}
+              onChange={(e) => setNewRemoteUrl(e.target.value)}
               className={cn(
                 "w-full rounded border border-border bg-primary-bg",
                 "px-2 py-1 text-text text-xs",
                 "focus:border-blue-500 focus:outline-none",
               )}
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleAddRemote();
                 }
@@ -162,7 +162,7 @@ const GitRemoteManager = ({ isOpen, onClose, repoPath, onRefresh }: GitRemoteMan
             <div className="p-4 text-center text-text-lighter text-xs">No remotes configured</div>
           ) : (
             <div className="space-y-0">
-              {remotes.map(remote => {
+              {remotes.map((remote) => {
                 const isActionLoading = actionLoading.has(remote.name);
 
                 return (

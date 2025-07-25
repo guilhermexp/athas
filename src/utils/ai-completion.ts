@@ -1,8 +1,3 @@
-export interface CompletionResponse {
-  completion: string;
-  confidence: number;
-}
-
 // Store GitHub token securely
 export const storeGitHubToken = async (token: string): Promise<void> => {
   try {

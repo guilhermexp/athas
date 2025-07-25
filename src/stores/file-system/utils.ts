@@ -138,7 +138,7 @@ export function updateDirectoryContents(
       // Create a map of existing children to preserve their states
       const existingChildrenMap = new Map<string, FileEntry>();
       if (preserveStates && item.children) {
-        item.children.forEach(child => {
+        item.children.forEach((child) => {
           existingChildrenMap.set(child.path, child);
         });
       }

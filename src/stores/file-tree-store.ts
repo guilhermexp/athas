@@ -19,7 +19,7 @@ export const useFileTreeStore = create(
       } as FileTreeState,
       (set, get) => ({
         toggleFolder: (path: string) => {
-          set(state => {
+          set((state) => {
             if (state.expandedFolders.has(path)) {
               state.expandedFolders.delete(path);
               state.expandedPaths.delete(path);
@@ -31,7 +31,7 @@ export const useFileTreeStore = create(
         },
 
         selectFile: (path: string, multiSelect = false) => {
-          set(state => {
+          set((state) => {
             if (multiSelect) {
               if (state.selectedFiles.has(path)) {
                 state.selectedFiles.delete(path);
@@ -46,13 +46,13 @@ export const useFileTreeStore = create(
         },
 
         clearSelection: () => {
-          set(state => {
+          set((state) => {
             state.selectedFiles.clear();
           });
         },
 
         setExpandedPaths: (paths: Set<string>) => {
-          set(state => {
+          set((state) => {
             state.expandedPaths = paths;
             state.expandedFolders = new Set(paths);
           });
@@ -71,7 +71,7 @@ export const useFileTreeStore = create(
         },
 
         expandToPath: (targetPath: string) => {
-          set(state => {
+          set((state) => {
             const pathParts = targetPath.split(/[/\\]/);
             let currentPath = "";
 
@@ -89,14 +89,14 @@ export const useFileTreeStore = create(
         },
 
         collapseAll: () => {
-          set(state => {
+          set((state) => {
             state.expandedFolders.clear();
             state.expandedPaths.clear();
           });
         },
 
         expandAll: (files: FileEntry[]) => {
-          set(state => {
+          set((state) => {
             const collectFolders = (items: FileEntry[]) => {
               for (const item of items) {
                 if (item.isDir) {

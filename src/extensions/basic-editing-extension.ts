@@ -9,7 +9,7 @@ export const basicEditingExtension: EditorExtension = {
     {
       id: "editor.indent",
       name: "Indent",
-      execute: args => {
+      execute: (args) => {
         const editor = args?.editor as EditorAPI;
         if (!editor) return;
 
@@ -44,7 +44,7 @@ export const basicEditingExtension: EditorExtension = {
     {
       id: "editor.outdent",
       name: "Outdent",
-      execute: args => {
+      execute: (args) => {
         const editor = args?.editor as EditorAPI;
         if (!editor) return;
 
@@ -86,7 +86,7 @@ export const basicEditingExtension: EditorExtension = {
     {
       id: "editor.deleteLine",
       name: "Delete Line",
-      execute: args => {
+      execute: (args) => {
         const editor = args?.editor as EditorAPI;
         if (!editor) return;
 
@@ -107,7 +107,7 @@ export const basicEditingExtension: EditorExtension = {
     {
       id: "editor.duplicateLine",
       name: "Duplicate Line",
-      execute: args => {
+      execute: (args) => {
         const editor = args?.editor as EditorAPI;
         if (!editor) return;
 
@@ -127,7 +127,7 @@ export const basicEditingExtension: EditorExtension = {
     {
       id: "editor.moveLineUp",
       name: "Move Line Up",
-      execute: args => {
+      execute: (args) => {
         const editor = args?.editor as EditorAPI;
         if (!editor) return;
 
@@ -161,7 +161,7 @@ export const basicEditingExtension: EditorExtension = {
     {
       id: "editor.moveLineDown",
       name: "Move Line Down",
-      execute: args => {
+      execute: (args) => {
         const editor = args?.editor as EditorAPI;
         if (!editor) return;
 
@@ -195,7 +195,7 @@ export const basicEditingExtension: EditorExtension = {
     {
       id: "editor.toggleComment",
       name: "Toggle Comment",
-      execute: args => {
+      execute: (args) => {
         const editor = args?.editor as EditorAPI;
         if (!editor) return;
 
@@ -253,9 +253,9 @@ export const basicEditingExtension: EditorExtension = {
     // Pass editor to command handlers
     const commands = basicEditingExtension.commands;
     if (commands) {
-      commands.forEach(command => {
+      commands.forEach((command) => {
         const originalExecute = command.execute;
-        command.execute = args => originalExecute({ ...args, editor });
+        command.execute = (args) => originalExecute({ ...args, editor });
       });
     }
   },

@@ -159,7 +159,7 @@ const GitHubCopilotSettings = () => {
               id="openai-api-key"
               type="password"
               value={apiKey}
-              onChange={e => handleKeyChange(e.target.value)}
+              onChange={(e) => handleKeyChange(e.target.value)}
               placeholder="sk-xxxxxxxxxxxxxxxxxxxx"
               className={cn(
                 "w-full rounded border border-border bg-secondary-bg",

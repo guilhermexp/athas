@@ -13,7 +13,7 @@ const initialState = {
 };
 
 export const useEditorSettingsStore = create(
-  combine(initialState, set => ({
+  combine(initialState, (set) => ({
     // Editor Settings Actions
     setFontSize: (size: number) => set({ fontSize: size }),
     setFontFamily: (family: string) => set({ fontFamily: family }),
@@ -24,6 +24,7 @@ export const useEditorSettingsStore = create(
     setTheme: (theme: string) => set({ theme }),
 
     // Bulk configuration update
-    updateConfig: (config: Partial<typeof initialState>) => set(state => ({ ...state, ...config })),
+    updateConfig: (config: Partial<typeof initialState>) =>
+      set((state) => ({ ...state, ...config })),
   })),
 );

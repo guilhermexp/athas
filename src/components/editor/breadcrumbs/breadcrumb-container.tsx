@@ -4,7 +4,7 @@ import { useUIState } from "../../../stores/ui-state-store";
 import Breadcrumb from "./breadcrumb";
 
 export default function BreadcrumbContainer() {
-  const activeBuffer = useBufferStore(state => state.getActiveBuffer());
+  const activeBuffer = useBufferStore((state) => state.getActiveBuffer());
   const { rootFolderPath, handleFileSelect } = useFileSystemStore();
   const { isFindVisible, setIsFindVisible } = useUIState();
 

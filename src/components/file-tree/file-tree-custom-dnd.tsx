@@ -67,7 +67,7 @@ export const useCustomDragDrop = (
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (dragState.isDragging) {
-        setDragState(prev => ({
+        setDragState((prev) => ({
           ...prev,
           mousePosition: { x: e.clientX, y: e.clientY },
         }));
@@ -91,18 +91,18 @@ export const useCustomDragDrop = (
                   (dragState.draggedItem.path.includes("\\") ? "\\" : "/"),
               )
             ) {
-              setDragState(prev => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
+              setDragState((prev) => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
             } else {
-              setDragState(prev => ({ ...prev, dragOverPath: path, dragOverIsDir: isDir }));
+              setDragState((prev) => ({ ...prev, dragOverPath: path, dragOverIsDir: isDir }));
             }
           } else {
-            setDragState(prev => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
+            setDragState((prev) => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
           }
         } else if (fileTreeContainer) {
           // When hovering over empty space in the file tree container, treat it as dropping to root
-          setDragState(prev => ({ ...prev, dragOverPath: "__ROOT__", dragOverIsDir: true }));
+          setDragState((prev) => ({ ...prev, dragOverPath: "__ROOT__", dragOverIsDir: true }));
         } else {
-          setDragState(prev => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
+          setDragState((prev) => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
         }
       }
     };

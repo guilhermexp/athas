@@ -18,7 +18,7 @@ export const useHover = ({
 }: UseHoverProps) => {
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { setHoverInfo, setIsHovering, isHovering } = useEditorCompletionStore();
+  const { actions, isHovering } = useEditorCompletionStore();
 
   const handleHover = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -98,7 +98,7 @@ export const useHover = ({
                   Math.min(tooltipY, window.innerHeight - tooltipHeight - margin),
                 );
 
-                setHoverInfo({
+                actions.setHoverInfo({
                   content: content.trim(),
                   position: { top: tooltipY, left: tooltipX },
                 });
@@ -110,24 +110,24 @@ export const useHover = ({
         }
       }, 300);
     },
-    [getHover, isLanguageSupported, filePath, fontSize, lineNumbers, setHoverInfo],
+    [getHover, isLanguageSupported, filePath, fontSize, lineNumbers, actions.setHoverInfo],
   );
 
   const handleMouseLeave = useCallback(() => {
-    setIsHovering(false);
+    actions.setIsHovering(false);
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
     setTimeout(() => {
       if (!isHovering) {
-        setHoverInfo(null);
+        actions.setHoverInfo(null);
       }
     }, 150);
-  }, [isHovering, setIsHovering, setHoverInfo]);
+  }, [isHovering, actions.setIsHovering, actions.setHoverInfo]);
 
   const handleMouseEnter = useCallback(() => {
-    setIsHovering(true);
-  }, [setIsHovering]);
+    actions.setIsHovering(true);
+  }, [actions.setIsHovering]);
 
   return {
     handleHover,

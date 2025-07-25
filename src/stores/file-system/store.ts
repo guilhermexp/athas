@@ -55,7 +55,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
     // Actions
     handleOpenFolder: async () => {
       try {
-        set(state => {
+        set((state) => {
           state.isFileTreeLoading = true;
         });
 
@@ -65,7 +65,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
           const entries = await readDirectoryContents(selected);
           const fileTree = sortFileEntries(entries);
 
-          set(state => {
+          set((state) => {
             state.isFileTreeLoading = false;
             state.files = fileTree;
             state.rootFolderPath = selected;
@@ -100,14 +100,14 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
 
           return true;
         } else {
-          set(state => {
+          set((state) => {
             state.isFileTreeLoading = false;
           });
           return false;
         }
       } catch (error) {
         console.error("Error opening folder:", error);
-        set(state => {
+        set((state) => {
           state.isFileTreeLoading = false;
         });
         return false;
@@ -116,14 +116,14 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
 
     handleOpenFolderByPath: async (path: string) => {
       try {
-        set(state => {
+        set((state) => {
           state.isFileTreeLoading = true;
         });
 
         const entries = await readDirectoryContents(path);
         const fileTree = sortFileEntries(entries);
 
-        set(state => {
+        set((state) => {
           state.isFileTreeLoading = false;
           state.files = fileTree;
           state.rootFolderPath = path;
@@ -159,7 +159,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
         return true;
       } catch (error) {
         console.error("Error opening folder by path:", error);
-        set(state => {
+        set((state) => {
           state.isFileTreeLoading = false;
         });
         return false;
@@ -277,13 +277,13 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
         // Expand folder - load children
         try {
           const entries = await readDirectoryContents(folder.path);
-          const updatedFiles = updateFileInTree(get().files, path, item => ({
+          const updatedFiles = updateFileInTree(get().files, path, (item) => ({
             ...item,
             expanded: true,
             children: sortFileEntries(entries),
           }));
 
-          set(state => {
+          set((state) => {
             state.files = updatedFiles;
             state.filesVersion = state.filesVersion + 1;
           });
@@ -294,12 +294,12 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
         }
       } else {
         // Collapse folder
-        const updatedFiles = updateFileInTree(get().files, path, item => ({
+        const updatedFiles = updateFileInTree(get().files, path, (item) => ({
           ...item,
           expanded: false,
         }));
 
-        set(state => {
+        set((state) => {
           state.files = updatedFiles;
           state.filesVersion = state.filesVersion + 1;
         });
@@ -334,7 +334,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
       };
 
       // Add the new item to the root level of the file tree
-      set(state => {
+      set((state) => {
         state.files = [...state.files, newItem];
       });
     },
@@ -413,7 +413,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
         // Read the directory contents
         const entries = await readDirectory(directoryPath);
 
-        set(state => {
+        set((state) => {
           // Update the directory contents while preserving all states
           const updated = updateDirectoryContents(state.files, directoryPath, entries as any[]);
 
@@ -432,7 +432,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
     handleCollapseAllFolders: async () => {
       const updatedFiles = collapseAllFolders(get().files);
 
-      set(state => {
+      set((state) => {
         state.files = updatedFiles;
         state.filesVersion = state.filesVersion + 1;
       });
@@ -466,7 +466,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
       // Add to new location
       updatedFiles = addFileToTree(updatedFiles, targetDir, updatedMovedFile);
 
-      set(state => {
+      set((state) => {
         state.files = updatedFiles;
         state.filesVersion = state.filesVersion + 1;
         state.projectFilesCache = undefined;
@@ -474,7 +474,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
 
       // Update open buffers
       const { buffers, updateBuffer } = useBufferStore.getState();
-      const buffer = buffers.find(b => b.path === oldPath);
+      const buffer = buffers.find((b) => b.path === oldPath);
       if (buffer) {
         const fileName = newPath.split("/").pop() || buffer.name;
         updateBuffer({
@@ -542,7 +542,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
             // Yield control much less frequently to improve performance
             if (allFiles.length % 500 === 0) {
               // Use requestIdleCallback for better performance when available
-              await new Promise(resolve => {
+              await new Promise((resolve) => {
                 if ("requestIdleCallback" in window) {
                   requestIdleCallback(resolve, { timeout: 16 });
                 } else {
@@ -572,7 +572,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
       );
 
       // Cache the results
-      set(state => {
+      set((state) => {
         state.projectFilesCache = {
           path: rootFolderPath,
           files: allFiles,
@@ -597,7 +597,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
 
         const updatedFiles = addFileToTree(get().files, directoryPath, newFile);
 
-        set(state => {
+        set((state) => {
           state.files = updatedFiles;
           state.filesVersion = state.filesVersion + 1;
         });
@@ -624,7 +624,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
 
         const updatedFiles = addFileToTree(get().files, parentPath, newFolder);
 
-        set(state => {
+        set((state) => {
           state.files = updatedFiles;
           state.filesVersion = state.filesVersion + 1;
         });
@@ -643,7 +643,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
         // Update file tree
         const updatedFiles = removeFileFromTree(get().files, path);
 
-        set(state => {
+        set((state) => {
           state.files = updatedFiles;
           state.filesVersion = state.filesVersion + 1;
         });
@@ -652,8 +652,8 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
         const { buffers, closeBuffer } = useBufferStore.getState();
 
         // Find and close any buffers with matching path
-        const buffersToClose = buffers.filter(buffer => buffer.path === path);
-        buffersToClose.forEach(buffer => {
+        const buffersToClose = buffers.filter((buffer) => buffer.path === path);
+        buffersToClose.forEach((buffer) => {
           closeBuffer(buffer.id);
         });
       } catch (error) {
@@ -664,7 +664,7 @@ const useFileSystemStoreBase = create<FsState & FsActions>()(
 
     // Setter methods
     setFiles: (newFiles: FileEntry[]) => {
-      set(state => {
+      set((state) => {
         state.files = newFiles;
         state.filesVersion = state.filesVersion + 1;
       });

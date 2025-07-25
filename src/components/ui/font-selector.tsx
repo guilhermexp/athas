@@ -51,7 +51,7 @@ export const FontSelector = ({
   }));
 
   // Add custom font option if current value is not in the list
-  const currentFontInList = fontOptions.some(option => option.value === selectedFont);
+  const currentFontInList = fontOptions.some((option) => option.value === selectedFont);
   if (!currentFontInList && selectedFont && selectedFont.trim() !== "") {
     fontOptions.unshift({
       value: selectedFont,

@@ -13,7 +13,7 @@ export const useDiffViewState = (): UseDiffViewStateReturn => {
   const [viewMode, setViewMode] = useState<"unified" | "split">("unified");
 
   const toggleHunkCollapse = useCallback((hunkId: number) => {
-    setCollapsedHunks(prev => {
+    setCollapsedHunks((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(hunkId)) {
         newSet.delete(hunkId);

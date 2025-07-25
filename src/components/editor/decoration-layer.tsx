@@ -36,8 +36,8 @@ export const DecorationLayer = ({
   scrollTop,
   scrollLeft,
 }: DecorationLayerProps) => {
-  const storeDecorations = useEditorDecorationsStore(useShallow(state => state.getDecorations()));
-  const selection = useEditorCursorStore(state => state.selection);
+  const storeDecorations = useEditorDecorationsStore(useShallow((state) => state.getDecorations()));
+  const selection = useEditorCursorStore((state) => state.selection);
   const charWidth = getCharWidth(fontSize);
 
   const decorations = useMemo(() => {
@@ -163,7 +163,7 @@ export const DecorationLayer = ({
 
   return (
     <>
-      {renderedDecorations.map(decoration => (
+      {renderedDecorations.map((decoration) => (
         <div
           key={decoration.key}
           className={`editor-decoration editor-decoration-${decoration.type} ${decoration.className}`}

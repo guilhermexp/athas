@@ -55,7 +55,7 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
-      "arrowParentheses": "asNeeded"
+      "arrowParentheses": "always"
     }
   },
   "assist": {

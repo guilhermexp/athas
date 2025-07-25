@@ -180,7 +180,7 @@ const ApiKeyModal = ({
               id="api-key-input"
               type="password"
               value={apiKey}
-              onChange={e => handleKeyChange(e.target.value)}
+              onChange={(e) => handleKeyChange(e.target.value)}
               placeholder={getApiKeyPlaceholder()}
               className={cn(
                 "w-full rounded border border-border bg-secondary-bg",
@@ -233,7 +233,7 @@ const ApiKeyModal = ({
           <div className="rounded border border-border bg-secondary-bg p-3">
             <div className="mb-2 font-medium text-text text-xs">Available Models:</div>
             <div className="space-y-1">
-              {provider.models.slice(0, 3).map(model => (
+              {provider.models.slice(0, 3).map((model) => (
                 <div key={model.id} className="flex items-center justify-between text-xs">
                   <span className="text-text">{model.name}</span>
                   <span className="text-text-lighter">

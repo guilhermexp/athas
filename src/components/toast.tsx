@@ -7,7 +7,7 @@ export const ToastContainer: React.FC = () => {
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex flex-col gap-2">
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <div
           key={toast.id}
           className={`relative flex min-w-[300px] max-w-[500px] animate-slide-in-right items-center gap-3 rounded-lg px-4 py-3 pr-8 shadow-lg ${toast.type === "error" ? "bg-red-900/90 text-red-100" : ""} ${toast.type === "warning" ? "bg-yellow-900/90 text-yellow-100" : ""} ${toast.type === "success" ? "bg-green-900/90 text-green-100" : ""} ${!toast.type || toast.type === "info" ? "bg-gray-800/90 text-gray-100" : ""} `}

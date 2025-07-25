@@ -92,7 +92,7 @@ export const useFontStore = create(
           return;
         }
 
-        set(state => {
+        set((state) => {
           state.isLoading = true;
           state.error = null;
         });
@@ -100,9 +100,9 @@ export const useFontStore = create(
         try {
           console.log("Loading fonts from system...");
           const fonts = await invoke<FontInfo[]>("get_system_fonts");
-          const monospaceFonts = fonts.filter(font => font.is_monospace);
+          const monospaceFonts = fonts.filter((font) => font.is_monospace);
 
-          set(state => {
+          set((state) => {
             state.availableFonts = fonts;
             state.monospaceFonts = monospaceFonts;
             state.isLoading = false;
@@ -114,7 +114,7 @@ export const useFontStore = create(
           console.log("Loaded and cached", fonts.length, "fonts");
         } catch (error) {
           console.error("Failed to load fonts:", error);
-          set(state => {
+          set((state) => {
             state.error = error instanceof Error ? error.message : "Failed to load fonts";
             state.isLoading = false;
           });
@@ -131,7 +131,7 @@ export const useFontStore = create(
           return;
         }
 
-        set(state => {
+        set((state) => {
           state.isLoading = true;
           state.error = null;
         });
@@ -139,7 +139,7 @@ export const useFontStore = create(
         try {
           console.log("Loading monospace fonts from system...");
           const fonts = await invoke<FontInfo[]>("get_monospace_fonts");
-          set(state => {
+          set((state) => {
             state.monospaceFonts = fonts;
             state.isLoading = false;
             state.lastCacheTime = Date.now();
@@ -154,7 +154,7 @@ export const useFontStore = create(
           console.log("Loaded and cached", fonts.length, "monospace fonts");
         } catch (error) {
           console.error("Failed to load monospace fonts:", error);
-          set(state => {
+          set((state) => {
             state.error = error instanceof Error ? error.message : "Failed to load monospace fonts";
             state.isLoading = false;
           });
@@ -174,7 +174,7 @@ export const useFontStore = create(
       // Clear cache and reload
       clearCacheAndReload: () => {
         localStorage.removeItem(FONT_CACHE_KEY);
-        set(state => {
+        set((state) => {
           state.availableFonts = [];
           state.monospaceFonts = [];
           state.lastCacheTime = null;
@@ -184,7 +184,7 @@ export const useFontStore = create(
 
       // Clear error
       clearError: () => {
-        set(state => {
+        set((state) => {
           state.error = null;
         });
       },

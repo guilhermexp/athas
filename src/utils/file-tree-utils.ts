@@ -29,7 +29,7 @@ export function updateFileInTree(
   targetPath: string,
   updater: (file: FileEntry) => FileEntry,
 ): FileEntry[] {
-  return files.map(file => {
+  return files.map((file) => {
     if (file.path === targetPath) {
       return updater(file);
     }
@@ -45,8 +45,8 @@ export function updateFileInTree(
 
 export function removeFileFromTree(files: FileEntry[], targetPath: string): FileEntry[] {
   return files
-    .filter(file => file.path !== targetPath)
-    .map(file => {
+    .filter((file) => file.path !== targetPath)
+    .map((file) => {
       if (file.children) {
         return {
           ...file,
@@ -79,7 +79,7 @@ export function addFileToTree(
     }
   }
 
-  const result = files.map(file => {
+  const result = files.map((file) => {
     if (file.path === parentPath && file.isDir) {
       const children = sortFileEntries([...(file.children || []), newFile]);
       return { ...file, children, expanded: true };
@@ -96,7 +96,7 @@ export function addFileToTree(
 }
 
 export function collapseAllFolders(files: FileEntry[]): FileEntry[] {
-  return files.map(file => ({
+  return files.map((file) => ({
     ...file,
     expanded: false,
     children: file.children ? collapseAllFolders(file.children) : undefined,

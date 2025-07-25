@@ -73,7 +73,7 @@ export default function Breadcrumb({
         return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
       });
 
-      setDropdown(prev =>
+      setDropdown((prev) =>
         prev
           ? {
               ...prev,
@@ -187,10 +187,10 @@ export default function Breadcrumb({
                 <ChevronRight size={10} className="mx-0.5 flex-shrink-0 text-text-lighter" />
               )}
               <button
-                ref={el => {
+                ref={(el) => {
                   buttonRefs.current[index] = el;
                 }}
-                onClick={e => handleSegmentClick(index, e)}
+                onClick={(e) => handleSegmentClick(index, e)}
                 className="flex max-w-[240px] items-center gap-1 truncate rounded px-1 py-0.5 text-xs transition-colors hover:bg-hover hover:text-text"
                 title={segment}
               >
@@ -233,7 +233,7 @@ export default function Breadcrumb({
               </button>
             )}
 
-            {dropdown.items.map(item => (
+            {dropdown.items.map((item) => (
               <button
                 key={item.path}
                 onClick={async () => {
@@ -257,7 +257,7 @@ export default function Breadcrumb({
                       });
 
                       // Update dropdown with new contents and track navigation
-                      setDropdown(prev =>
+                      setDropdown((prev) =>
                         prev
                           ? {
                               ...prev,

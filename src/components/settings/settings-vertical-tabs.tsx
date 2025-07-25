@@ -54,7 +54,7 @@ const tabs: TabItem[] = [
 export const SettingsVerticalTabs = ({ activeTab, onTabChange }: SettingsVerticalTabsProps) => {
   return (
     <div className="p-1.5">
-      {tabs.map(tab => {
+      {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
 

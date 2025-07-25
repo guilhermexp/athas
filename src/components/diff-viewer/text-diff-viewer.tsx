@@ -16,9 +16,9 @@ export function TextDiffViewer({
   const { isHunkCollapsed, toggleHunkCollapse } = useDiffViewState();
 
   const hunks = groupLinesIntoHunks(diff.lines);
-  const contextLines = diff.lines.filter(line => line.line_type === "context").length;
-  const addedLines = diff.lines.filter(line => line.line_type === "added").length;
-  const removedLines = diff.lines.filter(line => line.line_type === "removed").length;
+  const contextLines = diff.lines.filter((line) => line.line_type === "context").length;
+  const addedLines = diff.lines.filter((line) => line.line_type === "added").length;
+  const removedLines = diff.lines.filter((line) => line.line_type === "removed").length;
 
   if (hunks.length === 0) {
     return (
@@ -46,7 +46,7 @@ export function TextDiffViewer({
       {/* Diff Content */}
       <div className="custom-scrollbar flex-1 overflow-y-auto">
         <div className="font-mono">
-          {hunks.map(hunk => (
+          {hunks.map((hunk) => (
             <div key={hunk.id} className="border-border border-b last:border-b-0">
               <DiffHunkHeader
                 hunk={hunk}

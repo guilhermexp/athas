@@ -265,7 +265,7 @@ export default function AIChatInputBar({
                         <div className="p-2 text-text-lighter text-xs">No files available</div>
                       ) : (
                         <div className="space-y-1">
-                          {buffers.map(buffer => (
+                          {buffers.map((buffer) => (
                             <label
                               key={buffer.id}
                               className="flex cursor-pointer items-center gap-2 rounded p-1 hover:bg-hover"
@@ -297,8 +297,8 @@ export default function AIChatInputBar({
       {aiProviderId !== "claude-code" && selectedBufferIds.size > 0 && (
         <div className="border-border border-b bg-secondary-bg px-2 py-1.5">
           <div className="flex flex-wrap items-center gap-1">
-            {Array.from(selectedBufferIds).map(bufferId => {
-              const buffer = buffers.find(b => b.id === bufferId);
+            {Array.from(selectedBufferIds).map((bufferId) => {
+              const buffer = buffers.find((b) => b.id === bufferId);
               if (!buffer) return null;
               return (
                 <div

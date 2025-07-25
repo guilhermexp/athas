@@ -89,7 +89,7 @@ const ConnectionList = ({
           </div>
         ) : (
           <div className="space-y-2 p-2 sm:p-3">
-            {connections.map(connection => (
+            {connections.map((connection) => (
               <div
                 key={connection.id}
                 className={cn(
@@ -114,7 +114,7 @@ const ConnectionList = ({
                       <span
                         className="cursor-pointer truncate rounded px-1 py-0.5 font-medium text-sm text-text hover:bg-hover"
                         title="Click for options"
-                        onClick={e => {
+                        onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           setConnectionMenu({
@@ -123,7 +123,7 @@ const ConnectionList = ({
                             connectionId: connection.id,
                           });
                         }}
-                        onContextMenu={e => {
+                        onContextMenu={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           setConnectionMenu({
@@ -187,15 +187,15 @@ const ConnectionList = ({
             left: connectionMenu.x,
             top: connectionMenu.y,
           }}
-          onMouseDown={e => {
+          onMouseDown={(e) => {
             e.stopPropagation();
           }}
         >
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              const connection = connections.find(c => c.id === connectionMenu.connectionId);
+              const connection = connections.find((c) => c.id === connectionMenu.connectionId);
               if (connection) {
                 onEdit(connection);
               }
@@ -207,7 +207,7 @@ const ConnectionList = ({
             Edit
           </button>
           <button
-            onMouseDown={e => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDelete(connectionMenu.connectionId);

@@ -151,7 +151,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
           "crystal",
         ]);
 
-        const textFiles = allProjectFiles.filter(file => {
+        const textFiles = allProjectFiles.filter((file) => {
           if (file.isDir) return false;
 
           const extension = file.name.split(".").pop()?.toLowerCase();
@@ -181,7 +181,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
           const chunk = textFiles.slice(i, i + CHUNK_SIZE);
 
           await Promise.all(
-            chunk.map(async file => {
+            chunk.map(async (file) => {
               if (signal.aborted) return;
 
               try {
@@ -224,7 +224,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
           );
 
           // Allow UI to update between chunks - use requestAnimationFrame for better performance
-          await new Promise(resolve => requestAnimationFrame(resolve));
+          await new Promise((resolve) => requestAnimationFrame(resolve));
         }
 
         if (!signal.aborted) {
@@ -303,7 +303,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
     (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex(prev => {
+        setSelectedIndex((prev) => {
           const newIndex = Math.min(prev + 1, flatResults.length - 1);
           // Scroll to the selected item
           const key = `${flatResults[newIndex]?.file}-${flatResults[newIndex]?.index}`;
@@ -313,7 +313,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
         });
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex(prev => {
+        setSelectedIndex((prev) => {
           const newIndex = Math.max(prev - 1, -1);
           if (newIndex >= 0) {
             const key = `${flatResults[newIndex]?.file}-${flatResults[newIndex]?.index}`;
@@ -378,7 +378,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
             ref={searchInputRef}
             type="text"
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search"
             className="h-6 w-full border-none bg-transparent pr-18 pl-6 text-text text-xs focus:outline-none focus:ring-0"
             style={{
@@ -484,7 +484,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
                   <div className="ml-6 space-y-0.5">
                     {results.map((result, index) => {
                       const flatIndex = flatResults.findIndex(
-                        fr => fr.file === filePath && fr.index === index,
+                        (fr) => fr.file === filePath && fr.index === index,
                       );
                       const isSelected = flatIndex === selectedIndex;
                       const key = `${filePath}-${index}`;
@@ -492,7 +492,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
                       return (
                         <button
                           key={index}
-                          ref={el => {
+                          ref={(el) => {
                             if (el) resultRefs.current.set(key, el);
                             else resultRefs.current.delete(key);
                           }}

@@ -20,7 +20,7 @@ export const useEditorContentStore = createWithEqualityFn(
       },
 
       setLineTokens: (lineNumber: number, tokens: LineToken[]) =>
-        set(state => {
+        set((state) => {
           if (lineNumber < 0 || lineNumber >= state.lines.length) {
             return state;
           }

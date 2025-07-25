@@ -11,7 +11,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   sessions: new Map(),
 
   updateSession: (sessionId: string, updates: Partial<Terminal>) => {
-    set(state => {
+    set((state) => {
       const newSessions = new Map(state.sessions);
       const currentSession = newSessions.get(sessionId) || {};
       newSessions.set(sessionId, { ...currentSession, ...updates });

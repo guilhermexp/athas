@@ -12,8 +12,8 @@ export function DiffHunkHeader({
   onStageHunk,
   onUnstageHunk,
 }: DiffHunkHeaderProps) {
-  const addedCount = hunk.lines.filter(l => l.line_type === "added").length;
-  const removedCount = hunk.lines.filter(l => l.line_type === "removed").length;
+  const addedCount = hunk.lines.filter((l) => l.line_type === "added").length;
+  const removedCount = hunk.lines.filter((l) => l.line_type === "removed").length;
 
   return (
     <div className="sticky top-0 z-10 border-border border-y bg-secondary-bg">

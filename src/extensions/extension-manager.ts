@@ -190,8 +190,8 @@ class ExtensionManager {
         localStorage.removeItem(`${storageKey}-${key}`);
       },
       clear: (): void => {
-        const keys = Object.keys(localStorage).filter(k => k.startsWith(`${storageKey}-`));
-        keys.forEach(key => localStorage.removeItem(key));
+        const keys = Object.keys(localStorage).filter((k) => k.startsWith(`${storageKey}-`));
+        keys.forEach((key) => localStorage.removeItem(key));
       },
     };
   }
