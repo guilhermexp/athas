@@ -1,30 +1,24 @@
 import { create } from "zustand";
-import { combine } from "zustand/middleware";
+import { createSelectors } from "@/utils/zustand-selectors";
 
-const initialState = {
-  activeBufferPath: undefined as string | undefined,
+interface SidebarState {
+  activeBufferPath?: string;
+  coreFeatures: {
+    search: boolean;
+    git: boolean;
+    remote: boolean;
+  };
+  isRemoteWindow: boolean;
+  remoteConnectionName?: string;
+}
+
+const useSidebarStoreBase = create<SidebarState>()(() => ({
   coreFeatures: {
     search: true,
     git: true,
     remote: true,
   },
   isRemoteWindow: false,
-  remoteConnectionName: undefined as string | undefined,
-};
+}));
 
-export const useSidebarStore = create(
-  combine(initialState, set => ({
-    setActiveBufferPath: (path: string | undefined) => set({ activeBufferPath: path }),
-    setCoreFeatures: (features: { search: boolean; git: boolean; remote: boolean }) =>
-      set({ coreFeatures: features }),
-    updateCoreFeature: (feature: keyof typeof initialState.coreFeatures, enabled: boolean) =>
-      set(state => ({
-        coreFeatures: {
-          ...state.coreFeatures,
-          [feature]: enabled,
-        },
-      })),
-    setIsRemoteWindow: (isRemote: boolean) => set({ isRemoteWindow: isRemote }),
-    setRemoteConnectionName: (name: string | undefined) => set({ remoteConnectionName: name }),
-  })),
-);
+export const useSidebarStore = createSelectors(useSidebarStoreBase);

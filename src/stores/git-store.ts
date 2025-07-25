@@ -23,26 +23,20 @@ const initialState: GitState = {
 
 export const useGitStore = create(
   combine(initialState, set => ({
-    // Setters
-    setGitStatus: (gitStatus: GitStatus | null) => set({ gitStatus }),
-    setCommits: (commits: GitCommit[]) => set({ commits }),
-    setBranches: (branches: string[]) => set({ branches }),
-    setIsLoadingGitData: (isLoadingGitData: boolean) => set({ isLoadingGitData }),
-    setIsRefreshing: (isRefreshing: boolean) => set({ isRefreshing }),
-
-    // Batch update
-    updateGitData: (data: {
-      gitStatus: GitStatus | null;
-      commits: GitCommit[];
-      branches: string[];
-    }) =>
-      set({
-        gitStatus: data.gitStatus,
-        commits: data.commits,
-        branches: data.branches,
-      }),
-
-    // Reset
-    reset: () => set(initialState),
+    actions: {
+      setGitStatus: (gitStatus: GitStatus | null) => set({ gitStatus }),
+      setIsLoadingGitData: (isLoadingGitData: boolean) => set({ isLoadingGitData }),
+      setIsRefreshing: (isRefreshing: boolean) => set({ isRefreshing }),
+      updateGitData: (data: {
+        gitStatus: GitStatus | null;
+        commits: GitCommit[];
+        branches: string[];
+      }) =>
+        set({
+          gitStatus: data.gitStatus,
+          commits: data.commits,
+          branches: data.branches,
+        }),
+    },
   })),
 );

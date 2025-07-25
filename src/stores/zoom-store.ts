@@ -3,8 +3,6 @@ import { combine } from "zustand/middleware";
 
 const ZOOM_LEVELS = [0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0];
 const DEFAULT_ZOOM = 1.0;
-const MIN_ZOOM = ZOOM_LEVELS[0];
-const MAX_ZOOM = ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
 
 const initialState = {
   zoomLevel: DEFAULT_ZOOM,
@@ -61,21 +59,7 @@ export const useZoomStore = create(
         }
       },
 
-      setZoomLevel: (level: number) => {
-        const clampedLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, level));
-        set({ zoomLevel: clampedLevel });
-        showZoomIndicatorTemporarily();
-      },
-
       showZoomIndicatorTemporarily,
-
-      hideZoomIndicator: () => {
-        const state = get();
-        if (state.zoomIndicatorTimeout) {
-          clearTimeout(state.zoomIndicatorTimeout);
-        }
-        set({ showZoomIndicator: false, zoomIndicatorTimeout: null });
-      },
 
       getZoomPercentage: () => Math.round(get().zoomLevel * 100),
     };

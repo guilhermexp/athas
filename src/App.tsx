@@ -8,7 +8,7 @@ import WelcomeScreen from "./components/window/welcome-screen";
 import { ZoomIndicator } from "./components/zoom-indicator";
 import { useSettingsSync } from "./hooks/use-settings-sync";
 import { useAppStore } from "./stores/app-store";
-import { useFileSystemStore } from "./stores/file-system-store";
+import { useFileSystemStore } from "./stores/file-system/store";
 import {
   cleanupFileWatcherListener,
   initializeFileWatcherListener,

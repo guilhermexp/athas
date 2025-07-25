@@ -3,7 +3,7 @@ import type React from "react";
 import { useMemo } from "react";
 import { cn } from "@/utils/cn";
 import { useBufferStore } from "../../stores/buffer-store";
-import { useFileSystemStore } from "../../stores/file-system-store";
+import { useFileSystemStore } from "../../stores/file-system/store";
 import { useProjectStore } from "../../stores/project-store";
 import { useSidebarStore } from "../../stores/sidebar-store";
 import { useUIState } from "../../stores/ui-state-store";
@@ -42,24 +42,31 @@ export const MainSidebar = () => {
     setProjectNameMenu,
   } = useUIState();
   const { getProjectName } = useProjectStore();
-  const {
-    files,
-    rootFolderPath,
-    isFileTreeLoading,
-    setFiles,
-    handleOpenFolder,
-    handleCreateNewFile,
-    handleCreateNewFolderInDirectory,
-    handleFileSelect,
-    handleCreateNewFileInDirectory,
-    handleDeletePath,
-    refreshDirectory,
-    handleFileMove,
-  } = useFileSystemStore();
-  const { activeBufferPath, coreFeatures, isRemoteWindow, remoteConnectionName } =
-    useSidebarStore();
+
+  // file system store
+  const rootFolderPath = useFileSystemStore.use.rootFolderPath?.();
+  const files = useFileSystemStore.use.files();
+  const isFileTreeLoading = useFileSystemStore.use.isFileTreeLoading();
+  const setFiles = useFileSystemStore.use.setFiles?.();
+  const handleOpenFolder = useFileSystemStore.use.handleOpenFolder?.();
+  const handleCreateNewFile = useFileSystemStore.use.handleCreateNewFile?.();
+  const handleCreateNewFolderInDirectory =
+    useFileSystemStore.use.handleCreateNewFolderInDirectory?.();
+  const handleFileSelect = useFileSystemStore.use.handleFileSelect?.();
+  const handleCreateNewFileInDirectory = useFileSystemStore.use.handleCreateNewFileInDirectory?.();
+  const handleDeletePath = useFileSystemStore.use.handleDeletePath?.();
+  const refreshDirectory = useFileSystemStore.use.refreshDirectory?.();
+  const handleFileMove = useFileSystemStore.use.handleFileMove?.();
+
+  // sidebar store
+  const activeBufferPath = useSidebarStore.use.activeBufferPath?.();
+  const coreFeatures = useSidebarStore.use.coreFeatures?.();
+  const isRemoteWindow = useSidebarStore.use.isRemoteWindow();
+  const remoteConnectionName = useSidebarStore.use.remoteConnectionName?.();
+
   const showFileTreeHeader =
     !isGitViewActive && !isSearchViewActive && !isRemoteViewActive && !isRemoteWindow;
+
   const projectName = getProjectName();
 
   // Handlers

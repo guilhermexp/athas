@@ -10,7 +10,7 @@ import { useEditorCompletionStore } from "../../stores/editor-completion-store";
 import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 import { useEditorSearchStore } from "../../stores/editor-search-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
-import { useFileSystemStore } from "../../stores/file-system-store";
+import { useFileSystemStore } from "../../stores/file-system/store";
 import FindBar from "../find-bar";
 import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
 import { CompletionDropdown } from "./completion-dropdown";

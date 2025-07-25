@@ -1,5 +1,5 @@
 import { useBufferStore } from "../../../stores/buffer-store";
-import { useFileSystemStore } from "../../../stores/file-system-store";
+import { useFileSystemStore } from "../../../stores/file-system/store";
 import { useUIState } from "../../../stores/ui-state-store";
 import Breadcrumb from "./breadcrumb";
 

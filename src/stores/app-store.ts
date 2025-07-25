@@ -150,35 +150,6 @@ export const useAppStore = create(
           });
         },
 
-        closeQuickEdit: () => {
-          set(state => {
-            state.quickEditState.isOpen = false;
-          });
-        },
-
-        // Apply quick edit
-        applyQuickEdit: async (editedText: string) => {
-          const { useBufferStore } = await import("./buffer-store");
-          const { activeBufferId, updateBufferContent } = useBufferStore.getState();
-          const activeBuffer = useBufferStore.getState().buffers.find(b => b.id === activeBufferId);
-
-          if (!activeBuffer) return;
-
-          const { selectionRange } = get().quickEditState;
-          const { start, end } = selectionRange;
-
-          const newContent =
-            activeBuffer.content.substring(0, start) +
-            editedText +
-            activeBuffer.content.substring(end);
-
-          updateBufferContent(activeBuffer.id, newContent);
-          set(state => {
-            state.quickEditState.isOpen = false;
-          });
-        },
-
-        // Cleanup
         cleanup: () => {
           const { autoSaveTimeoutId } = get();
           if (autoSaveTimeoutId) {

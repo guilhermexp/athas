@@ -1,6 +1,6 @@
 import { useAppStore } from "../stores/app-store";
 import { useBufferStore } from "../stores/buffer-store";
-import { useFileSystemStore } from "../stores/file-system-store";
+import { useFileSystemStore } from "../stores/file-system/store";
 import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
 import { useSettingsStore } from "../stores/settings-store";
 import { useUIState } from "../stores/ui-state-store";

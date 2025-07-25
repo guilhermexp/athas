@@ -44,7 +44,7 @@ export const useRecentFoldersStore = create<RecentFoldersState & RecentFoldersAc
 
         openRecentFolder: async (folderPath: string) => {
           try {
-            const { useFileSystemStore } = await import("./file-system-store");
+            const { useFileSystemStore } = await import("./file-system/store");
             const { handleOpenFolderByPath } = useFileSystemStore.getState();
             await handleOpenFolderByPath(folderPath);
             get().addToRecents(folderPath);

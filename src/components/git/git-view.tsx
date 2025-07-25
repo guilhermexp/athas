@@ -21,15 +21,8 @@ interface GitViewProps {
 }
 
 const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
-  const {
-    gitStatus,
-    commits,
-    isLoadingGitData,
-    isRefreshing,
-    setIsLoadingGitData,
-    setIsRefreshing,
-    updateGitData,
-  } = useGitStore();
+  const { gitStatus, commits, isLoadingGitData, isRefreshing, actions } = useGitStore();
+  const { setIsLoadingGitData, setIsRefreshing, updateGitData } = actions;
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [showGitActionsMenu, setShowGitActionsMenu] = useState(false);
   const [gitActionsMenuPosition, setGitActionsMenuPosition] = useState<{
@@ -61,7 +54,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     } finally {
       setIsLoadingGitData(false);
     }
-  }, [repoPath, setIsLoadingGitData, updateGitData]);
+  }, [repoPath, actions]);
 
   // Handler for manual refresh with minimum display time
   const handleManualRefresh = useCallback(async () => {
@@ -74,7 +67,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [loadGitData, setIsRefreshing]);
+  }, [loadGitData, actions]);
 
   // Load git status on mount and when repo path changes
   useEffect(() => {

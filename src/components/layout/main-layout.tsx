@@ -4,7 +4,7 @@ import { ProjectNameMenu } from "../../hooks/use-context-menus";
 import { useKeyboardShortcutsWrapper } from "../../hooks/use-keyboard-shortcuts-wrapper";
 import { useMenuEventsWrapper } from "../../hooks/use-menu-events-wrapper";
 import { useActiveBuffer } from "../../stores/buffer-store";
-import { useFileSystemStore } from "../../stores/file-system-store";
+import { useFileSystemStore } from "../../stores/file-system/store";
 import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
 import { useSettingsStore } from "../../stores/settings-store";
 import { useUIState } from "../../stores/ui-state-store";

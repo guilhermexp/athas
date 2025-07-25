@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useActiveBuffer, useBufferStore } from "../../../stores/buffer-store";
-import { useFileSystemStore } from "../../../stores/file-system-store";
+import { useFileSystemStore } from "../../../stores/file-system/store";
 import type { GitDiff } from "../../../utils/git";
 import { getFileDiff } from "../../../utils/git";
 
