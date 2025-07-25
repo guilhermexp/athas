@@ -189,7 +189,14 @@ export function TextEditor() {
   useEffect(() => {
     if (textareaRef.current && !disabled) {
       textareaRef.current.focus();
-      handleSelectionChange();
+      // Delay setting selection to ensure content is loaded
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = 0;
+          textareaRef.current.selectionEnd = 0;
+          handleSelectionChange();
+        }
+      }, 0);
     }
 
     // Initialize extension manager with editor API
@@ -227,6 +234,23 @@ export function TextEditor() {
       setSyntaxHighlightingFilePath(filePath);
     }
   }, [filePath]);
+
+  // Reset cursor position when content changes (new file opened)
+  useEffect(() => {
+    // Small delay to ensure textarea value is updated
+    const timer = setTimeout(() => {
+      if (textareaRef.current && content !== "") {
+        // Only reset if cursor is at end of file
+        if (textareaRef.current.selectionStart === content.length) {
+          textareaRef.current.selectionStart = 0;
+          textareaRef.current.selectionEnd = 0;
+          handleSelectionChange();
+        }
+      }
+    }, 10);
+
+    return () => clearTimeout(timer);
+  }, [content, handleSelectionChange]);
 
   // Update editor API by subscribing to cursor store changes
   useEffect(() => {
