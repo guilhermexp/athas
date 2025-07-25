@@ -1,10 +1,16 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+// Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use claude_bridge::ClaudeCodeBridge;
+use commands::*;
+use file_watcher::FileWatcher;
 use log::{debug, info};
+use lsp::LSPState;
+use ssh::{ssh_connect, ssh_disconnect, ssh_write_file};
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
+use xterm_terminal::XtermManager;
 
 mod claude_bridge;
 mod commands;
@@ -16,19 +22,6 @@ mod menu;
 mod ssh;
 mod terminal;
 mod xterm_terminal;
-use claude_bridge::ClaudeCodeBridge;
-use commands::*;
-use file_watcher::FileWatcher;
-use lsp::{
-   LSPState, list_lsp_servers, lsp_completion, lsp_did_change, lsp_did_close, lsp_did_open,
-   lsp_hover, start_lsp_server, stop_lsp_server,
-};
-use ssh::{
-   ssh_connect, ssh_disconnect, ssh_execute_command, ssh_list_directory, ssh_read_file,
-   ssh_write_file,
-};
-use terminal::TerminalManager;
-use xterm_terminal::XtermManager;
 
 fn main() {
    tauri::Builder::default()
@@ -185,20 +178,10 @@ fn main() {
          Ok(())
       })
       .manage(LSPState::new())
-      .manage(Arc::new(TerminalManager::new()))
       .manage(Arc::new(XtermManager::new()))
       .invoke_handler(tauri::generate_handler![
          // File system commands
-         read_directory_custom,
-         read_file_custom,
-         write_file_custom,
-         create_directory_custom,
-         delete_path_custom,
          move_file,
-         copy_external_file,
-         // Database commands
-         get_sqlite_tables,
-         query_sqlite,
          // Git commands
          git_status,
          git_add,
@@ -242,23 +225,6 @@ fn main() {
          start_watching,
          stop_watching,
          set_project_root,
-         // LSP commands
-         start_lsp_server,
-         stop_lsp_server,
-         lsp_did_open,
-         lsp_did_change,
-         lsp_did_close,
-         lsp_completion,
-         lsp_hover,
-         list_lsp_servers,
-         // Terminal commands
-         create_terminal_connection,
-         send_terminal_data,
-         resize_terminal,
-         close_terminal_connection,
-         send_terminal_ctrl_c,
-         send_terminal_ctrl_d,
-         get_available_terminal_types,
          // Xterm commands
          create_xterm_terminal,
          terminal_write,
@@ -267,10 +233,7 @@ fn main() {
          // SSH commands
          ssh_connect,
          ssh_disconnect,
-         ssh_list_directory,
-         ssh_read_file,
          ssh_write_file,
-         ssh_execute_command,
          // Claude commands
          start_claude_code,
          stop_claude_code,
@@ -283,8 +246,7 @@ fn main() {
          get_monospace_fonts,
          validate_font,
          // Token commands
-         get_tokens,
-         get_tokens_from_path
+         get_tokens
       ])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");

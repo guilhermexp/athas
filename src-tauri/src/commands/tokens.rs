@@ -1,6 +1,5 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent, Highlighter};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -221,37 +220,6 @@ fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
    }
 }
 
-fn get_language_from_path(path: &Path) -> Option<&'static str> {
-   // Handle .html.erb files specifically
-   if let Some(filename) = path.file_name().and_then(|name| name.to_str())
-      && filename.ends_with(".html.erb")
-   {
-      return Some("erb");
-   }
-
-   path
-      .extension()
-      .and_then(|ext| ext.to_str())
-      .and_then(|ext| match ext {
-         "js" | "jsx" => Some("javascript"),
-         "ts" => Some("typescript"),
-         "tsx" => Some("tsx"),
-         "json" => Some("json"),
-         "yml" | "yaml" => Some("yaml"),
-         "go" => Some("go"),
-         "rb" | "ruby" => Some("ruby"),
-         "rs" => Some("rust"),
-         "erb" => Some("erb"),
-         "py" => Some("python"),
-         "html" | "htm" => Some("html"),
-         "css" => Some("css"),
-         "md" | "markdown" => Some("markdown"),
-         "sh" | "bash" => Some("bash"),
-         "toml" => Some("toml"),
-         _ => None,
-      })
-}
-
 fn map_highlight_to_class(highlight_name: &str) -> (&str, &str) {
    match highlight_name {
       "keyword" | "keyword.control" | "keyword.function" | "keyword.operator"
@@ -295,22 +263,6 @@ pub async fn get_tokens(content: String, file_extension: String) -> Result<Vec<T
       "toml" => "toml",
       _ => return Err(format!("Unsupported file extension: {}", file_extension)),
    };
-
-   tokenize_content(&content, language).map_err(|e| format!("Failed to tokenize: {e}"))
-}
-
-#[tauri::command]
-pub async fn get_tokens_from_path(file_path: String) -> Result<Vec<Token>, String> {
-   let path = Path::new(&file_path);
-
-   // Read the file content asynchronously with tokio
-   let content = tokio::fs::read_to_string(&path)
-      .await
-      .map_err(|e| format!("Failed to read file: {e}"))?;
-
-   // Determine the language from the file extension
-   let language = get_language_from_path(path)
-      .ok_or_else(|| format!("Unsupported file type: {:?}", path.extension()))?;
 
    tokenize_content(&content, language).map_err(|e| format!("Failed to tokenize: {e}"))
 }
@@ -409,54 +361,6 @@ const result = numbers.map(n => n * 2);"#;
          token_types.contains(&"operator"),
          "Should have operator tokens"
       );
-   }
-
-   #[test]
-   fn test_get_language_from_path() {
-      use std::path::Path;
-
-      assert_eq!(
-         get_language_from_path(Path::new("test.js")),
-         Some("javascript")
-      );
-      assert_eq!(
-         get_language_from_path(Path::new("test.jsx")),
-         Some("javascript")
-      );
-      assert_eq!(
-         get_language_from_path(Path::new("test.ts")),
-         Some("typescript")
-      );
-      assert_eq!(get_language_from_path(Path::new("test.tsx")), Some("tsx"));
-      assert_eq!(get_language_from_path(Path::new("test.json")), Some("json"));
-      assert_eq!(get_language_from_path(Path::new("test.yaml")), Some("yaml"));
-      assert_eq!(get_language_from_path(Path::new("test.yml")), Some("yaml"));
-      assert_eq!(get_language_from_path(Path::new("test.go")), Some("go"));
-      assert_eq!(get_language_from_path(Path::new("test.rb")), Some("ruby"));
-      assert_eq!(get_language_from_path(Path::new("test.ruby")), Some("ruby"));
-      assert_eq!(get_language_from_path(Path::new("test.rs")), Some("rust"));
-      assert_eq!(get_language_from_path(Path::new("test.erb")), Some("erb"));
-      assert_eq!(
-         get_language_from_path(Path::new("index.html.erb")),
-         Some("erb")
-      );
-      assert_eq!(get_language_from_path(Path::new("test.py")), Some("python"));
-      assert_eq!(get_language_from_path(Path::new("test.html")), Some("html"));
-      assert_eq!(get_language_from_path(Path::new("test.htm")), Some("html"));
-      assert_eq!(get_language_from_path(Path::new("test.css")), Some("css"));
-      assert_eq!(
-         get_language_from_path(Path::new("test.md")),
-         Some("markdown")
-      );
-      assert_eq!(
-         get_language_from_path(Path::new("test.markdown")),
-         Some("markdown")
-      );
-      assert_eq!(get_language_from_path(Path::new("test.sh")), Some("bash"));
-      assert_eq!(get_language_from_path(Path::new("test.bash")), Some("bash"));
-      assert_eq!(get_language_from_path(Path::new("test.toml")), Some("toml"));
-      assert_eq!(get_language_from_path(Path::new("test.txt")), None);
-      assert_eq!(get_language_from_path(Path::new("test")), None);
    }
 
    #[test]

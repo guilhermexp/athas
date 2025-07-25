@@ -1,5 +1,4 @@
 pub mod claude;
-pub mod database;
 pub mod font;
 pub mod fs;
 pub mod git;
@@ -12,12 +11,10 @@ pub mod window;
 pub mod xterm;
 
 pub use claude::*;
-pub use database::*;
 pub use font::*;
 pub use fs::*;
 pub use git::*;
 pub use github::*;
-pub use terminal::*;
 pub use theme::*;
 pub use tokens::*;
 pub use watcher::*;
