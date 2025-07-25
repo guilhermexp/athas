@@ -1,7 +1,7 @@
 import { memo } from "react";
-import { useShallow } from "zustand/react/shallow";
+import { useShallow } from "zustand/shallow";
+import { useEditorDecorationsStore } from "@/stores/editor-decorations-store";
 import { useEditorContentStore } from "../../stores/editor-content-store";
-import { useEditorDecorationsStore } from "../../stores/editor-decorations-store";
 import { LineGutter } from "./line-gutter";
 import { LineRenderer } from "./line-renderer";
 
@@ -15,13 +15,8 @@ interface LineWithContentProps {
 
 export const LineWithContent = memo<LineWithContentProps>(
   ({ lineNumber, showLineNumbers, gutterWidth, lineHeight, isSelected }) => {
-    // Subscribe only to this specific line's content
-    const content = useEditorContentStore(state => state.lines[lineNumber] ?? "");
-
-    // Subscribe only to this specific line's tokens with shallow comparison
-    const tokens = useEditorContentStore(
-      useShallow(state => state.lineTokens.get(lineNumber) ?? []),
-    );
+    const content = useEditorContentStore(state => state.lines[lineNumber]);
+    const tokens = useEditorContentStore(state => state.lineTokens.get(lineNumber)) ?? [];
 
     // Subscribe only to decorations for this line with shallow comparison
     const decorations = useEditorDecorationsStore(
