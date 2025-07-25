@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { useShallow } from "zustand/shallow";
 import { useEditorDecorationsStore } from "@/stores/editor-decorations-store";
-import { useEditorContentStore } from "../../stores/editor-content-store";
+import { useEditorContentStore } from "../../../stores/editor-content-store";
 import { LineGutter } from "./line-gutter";
 import { LineRenderer } from "./line-renderer";
 

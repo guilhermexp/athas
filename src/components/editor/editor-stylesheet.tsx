@@ -1,4 +1,4 @@
-export function EditorStyles() {
+export function EditorStylesheet() {
   return (
     <style>
       {`

@@ -1,7 +1,7 @@
 import { memo } from "react";
-import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
-import { useEditorCompletionStore } from "../../stores/editor-completion-store";
-import { useEditorInstanceStore } from "../../stores/editor-instance-store";
+import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
+import { useEditorCompletionStore } from "../../../stores/editor-completion-store";
+import { useEditorInstanceStore } from "../../../stores/editor-instance-store";
 
 export const CompletionDropdown = memo(() => {
   const { isLspCompletionVisible, lspCompletions, selectedLspIndex, completionPosition, actions } =

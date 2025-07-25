@@ -1,26 +1,26 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
-import { useEditorInteractions } from "../../hooks/use-editor-interactions";
-import { useEditorContentStore } from "../../stores/editor-content-store";
-import { useEditorCursorStore } from "../../stores/editor-cursor-store";
-import { useEditorSettingsStore } from "../../stores/editor-settings-store";
-import type { Position } from "../../types/editor-types";
-import { getLineHeight } from "../../utils/editor-position";
-import { DecorationLayer } from "./decoration-layer";
+import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
+import { useEditorInteractions } from "../../../hooks/use-editor-interactions";
+import { useEditorContentStore } from "../../../stores/editor-content-store";
+import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
+import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
+import type { Position } from "../../../types/editor-types";
+import { getLineHeight } from "../../../utils/editor-position";
+import { Cursor } from "../overlays/cursor";
+import { DecorationLayer } from "../overlays/decoration-layer";
+import { EditorViewport } from "../rendering/editor-viewport";
 import { EditorLayer, EditorLayers } from "./editor-layers";
-import { CursorOverlay } from "./editor-overlay";
-import { ViewportWithSelection } from "./viewport-with-selection";
-import "../../styles/editor-line-based.css";
-import "../../styles/token-theme.css";
+import "../../../styles/editor-line-based.css";
+import "../../../styles/token-theme.css";
 
-interface EditorContentNewProps {
+interface LineBasedEditorProps {
   viewportHeight: number;
   filePath?: string;
   onPositionClick?: (position: Position) => void;
   onSelectionDrag?: (start: Position, end: Position) => void;
 }
 
-export const EditorContentNew = memo<EditorContentNewProps>(
+export const LineBasedEditor = memo<LineBasedEditorProps>(
   ({ viewportHeight, onPositionClick, onSelectionDrag }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [scrollTop, setScrollTop] = useState(0);
@@ -89,7 +89,7 @@ export const EditorContentNew = memo<EditorContentNewProps>(
       >
         <EditorLayers>
           <EditorLayer type="base">
-            <ViewportWithSelection
+            <EditorViewport
               showLineNumbers={lineNumbers}
               gutterWidth={gutterWidth}
               lineHeight={lineHeight}
@@ -113,7 +113,7 @@ export const EditorContentNew = memo<EditorContentNewProps>(
             />
           </EditorLayer>
           <EditorLayer type="overlay">
-            <CursorOverlay
+            <Cursor
               lineHeight={lineHeight}
               fontSize={fontSize}
               gutterWidth={gutterWidth}
@@ -127,4 +127,4 @@ export const EditorContentNew = memo<EditorContentNewProps>(
   },
 );
 
-EditorContentNew.displayName = "EditorContentNew";
+LineBasedEditor.displayName = "LineBasedEditor";

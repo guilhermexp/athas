@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { extensionManager } from "../../extensions/extension-manager";
-import { useEditorContentStore } from "../../stores/editor-content-store";
-import { useEditorCursorStore } from "../../stores/editor-cursor-store";
-import { useEditorDecorationsStore } from "../../stores/editor-decorations-store";
-import type { Decoration, Position } from "../../types/editor-types";
-import { getCharWidth } from "../../utils/editor-position";
+import { extensionManager } from "../../../extensions/extension-manager";
+import { useEditorContentStore } from "../../../stores/editor-content-store";
+import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
+import { useEditorDecorationsStore } from "../../../stores/editor-decorations-store";
+import type { Decoration, Position } from "../../../types/editor-types";
+import { getCharWidth } from "../../../utils/editor-position";
 
 interface DecorationLayerProps {
   lineHeight: number;

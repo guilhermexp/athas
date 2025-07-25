@@ -1,26 +1,35 @@
 import { ArrowLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
-import type { FileEntry } from "../../../types/app";
-import { readDirectory } from "../../../utils/platform";
-import FileIcon from "../../file-icon";
+import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
+import { useBufferStore } from "../../stores/buffer-store";
+import { useFileSystemStore } from "../../stores/file-system/store";
+import { useUIState } from "../../stores/ui-state-store";
+import type { FileEntry } from "../../types/app";
+import { readDirectory } from "../../utils/platform";
+import FileIcon from "../file-icon";
 
-interface BreadcrumbProps {
-  filePath: string;
-  rootPath?: string | null;
-  onNavigate: (path: string) => void;
-  isOutlineVisible: boolean;
-  onToggleOutline: () => void;
-  onSearchClick?: () => void;
-}
+export default function Breadcrumb() {
+  const activeBuffer = useBufferStore((state) => state.getActiveBuffer());
+  const { rootFolderPath, handleFileSelect } = useFileSystemStore();
+  const { isFindVisible, setIsFindVisible } = useUIState();
 
-export default function Breadcrumb({
-  filePath,
-  rootPath,
-  onNavigate,
-  onSearchClick,
-}: BreadcrumbProps) {
+  const handleNavigate = async (path: string) => {
+    try {
+      await handleFileSelect(path, false);
+    } catch (error) {
+      console.error("Failed to navigate to path:", path, error);
+    }
+  };
+
+  const handleSearchClick = () => {
+    setIsFindVisible(!isFindVisible);
+  };
+
+  const filePath = activeBuffer?.path || "";
+  const rootPath = rootFolderPath;
+  const onNavigate = handleNavigate;
+  const onSearchClick = handleSearchClick;
   const [dropdown, setDropdown] = useState<{
     segmentIndex: number;
     x: number;
@@ -175,7 +184,7 @@ export default function Breadcrumb({
     };
   }, [dropdown]);
 
-  if (segments.length === 0) return null;
+  if (!activeBuffer || segments.length === 0) return null;
 
   return (
     <>

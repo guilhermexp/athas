@@ -1,17 +1,17 @@
 import type React from "react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
+import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
+import { useEditorContentStore } from "../../../stores/editor-content-store";
+import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
 import { LineWithContent } from "./line-with-content";
 
 interface EditorViewportProps {
-  lineCount: number;
   showLineNumbers: boolean;
   gutterWidth: number;
   lineHeight: number;
   scrollTop: number;
   scrollLeft: number;
   viewportHeight: number;
-  selectedLines: Set<number>;
   onScroll?: (scrollTop: number, scrollLeft: number) => void;
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   onMouseDown?: (e: React.MouseEvent<HTMLElement>) => void;
@@ -21,20 +21,30 @@ interface EditorViewportProps {
 
 export const EditorViewport = memo<EditorViewportProps>(
   ({
-    lineCount,
     showLineNumbers,
     gutterWidth,
     lineHeight,
     scrollTop,
     scrollLeft: _scrollLeft,
     viewportHeight,
-    selectedLines,
     onScroll,
     onClick,
     onMouseDown,
     onMouseMove,
     onMouseUp,
   }) => {
+    const selection = useEditorCursorStore((state) => state.selection);
+    const lineCount = useEditorContentStore((state) => state.lines.length);
+
+    const selectedLines = useMemo(() => {
+      const lines = new Set<number>();
+      if (selection) {
+        for (let i = selection.start.line; i <= selection.end.line; i++) {
+          lines.add(i);
+        }
+      }
+      return lines;
+    }, [selection]);
     const containerRef = useRef<HTMLDivElement>(null);
     const [, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);

@@ -12,11 +12,11 @@ import { useEditorSearchStore } from "../../stores/editor-search-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 import { useFileSystemStore } from "../../stores/file-system/store";
 import FindBar from "../find-bar";
-import BreadcrumbContainer from "./breadcrumbs/breadcrumb-container";
-import { CompletionDropdown } from "./completion-dropdown";
-import { EditorStyles } from "./editor-styles";
-import { HoverTooltip } from "./hover-tooltip";
-import { VirtualTextEditor } from "./virtual-text-editor";
+import Breadcrumb from "./breadcrumb";
+import { TextEditor } from "./core/text-editor";
+import { EditorStylesheet } from "./editor-stylesheet";
+import { CompletionDropdown } from "./overlays/completion-dropdown";
+import { HoverTooltip } from "./overlays/hover-tooltip";
 
 interface CodeEditorProps {
   // All props are now optional as we get most data from stores
@@ -162,10 +162,10 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
 
   return (
     <>
-      <EditorStyles />
+      <EditorStylesheet />
       <div className="flex h-full flex-col">
         {/* Breadcrumbs */}
-        <BreadcrumbContainer />
+        <Breadcrumb />
 
         {/* Find Bar */}
         <FindBar />
@@ -182,7 +182,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
             {/* Editor content area */}
             <div className="editor-wrapper relative flex-1 overflow-hidden">
               <div className="relative h-full flex-1 bg-primary-bg">
-                <VirtualTextEditor />
+                <TextEditor />
               </div>
 
               {/* LSP Completion Dropdown - temporarily disabled */}

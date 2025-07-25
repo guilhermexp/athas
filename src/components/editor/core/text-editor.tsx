@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useRef } from "react";
-import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
-import { basicEditingExtension } from "../../extensions/basic-editing-extension";
-import { editorAPI } from "../../extensions/editor-api";
-import { extensionManager } from "../../extensions/extension-manager";
+import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
+import { basicEditingExtension } from "../../../extensions/basic-editing-extension";
+import { editorAPI } from "../../../extensions/editor-api";
+import { extensionManager } from "../../../extensions/extension-manager";
 import {
   setSyntaxHighlightingFilePath,
   syntaxHighlightingExtension,
-} from "../../extensions/syntax-highlighting-extension";
-import { useCursorActions } from "../../hooks/use-cursor-actions";
-import { useEditorContentStore } from "../../stores/editor-content-store";
-import { useEditorCursorStore } from "../../stores/editor-cursor-store";
-import { useEditorInstanceStore } from "../../stores/editor-instance-store";
-import { useEditorSettingsStore } from "../../stores/editor-settings-store";
-import type { Position } from "../../types/editor-types";
-import { calculateCursorPosition, calculateOffsetFromPosition } from "../../utils/editor-position";
-import { EditorContentNew } from "./editor-content-new";
+} from "../../../extensions/syntax-highlighting-extension";
+import { useCursorActions } from "../../../hooks/use-cursor-actions";
+import { useEditorContentStore } from "../../../stores/editor-content-store";
+import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
+import { useEditorInstanceStore } from "../../../stores/editor-instance-store";
+import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
+import type { Position } from "../../../types/editor-types";
+import {
+  calculateCursorPosition,
+  calculateOffsetFromPosition,
+} from "../../../utils/editor-position";
+import { LineBasedEditor } from "./line-based-editor";
 
-export function VirtualTextEditor() {
+export function TextEditor() {
   const { tabSize } = useEditorSettingsStore();
   const { lines, getContent, setContent } = useEditorContentStore();
   const { onChange, disabled, filePath, editorRef } = useEditorInstanceStore();
@@ -266,7 +269,7 @@ export function VirtualTextEditor() {
       />
 
       {/* Line-based editor content */}
-      <EditorContentNew
+      <LineBasedEditor
         viewportHeight={
           containerRef.current?.clientHeight || EDITOR_CONSTANTS.DEFAULT_VIEWPORT_HEIGHT
         }

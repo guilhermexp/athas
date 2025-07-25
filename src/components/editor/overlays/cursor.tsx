@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { useEditorCursorStore } from "../../stores/editor-cursor-store";
-import { getCharWidth } from "../../utils/editor-position";
+import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
+import { getCharWidth } from "../../../utils/editor-position";
 
-interface CursorOverlayProps {
+interface CursorProps {
   lineHeight: number;
   fontSize: number;
   gutterWidth: number;
@@ -11,7 +11,7 @@ interface CursorOverlayProps {
   visible?: boolean;
 }
 
-export const CursorOverlay = memo<CursorOverlayProps>(
+export const Cursor = memo<CursorProps>(
   ({ lineHeight, fontSize, gutterWidth, scrollTop, scrollLeft, visible = true }) => {
     const position = useEditorCursorStore((state) => state.cursorPosition);
 
@@ -38,4 +38,4 @@ export const CursorOverlay = memo<CursorOverlayProps>(
   },
 );
 
-CursorOverlay.displayName = "CursorOverlay";
+Cursor.displayName = "Cursor";
