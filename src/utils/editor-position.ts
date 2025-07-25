@@ -9,10 +9,12 @@ export const calculateCursorPosition = (offset: number, lines: string[]): Positi
 
   for (let i = 0; i < lines.length; i++) {
     const lineLength = lines[i].length + (i < lines.length - 1 ? 1 : 0); // +1 for newline
-    if (currentOffset + lineLength >= offset) {
+    if (currentOffset + lineLength > offset) {
+      // Calculate column, but ensure it doesn't exceed the actual line content length
+      const column = Math.min(offset - currentOffset, lines[i].length);
       return {
         line: i,
-        column: offset - currentOffset,
+        column,
         offset,
       };
     }
@@ -39,10 +41,12 @@ export const calculateOffsetFromPosition = (
 ): number => {
   let offset = 0;
 
+  // Add lengths of all lines before the target line
   for (let i = 0; i < line && i < lines.length; i++) {
     offset += lines[i].length + 1; // +1 for newline
   }
 
+  // Add the column position within the target line
   if (line < lines.length) {
     offset += Math.min(column, lines[line].length);
   }

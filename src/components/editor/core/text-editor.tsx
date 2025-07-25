@@ -142,6 +142,19 @@ export function TextEditor() {
         setDesiredColumn(currentPosition.column);
       }
     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      // Handle horizontal movement with boundary checking
+      const isLeft = e.key === "ArrowLeft";
+
+      // Check if we're at a boundary
+      if (
+        (isLeft && currentPosition.column === 0) ||
+        (!isLeft && currentPosition.column === lines[currentPosition.line].length)
+      ) {
+        // Prevent default to stop cursor from moving to next/prev line
+        e.preventDefault();
+        return;
+      }
+
       // Reset desired column on horizontal movement
       setDesiredColumn(undefined);
     } else {
@@ -156,6 +169,7 @@ export function TextEditor() {
 
     const { selectionStart, selectionEnd } = textareaRef.current;
     const newCursorPosition = calculateCursorPosition(selectionStart, lines);
+
     setCursorPosition(newCursorPosition);
 
     // Track cursor position for debug

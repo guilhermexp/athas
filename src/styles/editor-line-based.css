@@ -70,6 +70,10 @@
   animation: blink 1s step-end infinite;
 }
 
+.editor-cursor.moving {
+  animation: none;
+}
+
 @keyframes blink {
   0%, 50% {
     opacity: 1;

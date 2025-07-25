@@ -39,15 +39,15 @@ export const useEditorInteractions = ({
 
       // Get line content
       const lineContent = currentLines[line];
-      if (!lineContent) {
-        return { line, column: 0, offset: 0 };
+      if (lineContent === undefined || lineContent === null) {
+        return null;
       }
 
       // Calculate column using fixed character width for monospace font
       const charWidth = fontSize * 0.6;
       const column = Math.round(relativeX / charWidth);
 
-      // Clamp column to line bounds
+      // Clamp column to line bounds (handles empty lines where length is 0)
       const clampedColumn = Math.max(0, Math.min(column, lineContent.length));
 
       // Calculate offset
