@@ -10,6 +10,7 @@ import {
 import { useCursorActions } from "../../../hooks/use-cursor-actions";
 import { useEditorContentStore } from "../../../stores/editor-content-store";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
+import { useEditorDebugStore } from "../../../stores/editor-debug-store";
 import { useEditorInstanceStore } from "../../../stores/editor-instance-store";
 import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
 import type { Position } from "../../../types/editor-types";
@@ -29,6 +30,7 @@ export function TextEditor() {
 
   const { setCursorPosition, setSelection, setDesiredColumn, getDesiredColumn } =
     useCursorActions();
+  const { addKeystroke, addTextChange, addCursorPosition } = useEditorDebugStore();
 
   // Use the ref from the store or fallback to local ref
   const containerRef = editorRef || localRef;
@@ -38,12 +40,26 @@ export function TextEditor() {
 
   // Handle textarea input
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const oldValue = getContent();
     const newValue = e.target.value;
+    const cursorBefore = useEditorCursorStore.getState().cursorPosition;
+
     setContent(newValue);
     onChange?.(newValue);
 
     // Update selection after change
-    setTimeout(() => handleSelectionChange(), 0);
+    setTimeout(() => {
+      handleSelectionChange();
+      const cursorAfter = useEditorCursorStore.getState().cursorPosition;
+
+      // Track text change for debug
+      addTextChange({
+        oldValue,
+        newValue,
+        cursorBefore,
+        cursorAfter,
+      });
+    }, 0);
   };
 
   // Handle keyboard events
@@ -62,6 +78,9 @@ export function TextEditor() {
     ]
       .filter(Boolean)
       .join("+");
+
+    // Track keystroke for debug
+    addKeystroke(key);
 
     const command = extensionManager.getCommandForKeybinding(key);
     if (command && (!command.when || command.when())) {
@@ -141,6 +160,9 @@ export function TextEditor() {
     const { selectionStart, selectionEnd } = textareaRef.current;
     const newCursorPosition = calculateCursorPosition(selectionStart, lines);
     setCursorPosition(newCursorPosition);
+
+    // Track cursor position for debug
+    addCursorPosition(newCursorPosition);
 
     if (selectionStart !== selectionEnd) {
       setSelection({

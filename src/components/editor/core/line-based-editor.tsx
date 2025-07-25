@@ -7,6 +7,7 @@ import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
 import type { Position } from "../../../types/editor-types";
 import { getLineHeight } from "../../../utils/editor-position";
 import { Cursor } from "../overlays/cursor";
+import { DebugOverlay } from "../overlays/debug-overlay";
 import { DecorationLayer } from "../overlays/decoration-layer";
 import { EditorViewport } from "../rendering/editor-viewport";
 import { EditorLayer, EditorLayers } from "./editor-layers";
@@ -114,6 +115,13 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
           </EditorLayer>
           <EditorLayer type="overlay">
             <Cursor
+              lineHeight={lineHeight}
+              fontSize={fontSize}
+              gutterWidth={gutterWidth}
+              scrollTop={scrollTop}
+              scrollLeft={scrollLeft}
+            />
+            <DebugOverlay
               lineHeight={lineHeight}
               fontSize={fontSize}
               gutterWidth={gutterWidth}
