@@ -166,7 +166,7 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
 
               {/* Expanded Commit Details */}
               {isExpanded && (
-                <div className="bg-primary-bg px-8 pb-2">
+                <div className="bg-primary-bg px-8 py-2">
                   {isLoading ? (
                     <div className="text-[9px] text-text-lighter italic">Loading files...</div>
                   ) : files.length > 0 ? (
