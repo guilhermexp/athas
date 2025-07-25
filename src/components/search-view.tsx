@@ -1,10 +1,11 @@
-import { ChevronDown, ChevronRight, Search, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import type { FileEntry } from "../types/app";
 import { readFile } from "../utils/platform";
 import FileIcon from "./file-icon";
-import Button from "./ui/button";
+import Toggle from "./ui/toggle";
+import Tooltip from "./ui/tooltip";
 
 interface SearchResult {
   file: string;
@@ -271,16 +272,6 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
     onFileSelect(result.file, result.line, result.column);
   };
 
-  const clearSearch = () => {
-    setSearchQuery("");
-    setSearchResults([]);
-    setHasSearched(false);
-    setSelectedIndex(-1);
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  };
-
   const getFileName = (filePath: string) => {
     return filePath.split("/").pop() || filePath;
   };
@@ -361,7 +352,10 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
     };
 
     // Add listener to the document to capture all wheel events
-    document.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    document.addEventListener("wheel", handleWheel, {
+      passive: false,
+      capture: true,
+    });
 
     return () => {
       document.removeEventListener("wheel", handleWheel, { capture: true });
@@ -369,89 +363,63 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
   }, []);
 
   return (
-    <div ref={searchContainerRef} className="flex h-full flex-col" onKeyDown={handleKeyDown}>
+    <div
+      ref={searchContainerRef}
+      className="flex h-full select-none flex-col"
+      onKeyDown={handleKeyDown}
+    >
       {/* Search Input and Options */}
-      <div className="border-border border-b bg-secondary-bg px-2 py-1.5">
-        <div className="relative flex w-full items-center gap-1">
-          <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 text-text-lighter">
-            <Search size={12} />
+      <div className="select-none border-border border-b bg-secondary-bg px-2 py-1">
+        <div className="relative flex w-full items-center">
+          <span className="pointer-events-none absolute left-2 z-10 text-text-lighter">
+            <Search size={11} />
           </span>
           <input
             ref={searchInputRef}
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search in files..."
-            className="h-7 flex-1 border-none bg-transparent pr-6 pl-7 text-text text-xs focus:outline-none focus:ring-0"
+            placeholder="Search"
+            className="h-6 w-full border-none bg-transparent pr-18 pl-6 text-text text-xs focus:outline-none focus:ring-0"
             style={{
               borderRadius: 0,
               boxShadow: "none",
+              userSelect: "text",
+              WebkitUserSelect: "text",
+              MozUserSelect: "text",
             }}
           />
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="-translate-y-1/2 absolute top-1/2 right-[4.5rem] text-text-lighter hover:text-text"
-              tabIndex={-1}
-              style={{
-                padding: 0,
-                margin: 0,
-                height: "1rem",
-                width: "1rem",
-              }}
-            >
-              <X size={10} />
-            </button>
-          )}
-          <div className="ml-auto flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCaseSensitive(!caseSensitive)}
-              className={cn(
-                "h-5 w-5 px-0.5 py-0.5 text-xs",
-                caseSensitive
-                  ? "bg-selected text-text"
-                  : "text-text-lighter hover:bg-hover hover:text-text",
-              )}
-              title="Match Case"
-              tabIndex={0}
-              style={{ minWidth: "unset" }}
-            >
-              Aa
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setWholeWord(!wholeWord)}
-              className={cn(
-                "h-5 w-5 px-0.5 py-0.5 text-xs",
-                wholeWord
-                  ? "bg-selected text-text"
-                  : "text-text-lighter hover:bg-hover hover:text-text",
-              )}
-              title="Match Whole Word"
-              tabIndex={0}
-              style={{ minWidth: "unset" }}
-            >
-              Ab
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setUseRegex(!useRegex)}
-              className={cn(
-                "h-5 w-5 px-0.5 py-0.5 text-xs",
-                useRegex
-                  ? "bg-selected text-text"
-                  : "text-text-lighter hover:bg-hover hover:text-text",
-              )}
-              title="Use Regular Expression"
-              tabIndex={0}
-              style={{ minWidth: "unset" }}
-            >
-              .*
-            </Button>
+          <div className="absolute right-0 flex items-center gap-0.5">
+            <Tooltip content="Match Case" side="bottom">
+              <Toggle
+                pressed={caseSensitive}
+                onPressedChange={setCaseSensitive}
+                size="xs"
+                style={{ fontSize: "10px" }}
+              >
+                Aa
+              </Toggle>
+            </Tooltip>
+            <Tooltip content="Match Whole Word" side="bottom">
+              <Toggle
+                pressed={wholeWord}
+                onPressedChange={setWholeWord}
+                size="xs"
+                style={{ fontSize: "10px" }}
+              >
+                Ab
+              </Toggle>
+            </Tooltip>
+            <Tooltip content="Use Regular Expression" side="bottom">
+              <Toggle
+                pressed={useRegex}
+                onPressedChange={setUseRegex}
+                size="xs"
+                style={{ fontSize: "10px" }}
+              >
+                .*
+              </Toggle>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -547,12 +515,6 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
                 )}
               </div>
             ))}
-          </div>
-        )}
-
-        {!searchQuery && !isSearching && (
-          <div className="p-3 text-center text-text-lighter text-xs">
-            Enter a search term to find text across your project files
           </div>
         )}
       </div>

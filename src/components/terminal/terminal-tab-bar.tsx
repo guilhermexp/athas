@@ -69,7 +69,7 @@ const TerminalContextMenu = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-[180px] rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
+      className="fixed z-50 w-[180px] border border-border bg-secondary-bg py-1 shadow-lg"
       style={{ left: position.x, top: position.y }}
     >
       <button
@@ -354,7 +354,7 @@ const TerminalTabBar = ({
           <button
             onClick={onNewTerminal}
             className={cn(
-              "flex items-center gap-0.5 rounded px-1.5 py-1",
+              "flex items-center gap-0.5 px-1.5 py-1",
               "text-text-lighter text-xs transition-colors hover:bg-hover",
             )}
             title="New Terminal (Cmd+T)"
@@ -373,7 +373,7 @@ const TerminalTabBar = ({
         className={cn(
           "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border",
           "flex min-h-[28px] items-center justify-between overflow-x-auto",
-          "border-border border-b bg-[#161b22] px-1",
+          "border-border border-b bg-secondary-bg px-1",
         )}
         style={{
           scrollbarWidth: "thin",
@@ -403,10 +403,10 @@ const TerminalTabBar = ({
                   ref={el => {
                     tabRefs.current[index] = el;
                   }}
-                  className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap rounded-t-md px-3 py-1 transition-all duration-150 ${
+                  className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-3 py-1 transition-all duration-150 ${
                     isActive
-                      ? "bg-[#0d1117] text-[#c9d1d9]"
-                      : "bg-transparent text-[#8b949e] hover:text-[#c9d1d9]"
+                      ? "bg-bg text-text"
+                      : "bg-transparent text-text-lighter hover:text-text"
                   } ${terminal.isPinned ? "border-l-2 border-l-blue-500" : ""}`}
                   style={{ minWidth: "120px", maxWidth: "200px" }}
                   onMouseDown={e => handleMouseDown(e, index)}
@@ -420,7 +420,7 @@ const TerminalTabBar = ({
                 >
                   {/* Active tab indicator */}
                   {isActive && (
-                    <div className="absolute right-0 bottom-0 left-0 h-[2px] bg-[#58a6ff]" />
+                    <div className="absolute right-0 bottom-0 left-0 h-[2px] bg-blue-500" />
                   )}
 
                   {/* Terminal Icon */}
@@ -447,7 +447,7 @@ const TerminalTabBar = ({
                         onTabClose(terminal.id, e);
                       }}
                       className={cn(
-                        "flex-shrink-0 cursor-pointer rounded p-0.5",
+                        "flex-shrink-0 cursor-pointer p-0.5",
                         "text-text-lighter opacity-0 transition-all duration-150",
                         "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
                       )}
@@ -478,7 +478,7 @@ const TerminalTabBar = ({
             <button
               onClick={onNewTerminal}
               className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "flex flex-shrink-0 cursor-pointer items-center p-1",
                 "text-text-lighter transition-colors hover:bg-hover",
               )}
               title="New Terminal (Cmd+T)"
@@ -492,7 +492,7 @@ const TerminalTabBar = ({
             <button
               onClick={onSplitView}
               className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "flex flex-shrink-0 cursor-pointer items-center p-1",
                 "text-text-lighter transition-colors hover:bg-hover",
               )}
               title="Split Terminal View"
@@ -506,7 +506,7 @@ const TerminalTabBar = ({
             <button
               onClick={onFullScreen}
               className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "flex flex-shrink-0 cursor-pointer items-center p-1",
                 "text-text-lighter transition-colors hover:bg-hover",
               )}
               title={isFullScreen ? "Exit Full Screen" : "Full Screen Terminal"}
@@ -520,7 +520,7 @@ const TerminalTabBar = ({
             <button
               onClick={onClosePanel}
               className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center rounded p-1",
+                "flex flex-shrink-0 cursor-pointer items-center p-1",
                 "text-text-lighter transition-colors hover:bg-hover",
               )}
               title="Close Panel"
@@ -540,7 +540,7 @@ const TerminalTabBar = ({
                 el.style.top = `${dragCurrentPosition.y - rect.height / 2}px`;
               }
             }}
-            className="fixed z-50 flex cursor-pointer items-center gap-1.5 rounded border border-border bg-primary-bg px-2 py-1.5 font-mono text-xs shadow-lg"
+            className="fixed z-50 flex cursor-pointer items-center gap-1.5 border border-border bg-bg px-2 py-1.5 font-mono text-xs shadow-lg"
             style={{
               opacity: 0.95,
               minWidth: 60,

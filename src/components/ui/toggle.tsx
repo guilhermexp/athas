@@ -1,49 +1,49 @@
+import type React from "react";
 import { cn } from "../../utils/cn";
 
-interface ToggleProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-  size?: "sm" | "md";
-  className?: string;
+interface ToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  pressed: boolean;
+  onPressedChange: (pressed: boolean) => void;
+  size?: "xs" | "sm" | "md";
+  variant?: "default" | "outline";
+  children: React.ReactNode;
 }
 
 export default function Toggle({
-  checked,
-  onChange,
-  disabled = false,
-  size = "md",
+  pressed,
+  onPressedChange,
+  size = "sm",
+  variant = "default",
   className,
+  children,
+  ...props
 }: ToggleProps) {
-  const sizeClasses = {
-    sm: "w-7 h-3.5 after:h-2.5 after:w-2.5 after:top-[2px] after:left-[2px] peer-checked:after:translate-x-3.5",
-    md: "w-9 h-5 after:h-4 after:w-4 after:top-[2px] after:left-[2px] peer-checked:after:translate-x-4",
+  const baseClasses =
+    "inline-flex items-center justify-center font-mono font-medium transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded select-none";
+
+  const sizes = {
+    xs: "px-1 py-1 text-xs h-5 min-w-[20px]",
+    sm: "px-1.5 py-1 text-xs h-6 min-w-[24px]",
+    md: "px-2 py-1.5 text-sm h-7 min-w-[28px]",
+  };
+
+  const variants = {
+    default: pressed
+      ? "bg-selected text-text border border-border"
+      : "bg-transparent text-text-lighter hover:bg-hover hover:text-text border border-transparent",
+    outline: pressed
+      ? "bg-selected text-text border border-border"
+      : "bg-transparent text-text-lighter hover:bg-hover hover:text-text border border-border",
   };
 
   return (
-    <label
-      className={cn(
-        "relative inline-flex cursor-pointer items-center",
-        disabled && "cursor-not-allowed opacity-50",
-        className,
-      )}
+    <button
+      className={cn(baseClasses, variants[variant], sizes[size], className)}
+      onClick={() => onPressedChange(!pressed)}
+      data-pressed={pressed}
+      {...props}
     >
-      <input
-        type="checkbox"
-        className="peer sr-only"
-        checked={checked}
-        onChange={e => !disabled && onChange(e.target.checked)}
-        disabled={disabled}
-      />
-      <div
-        className={cn(
-          "peer rounded border bg-secondary-bg transition-colors duration-200",
-          "after:absolute after:rounded after:bg-text after:shadow-sm after:transition-all after:content-['']",
-          "border-border peer-checked:border-blue-500 peer-checked:bg-blue-500 peer-checked:after:bg-white",
-          "peer-focus:ring-1 peer-focus:ring-blue-500/50",
-          sizeClasses[size],
-        )}
-      />
-    </label>
+      {children}
+    </button>
   );
 }

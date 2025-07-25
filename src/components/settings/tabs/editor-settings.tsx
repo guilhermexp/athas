@@ -1,7 +1,7 @@
 import { FontSelector } from "@/components/ui/font-selector";
 import Input from "@/components/ui/input";
 import Section, { SettingRow } from "@/components/ui/section";
-import Toggle from "@/components/ui/toggle";
+import Switch from "@/components/ui/switch";
 import { useSettingsStore } from "@/stores/settings-store";
 
 export const EditorSettings = () => {
@@ -46,7 +46,7 @@ export const EditorSettings = () => {
 
       <Section title="Display">
         <SettingRow label="Word Wrap" description="Wrap lines that exceed viewport width">
-          <Toggle
+          <Switch
             checked={settings.wordWrap}
             onChange={checked => updateSetting("wordWrap", checked)}
             size="sm"
@@ -54,7 +54,7 @@ export const EditorSettings = () => {
         </SettingRow>
 
         <SettingRow label="Line Numbers" description="Show line numbers in the editor">
-          <Toggle
+          <Switch
             checked={settings.lineNumbers}
             onChange={checked => updateSetting("lineNumbers", checked)}
             size="sm"
@@ -64,7 +64,7 @@ export const EditorSettings = () => {
 
       <Section title="Features">
         <SettingRow label="AI Completion" description="Enable AI-powered code completion">
-          <Toggle
+          <Switch
             checked={settings.aiCompletion}
             onChange={checked => updateSetting("aiCompletion", checked)}
             size="sm"

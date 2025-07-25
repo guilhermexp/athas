@@ -183,7 +183,6 @@ const TerminalContainer = ({
   }, [registerTerminalFocus, clearTerminalFocus, focusActiveTerminal]);
 
   // Terminal-specific keyboard shortcuts
-  // Terminal-specific keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle shortcuts when the terminal container or its children have focus

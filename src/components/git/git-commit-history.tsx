@@ -1,13 +1,4 @@
-import {
-  ChevronDown,
-  ChevronRight,
-  Clock,
-  Copy,
-  Eye,
-  GitCommit as GitCommitIcon,
-  Hash,
-  User,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Hash, User } from "lucide-react";
 import { useState } from "react";
 import { type GitCommit, getCommitDiff } from "../../utils/git";
 
@@ -21,6 +12,7 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
   const [expandedCommits, setExpandedCommits] = useState<Set<string>>(new Set());
   const [commitFiles, setCommitFiles] = useState<Record<string, any[]>>({});
   const [loadingCommits, setLoadingCommits] = useState<Set<string>>(new Set());
+  const [copiedHashes, setCopiedHashes] = useState<Set<string>>(new Set());
 
   const toggleCommitExpansion = async (commitHash: string) => {
     const newExpanded = new Set(expandedCommits);
@@ -57,6 +49,14 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
 
   const copyCommitHash = (hash: string) => {
     navigator.clipboard.writeText(hash);
+    setCopiedHashes(prev => new Set(prev).add(hash));
+    setTimeout(() => {
+      setCopiedHashes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(hash);
+        return newSet;
+      });
+    }, 1000);
   };
 
   const formatDate = (dateString: string) => {
@@ -130,17 +130,20 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
           return (
             <div key={commit.hash} className="border-border border-b last:border-b-0">
               {/* Commit Header */}
-              <div className="cursor-pointer px-3 py-2 hover:bg-hover">
+              <div
+                className="cursor-pointer px-3 py-2 hover:bg-hover"
+                onClick={() => onViewCommitDiff?.(commit.hash)}
+              >
                 <div className="flex items-start gap-2">
                   <button
-                    onClick={() => toggleCommitExpansion(commit.hash)}
+                    onClick={e => {
+                      e.stopPropagation();
+                      toggleCommitExpansion(commit.hash);
+                    }}
                     className="mt-0.5 text-text-lighter transition-colors hover:text-text"
                   >
                     {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                   </button>
-
-                  <GitCommitIcon size={10} className="mt-0.5 flex-shrink-0 text-text-lighter" />
-
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 font-medium text-[10px] text-text leading-tight">
                       {commit.message}
@@ -156,46 +159,29 @@ const GitCommitHistory = ({ commits, onViewCommitDiff, repoPath }: GitCommitHist
                         <Clock size={8} />
                         {formatDate(commit.date)}
                       </span>
-
-                      <div className="flex items-center gap-1">
-                        <Hash size={8} />
-                        <span className="font-mono">{commit.hash.substring(0, 7)}</span>
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            copyCommitHash(commit.hash);
-                          }}
-                          className="text-text-lighter transition-colors hover:text-text"
-                          title="Copy full hash"
-                        >
-                          <Copy size={8} />
-                        </button>
-                      </div>
                     </div>
                   </div>
-
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      onViewCommitDiff?.(commit.hash);
-                    }}
-                    className="text-text-lighter transition-colors hover:text-text"
-                    title="View commit diff"
-                  >
-                    <Eye size={10} />
-                  </button>
                 </div>
               </div>
 
               {/* Expanded Commit Details */}
               {isExpanded && (
-                <div className="bg-secondary-bg px-8 pb-2">
+                <div className="bg-primary-bg px-8 pb-2">
                   {isLoading ? (
                     <div className="text-[9px] text-text-lighter italic">Loading files...</div>
                   ) : files.length > 0 ? (
                     <div className="space-y-1">
-                      <div className="mb-1 text-[9px] text-text-lighter">
-                        {files.length} file{files.length !== 1 ? "s" : ""} changed
+                      <div className="mb-1 flex items-center justify-between text-[9px] text-text-lighter">
+                        <span>
+                          {files.length} file{files.length !== 1 ? "s" : ""} changed
+                        </span>
+                        <button
+                          onClick={() => copyCommitHash(commit.hash)}
+                          className="inline-flex items-center gap-1 rounded bg-secondary-bg px-2 py-0.5 font-mono text-[8px] transition-colors hover:bg-hover"
+                        >
+                          <Hash size={6} />
+                          {copiedHashes.has(commit.hash) ? "Copied" : commit.hash.substring(0, 7)}
+                        </button>
                       </div>
                       {files.map((file, fileIndex) => (
                         <div

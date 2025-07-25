@@ -1,7 +1,7 @@
 import Button from "@/components/ui/button";
 import KeybindingBadge from "@/components/ui/keybinding-badge";
 import Section, { SettingRow } from "@/components/ui/section";
-import Toggle from "@/components/ui/toggle";
+import Switch from "@/components/ui/switch";
 
 const isMac = typeof navigator !== "undefined" && navigator.platform.includes("Mac");
 
@@ -74,7 +74,7 @@ export const KeyboardSettings = () => {
 
       <Section title="Preferences">
         <SettingRow label="Tab Navigation" description="Navigate UI elements with Tab key">
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow label="Custom Shortcuts" description="Create custom keyboard shortcuts">

@@ -1,6 +1,6 @@
 import Dropdown from "@/components/ui/dropdown";
 import Section, { SettingRow } from "@/components/ui/section";
-import Toggle from "@/components/ui/toggle";
+import Switch from "@/components/ui/switch";
 
 export const LanguageSettings = () => {
   const languageOptions = [
@@ -46,13 +46,13 @@ export const LanguageSettings = () => {
           label="Auto-detect Language"
           description="Automatically detect file language from extension"
         >
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
       </Section>
 
       <Section title="Code Formatting">
         <SettingRow label="Format on Save" description="Automatically format code when saving">
-          <Toggle checked={false} onChange={() => {}} size="sm" />
+          <Switch checked={false} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow label="Default Formatter" description="Choose default code formatter">
@@ -68,11 +68,11 @@ export const LanguageSettings = () => {
 
       <Section title="IntelliSense">
         <SettingRow label="Auto Completion" description="Show completion suggestions while typing">
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow label="Parameter Hints" description="Show function parameter hints">
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
       </Section>
     </div>

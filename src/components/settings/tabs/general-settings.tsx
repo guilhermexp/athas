@@ -1,7 +1,7 @@
 import Dropdown from "@/components/ui/dropdown";
 import KeybindingBadge from "@/components/ui/keybinding-badge";
 import Section, { SettingRow } from "@/components/ui/section";
-import Toggle from "@/components/ui/toggle";
+import Switch from "@/components/ui/switch";
 import { useSettingsStore } from "@/stores/settings-store";
 
 const isMac = typeof navigator !== "undefined" && navigator.platform.includes("Mac");
@@ -18,7 +18,7 @@ export const GeneralSettings = () => {
     <div className="space-y-4">
       <Section title="File Management">
         <SettingRow label="Auto Save" description="Automatically save files when editing">
-          <Toggle
+          <Switch
             checked={settings.autoSave}
             onChange={checked => updateSetting("autoSave", checked)}
             size="sm"
@@ -40,7 +40,7 @@ export const GeneralSettings = () => {
 
       <Section title="Zoom">
         <SettingRow label="Mouse Wheel Zoom" description="Use mouse wheel to zoom in/out">
-          <Toggle
+          <Switch
             checked={settings.mouseWheelZoom}
             onChange={checked => updateSetting("mouseWheelZoom", checked)}
             size="sm"

@@ -53,7 +53,7 @@ const ConnectionList = ({
   }, [connectionMenu]);
 
   return (
-    <div className="flex h-full flex-col bg-secondary-bg">
+    <div className="flex h-full select-none flex-col bg-secondary-bg">
       {/* Header */}
       <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-2 py-1.5">
         <h3 className="font-medium font-mono text-text text-xs tracking-wide">Remote</h3>

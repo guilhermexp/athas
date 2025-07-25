@@ -1,14 +1,14 @@
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import Section, { SettingRow } from "@/components/ui/section";
-import Toggle from "@/components/ui/toggle";
+import Switch from "@/components/ui/switch";
 
 export const AdvancedSettings = () => {
   return (
     <div className="space-y-4">
       <Section title="Performance">
         <SettingRow label="File Watcher" description="Watch for file changes in workspace">
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow label="Memory Limit" description="Maximum memory usage (MB)">
@@ -18,11 +18,11 @@ export const AdvancedSettings = () => {
 
       <Section title="Development">
         <SettingRow label="Developer Mode" description="Enable developer tools and debug features">
-          <Toggle checked={false} onChange={() => {}} size="sm" />
+          <Switch checked={false} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow label="Debug Logging" description="Show detailed logs in console">
-          <Toggle checked={false} onChange={() => {}} size="sm" />
+          <Switch checked={false} onChange={() => {}} size="sm" />
         </SettingRow>
       </Section>
 
@@ -31,14 +31,14 @@ export const AdvancedSettings = () => {
           label="Auto Update Extensions"
           description="Automatically update installed extensions"
         >
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow
           label="Extension Host"
           description="Enable extension host for third-party extensions"
         >
-          <Toggle checked={false} onChange={() => {}} size="sm" />
+          <Switch checked={false} onChange={() => {}} size="sm" />
         </SettingRow>
       </Section>
 

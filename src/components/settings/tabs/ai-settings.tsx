@@ -2,7 +2,7 @@ import { useState } from "react";
 import Button from "@/components/ui/button";
 import Dropdown from "@/components/ui/dropdown";
 import Section, { SettingRow } from "@/components/ui/section";
-import Toggle from "@/components/ui/toggle";
+import Switch from "@/components/ui/switch";
 import { usePersistentSettingsStore } from "@/stores/persistent-settings-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { getAvailableProviders, getModelById } from "@/types/ai-provider";
@@ -78,7 +78,7 @@ export const AISettings = () => {
 
       <Section title="AI Features">
         <SettingRow label="AI Chat" description="Enable AI-powered chat assistant">
-          <Toggle
+          <Switch
             checked={coreFeatures.aiChat}
             onChange={checked => setCoreFeatures({ ...coreFeatures, aiChat: checked })}
             size="sm"
@@ -86,7 +86,7 @@ export const AISettings = () => {
         </SettingRow>
 
         <SettingRow label="AI Completion" description="Enable AI code completion in editor">
-          <Toggle
+          <Switch
             checked={settings.aiCompletion}
             onChange={checked => updateSetting("aiCompletion", checked)}
             size="sm"
@@ -122,24 +122,24 @@ export const AISettings = () => {
           label="Auto-scroll to Bottom"
           description="Automatically scroll to new messages"
         >
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow
           label="Remember Context"
           description="Include recent file context in conversations"
         >
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow label="Syntax Highlighting" description="Enable code highlighting in chat">
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
       </Section>
 
       <Section title="Performance">
         <SettingRow label="Stream Responses" description="Show AI responses as they generate">
-          <Toggle checked={true} onChange={() => {}} size="sm" />
+          <Switch checked={true} onChange={() => {}} size="sm" />
         </SettingRow>
 
         <SettingRow
