@@ -7,7 +7,6 @@ import {
   setSyntaxHighlightingFilePath,
   syntaxHighlightingExtension,
 } from "../../../extensions/syntax-highlighting-extension";
-import { useCursorActions } from "../../../hooks/use-cursor-actions";
 import { useEditorContentStore } from "../../../stores/editor-content-store";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
 import { useEditorDebugStore } from "../../../stores/editor-debug-store";
@@ -28,8 +27,8 @@ export function TextEditor() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const localRef = useRef<HTMLDivElement>(null);
 
-  const { setCursorPosition, setSelection, setDesiredColumn, getDesiredColumn } =
-    useCursorActions();
+  const { setCursorPosition, setSelection, setDesiredColumn } = useEditorCursorStore.use.actions();
+  const currentDesiredColumn = useEditorCursorStore.use.desiredColumn?.();
   const { addKeystroke, addTextChange, addCursorPosition } = useEditorDebugStore();
 
   // Use the ref from the store or fallback to local ref
@@ -110,7 +109,7 @@ export function TextEditor() {
       }, 0);
 
       // Reset desired column
-      setDesiredColumn(null);
+      setDesiredColumn(undefined);
     } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
 
@@ -122,9 +121,7 @@ export function TextEditor() {
       }
 
       // Use desired column if set, otherwise use current column
-      const currentDesiredColumn = getDesiredColumn();
-      const targetColumn =
-        currentDesiredColumn !== null ? currentDesiredColumn : currentPosition.column;
+      const targetColumn = currentDesiredColumn ?? currentPosition.column;
 
       // Ensure column doesn't exceed line length
       const actualColumn = Math.min(targetColumn, lines[targetLine].length);
@@ -146,10 +143,10 @@ export function TextEditor() {
       }
     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
       // Reset desired column on horizontal movement
-      setDesiredColumn(null);
+      setDesiredColumn(undefined);
     } else {
       // Reset desired column on any other key
-      setDesiredColumn(null);
+      setDesiredColumn(undefined);
     }
   };
 
@@ -170,7 +167,7 @@ export function TextEditor() {
         end: calculateCursorPosition(selectionEnd, lines),
       });
     } else {
-      setSelection(null);
+      setSelection(undefined);
     }
   };
 
@@ -222,7 +219,7 @@ export function TextEditor() {
     const unsubscribe = useEditorCursorStore.subscribe(
       (state) => ({ cursor: state.cursorPosition, selection: state.selection }),
       ({ cursor, selection }) => {
-        editorAPI.updateCursorAndSelection(cursor, selection);
+        editorAPI.updateCursorAndSelection(cursor, selection ?? null);
       },
     );
     return unsubscribe;
