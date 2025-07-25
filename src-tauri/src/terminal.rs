@@ -663,9 +663,3 @@ impl TerminalManager {
       Ok(())
    }
 }
-
-#[derive(Default)]
-pub struct AppState {}
-
-impl AppState {
-}

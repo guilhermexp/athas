@@ -62,12 +62,11 @@ fn get_system_theme_sync() -> String {
       if let Ok(output) = Command::new("defaults")
          .args(["read", "-g", "AppleInterfaceStyle"])
          .output()
+         && output.status.success()
       {
-         if output.status.success() {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            if stdout.trim().eq_ignore_ascii_case("dark") {
-               return "dark".to_string();
-            }
+         let stdout = String::from_utf8_lossy(&output.stdout);
+         if stdout.trim().eq_ignore_ascii_case("dark") {
+            return "dark".to_string();
          }
       }
       "light".to_string()

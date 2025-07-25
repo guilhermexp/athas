@@ -223,10 +223,10 @@ fn get_language_config(language_name: &str) -> Result<HighlightConfiguration> {
 
 fn get_language_from_path(path: &Path) -> Option<&'static str> {
    // Handle .html.erb files specifically
-   if let Some(filename) = path.file_name().and_then(|name| name.to_str()) {
-      if filename.ends_with(".html.erb") {
-         return Some("erb");
-      }
+   if let Some(filename) = path.file_name().and_then(|name| name.to_str())
+      && filename.ends_with(".html.erb")
+   {
+      return Some("erb");
    }
 
    path

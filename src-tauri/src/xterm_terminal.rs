@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow};
-use portable_pty::{Child, CommandBuilder, PtyPair, PtySize};
+use portable_pty::{CommandBuilder, PtyPair, PtySize};
 use serde::{Deserialize, Serialize};
 use std::{
    collections::HashMap,
@@ -22,7 +22,6 @@ pub struct XtermConfig {
 pub struct XtermConnection {
    pub id: String,
    pub pty_pair: PtyPair,
-   pub child: Box<dyn Child + Send + Sync>,
    pub app_handle: AppHandle,
    pub writer: Arc<Mutex<Option<Box<dyn Write + Send>>>>,
 }
@@ -39,13 +38,12 @@ impl XtermConnection {
       })?;
 
       let cmd = Self::build_command(&config)?;
-      let child = pty_pair.slave.spawn_command(cmd)?;
+      let _child = pty_pair.slave.spawn_command(cmd)?;
       let writer = Arc::new(Mutex::new(Some(pty_pair.master.take_writer()?)));
 
       Ok(Self {
          id,
          pty_pair,
-         child,
          app_handle,
          writer,
       })
@@ -152,10 +150,6 @@ impl XtermConnection {
          pixel_height: 0,
       })?;
       Ok(())
-   }
-
-   pub fn is_alive(&mut self) -> bool {
-      self.child.try_wait().is_ok()
    }
 }
 

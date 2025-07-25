@@ -34,13 +34,12 @@ pub fn is_image_file(path: &str) -> bool {
 }
 
 pub fn get_blob_base64(repo: &Repository, oid: Option<Oid>, _file_path: &str) -> Option<String> {
-   if let Some(oid) = oid {
-      if !oid.is_zero() {
-         if let Ok(blob) = repo.find_blob(oid) {
-            let data = blob.content();
-            return Some(general_purpose::STANDARD.encode(data));
-         }
-      }
+   if let Some(oid) = oid
+      && !oid.is_zero()
+      && let Ok(blob) = repo.find_blob(oid)
+   {
+      let data = blob.content();
+      return Some(general_purpose::STANDARD.encode(data));
    }
    None
 }

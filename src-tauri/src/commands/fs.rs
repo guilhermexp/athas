@@ -141,10 +141,10 @@ pub fn move_file(source_path: String, target_path: String) -> Result<(), String>
    }
 
    // Ensure target directory exists
-   if let Some(parent) = target.parent() {
-      if !parent.exists() {
-         return Err("Target directory does not exist".to_string());
-      }
+   if let Some(parent) = target.parent()
+      && !parent.exists()
+   {
+      return Err("Target directory does not exist".to_string());
    }
 
    // Check if source is a directory

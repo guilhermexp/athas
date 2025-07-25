@@ -272,35 +272,34 @@ fn get_system_fonts_sync() -> Vec<FontInfo> {
 
    // Try to get actual system fonts using system_profiler
    if let Ok(output) = Command::new("system_profiler")
-      .args(&["SPFontsDataType", "-detailLevel", "mini"])
+      .args(["SPFontsDataType", "-detailLevel", "mini"])
       .output()
+      && output.status.success()
    {
-      if output.status.success() {
-         let stdout = String::from_utf8_lossy(&output.stdout);
-         for line in stdout.lines() {
-            if line.trim().starts_with("Font Name:") || line.trim().starts_with("_name:") {
-               if let Some(font_name) = line.split(':').nth(1) {
-                  let family = font_name.trim().to_string();
-                  if !family.is_empty() && !font_families.contains(&family) {
-                     let is_monospace = is_monospace_font(&family);
-                     font_families.insert(family.clone());
-                     fonts.push(FontInfo {
-                        name: family.clone(),
-                        family: family.clone(),
-                        style: "Regular".to_string(),
-                        is_monospace,
-                     });
-                  }
-               }
+      let stdout = String::from_utf8_lossy(&output.stdout);
+      for line in stdout.lines() {
+         if (line.trim().starts_with("Font Name:") || line.trim().starts_with("_name:"))
+            && let Some(font_name) = line.split(':').nth(1)
+         {
+            let family = font_name.trim().to_string();
+            if !family.is_empty() && !font_families.contains(&family) {
+               let is_monospace = is_monospace_font(&family);
+               font_families.insert(family.clone());
+               fonts.push(FontInfo {
+                  name: family.clone(),
+                  family: family.clone(),
+                  style: "Regular".to_string(),
+                  is_monospace,
+               });
             }
          }
       }
    }
 
    // If system_profiler didn't work, try using font book database
-   if fonts.is_empty() {
-      if let Ok(output) = Command::new("find")
-         .args(&[
+   if fonts.is_empty()
+      && let Ok(output) = Command::new("find")
+         .args([
             "/System/Library/Fonts",
             "/Library/Fonts",
             "/Users/*/Library/Fonts",
@@ -311,23 +310,21 @@ fn get_system_fonts_sync() -> Vec<FontInfo> {
             "*.otf",
          ])
          .output()
-      {
-         if output.status.success() {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            for line in stdout.lines() {
-               if let Some(filename) = std::path::Path::new(line).file_stem() {
-                  let family = filename.to_string_lossy().to_string();
-                  if !font_families.contains(&family) {
-                     let is_monospace = is_monospace_font(&family);
-                     font_families.insert(family.clone());
-                     fonts.push(FontInfo {
-                        name: family.clone(),
-                        family: family.clone(),
-                        style: "Regular".to_string(),
-                        is_monospace,
-                     });
-                  }
-               }
+      && output.status.success()
+   {
+      let stdout = String::from_utf8_lossy(&output.stdout);
+      for line in stdout.lines() {
+         if let Some(filename) = std::path::Path::new(line).file_stem() {
+            let family = filename.to_string_lossy().to_string();
+            if !font_families.contains(&family) {
+               let is_monospace = is_monospace_font(&family);
+               font_families.insert(family.clone());
+               fonts.push(FontInfo {
+                  name: family.clone(),
+                  family: family.clone(),
+                  style: "Regular".to_string(),
+                  is_monospace,
+               });
             }
          }
       }

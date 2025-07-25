@@ -172,11 +172,11 @@ async fn handle_message(
 ) {
    if let Some(id_val) = message.get("id") {
       // lsp response to a request
-      if let Some(id) = id_val.as_i64().map(|i| i as i32) {
-         if let Some(pending) = pending_requests.lock().await.remove(&id) {
-            let result = message.get("result").unwrap_or(&serde_json::Value::Null);
-            let _ = pending.sender.send(result.clone());
-         }
+      if let Some(id) = id_val.as_i64().map(|i| i as i32)
+         && let Some(pending) = pending_requests.lock().await.remove(&id)
+      {
+         let result = message.get("result").unwrap_or(&serde_json::Value::Null);
+         let _ = pending.sender.send(result.clone());
       }
    } else if let Some(method) = message.get("method").and_then(|m| m.as_str()) {
       // lsp notifications
