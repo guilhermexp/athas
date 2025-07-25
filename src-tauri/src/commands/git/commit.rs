@@ -5,64 +5,65 @@ use tauri::command;
 
 #[command]
 pub fn git_commit(repo_path: String, message: String) -> Result<(), String> {
-    _git_commit(repo_path, message).into_string_error()
+   _git_commit(repo_path, message).into_string_error()
 }
 
 fn _git_commit(repo_path: String, message: String) -> Result<()> {
-    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
-    let mut index = repo.index().context("Failed to get index")?;
+   let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+   let mut index = repo.index().context("Failed to get index")?;
 
-    let tree_id = index.write_tree().context("Failed to write tree")?;
-    let tree = repo.find_tree(tree_id).context("Failed to find tree")?;
-    let sig = repo.signature().context("Failed to get signature")?;
-    let head = repo.head().context("Failed to get HEAD")?;
-    let parent_commit = head
-        .peel_to_commit()
-        .context("Failed to get parent commit")?;
+   let tree_id = index.write_tree().context("Failed to write tree")?;
+   let tree = repo.find_tree(tree_id).context("Failed to find tree")?;
+   let sig = repo.signature().context("Failed to get signature")?;
+   let head = repo.head().context("Failed to get HEAD")?;
+   let parent_commit = head
+      .peel_to_commit()
+      .context("Failed to get parent commit")?;
 
-    repo.commit(Some("HEAD"), &sig, &sig, &message, &tree, &[&parent_commit])
-        .context("Failed to create commit")?;
+   repo
+      .commit(Some("HEAD"), &sig, &sig, &message, &tree, &[&parent_commit])
+      .context("Failed to create commit")?;
 
-    Ok(())
+   Ok(())
 }
 
 #[command]
 pub fn git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>, String> {
-    _git_log(repo_path, limit).into_string_error()
+   _git_log(repo_path, limit).into_string_error()
 }
 
 fn _git_log(repo_path: String, limit: Option<u32>) -> Result<Vec<GitCommit>> {
-    let repo = Repository::open(&repo_path).context("Failed to open repository")?;
-    let mut revwalk = repo.revwalk().context("Failed to create revwalk")?;
+   let repo = Repository::open(&repo_path).context("Failed to open repository")?;
+   let mut revwalk = repo.revwalk().context("Failed to create revwalk")?;
 
-    revwalk.push_head().context("Failed to push HEAD")?;
-    revwalk
-        .set_sorting(Sort::TIME)
-        .context("Failed to set sorting")?;
+   revwalk.push_head().context("Failed to push HEAD")?;
+   revwalk
+      .set_sorting(Sort::TIME)
+      .context("Failed to set sorting")?;
 
-    let limit = limit.unwrap_or(10) as usize;
-    let mut commits = Vec::new();
+   let limit = limit.unwrap_or(10) as usize;
+   let mut commits = Vec::new();
 
-    for (idx, oid) in revwalk.enumerate() {
-        if idx >= limit {
-            break;
-        }
+   for (idx, oid) in revwalk.enumerate() {
+      if idx >= limit {
+         break;
+      }
 
-        let oid = oid.context("Failed to get commit oid")?;
-        let commit = repo.find_commit(oid).context("Failed to find commit")?;
+      let oid = oid.context("Failed to get commit oid")?;
+      let commit = repo.find_commit(oid).context("Failed to find commit")?;
 
-        let author = commit.author();
-        let time = chrono::DateTime::<chrono::Utc>::from_timestamp(author.when().seconds(), 0)
-            .map(|dt| dt.format("%Y-%m-%d").to_string())
-            .unwrap_or_default();
+      let author = commit.author();
+      let time = chrono::DateTime::<chrono::Utc>::from_timestamp(author.when().seconds(), 0)
+         .map(|dt| dt.format("%Y-%m-%d").to_string())
+         .unwrap_or_default();
 
-        commits.push(GitCommit {
-            hash: oid.to_string(),
-            message: commit.summary().unwrap_or("").to_string(),
-            author: author.name().unwrap_or("Unknown").to_string(),
-            date: time,
-        });
-    }
+      commits.push(GitCommit {
+         hash: oid.to_string(),
+         message: commit.summary().unwrap_or("").to_string(),
+         author: author.name().unwrap_or("Unknown").to_string(),
+         date: time,
+      });
+   }
 
-    Ok(commits)
+   Ok(commits)
 }
