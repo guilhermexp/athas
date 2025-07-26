@@ -18,10 +18,16 @@ const TerminalSession = ({
   onRegisterRef,
 }: TerminalSessionProps) => {
   const terminalRef = useRef<any>(null);
+  const xtermInstanceRef = useRef<any>(null);
 
   // Focus method that can be called externally
   const focusTerminal = useCallback(() => {
-    terminalRef.current?.focus();
+    // Try multiple focus methods to ensure it works
+    if (xtermInstanceRef.current?.focus) {
+      xtermInstanceRef.current.focus();
+    } else if (terminalRef.current?.focus) {
+      terminalRef.current.focus();
+    }
   }, []);
 
   // Register ref with parent
@@ -42,19 +48,18 @@ const TerminalSession = ({
   }, [isActive, terminal.id, onActivity]);
 
   return (
-    <div className={`h-full ${isActive ? "block" : "hidden"}`} data-terminal-id={terminal.id}>
+    <div className="h-full" data-terminal-id={terminal.id}>
       <TerminalErrorBoundary>
         <XtermTerminal
           sessionId={terminal.id}
           isActive={isActive}
           onReady={() => {
-            // Store terminal reference
-            terminalRef.current = {
-              focus: () => {
-                const session = (window as any).terminalSessions?.[terminal.id];
-                session?.terminal?.focus();
-              },
-            };
+            // Additional ready callback if needed
+          }}
+          onTerminalRef={(ref) => {
+            // Store both xterm instance and focus method
+            xtermInstanceRef.current = ref;
+            terminalRef.current = ref;
           }}
         />
       </TerminalErrorBoundary>

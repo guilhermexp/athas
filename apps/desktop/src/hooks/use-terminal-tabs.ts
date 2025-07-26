@@ -8,7 +8,7 @@ const generateTerminalId = (name: string): string => {
 const terminalReducer = (state: TerminalState, action: TerminalAction): TerminalState => {
   switch (action.type) {
     case "CREATE_TERMINAL": {
-      const { name, currentDirectory, shell } = action.payload;
+      const { name, currentDirectory, shell, id } = action.payload;
 
       // Generate a unique name if needed
       const existingNames = state.terminals.map((t) => t.name);
@@ -20,7 +20,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       }
 
       const newTerminal: Terminal = {
-        id: generateTerminalId(terminalName),
+        id: id || generateTerminalId(terminalName),
         name: terminalName,
         currentDirectory,
         isActive: true,
@@ -58,11 +58,25 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
         }
       }
 
-      return {
-        terminals: newTerminals.map((terminal) => ({
+      // Also clean up any terminals that were split with the closed terminal
+      const cleanedTerminals = newTerminals.map((terminal) => {
+        if (terminal.splitWithId === id) {
+          // Remove split mode if the paired terminal is being closed
+          return {
+            ...terminal,
+            splitMode: false,
+            splitWithId: undefined,
+            isActive: terminal.id === newActiveTerminalId,
+          };
+        }
+        return {
           ...terminal,
           isActive: terminal.id === newActiveTerminalId,
-        })),
+        };
+      });
+
+      return {
+        terminals: cleanedTerminals,
         activeTerminalId: newActiveTerminalId,
       };
     }
@@ -133,6 +147,16 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       };
     }
 
+    case "SET_TERMINAL_SPLIT_MODE": {
+      const { id, splitMode, splitWithId } = action.payload;
+      return {
+        ...state,
+        terminals: state.terminals.map((terminal) =>
+          terminal.id === id ? { ...terminal, splitMode, splitWithId } : terminal,
+        ),
+      };
+    }
+
     default:
       return state;
   }
@@ -144,9 +168,18 @@ export const useTerminalTabs = () => {
     activeTerminalId: null,
   });
 
-  const createTerminal = useCallback((name: string, currentDirectory: string, shell?: string) => {
-    dispatch({ type: "CREATE_TERMINAL", payload: { name, currentDirectory, shell } });
-  }, []);
+  const createTerminal = useCallback(
+    (name: string, currentDirectory: string, shell?: string): string => {
+      // Generate the terminal ID here so we can return it
+      const terminalId = generateTerminalId(name);
+      dispatch({
+        type: "CREATE_TERMINAL",
+        payload: { name, currentDirectory, shell, id: terminalId },
+      });
+      return terminalId;
+    },
+    [],
+  );
 
   const closeTerminal = useCallback((id: string) => {
     dispatch({ type: "CLOSE_TERMINAL", payload: { id } });
@@ -208,6 +241,13 @@ export const useTerminalTabs = () => {
     }
   }, [state.terminals, state.activeTerminalId, setActiveTerminal]);
 
+  const setTerminalSplitMode = useCallback(
+    (id: string, splitMode: boolean, splitWithId?: string) => {
+      dispatch({ type: "SET_TERMINAL_SPLIT_MODE", payload: { id, splitMode, splitWithId } });
+    },
+    [],
+  );
+
   return {
     terminals: state.terminals,
     activeTerminalId: state.activeTerminalId,
@@ -222,5 +262,6 @@ export const useTerminalTabs = () => {
     getActiveTerminal,
     switchToNextTerminal,
     switchToPrevTerminal,
+    setTerminalSplitMode,
   };
 };
