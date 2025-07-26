@@ -8,7 +8,7 @@ const generateTerminalId = (name: string): string => {
 const terminalReducer = (state: TerminalState, action: TerminalAction): TerminalState => {
   switch (action.type) {
     case "CREATE_TERMINAL": {
-      const { name, currentDirectory, shell } = action.payload;
+      const { name, currentDirectory, shell, id } = action.payload;
 
       // Generate a unique name if needed
       const existingNames = state.terminals.map((t) => t.name);
@@ -20,7 +20,7 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       }
 
       const newTerminal: Terminal = {
-        id: generateTerminalId(terminalName),
+        id: id || generateTerminalId(terminalName),
         name: terminalName,
         currentDirectory,
         isActive: true,
@@ -144,9 +144,18 @@ export const useTerminalTabs = () => {
     activeTerminalId: null,
   });
 
-  const createTerminal = useCallback((name: string, currentDirectory: string, shell?: string) => {
-    dispatch({ type: "CREATE_TERMINAL", payload: { name, currentDirectory, shell } });
-  }, []);
+  const createTerminal = useCallback(
+    (name: string, currentDirectory: string, shell?: string): string => {
+      // Generate the terminal ID here so we can return it
+      const terminalId = generateTerminalId(name);
+      dispatch({
+        type: "CREATE_TERMINAL",
+        payload: { name, currentDirectory, shell, id: terminalId },
+      });
+      return terminalId;
+    },
+    [],
+  );
 
   const closeTerminal = useCallback((id: string) => {
     dispatch({ type: "CLOSE_TERMINAL", payload: { id } });

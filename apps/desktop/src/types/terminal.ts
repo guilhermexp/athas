@@ -19,7 +19,10 @@ export interface TerminalState {
 }
 
 export type TerminalAction =
-  | { type: "CREATE_TERMINAL"; payload: { name: string; currentDirectory: string; shell?: string } }
+  | {
+      type: "CREATE_TERMINAL";
+      payload: { name: string; currentDirectory: string; shell?: string; id?: string };
+    }
   | { type: "CLOSE_TERMINAL"; payload: { id: string } }
   | { type: "SET_ACTIVE_TERMINAL"; payload: { id: string } }
   | { type: "UPDATE_TERMINAL_NAME"; payload: { id: string; name: string } }

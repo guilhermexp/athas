@@ -22,6 +22,7 @@ interface XtermTerminalProps {
   sessionId: string;
   isActive: boolean;
   onReady?: () => void;
+  onTerminalRef?: (ref: any) => void;
 }
 
 interface TerminalTheme {
@@ -49,7 +50,12 @@ interface TerminalTheme {
   brightWhite: string;
 }
 
-export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActive, onReady }) => {
+export const XtermTerminal: React.FC<XtermTerminalProps> = ({
+  sessionId,
+  isActive,
+  onReady,
+  onTerminalRef,
+}) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -272,6 +278,15 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
 
         setIsInitialized(true);
         isInitializingRef.current = false;
+
+        // Pass terminal reference up to parent
+        if (onTerminalRef) {
+          onTerminalRef({
+            focus: () => terminal.focus(),
+            terminal: terminal,
+          });
+        }
+
         onReady?.();
       } catch (innerError) {
         console.error("Failed to create terminal connection:", innerError);
@@ -396,12 +411,15 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({ sessionId, isActiv
     };
   }, [isInitialized]);
 
-  // Handle focus
+  // Handle focus - ensure terminal is focused when it becomes active or is initialized
   useEffect(() => {
-    if (isActive && xtermRef.current) {
-      xtermRef.current.focus();
+    if (isActive && xtermRef.current && isInitialized) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        xtermRef.current?.focus();
+      });
     }
-  }, [isActive]);
+  }, [isActive, isInitialized]);
 
   // Zoom handlers
   const handleZoomIn = useCallback(() => {

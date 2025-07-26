@@ -44,7 +44,16 @@ const TerminalContainer = ({
 
   const handleNewTerminal = useCallback(() => {
     const dirName = currentDirectory.split("/").pop() || "terminal";
-    createTerminal(dirName, currentDirectory);
+    const newTerminalId = createTerminal(dirName, currentDirectory);
+    // Focus the new terminal after creation
+    if (newTerminalId) {
+      setTimeout(() => {
+        const terminalRef = terminalSessionRefs.current.get(newTerminalId);
+        if (terminalRef) {
+          terminalRef.focus();
+        }
+      }, 150);
+    }
   }, [createTerminal, currentDirectory]);
 
   // Create initial terminal on mount if none exist
@@ -58,6 +67,13 @@ const TerminalContainer = ({
   const handleTabClick = useCallback(
     (terminalId: string) => {
       setActiveTerminal(terminalId);
+      // Focus the terminal after a short delay to ensure it's rendered
+      setTimeout(() => {
+        const terminalRef = terminalSessionRefs.current.get(terminalId);
+        if (terminalRef) {
+          terminalRef.focus();
+        }
+      }, 50);
     },
     [setActiveTerminal],
   );
@@ -127,16 +143,22 @@ const TerminalContainer = ({
   }, []);
 
   const handleSplitView = useCallback(() => {
-    // Only allow split view if there are at least 2 terminals
-    if (terminals.length >= 2) {
-      setIsSplitView((prev) => !prev);
+    if (isSplitView) {
+      // Toggle off split view
+      setIsSplitView(false);
     } else {
-      // Create a new terminal if there's only one
-      const dirName = currentDirectory.split("/").pop() || "terminal";
-      createTerminal(dirName, currentDirectory);
-      setTimeout(() => setIsSplitView(true), 100);
+      // Toggle on split view
+      if (terminals.length >= 2) {
+        setIsSplitView(true);
+      } else {
+        // Create a new terminal if there's only one
+        const dirName = currentDirectory.split("/").pop() || "terminal";
+        createTerminal(dirName, currentDirectory);
+        // Delay to ensure the new terminal is created before enabling split view
+        setTimeout(() => setIsSplitView(true), 100);
+      }
     }
-  }, [terminals.length, currentDirectory, createTerminal]);
+  }, [isSplitView, terminals.length, currentDirectory, createTerminal]);
 
   const handleDirectoryChange = useCallback(
     (terminalId: string, directory: string) => {
@@ -181,6 +203,13 @@ const TerminalContainer = ({
       clearTerminalFocus();
     };
   }, [registerTerminalFocus, clearTerminalFocus, focusActiveTerminal]);
+
+  // Auto-disable split view when terminals are reduced to less than 2
+  useEffect(() => {
+    if (isSplitView && terminals.length < 2) {
+      setIsSplitView(false);
+    }
+  }, [terminals.length, isSplitView]);
 
   // Terminal-specific keyboard shortcuts
   useEffect(() => {
@@ -274,6 +303,13 @@ const TerminalContainer = ({
         return;
       }
 
+      // Cmd+D (Mac) or Ctrl+D (Windows/Linux) to toggle split view
+      if ((e.metaKey || e.ctrlKey) && e.key === "d" && !e.shiftKey) {
+        e.preventDefault();
+        handleSplitView();
+        return;
+      }
+
       // Number shortcuts: Cmd/Ctrl+1, Cmd/Ctrl+2, etc. to switch to specific terminal tabs
       if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
         e.preventDefault();
@@ -295,6 +331,7 @@ const TerminalContainer = ({
     setActiveTerminal,
     switchToNextTerminal,
     switchToPrevTerminal,
+    handleSplitView,
   ]);
 
   // Auto-create first terminal when the pane becomes visible
@@ -359,53 +396,68 @@ const TerminalContainer = ({
 
       {/* Terminal Sessions */}
       <div className="relative flex-1">
-        {isSplitView ? (
-          // Split view: Show active terminal on left, other terminals on right
+        {isSplitView && terminals.length >= 2 ? (
+          // Split view: Show active terminal on left, next terminal on right
           <div className="flex h-full">
+            {/* Left terminal - active terminal */}
             <div className="w-1/2 border-border border-r">
-              {terminals.map(
-                (terminal) =>
-                  terminal.id === activeTerminalId && (
-                    <TerminalSession
-                      key={terminal.id}
-                      terminal={terminal}
-                      isActive={true}
-                      onDirectoryChange={handleDirectoryChange}
-                      onActivity={handleActivity}
-                      onRegisterRef={registerTerminalRef}
-                    />
-                  ),
-              )}
-            </div>
-            <div className="w-1/2">
-              {(() => {
-                const nextTerminal = terminals.find((t) => t.id !== activeTerminalId);
-                if (!nextTerminal) return null;
-                return (
+              {terminals.map((terminal) => (
+                <div
+                  key={terminal.id}
+                  className={terminal.id === activeTerminalId ? "h-full" : "hidden"}
+                >
                   <TerminalSession
-                    key={nextTerminal.id}
-                    terminal={nextTerminal}
-                    isActive={true}
+                    terminal={terminal}
+                    isActive={terminal.id === activeTerminalId}
                     onDirectoryChange={handleDirectoryChange}
                     onActivity={handleActivity}
                     onRegisterRef={registerTerminalRef}
                   />
-                );
+                </div>
+              ))}
+            </div>
+            {/* Right terminal - next available terminal */}
+            <div className="w-1/2">
+              {(() => {
+                // Find the next terminal that's not the active one
+                const nextTerminal = terminals.find((t) => t.id !== activeTerminalId);
+                if (!nextTerminal) return null;
+
+                return terminals.map((terminal) => (
+                  <div
+                    key={terminal.id}
+                    className={terminal.id === nextTerminal.id ? "h-full" : "hidden"}
+                  >
+                    <TerminalSession
+                      terminal={terminal}
+                      isActive={terminal.id === nextTerminal.id}
+                      onDirectoryChange={handleDirectoryChange}
+                      onActivity={handleActivity}
+                      onRegisterRef={registerTerminalRef}
+                    />
+                  </div>
+                ));
               })()}
             </div>
           </div>
         ) : (
-          // Normal view: Show only active terminal
-          terminals.map((terminal) => (
-            <TerminalSession
-              key={terminal.id}
-              terminal={terminal}
-              isActive={terminal.id === activeTerminalId}
-              onDirectoryChange={handleDirectoryChange}
-              onActivity={handleActivity}
-              onRegisterRef={registerTerminalRef}
-            />
-          ))
+          // Normal view: Show all terminals but only display the active one
+          <div className="h-full">
+            {terminals.map((terminal) => (
+              <div
+                key={terminal.id}
+                className={terminal.id === activeTerminalId ? "h-full" : "hidden"}
+              >
+                <TerminalSession
+                  terminal={terminal}
+                  isActive={terminal.id === activeTerminalId}
+                  onDirectoryChange={handleDirectoryChange}
+                  onActivity={handleActivity}
+                  onRegisterRef={registerTerminalRef}
+                />
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
