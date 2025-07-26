@@ -56,7 +56,6 @@ export const FontSelector = ({
   }
 
   const handleFontChange = (fontFamily: string) => {
-    console.log("Font changing to:", fontFamily);
     setSelectedFont(fontFamily);
     onChange(fontFamily);
     clearError();
@@ -78,6 +77,7 @@ export const FontSelector = ({
       placeholder="Select font"
       className={className}
       size="xs"
+      searchable={true}
     />
   );
 };

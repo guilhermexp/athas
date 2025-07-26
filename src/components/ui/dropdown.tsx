@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../../utils/cn";
@@ -11,6 +11,7 @@ interface DropdownProps {
   className?: string;
   disabled?: boolean;
   size?: "xs" | "sm" | "md";
+  searchable?: boolean;
 }
 
 const Dropdown = ({
@@ -21,11 +22,14 @@ const Dropdown = ({
   className = "",
   disabled = false,
   size = "sm",
+  searchable = false,
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,10 +56,23 @@ const Dropdown = ({
         left: rect.left + window.scrollX,
         width: rect.width,
       });
+      // Focus search input when dropdown opens
+      if (searchable && searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    } else {
+      // Reset search when dropdown closes
+      setSearchQuery("");
     }
-  }, [isOpen]);
+  }, [isOpen, searchable]);
 
   const selectedOption = options.find((option) => option.value === value);
+
+  // Filter options based on search query
+  const filteredOptions =
+    searchable && searchQuery
+      ? options.filter((option) => option.label.toLowerCase().includes(searchQuery.toLowerCase()))
+      : options;
 
   const sizeClasses = {
     xs: "px-2 py-1 text-xs h-6",
@@ -76,9 +93,9 @@ const Dropdown = ({
       <div
         ref={dropdownRef}
         className={cn(
-          "fixed z-[9999] max-h-48 min-w-max max-w-xs overflow-auto",
+          "fixed z-[9999] max-h-96 min-w-max max-w-xs overflow-auto",
           "rounded border border-border bg-primary-bg shadow-xl",
-          "py-1",
+          searchable ? "pt-0" : "py-1",
         )}
         style={{
           top: dropdownPosition.top,
@@ -86,23 +103,46 @@ const Dropdown = ({
           minWidth: dropdownPosition.width,
         }}
       >
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => {
-              onChange(option.value);
-              setIsOpen(false);
-            }}
-            className={cn(
-              "w-full px-2 py-1 text-left text-text text-xs transition-colors",
-              "hover:bg-hover",
-              value === option.value ? "bg-blue-500/20 text-blue-400" : "hover:text-text",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
+        {searchable && (
+          <div className="sticky top-0 border-border border-b bg-primary-bg p-2">
+            <div className="relative">
+              <Search
+                size={12}
+                className="-translate-y-1/2 absolute top-1/2 left-2 text-text-lighter"
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search fonts..."
+                className="w-full rounded border border-border bg-secondary-bg py-1 pr-2 pl-6 text-text text-xs placeholder-text-lighter focus:border-blue-500 focus:outline-none"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        )}
+        {filteredOptions.length === 0 ? (
+          <div className="px-2 py-4 text-center text-text-lighter text-xs">No matching options</div>
+        ) : (
+          filteredOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              className={cn(
+                "w-full px-2 py-1 text-left text-text text-xs transition-colors",
+                "hover:bg-hover",
+                value === option.value ? "bg-blue-500/20 text-blue-400" : "hover:text-text",
+              )}
+            >
+              {option.label}
+            </button>
+          ))
+        )}
       </div>
     );
   };
