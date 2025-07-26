@@ -14,6 +14,8 @@
       "apps/**/*.js",
       "apps/**/*.jsx",
       "apps/**/*.json",
+      "!apps/web/**",
+      "!apps/desktop/src-tauri/gen/schemas/**",
       "packages/**/*.ts",
       "packages/**/*.tsx",
       "packages/**/*.js",

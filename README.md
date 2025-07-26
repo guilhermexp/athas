@@ -12,7 +12,7 @@ Designed for developers who want a fast and customizable development environment
 2. Install packages:
    `bun install`
 3. Build and run:
-   `bun run tauri dev`
+   `bun dev:app`
 
 ## Contributing
 
