@@ -19,12 +19,13 @@ export const useEditorInteractions = ({
 }: UseEditorInteractionsProps) => {
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef<Position | null>(null);
+  const GUTTER_MARGIN = 8; // mr-2 in Tailwind (0.5rem = 8px)
 
   const getPositionFromCoordinates = useCallback(
     (clientX: number, clientY: number, containerRect: DOMRect): Position | null => {
       // console.log("firing getPositionFromCoordinates")
       // Calculate relative position
-      const relativeX = clientX - containerRect.left - gutterWidth;
+      const relativeX = clientX - containerRect.left - gutterWidth - GUTTER_MARGIN;
       const relativeY = clientY - containerRect.top;
 
       // Calculate line number

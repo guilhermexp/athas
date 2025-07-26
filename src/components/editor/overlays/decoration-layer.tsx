@@ -27,6 +27,7 @@ export const DecorationLayer = () => {
   const selection = useEditorCursorStore.use.selection?.() ?? undefined;
   const { scrollTop, scrollLeft } = useEditorLayoutStore();
   const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
+  const GUTTER_MARGIN = 8; // mr-2 in Tailwind (0.5rem = 8px)
 
   const decorations = useMemo(() => {
     const allDecorations = [...storeDecorations];
@@ -64,7 +65,7 @@ export const DecorationLayer = () => {
         // Inline decorations span within text
         if (start.line === end.line) {
           // Single line decoration
-          const x = gutterWidth + start.column * charWidth - scrollLeft;
+          const x = gutterWidth + GUTTER_MARGIN + start.column * charWidth - scrollLeft;
           const y = start.line * lineHeight - scrollTop;
           const width = (end.column - start.column) * charWidth;
 
@@ -80,7 +81,7 @@ export const DecorationLayer = () => {
         } else {
           // Multi-line decoration
           // First line
-          const firstLineX = gutterWidth + start.column * charWidth - scrollLeft;
+          const firstLineX = gutterWidth + GUTTER_MARGIN + start.column * charWidth - scrollLeft;
           const firstLineY = start.line * lineHeight - scrollTop;
           const firstLineWidth = (lines[start.line].length - start.column) * charWidth;
 
@@ -96,7 +97,7 @@ export const DecorationLayer = () => {
 
           // Middle lines
           for (let line = start.line + 1; line < end.line; line++) {
-            const x = gutterWidth - scrollLeft;
+            const x = gutterWidth + GUTTER_MARGIN - scrollLeft;
             const y = line * lineHeight - scrollTop;
             const width = lines[line].length * charWidth;
 
@@ -112,7 +113,7 @@ export const DecorationLayer = () => {
           }
 
           // Last line
-          const lastLineX = gutterWidth - scrollLeft;
+          const lastLineX = gutterWidth + GUTTER_MARGIN - scrollLeft;
           const lastLineY = end.line * lineHeight - scrollTop;
           const lastLineWidth = end.column * charWidth;
 

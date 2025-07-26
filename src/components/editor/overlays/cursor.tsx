@@ -12,6 +12,7 @@ export function Cursor({ visible = true }: CursorRendererProps) {
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { scrollTop, scrollLeft } = useEditorLayoutStore();
   const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
+  const GUTTER_MARGIN = 8; // mr-2 in Tailwind (0.5rem = 8px)
 
   // Update position without re-rendering
   useEffect(() => {
@@ -22,7 +23,7 @@ export function Cursor({ visible = true }: CursorRendererProps) {
       (position) => {
         if (!cursorRef.current) return;
 
-        const x = gutterWidth + position.column * charWidth - scrollLeft;
+        const x = gutterWidth + GUTTER_MARGIN + position.column * charWidth - scrollLeft;
         const y = position.line * lineHeight - scrollTop;
 
         // Add moving class to pause blinking
@@ -46,7 +47,7 @@ export function Cursor({ visible = true }: CursorRendererProps) {
 
     // Set initial position
     const position = useEditorCursorStore.getState().cursorPosition;
-    const x = gutterWidth + position.column * charWidth - scrollLeft;
+    const x = gutterWidth + GUTTER_MARGIN + position.column * charWidth - scrollLeft;
     const y = position.line * lineHeight - scrollTop;
     cursorRef.current.style.left = `${x}px`;
     cursorRef.current.style.top = `${y}px`;
