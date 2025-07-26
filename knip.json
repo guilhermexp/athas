@@ -1,6 +1,15 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/main.tsx"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignore": ["src/vite-env.d.ts", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"]
+  "ignoreDependencies": ["tailwindcss"],
+  "workspaces": {
+    "apps/desktop": {
+      "entry": ["src/main.tsx"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/vite-env.d.ts", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"]
+    },
+    "apps/web": {
+      "project": ["app/**/*.{ts,tsx}"],
+      "ignore": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"]
+    }
+  }
 }

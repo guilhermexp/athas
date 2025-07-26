@@ -9,11 +9,15 @@
     "ignoreUnknown": false,
     "maxSize": 200000,
     "includes": [
-      "src/**/*.ts",
-      "src/**/*.tsx",
-      "src/**/*.js",
-      "src/**/*.jsx",
-      "src/**/*.json",
+      "apps/**/*.ts",
+      "apps/**/*.tsx",
+      "apps/**/*.js",
+      "apps/**/*.jsx",
+      "apps/**/*.json",
+      "packages/**/*.ts",
+      "packages/**/*.tsx",
+      "packages/**/*.js",
+      "packages/**/*.jsx",
       "*.json",
       "*.ts"
     ]

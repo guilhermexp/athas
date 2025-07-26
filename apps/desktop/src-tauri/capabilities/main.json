@@ -54,23 +54,12 @@
         {
           "name": "kreadconfig5",
           "cmd": "kreadconfig5",
-          "args": [
-            "--file",
-            "kdeglobals",
-            "--group",
-            "General",
-            "--key",
-            "ColorScheme"
-          ]
+          "args": ["--file", "kdeglobals", "--group", "General", "--key", "ColorScheme"]
         },
         {
           "name": "defaults",
           "cmd": "defaults",
-          "args": [
-            "read",
-            "-g",
-            "AppleInterfaceStyle"
-          ]
+          "args": ["read", "-g", "AppleInterfaceStyle"]
         },
         {
           "name": "reg",

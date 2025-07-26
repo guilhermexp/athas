@@ -34,11 +34,11 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tsc
-        run: bunx tsc --noEmit
+      - name: Run typecheck
+        run: bun typecheck
 
       - name: Run biome check
-        run: bunx biome check
+        run: bun check
 
       - name: Run knip (unused stuff)
-        run: bunx knip
+        run: bun knip

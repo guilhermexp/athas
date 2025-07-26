@@ -9,14 +9,17 @@ session_id=$(echo "$input" | jq -r '.session_id')
 # Check if any .ts or .tsx files were modified during this session
 # Look through git status to see if TypeScript files were touched
 if git status --porcelain | grep -E '\.tsx?$' > /dev/null; then
-    echo "TypeScript files were modified, running bun check:all..."
+    echo "TypeScript files were modified, running checks..."
 
-    # Run bun check:all and capture the exit code
-    bun check:all
-    exit_code=$?
+    # Run both check and typecheck
+    bun check
+    check_exit=$?
+    
+    bun typecheck
+    typecheck_exit=$?
 
-    # If there were errors, exit with code 2 to block and have Claude fix them
-    if [ $exit_code -ne 0 ]; then
+    # If either had errors, exit with code 2 to block and have Claude fix them
+    if [ $check_exit -ne 0 ] || [ $typecheck_exit -ne 0 ]; then
         echo "Found TypeScript/lint errors that need to be fixed" >&2
         exit 2
     fi

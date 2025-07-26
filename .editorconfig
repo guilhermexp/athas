@@ -32,7 +32,7 @@ max_line_length = off
 
 # Rust files
 [*.rs]
-indent_size = 4
+indent_size = 3
 
 # TOML files (Cargo.toml, etc.)
 [*.toml]
@@ -40,4 +40,4 @@ indent_size = 2
 
 # Config files
 [*.{toml,conf,config}]
-indent_size = 2 
+indent_size = 2
