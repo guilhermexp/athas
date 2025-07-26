@@ -3,11 +3,14 @@ import KeybindingBadge from "@/components/ui/keybinding-badge";
 import Section, { SettingRow } from "@/components/ui/section";
 import Switch from "@/components/ui/switch";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useUpdater } from "@/hooks/use-updater";
+import Button from "@/components/ui/button";
 
 const isMac = typeof navigator !== "undefined" && navigator.platform.includes("Mac");
 
 export const GeneralSettings = () => {
   const { settings, updateSetting } = useSettingsStore();
+  const { available, checking, downloading, installing, error, updateInfo, checkForUpdates, downloadAndInstall } = useUpdater(false);
 
   const sidebarOptions = [
     { value: "left", label: "Left" },
@@ -68,6 +71,47 @@ export const GeneralSettings = () => {
         <SettingRow label="Reset Zoom" description="Reset zoom to 100%">
           <KeybindingBadge keys={isMac ? ["⌘", "0"] : ["Ctrl", "0"]} />
         </SettingRow>
+      </Section>
+
+      <Section title="Updates">
+        <SettingRow 
+          label="Check for Updates" 
+          description={
+            available 
+              ? `Version ${updateInfo?.version} available` 
+              : error 
+                ? "Failed to check for updates"
+                : "App is up to date"
+          }
+        >
+          <div className="flex gap-2">
+            <Button
+              onClick={checkForUpdates}
+              disabled={checking || downloading || installing}
+              variant="ghost"
+              size="xs"
+              className="px-2 py-1"
+            >
+              {checking ? "Checking..." : "Check"}
+            </Button>
+            {available && (
+              <Button
+                onClick={downloadAndInstall}
+                disabled={downloading || installing}
+                variant="ghost"
+                size="xs"
+                className="px-2 py-1"
+              >
+                {downloading ? "Downloading..." : installing ? "Installing..." : "Install"}
+              </Button>
+            )}
+          </div>
+        </SettingRow>
+        {error && (
+          <div className="mt-2 text-xs text-red-500">
+            {error}
+          </div>
+        )}
       </Section>
     </div>
   );
