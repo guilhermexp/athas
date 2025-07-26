@@ -1,8 +1,5 @@
 [workspace]
-members = [
-    "apps/desktop/src-tauri",
-    "packages/interceptor"
-]
+members = ["src-tauri", "src-tauri/packages/interceptor"]
 resolver = "2"
 
 [workspace.lints.clippy]

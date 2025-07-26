@@ -37,9 +37,11 @@ const WelcomeScreen = ({
       {/* Logo Section */}
       <div className={cn("mb-6 flex flex-col items-center")}>
         <div className={cn("mb-1 flex justify-center")}>
-          <img src="/athas-industries-logo.svg" alt="athas industries" className={cn("h-12")} />
+          <img src="/logo.svg" alt="athas industries" className={cn("h-12")} />
         </div>
-        <p className={cn("paper-text-light font-mono font-normal text-xs")}>v0.1.0</p>
+        <p className={cn("paper-text-light font-mono font-normal text-xs")}>
+          v0.1.0
+        </p>
       </div>
 
       {/* Main Content */}
@@ -49,7 +51,10 @@ const WelcomeScreen = ({
           <Button
             onClick={onOpenFolder}
             variant="ghost"
-            className={cn("paper-button w-full gap-2 py-2 text-sm", "transition-all duration-200")}
+            className={cn(
+              "paper-button w-full gap-2 py-2 text-sm",
+              "transition-all duration-200",
+            )}
             size="sm"
           >
             <Folder size={14} />
@@ -60,7 +65,11 @@ const WelcomeScreen = ({
         {/* Recent Folders */}
         {recentFolders.length > 0 && (
           <div className={cn("w-full")}>
-            <h3 className={cn("paper-text-secondary", "mb-2 font-mono text-xs")}>Recent</h3>
+            <h3
+              className={cn("paper-text-secondary", "mb-2 font-mono text-xs")}
+            >
+              Recent
+            </h3>
             <div className={cn("space-y-1.5")}>
               {recentFolders.map((folder, index) => (
                 <Button
@@ -73,7 +82,11 @@ const WelcomeScreen = ({
                   )}
                   size="sm"
                 >
-                  <div className={cn("paper-text-primary truncate font-mono text-xs")}>
+                  <div
+                    className={cn(
+                      "paper-text-primary truncate font-mono text-xs",
+                    )}
+                  >
                     {folder.name}
                   </div>
                 </Button>
