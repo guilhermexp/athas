@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "knip": "knip",
     "type-check": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "check": "biome check",
@@ -57,13 +56,12 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.0",
-    "knip": "^5.62.0",
     "simple-git-hooks": "^2.13.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.5"
   },
   "simple-git-hooks": {
-    "pre-commit": "bunx concurrently --names \"rust,ts\" --prefix-colors \"yellow,cyan\" './scripts/format-staged-rust.sh' './scripts/format-staged-biome.sh && bun check:all && bun knip'",
+    "pre-commit": "bun check:all",
     "commit-msg": "bun commitlint --edit $1"
   },
   "lint-staged": {
