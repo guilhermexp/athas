@@ -5,7 +5,6 @@ use claude_bridge::ClaudeCodeBridge;
 use commands::*;
 use file_watcher::FileWatcher;
 use log::{debug, info};
-use lsp::LSPState;
 use ssh::{ssh_connect, ssh_disconnect, ssh_write_file};
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
@@ -17,7 +16,6 @@ mod commands;
 mod file_watcher;
 mod interceptor_types;
 mod logger;
-mod lsp;
 mod menu;
 mod ssh;
 mod terminal;
@@ -177,7 +175,6 @@ fn main() {
 
          Ok(())
       })
-      .manage(LSPState::new())
       .manage(Arc::new(XtermManager::new()))
       .invoke_handler(tauri::generate_handler![
          // File system commands

@@ -1,5 +1,6 @@
-import { create } from "zustand";
+import isEqual from "fast-deep-equal";
 import { immer } from "zustand/middleware/immer";
+import { createWithEqualityFn } from "zustand/traditional";
 import { createSelectors } from "@/utils/zustand-selectors";
 import { readFileContent } from "../utils/file-operations";
 import type { GitDiff } from "../utils/git";
@@ -19,6 +20,13 @@ interface Buffer {
   isActive: boolean;
   // For diff buffers, store the parsed diff data
   diffData?: GitDiff;
+  // Cached syntax highlighting tokens
+  tokens: {
+    start: number;
+    end: number;
+    token_type: string;
+    class_name: string;
+  }[];
 }
 
 interface BufferState {
@@ -47,6 +55,15 @@ interface BufferActions {
     markDirty?: boolean,
     diffData?: GitDiff,
   ) => void;
+  updateBufferTokens: (
+    bufferId: string,
+    tokens: {
+      start: number;
+      end: number;
+      token_type: string;
+      class_name: string;
+    }[],
+  ) => void;
   markBufferDirty: (bufferId: string, isDirty: boolean) => void;
   updateBuffer: (updatedBuffer: Buffer) => void;
   handleTabClick: (bufferId: string) => void;
@@ -68,7 +85,7 @@ const generateBufferId = (path: string): string => {
 };
 
 export const useBufferStore = createSelectors(
-  create<BufferState>()(
+  createWithEqualityFn<BufferState>()(
     immer((set, get) => ({
       buffers: [],
       activeBufferId: null,
@@ -120,6 +137,7 @@ export const useBufferStore = createSelectors(
             isDiff,
             isActive: true,
             diffData,
+            tokens: [],
           };
 
           set((state) => {
@@ -195,6 +213,16 @@ export const useBufferStore = createSelectors(
               if (!buffer.isVirtual) {
                 buffer.isDirty = markDirty;
               }
+              // Don't clear tokens - syntax highlighter will update them
+            }
+          });
+        },
+
+        updateBufferTokens: (bufferId: string, tokens: Buffer["tokens"]) => {
+          set((state) => {
+            const buffer = state.buffers.find((b) => b.id === bufferId);
+            if (buffer) {
+              buffer.tokens = tokens;
             }
           });
         },
@@ -328,5 +356,6 @@ export const useBufferStore = createSelectors(
         },
       },
     })),
+    isEqual,
   ),
 );

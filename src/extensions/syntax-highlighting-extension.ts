@@ -1,15 +1,8 @@
-import { getTokens } from "../lib/rust-api/tokens";
+import { getTokens, type Token } from "../lib/rust-api/tokens";
+import { useBufferStore } from "../stores/buffer-store";
 import { useEditorContentStore } from "../stores/editor-content-store";
-import type { LineToken } from "../types/editor-types";
+import type { Change, LineToken } from "../types/editor-types";
 import type { EditorAPI, EditorExtension } from "./extension-types";
-
-// Import Token from rust-api instead of editor-types
-type Token = {
-  start: number;
-  end: number;
-  token_type: string;
-  class_name: string;
-};
 
 const DEBOUNCE_TIME_MS = 300;
 
@@ -25,12 +18,35 @@ class SyntaxHighlighter {
 
   setFilePath(filePath: string) {
     this.filePath = filePath;
-    this.updateHighlighting();
+    // When switching files, try to use cached tokens immediately
+    this.updateHighlighting(true);
   }
 
-  async updateHighlighting() {
+  async updateHighlighting(immediate = false, affectedLines?: Set<number>) {
     if (!this.filePath) {
-      console.log("Syntax highlighting: No file path set");
+      return;
+    }
+
+    // Check if we have cached tokens for the current buffer
+    const bufferStore = useBufferStore.getState();
+    const activeBuffer = bufferStore.actions.getActiveBuffer();
+
+    if (activeBuffer && activeBuffer.path === this.filePath && activeBuffer.tokens.length > 0) {
+      // Use cached tokens immediately
+      this.tokens = activeBuffer.tokens;
+      this.applyDecorations(affectedLines);
+
+      // If not immediate (regular content change), still fetch new tokens in background
+      if (!immediate) {
+        // Clear existing timeout
+        if (this.timeoutId) {
+          clearTimeout(this.timeoutId);
+        }
+
+        this.timeoutId = setTimeout(async () => {
+          await this.fetchAndCacheTokens();
+        }, DEBOUNCE_TIME_MS);
+      }
       return;
     }
 
@@ -39,96 +55,114 @@ class SyntaxHighlighter {
       clearTimeout(this.timeoutId);
     }
 
-    // Debounce the update
-    this.timeoutId = setTimeout(async () => {
-      try {
-        const content = this.editor.getContent();
-        const extension = this.filePath?.split(".").pop() || "txt";
-
-        console.log(
-          `Syntax highlighting: Fetching tokens for .${extension} file, content length: ${content.length}`,
-        );
-
-        // Fetch tokens from Rust API
-        this.tokens = await getTokens(content, extension);
-
-        console.log(`Syntax highlighting: Received ${this.tokens.length} tokens`);
-
-        // Log the first few tokens to see what class names we're getting
-        if (this.tokens.length > 0) {
-          console.log(
-            "Sample tokens from Rust API:",
-            this.tokens.slice(0, 5).map((t) => ({
-              text: content.slice(t.start, t.end),
-              class_name: t.class_name,
-              token_type: t.token_type,
-            })),
-          );
-        }
-
-        // Update decorations
-        this.applyDecorations();
-      } catch (error) {
-        console.error("Syntax highlighting error:", error);
-        this.tokens = [];
-      }
-    }, DEBOUNCE_TIME_MS);
+    // If immediate flag is set, fetch without debounce
+    if (immediate) {
+      await this.fetchAndCacheTokens();
+    } else {
+      // Debounce the update
+      this.timeoutId = setTimeout(async () => {
+        await this.fetchAndCacheTokens();
+      }, DEBOUNCE_TIME_MS);
+    }
   }
 
-  private applyDecorations() {
+  private async fetchAndCacheTokens() {
+    try {
+      const content = this.editor.getContent();
+      const extension = this.filePath?.split(".").pop() || "txt";
+
+      // Fetch tokens from Rust API
+      this.tokens = await getTokens(content, extension);
+
+      // Cache tokens in buffer store
+      const bufferStore = useBufferStore.getState();
+      const activeBuffer = bufferStore.actions.getActiveBuffer();
+      if (activeBuffer) {
+        bufferStore.actions.updateBufferTokens(activeBuffer.id, this.tokens);
+      }
+
+      // Update decorations
+      this.applyDecorations();
+    } catch (error) {
+      console.error("Syntax highlighting error:", error);
+      this.tokens = [];
+    }
+  }
+
+  private applyDecorations(_affectedLines?: Set<number>) {
     // Update line tokens in the store
     this.updateLineTokens();
   }
 
   private updateLineTokens() {
     const lines = this.editor.getLines();
-    const { setLineTokens } = useEditorContentStore.getState().actions;
+    const existingLineTokens = useEditorContentStore.getState().lineTokens;
+    const { setAllLineTokens } = useEditorContentStore.getState().actions;
 
-    // Update tokens for each line
-    for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
-      const lineTokens = this.getLineTokens(lineNumber);
-      setLineTokens(lineNumber, lineTokens);
-    }
-
-    console.log(`Syntax highlighting: Updated tokens for ${lines.length} lines`);
-  }
-
-  getLineTokens(lineNumber: number): LineToken[] {
-    const lines = this.editor.getLines();
-    if (lineNumber < 0 || lineNumber >= lines.length) {
-      return [];
-    }
-
-    const lineTokens: LineToken[] = [];
+    // Build all line tokens at once
+    const tokensByLine = new Map<number, LineToken[]>();
     let currentOffset = 0;
 
-    // Calculate offset to the start of the requested line
-    for (let i = 0; i < lineNumber; i++) {
-      currentOffset += lines[i].length + 1; // +1 for newline
+    for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+      const lineLength = lines[lineNumber].length;
+      const lineStart = currentOffset;
+      const lineEnd = currentOffset + lineLength;
+      const lineTokens: LineToken[] = [];
+
+      // Find tokens that overlap with this line
+      for (const token of this.tokens) {
+        // Early exit if token starts after this line
+        if (token.start >= lineEnd) break;
+
+        // Skip if token ends before this line
+        if (token.end <= lineStart) continue;
+
+        const tokenStartInLine = Math.max(0, token.start - lineStart);
+        const tokenEndInLine = Math.min(lineLength, token.end - lineStart);
+
+        if (tokenStartInLine < tokenEndInLine) {
+          lineTokens.push({
+            startColumn: tokenStartInLine,
+            endColumn: tokenEndInLine,
+            className: token.class_name,
+          });
+        }
+      }
+
+      // Only store lines that have tokens
+      if (lineTokens.length > 0) {
+        // Check if we can reuse the existing token array
+        const existingTokens = existingLineTokens.get(lineNumber);
+        if (existingTokens && this.areTokensEqual(existingTokens, lineTokens)) {
+          tokensByLine.set(lineNumber, existingTokens); // Reuse existing array
+        } else {
+          tokensByLine.set(lineNumber, lineTokens);
+        }
+      }
+
+      currentOffset += lineLength + 1; // +1 for newline
     }
 
-    const lineLength = lines[lineNumber].length;
-    const lineStart = currentOffset;
-    const lineEnd = currentOffset + lineLength;
+    // Update all tokens in a single operation
+    setAllLineTokens(tokensByLine);
+  }
 
-    // Find tokens that overlap with this line
-    for (const token of this.tokens) {
-      if (token.start >= lineEnd) break;
-      if (token.end <= lineStart) continue;
+  private areTokensEqual(tokens1: LineToken[], tokens2: LineToken[]): boolean {
+    if (tokens1.length !== tokens2.length) return false;
 
-      const tokenStartInLine = Math.max(0, token.start - lineStart);
-      const tokenEndInLine = Math.min(lineLength, token.end - lineStart);
-
-      if (tokenStartInLine < tokenEndInLine) {
-        lineTokens.push({
-          startColumn: tokenStartInLine,
-          endColumn: tokenEndInLine,
-          className: token.class_name, // Rust API already includes 'token-' prefix
-        });
+    for (let i = 0; i < tokens1.length; i++) {
+      const t1 = tokens1[i];
+      const t2 = tokens2[i];
+      if (
+        t1.startColumn !== t2.startColumn ||
+        t1.endColumn !== t2.endColumn ||
+        t1.className !== t2.className
+      ) {
+        return false;
       }
     }
 
-    return lineTokens;
+    return true;
   }
 
   dispose() {
@@ -147,9 +181,6 @@ export const syntaxHighlightingExtension: EditorExtension = {
 
   initialize: (editor: EditorAPI) => {
     highlighter = new SyntaxHighlighter(editor);
-
-    // TODO: Get file path from editor instance
-    // For now, we'll update it when content changes
     highlighter.updateHighlighting();
   },
 
@@ -160,7 +191,7 @@ export const syntaxHighlightingExtension: EditorExtension = {
     }
   },
 
-  onContentChange: () => {
+  onContentChange: (_content: string, _changes: Change[]) => {
     if (highlighter) {
       highlighter.updateHighlighting();
     }

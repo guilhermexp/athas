@@ -1,5 +1,4 @@
 import isEqual from "fast-deep-equal";
-import { subscribeWithSelector } from "zustand/middleware";
 import { createWithEqualityFn } from "zustand/traditional";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { LineToken } from "../types/editor-types";
@@ -9,18 +8,17 @@ interface EditorContentState {
   lineTokens: Map<number, LineToken[]>;
   filename: string;
   filePath: string;
-  actions: EditorContentActions;
-}
-
-interface EditorContentActions {
-  setContent: (content: string) => void;
-  setLineTokens: (lineNumber: number, tokens: LineToken[]) => void;
-  getContent: () => string;
+  actions: {
+    setContent: (content: string) => void;
+    setTokensForLine: (line: number, tokens: LineToken[]) => void;
+    setAllLineTokens: (tokens: Map<number, LineToken[]>) => void;
+    getContent: () => string;
+  };
 }
 
 export const useEditorContentStore = createSelectors(
   createWithEqualityFn<EditorContentState>()(
-    subscribeWithSelector((set, get) => ({
+    (set, get) => ({
       lines: [""],
       lineTokens: new Map<number, LineToken[]>(),
       filename: "",
@@ -30,26 +28,16 @@ export const useEditorContentStore = createSelectors(
           const lines = content ? content.split("\n") : [""];
           set({ lines });
         },
-        setLineTokens: (lineNumber, tokens) =>
+        setTokensForLine: (line, tokens) =>
           set((state) => {
-            if (lineNumber < 0 || lineNumber >= state.lines.length) {
-              return state;
-            }
-
-            const newLineTokens = new Map(state.lineTokens);
-            if (tokens.length > 0) {
-              newLineTokens.set(lineNumber, tokens);
-            } else {
-              newLineTokens.delete(lineNumber);
-            }
-
-            return { lineTokens: newLineTokens };
+            const map = new Map(state.lineTokens);
+            map.set(line, tokens);
+            return { lineTokens: map };
           }),
-        getContent: () => {
-          return get().lines.join("\n");
-        },
+        setAllLineTokens: (lineTokens) => set(() => ({ lineTokens })),
+        getContent: () => get().lines.join("\n"),
       },
-    })),
+    }),
     isEqual,
   ),
 );

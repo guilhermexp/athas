@@ -129,7 +129,7 @@ export const EditorViewport = memo<EditorViewportProps>(
             const idx = visibleRange.start + i;
             return (
               <LineWithContent
-                key={idx}
+                key={`line-${idx}`}
                 lineNumber={idx}
                 showLineNumbers={showLineNumbers}
                 gutterWidth={gutterWidth}
