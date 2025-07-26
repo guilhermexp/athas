@@ -44,13 +44,18 @@ export function TextEditor() {
   // Handle textarea input
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    setContent(newValue);
-    onChange?.(newValue);
 
-    // Calculate cursor position with the new lines to avoid race condition
+    // Calculate which line changed
     const newLines = newValue ? newValue.split("\n") : [""];
     const { selectionStart, selectionEnd } = e.target;
     const newCursorPosition = calculateCursorPosition(selectionStart, newLines);
+
+    // Find the affected line
+    const affectedLines = new Set<number>();
+    affectedLines.add(newCursorPosition.line);
+
+    setContent(newValue);
+    onChange?.(newValue);
 
     setCursorPosition(newCursorPosition);
 
@@ -62,6 +67,10 @@ export function TextEditor() {
     } else {
       setSelection(undefined);
     }
+
+    // Emit content change with affected lines
+    const eventData = { content: newValue, changes: [], affectedLines };
+    editorAPI.emitEvent("contentChange", eventData);
   };
 
   // Handle keyboard events
@@ -290,12 +299,14 @@ export function TextEditor() {
     return () => resizeObserver.disconnect();
   }, [setViewportHeight]);
 
-  // Emit content change events to extensions
+  // Emit content change events to extensions on initial load only
   useEffect(() => {
-    // Emit the event directly without going through setContent to avoid loops
-    const eventData = { content, changes: [] };
-    editorAPI.emitEvent("contentChange", eventData);
-  }, [content]);
+    // Only emit on initial mount when content is first loaded
+    if (content) {
+      const eventData = { content, changes: [], affectedLines: new Set<number>() };
+      editorAPI.emitEvent("contentChange", eventData);
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   // Handlers for line-based rendering interactions
   const handleLineBasedClick = useCallback(

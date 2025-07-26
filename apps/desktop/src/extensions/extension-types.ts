@@ -80,7 +80,7 @@ export interface EditorExtension {
   decorations?: () => Decoration[];
 
   // Event handlers
-  onContentChange?: (content: string, changes: Change[]) => void;
+  onContentChange?: (content: string, changes: Change[], affectedLines?: Set<number>) => void;
   onSelectionChange?: (selection: Range | null) => void;
   onCursorChange?: (position: Position) => void;
   onSettingsChange?: (settings: Partial<EditorSettings>) => void;

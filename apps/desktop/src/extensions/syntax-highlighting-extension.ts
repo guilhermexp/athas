@@ -11,6 +11,7 @@ class SyntaxHighlighter {
   private tokens: Token[] = [];
   private timeoutId: NodeJS.Timeout | null = null;
   private filePath: string | null = null;
+  private pendingAffectedLines: Set<number> | undefined = undefined;
 
   constructor(editor: EditorAPI) {
     this.editor = editor;
@@ -43,8 +44,18 @@ class SyntaxHighlighter {
           clearTimeout(this.timeoutId);
         }
 
+        // Accumulate affected lines for the debounced update
+        if (affectedLines) {
+          if (!this.pendingAffectedLines) {
+            this.pendingAffectedLines = new Set();
+          }
+          affectedLines.forEach((line) => this.pendingAffectedLines!.add(line));
+        }
+
         this.timeoutId = setTimeout(async () => {
-          await this.fetchAndCacheTokens();
+          const linesToUpdate = this.pendingAffectedLines;
+          this.pendingAffectedLines = undefined;
+          await this.fetchAndCacheTokens(linesToUpdate);
         }, DEBOUNCE_TIME_MS);
       }
       return;
@@ -59,14 +70,24 @@ class SyntaxHighlighter {
     if (immediate) {
       await this.fetchAndCacheTokens();
     } else {
+      // Accumulate affected lines for the debounced update
+      if (affectedLines) {
+        if (!this.pendingAffectedLines) {
+          this.pendingAffectedLines = new Set();
+        }
+        affectedLines.forEach((line) => this.pendingAffectedLines!.add(line));
+      }
+
       // Debounce the update
       this.timeoutId = setTimeout(async () => {
-        await this.fetchAndCacheTokens();
+        const linesToUpdate = this.pendingAffectedLines;
+        this.pendingAffectedLines = undefined;
+        await this.fetchAndCacheTokens(linesToUpdate);
       }, DEBOUNCE_TIME_MS);
     }
   }
 
-  private async fetchAndCacheTokens() {
+  private async fetchAndCacheTokens(affectedLines?: Set<number>) {
     try {
       const content = this.editor.getContent();
       const extension = this.filePath?.split(".").pop() || "txt";
@@ -81,25 +102,73 @@ class SyntaxHighlighter {
         bufferStore.actions.updateBufferTokens(activeBuffer.id, this.tokens);
       }
 
-      // Update decorations
-      this.applyDecorations();
+      // Update decorations - pass affected lines to avoid full re-render
+      this.applyDecorations(affectedLines);
     } catch (error) {
       console.error("Syntax highlighting error:", error);
       this.tokens = [];
     }
   }
 
-  private applyDecorations(_affectedLines?: Set<number>) {
+  private applyDecorations(affectedLines?: Set<number>) {
     // Update line tokens in the store
-    this.updateLineTokens();
+    this.updateLineTokens(affectedLines);
   }
 
-  private updateLineTokens() {
+  private updateLineTokens(affectedLines?: Set<number>) {
     const lines = this.editor.getLines();
     const existingLineTokens = useEditorContentStore.getState().lineTokens;
-    const { setAllLineTokens } = useEditorContentStore.getState().actions;
+    const { setAllLineTokens, setTokensForLine } = useEditorContentStore.getState().actions;
 
-    // Build all line tokens at once
+    // If we have specific affected lines and tokens are already loaded, update only those
+    if (affectedLines && affectedLines.size > 0 && this.tokens.length > 0) {
+      // Calculate tokens only for affected lines
+      let currentOffset = 0;
+
+      // First, calculate the offset to the first affected line
+      const minAffectedLine = Math.min(...affectedLines);
+      for (let i = 0; i < minAffectedLine; i++) {
+        currentOffset += lines[i].length + 1;
+      }
+
+      // Update only affected lines
+      for (const lineNumber of affectedLines) {
+        // Reset offset calculation for this specific line
+        currentOffset = 0;
+        for (let i = 0; i < lineNumber; i++) {
+          currentOffset += lines[i].length + 1;
+        }
+
+        const lineLength = lines[lineNumber].length;
+        const lineStart = currentOffset;
+        const lineEnd = currentOffset + lineLength;
+        const lineTokens: LineToken[] = [];
+
+        // Find tokens that overlap with this line
+        for (const token of this.tokens) {
+          if (token.start >= lineEnd) break;
+          if (token.end <= lineStart) continue;
+
+          const tokenStartInLine = Math.max(0, token.start - lineStart);
+          const tokenEndInLine = Math.min(lineLength, token.end - lineStart);
+
+          if (tokenStartInLine < tokenEndInLine) {
+            lineTokens.push({
+              startColumn: tokenStartInLine,
+              endColumn: tokenEndInLine,
+              className: token.class_name,
+            });
+          }
+        }
+
+        // Update single line
+        setTokensForLine(lineNumber, lineTokens);
+      }
+
+      return;
+    }
+
+    // Otherwise, build all line tokens at once (initial load or full refresh)
     const tokensByLine = new Map<number, LineToken[]>();
     let currentOffset = 0;
 
@@ -191,9 +260,9 @@ export const syntaxHighlightingExtension: EditorExtension = {
     }
   },
 
-  onContentChange: (_content: string, _changes: Change[]) => {
+  onContentChange: (_content: string, _changes: Change[], affectedLines?: Set<number>) => {
     if (highlighter) {
-      highlighter.updateHighlighting();
+      highlighter.updateHighlighting(false, affectedLines);
     }
   },
 

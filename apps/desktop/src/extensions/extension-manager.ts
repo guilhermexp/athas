@@ -204,7 +204,7 @@ class ExtensionManager {
     if (extension.onContentChange) {
       const handler = (data: any) => {
         if (data && typeof data === "object" && "content" in data && "changes" in data) {
-          extension.onContentChange!(data.content, data.changes);
+          extension.onContentChange!(data.content, data.changes, data.affectedLines);
         }
       };
       const unsubscribe = this.editor.on("contentChange", handler);
