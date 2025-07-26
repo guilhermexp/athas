@@ -6,7 +6,6 @@ import { useEditorLayoutStore } from "../../../stores/editor-layout-store";
 import { useEditorSettingsStore } from "../../../stores/editor-settings-store";
 import type { Position } from "../../../types/editor-types";
 import { Cursor } from "../overlays/cursor";
-import { DebugOverlay } from "../overlays/debug-overlay";
 import { DecorationLayer } from "../overlays/decoration-layer";
 import { EditorViewport } from "../rendering/editor-viewport";
 import { EditorLayer, EditorLayers } from "./editor-layers";
@@ -85,7 +84,6 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
           </EditorLayer>
           <EditorLayer type="overlay">
             <Cursor />
-            <DebugOverlay />
           </EditorLayer>
         </EditorLayers>
       </div>
