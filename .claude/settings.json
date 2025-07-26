@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c \"$(git rev-parse --show-toplevel)/scripts/intercept-build.sh\""
+            "command": "bash -c \"$(git rev-parse --show-toplevel)/scripts/prevent-build.sh\""
           }
         ]
       }
@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c \"$(git rev-parse --show-toplevel)/scripts/check-ts-files.sh\""
+            "command": "bash -c \"$(git rev-parse --show-toplevel)/scripts/check-all-ts.sh\""
           }
         ]
       }
