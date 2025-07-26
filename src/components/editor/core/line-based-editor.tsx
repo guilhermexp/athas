@@ -27,7 +27,6 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
     const { setScroll } = useEditorLayoutStore.use.actions();
     const { lineHeight, gutterWidth } = useEditorLayout();
 
-    // Setup interaction handlers
     const { handleClick, handleMouseDown, handleMouseMove, handleMouseUp } = useEditorInteractions({
       lineHeight,
       fontSize,
@@ -35,8 +34,6 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
       onPositionClick,
       onSelectionDrag,
     });
-
-    // No longer need to sync - content is already in the same store
 
     // Subscribe to cursor line changes only
     useEffect(() => {

@@ -1,5 +1,6 @@
 import type React from "react";
 import type { Decoration } from "../../../types/editor-types";
+import { cn } from "../../../utils/cn";
 
 interface LineGutterProps {
   lineNumber: number;
@@ -51,17 +52,14 @@ export const LineGutter = ({
     return content;
   };
 
-  const getGutterClasses = () => {
-    const classes = ["editor-gutter"];
-    if (isBreakpoint) classes.push("has-breakpoint");
-    if (hasError) classes.push("has-error");
-    if (hasWarning) classes.push("has-warning");
-    return classes.join(" ");
-  };
-
   return (
     <div
-      className={getGutterClasses()}
+      className={cn(
+        "editor-gutter",
+        isBreakpoint && "has-breakpoint",
+        hasError && "has-error",
+        hasWarning && "has-warning",
+      )}
       style={{ width: `${gutterWidth}px` }}
       data-line-number={lineNumber}
     >

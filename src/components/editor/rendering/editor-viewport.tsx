@@ -99,25 +99,6 @@ export const EditorViewport = memo<EditorViewportProps>(
 
     const totalHeight = lineCount * lineHeight;
 
-    const renderVisibleLines = () => {
-      const elements: React.ReactNode[] = [];
-
-      for (let i = visibleRange.start; i < visibleRange.end; i++) {
-        elements.push(
-          <LineWithContent
-            key={i}
-            lineNumber={i}
-            showLineNumbers={showLineNumbers}
-            gutterWidth={gutterWidth}
-            lineHeight={lineHeight}
-            isSelected={selectedLines.has(i)}
-          />,
-        );
-      }
-
-      return elements;
-    };
-
     return (
       <div
         ref={containerRef}
@@ -142,7 +123,21 @@ export const EditorViewport = memo<EditorViewportProps>(
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
         >
-          {renderVisibleLines()}
+          {/* Array.from creates an array of specified length, then maps over
+              indices to generate line components */}
+          {Array.from({ length: visibleRange.end - visibleRange.start }, (_, i) => {
+            const idx = visibleRange.start + i;
+            return (
+              <LineWithContent
+                key={idx}
+                lineNumber={idx}
+                showLineNumbers={showLineNumbers}
+                gutterWidth={gutterWidth}
+                lineHeight={lineHeight}
+                isSelected={selectedLines.has(idx)}
+              />
+            );
+          })}
         </div>
       </div>
     );

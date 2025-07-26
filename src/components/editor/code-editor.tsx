@@ -64,6 +64,20 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
     });
   }, [setRefs]);
 
+  // Focus editor when active buffer changes
+  useEffect(() => {
+    if (activeBufferId && editorRef.current) {
+      // Find the textarea element within the editor
+      const textarea = editorRef.current.querySelector("textarea");
+      if (textarea) {
+        // Small delay to ensure content is loaded
+        setTimeout(() => {
+          textarea.focus();
+        }, 0);
+      }
+    }
+  }, [activeBufferId]);
+
   // Sync content and file info with editor instance store
   useEffect(() => {
     setContent(value, onChange);

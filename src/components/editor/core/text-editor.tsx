@@ -342,7 +342,6 @@ export function TextEditor() {
         spellCheck={false}
       />
 
-      {/* Line-based editor content */}
       <LineBasedEditor
         onPositionClick={handleLineBasedClick}
         onSelectionDrag={handleLineBasedSelection}
