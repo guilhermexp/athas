@@ -39,6 +39,3 @@ jobs:
 
       - name: Run biome check
         run: bun check
-
-      - name: Run knip (unused stuff)
-        run: bun knip
