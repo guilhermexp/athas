@@ -33,11 +33,11 @@ const TerminalContainer = ({
     reorderTerminals,
     switchToNextTerminal,
     switchToPrevTerminal,
+    setTerminalSplitMode,
   } = useTerminalTabs();
 
   const [renamingTerminalId, setRenamingTerminalId] = useState<string | null>(null);
   const [newTerminalName, setNewTerminalName] = useState("");
-  const [isSplitView, setIsSplitView] = useState(false);
   const hasInitializedRef = useRef(false);
   const terminalSessionRefs = useRef<Map<string, { focus: () => void }>>(new Map());
   const { registerTerminalFocus, clearTerminalFocus } = useUIState();
@@ -143,22 +143,21 @@ const TerminalContainer = ({
   }, []);
 
   const handleSplitView = useCallback(() => {
-    if (isSplitView) {
-      // Toggle off split view
-      setIsSplitView(false);
+    if (!activeTerminalId) return;
+
+    const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
+    if (!activeTerminal) return;
+
+    if (activeTerminal.splitMode) {
+      // Toggle off split view for this terminal
+      setTerminalSplitMode(activeTerminalId, false);
     } else {
-      // Toggle on split view
-      if (terminals.length >= 2) {
-        setIsSplitView(true);
-      } else {
-        // Create a new terminal if there's only one
-        const dirName = currentDirectory.split("/").pop() || "terminal";
-        createTerminal(dirName, currentDirectory);
-        // Delay to ensure the new terminal is created before enabling split view
-        setTimeout(() => setIsSplitView(true), 100);
-      }
+      // Always create a companion terminal for split view within the same tab
+      // This creates a virtual split, not a new tab
+      const companionId = `${activeTerminalId}_split`;
+      setTerminalSplitMode(activeTerminalId, true, companionId);
     }
-  }, [isSplitView, terminals.length, currentDirectory, createTerminal]);
+  }, [activeTerminalId, terminals, setTerminalSplitMode]);
 
   const handleDirectoryChange = useCallback(
     (terminalId: string, directory: string) => {
@@ -203,13 +202,6 @@ const TerminalContainer = ({
       clearTerminalFocus();
     };
   }, [registerTerminalFocus, clearTerminalFocus, focusActiveTerminal]);
-
-  // Auto-disable split view when terminals are reduced to less than 2
-  useEffect(() => {
-    if (isSplitView && terminals.length < 2) {
-      setIsSplitView(false);
-    }
-  }, [terminals.length, isSplitView]);
 
   // Terminal-specific keyboard shortcuts
   useEffect(() => {
@@ -392,15 +384,50 @@ const TerminalContainer = ({
         onFullScreen={onFullScreen}
         isFullScreen={isFullScreen}
         onClosePanel={onClosePanel}
+        isSplitView={terminals.find((t) => t.id === activeTerminalId)?.splitMode || false}
       />
 
       {/* Terminal Sessions */}
       <div className="relative flex-1">
-        {isSplitView && terminals.length >= 2 ? (
-          // Split view: Show active terminal on left, next terminal on right
-          <div className="flex h-full">
-            {/* Left terminal - active terminal */}
-            <div className="w-1/2 border-border border-r">
+        {(() => {
+          const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
+          const isSplitView = activeTerminal?.splitMode && activeTerminal?.splitWithId;
+
+          if (isSplitView && activeTerminal.splitWithId) {
+            // Split view: Show active terminal on left, companion terminal on right
+            return (
+              <div className="flex h-full">
+                {/* Left terminal - active terminal */}
+                <div className="w-1/2 border-border border-r">
+                  <TerminalSession
+                    terminal={activeTerminal}
+                    isActive={true}
+                    onDirectoryChange={handleDirectoryChange}
+                    onActivity={handleActivity}
+                    onRegisterRef={registerTerminalRef}
+                  />
+                </div>
+                {/* Right terminal - companion split terminal */}
+                <div className="w-1/2">
+                  <TerminalSession
+                    terminal={{
+                      ...activeTerminal,
+                      id: activeTerminal.splitWithId,
+                      name: `${activeTerminal.name} (split)`,
+                    }}
+                    isActive={true}
+                    onDirectoryChange={handleDirectoryChange}
+                    onActivity={handleActivity}
+                    onRegisterRef={registerTerminalRef}
+                  />
+                </div>
+              </div>
+            );
+          }
+
+          // Normal view: Show all terminals but only display the active one
+          return (
+            <div className="h-full">
               {terminals.map((terminal) => (
                 <div
                   key={terminal.id}
@@ -417,51 +444,8 @@ const TerminalContainer = ({
                 </div>
               ))}
             </div>
-            {/* Right terminal - next available terminal */}
-            <div className="w-1/2">
-              {(() => {
-                // Find the next terminal that's not the active one
-                const nextTerminal = terminals.find((t) => t.id !== activeTerminalId);
-                if (!nextTerminal) return null;
-
-                return terminals.map((terminal) => (
-                  <div
-                    key={terminal.id}
-                    className="h-full"
-                    style={{ display: terminal.id === nextTerminal.id ? "block" : "none" }}
-                  >
-                    <TerminalSession
-                      terminal={terminal}
-                      isActive={terminal.id === nextTerminal.id}
-                      onDirectoryChange={handleDirectoryChange}
-                      onActivity={handleActivity}
-                      onRegisterRef={registerTerminalRef}
-                    />
-                  </div>
-                ));
-              })()}
-            </div>
-          </div>
-        ) : (
-          // Normal view: Show all terminals but only display the active one
-          <div className="h-full">
-            {terminals.map((terminal) => (
-              <div
-                key={terminal.id}
-                className="h-full"
-                style={{ display: terminal.id === activeTerminalId ? "block" : "none" }}
-              >
-                <TerminalSession
-                  terminal={terminal}
-                  isActive={terminal.id === activeTerminalId}
-                  onDirectoryChange={handleDirectoryChange}
-                  onActivity={handleActivity}
-                  onRegisterRef={registerTerminalRef}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Rename Modal */}

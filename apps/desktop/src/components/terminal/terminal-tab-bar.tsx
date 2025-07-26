@@ -167,6 +167,7 @@ interface TerminalTabBarProps {
   onFullScreen?: () => void;
   isFullScreen?: boolean;
   onClosePanel?: () => void;
+  isSplitView?: boolean;
 }
 
 const TerminalTabBar = ({
@@ -184,6 +185,7 @@ const TerminalTabBar = ({
   onFullScreen,
   isFullScreen = false,
   onClosePanel,
+  isSplitView = false,
 }: TerminalTabBarProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -493,9 +495,11 @@ const TerminalTabBar = ({
               onClick={onSplitView}
               className={cn(
                 "flex flex-shrink-0 cursor-pointer items-center p-1",
-                "text-text-lighter transition-colors hover:bg-hover",
+                isSplitView
+                  ? "bg-selected text-text"
+                  : "text-text-lighter transition-colors hover:bg-hover",
               )}
-              title="Split Terminal View"
+              title={isSplitView ? "Exit Split View" : "Split Terminal View"}
             >
               <SplitSquareHorizontal size={12} />
             </button>

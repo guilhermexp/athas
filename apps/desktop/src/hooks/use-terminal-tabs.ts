@@ -58,11 +58,25 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
         }
       }
 
-      return {
-        terminals: newTerminals.map((terminal) => ({
+      // Also clean up any terminals that were split with the closed terminal
+      const cleanedTerminals = newTerminals.map((terminal) => {
+        if (terminal.splitWithId === id) {
+          // Remove split mode if the paired terminal is being closed
+          return {
+            ...terminal,
+            splitMode: false,
+            splitWithId: undefined,
+            isActive: terminal.id === newActiveTerminalId,
+          };
+        }
+        return {
           ...terminal,
           isActive: terminal.id === newActiveTerminalId,
-        })),
+        };
+      });
+
+      return {
+        terminals: cleanedTerminals,
         activeTerminalId: newActiveTerminalId,
       };
     }
@@ -130,6 +144,16 @@ const terminalReducer = (state: TerminalState, action: TerminalAction): Terminal
       return {
         ...state,
         terminals: newTerminals,
+      };
+    }
+
+    case "SET_TERMINAL_SPLIT_MODE": {
+      const { id, splitMode, splitWithId } = action.payload;
+      return {
+        ...state,
+        terminals: state.terminals.map((terminal) =>
+          terminal.id === id ? { ...terminal, splitMode, splitWithId } : terminal,
+        ),
       };
     }
 
@@ -217,6 +241,13 @@ export const useTerminalTabs = () => {
     }
   }, [state.terminals, state.activeTerminalId, setActiveTerminal]);
 
+  const setTerminalSplitMode = useCallback(
+    (id: string, splitMode: boolean, splitWithId?: string) => {
+      dispatch({ type: "SET_TERMINAL_SPLIT_MODE", payload: { id, splitMode, splitWithId } });
+    },
+    [],
+  );
+
   return {
     terminals: state.terminals,
     activeTerminalId: state.activeTerminalId,
@@ -231,5 +262,6 @@ export const useTerminalTabs = () => {
     getActiveTerminal,
     switchToNextTerminal,
     switchToPrevTerminal,
+    setTerminalSplitMode,
   };
 };

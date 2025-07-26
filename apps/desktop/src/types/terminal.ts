@@ -11,6 +11,8 @@ export interface Terminal {
   selection?: string;
   title?: string;
   ref?: any;
+  splitMode?: boolean;
+  splitWithId?: string; // ID of the terminal to split with
 }
 
 export interface TerminalState {
@@ -29,4 +31,8 @@ export type TerminalAction =
   | { type: "UPDATE_TERMINAL_DIRECTORY"; payload: { id: string; currentDirectory: string } }
   | { type: "UPDATE_TERMINAL_ACTIVITY"; payload: { id: string } }
   | { type: "PIN_TERMINAL"; payload: { id: string; isPinned: boolean } }
-  | { type: "REORDER_TERMINALS"; payload: { fromIndex: number; toIndex: number } };
+  | { type: "REORDER_TERMINALS"; payload: { fromIndex: number; toIndex: number } }
+  | {
+      type: "SET_TERMINAL_SPLIT_MODE";
+      payload: { id: string; splitMode: boolean; splitWithId?: string };
+    };
