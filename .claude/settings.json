@@ -3,8 +3,9 @@
     "allow": [
       "Bash(bun run:*)",
       "Bash(bun check:*)",
-      "Bash(bun knip:*)",
+      "Bash(bun knip)",
       "Bash(bun typecheck)",
+      "Bash(bun format)",
       "Bash(mv:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",

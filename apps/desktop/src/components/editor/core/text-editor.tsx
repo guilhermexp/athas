@@ -47,8 +47,21 @@ export function TextEditor() {
     setContent(newValue);
     onChange?.(newValue);
 
-    // Update selection after change
-    setTimeout(() => handleSelectionChange(), 0);
+    // Calculate cursor position with the new lines to avoid race condition
+    const newLines = newValue ? newValue.split("\n") : [""];
+    const { selectionStart, selectionEnd } = e.target;
+    const newCursorPosition = calculateCursorPosition(selectionStart, newLines);
+
+    setCursorPosition(newCursorPosition);
+
+    if (selectionStart !== selectionEnd) {
+      setSelection({
+        start: calculateCursorPosition(selectionStart, newLines),
+        end: calculateCursorPosition(selectionEnd, newLines),
+      });
+    } else {
+      setSelection(undefined);
+    }
   };
 
   // Handle keyboard events
