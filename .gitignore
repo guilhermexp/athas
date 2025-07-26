@@ -57,3 +57,8 @@ TODO.md
 
 # claude local settings
 .claude/settings.local.json
+
+# Tauri gen files 
+src-tauri/gen/
+apps/desktop/src-tauri/gen/
+**/src-tauri/gen/
