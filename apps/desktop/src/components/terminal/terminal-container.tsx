@@ -404,7 +404,8 @@ const TerminalContainer = ({
               {terminals.map((terminal) => (
                 <div
                   key={terminal.id}
-                  className={terminal.id === activeTerminalId ? "h-full" : "hidden"}
+                  className="h-full"
+                  style={{ display: terminal.id === activeTerminalId ? "block" : "none" }}
                 >
                   <TerminalSession
                     terminal={terminal}
@@ -426,7 +427,8 @@ const TerminalContainer = ({
                 return terminals.map((terminal) => (
                   <div
                     key={terminal.id}
-                    className={terminal.id === nextTerminal.id ? "h-full" : "hidden"}
+                    className="h-full"
+                    style={{ display: terminal.id === nextTerminal.id ? "block" : "none" }}
                   >
                     <TerminalSession
                       terminal={terminal}
@@ -446,7 +448,8 @@ const TerminalContainer = ({
             {terminals.map((terminal) => (
               <div
                 key={terminal.id}
-                className={terminal.id === activeTerminalId ? "h-full" : "hidden"}
+                className="h-full"
+                style={{ display: terminal.id === activeTerminalId ? "block" : "none" }}
               >
                 <TerminalSession
                   terminal={terminal}

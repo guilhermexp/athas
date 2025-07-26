@@ -64,6 +64,7 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const isInitializingRef = useRef(false);
+  const currentConnectionIdRef = useRef<string | null>(null);
 
   const { updateSession, getSession } = useTerminalStore();
   const { currentTheme } = useThemeStore();
@@ -232,35 +233,50 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
 
       // Create backend terminal connection
       try {
-        // Check if we already have a connection
+        // Always create a new connection for each terminal instance
         const existingSession = getSession(sessionId);
-        let connectionId = existingSession?.connectionId;
 
-        if (!connectionId) {
-          // Create new connection
-          connectionId = await invoke<string>("create_xterm_terminal", {
-            config: {
-              working_directory: existingSession?.currentDirectory || rootFolderPath || undefined,
-              shell: existingSession?.shell || undefined,
-              rows: terminal.rows,
-              cols: terminal.cols,
-            },
-          });
-
-          // Store connection ID for this session
-          updateSession(sessionId, { connectionId });
-        } else {
-          console.log("Reusing existing connection:", connectionId);
+        // If we already have a connection, close it first
+        if (existingSession?.connectionId) {
+          try {
+            await invoke("close_xterm_terminal", { id: existingSession.connectionId });
+          } catch (e) {
+            console.warn("Failed to close existing terminal connection:", e);
+          }
         }
+
+        // Create new connection
+        const connectionId = await invoke<string>("create_xterm_terminal", {
+          config: {
+            working_directory: existingSession?.currentDirectory || rootFolderPath || undefined,
+            shell: existingSession?.shell || undefined,
+            rows: terminal.rows,
+            cols: terminal.cols,
+          },
+        });
+
+        console.log("Created new terminal connection:", connectionId, "for session:", sessionId);
+
+        // Store connection ID for this session
+        updateSession(sessionId, { connectionId });
+        currentConnectionIdRef.current = connectionId;
 
         // Handle terminal input
         terminal.onData((data) => {
-          invoke("terminal_write", { id: connectionId, data });
+          // Use the ref to always have the current connection ID
+          const currentId = currentConnectionIdRef.current || connectionId;
+          invoke("terminal_write", { id: currentId, data }).catch((e) => {
+            console.error("Failed to write to terminal:", e);
+          });
         });
 
         // Handle terminal resize
         terminal.onResize(({ cols, rows }) => {
-          invoke("terminal_resize", { id: connectionId, rows, cols });
+          // Use the ref to always have the current connection ID
+          const currentId = currentConnectionIdRef.current || connectionId;
+          invoke("terminal_resize", { id: currentId, rows, cols }).catch((e) => {
+            console.error("Failed to resize terminal:", e);
+          });
         });
 
         // Handle selection
@@ -310,22 +326,54 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
     rootFolderPath,
   ]);
 
-  // Handle terminal output
+  // Monitor session for connection ID
+  const session = getSession(sessionId);
+  const connectionId = session?.connectionId;
+
+  // Handle terminal output with connection monitoring
   useEffect(() => {
-    if (!xtermRef.current || !isInitialized) return;
+    if (!xtermRef.current || !isInitialized || !connectionId) {
+      if (!connectionId) {
+        console.warn("No connection ID available for terminal output handling");
+      }
+      return;
+    }
 
-    const session = getSession(sessionId);
-    if (!session?.connectionId) return;
+    console.log("Setting up output listener for connection:", connectionId);
+    currentConnectionIdRef.current = connectionId;
 
-    const unlisten = listen(`pty-output-${session.connectionId}`, (event) => {
+    const outputEventName = `pty-output-${connectionId}`;
+    const errorEventName = `pty-error-${connectionId}`;
+    const closedEventName = `pty-closed-${connectionId}`;
+
+    const unlistenOutput = listen(outputEventName, (event) => {
       const data = event.payload as { data: string };
-      xtermRef.current?.write(data.data);
+      if (xtermRef.current) {
+        xtermRef.current.write(data.data);
+      }
+    });
+
+    const unlistenError = listen(errorEventName, (event) => {
+      const error = event.payload as { error: string };
+      console.error("Terminal error:", error);
+      if (xtermRef.current) {
+        xtermRef.current.writeln(`\r\n\x1b[31mError: ${error.error}\x1b[0m`);
+      }
+    });
+
+    const unlistenClosed = listen(closedEventName, () => {
+      console.log("Terminal closed:", connectionId);
+      if (xtermRef.current) {
+        xtermRef.current.writeln("\r\n\x1b[33mTerminal session closed\x1b[0m");
+      }
     });
 
     return () => {
-      unlisten.then((fn) => fn());
+      unlistenOutput.then((fn) => fn());
+      unlistenError.then((fn) => fn());
+      unlistenClosed.then((fn) => fn());
     };
-  }, [sessionId, isInitialized, getSession]);
+  }, [sessionId, isInitialized, connectionId]);
 
   // Handle theme changes
   useEffect(() => {
@@ -351,7 +399,7 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
 
       // Only initialize after a short delay to ensure theme is loaded
       initTimer = setTimeout(() => {
-        if (mounted && !isInitialized) {
+        if (mounted && !isInitialized && !isInitializingRef.current) {
           initializeTerminal();
         }
       }, 200);
@@ -370,6 +418,14 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
         style.remove();
       }
 
+      // Don't dispose terminal on cleanup - it might be reused
+      // Only cleanup on actual component unmount
+    };
+  }, [sessionId, initializeTerminal]); // Add sessionId dependency to reinitialize if it changes
+
+  // Cleanup on actual unmount
+  useEffect(() => {
+    return () => {
       if (xtermRef.current) {
         // Close backend connection
         const session = getSession(sessionId);
@@ -383,9 +439,10 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
         searchAddonRef.current = null;
         serializeAddonRef.current = null;
         setIsInitialized(false);
+        isInitializingRef.current = false;
       }
     };
-  }, []); // Remove dependencies to prevent re-initialization
+  }, [sessionId, getSession]);
 
   // Handle resize
   useEffect(() => {
@@ -394,9 +451,13 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
     const resizeObserver = new ResizeObserver(() => {
       // Debounce resize to avoid excessive calls
       requestAnimationFrame(() => {
-        if (fitAddonRef.current && xtermRef.current) {
+        if (fitAddonRef.current && xtermRef.current && terminalRef.current) {
           try {
-            fitAddonRef.current.fit();
+            // Force a reflow to ensure dimensions are correct
+            const rect = terminalRef.current.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+              fitAddonRef.current.fit();
+            }
           } catch (e) {
             console.warn("Failed to fit terminal:", e);
           }
@@ -405,6 +466,17 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
     });
 
     resizeObserver.observe(terminalRef.current);
+
+    // Initial fit after a short delay
+    setTimeout(() => {
+      if (fitAddonRef.current && xtermRef.current) {
+        try {
+          fitAddonRef.current.fit();
+        } catch (e) {
+          console.warn("Failed initial fit:", e);
+        }
+      }
+    }, 100);
 
     return () => {
       resizeObserver.disconnect();
