@@ -42,12 +42,13 @@ export function TextEditor() {
   const content = getContent();
 
   // Handle textarea input
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement> | React.FormEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    const newValue = textarea.value;
 
     // Calculate which line changed
     const newLines = newValue ? newValue.split("\n") : [""];
-    const { selectionStart, selectionEnd } = e.target;
+    const { selectionStart, selectionEnd } = textarea;
     const newCursorPosition = calculateCursorPosition(selectionStart, newLines);
 
     // Find the affected line
@@ -97,29 +98,7 @@ export function TextEditor() {
       return;
     }
 
-    // Default Tab handling (will be overridden by extension if loaded)
-    if (e.key === "Tab" && !command) {
-      e.preventDefault();
-      const { selectionEnd } = textarea;
-      const spaces = " ".repeat(tabSize);
-      const currentContent = getContent();
-      const newValue =
-        currentContent.substring(0, selectionStart) +
-        spaces +
-        currentContent.substring(selectionEnd);
-
-      setContent(newValue);
-      onChange?.(newValue);
-
-      // Update cursor position after tab
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = selectionStart + tabSize;
-        handleSelectionChange();
-      }, 0);
-
-      // Reset desired column
-      setDesiredColumn(undefined);
-    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
 
       const targetLine = e.key === "ArrowUp" ? currentPosition.line - 1 : currentPosition.line + 1;
@@ -221,6 +200,9 @@ export function TextEditor() {
       }, 0);
     }
 
+    // Set textarea ref in editor API
+    editorAPI.setTextareaRef(textareaRef.current);
+
     // Initialize extension manager with editor API
     extensionManager.setEditor(editorAPI);
 
@@ -283,6 +265,11 @@ export function TextEditor() {
       },
     );
     return unsubscribe;
+  }, []);
+
+  // Update textarea ref in editor API when it changes
+  useEffect(() => {
+    editorAPI.setTextareaRef(textareaRef.current);
   }, []);
 
   // Update viewport height when container size changes
@@ -350,6 +337,7 @@ export function TextEditor() {
         ref={textareaRef}
         value={content}
         onChange={handleTextareaChange}
+        onInput={handleTextareaChange}
         onKeyDown={handleKeyDown}
         onSelect={handleSelectionChange}
         onKeyUp={handleSelectionChange}

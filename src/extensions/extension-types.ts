@@ -46,6 +46,9 @@ export interface EditorAPI {
   on: (event: EditorEvent, handler: EventHandler) => () => void;
   off: (event: EditorEvent, handler: EventHandler) => void;
   emitEvent: (event: EditorEvent, data?: any) => void;
+  
+  // Internal - set textarea ref for cursor sync
+  setTextareaRef?: (ref: HTMLTextAreaElement | null) => void;
 }
 
 export interface EditorSettings {

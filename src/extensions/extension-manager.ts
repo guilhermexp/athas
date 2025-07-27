@@ -139,6 +139,10 @@ class ExtensionManager {
     return Array.from(this.commands.values());
   }
 
+  getAllKeybindings(): Map<string, string> {
+    return this.keybindings;
+  }
+
   getAllDecorations(): Decoration[] {
     const decorations: Decoration[] = [];
 
