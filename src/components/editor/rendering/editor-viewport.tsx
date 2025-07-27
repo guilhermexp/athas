@@ -115,12 +115,28 @@ export const EditorViewport = memo(
             height: `${viewportHeight}px`,
           }}
         >
+          {/* Gutter background for full height */}
+          {showLineNumbers && (
+            <div
+              className="editor-gutter-background"
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: `${gutterWidth}px`,
+                height: `${Math.max(totalHeight, viewportHeight)}px`,
+                backgroundColor: "var(--color-gutter-background, rgba(128, 128, 128, 0.05))",
+                zIndex: 0,
+              }}
+            />
+          )}
           <div
             className="editor-content"
             style={{
               position: "relative",
               height: `${totalHeight}px`,
               minWidth: "100%",
+              zIndex: 1,
             }}
             onClick={onClick}
             onMouseDown={onMouseDown}
