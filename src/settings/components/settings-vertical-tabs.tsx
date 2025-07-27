@@ -1,4 +1,4 @@
-import { Keyboard, Languages, Monitor, PenTool, Settings2, Sparkles, Wrench } from "lucide-react";
+import { Keyboard, Languages, Monitor, PenTool, Settings2, Sparkles, Wrench, Settings } from "lucide-react";
 import { cn } from "@/utils/cn";
 import type { SettingsTab } from "./settings-dialog";
 
@@ -43,6 +43,11 @@ const tabs: TabItem[] = [
     id: "language",
     label: "Language",
     icon: Languages,
+  },
+  {
+    id: "features",
+    label: "Features",
+    icon: Settings,
   },
   {
     id: "advanced",

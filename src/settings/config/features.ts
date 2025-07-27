@@ -2,11 +2,12 @@ import {
   Bug,
   GitBranch,
   MessageSquare,
+  Navigation,
   Search,
   Server,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import type { CoreFeature } from "../types/core-features";
+import type { CoreFeature } from "../models/feature.types";
 
 export const createCoreFeaturesList = (coreFeatures: any): CoreFeature[] => [
   {
@@ -50,5 +51,12 @@ export const createCoreFeaturesList = (coreFeatures: any): CoreFeature[] => [
     description: "AI-powered code assistance and chat",
     icon: MessageSquare,
     enabled: coreFeatures.aiChat,
+  },
+  {
+    id: "breadcrumbs",
+    name: "Breadcrumbs",
+    description: "File path navigation breadcrumbs in editor",
+    icon: Navigation,
+    enabled: coreFeatures.breadcrumbs,
   },
 ];

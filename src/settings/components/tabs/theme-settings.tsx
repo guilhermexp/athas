@@ -1,6 +1,6 @@
 import Dropdown from "@/components/ui/dropdown";
 import Section, { SettingRow } from "@/components/ui/section";
-import { useSettingsStore } from "@/stores/settings-store";
+import { useSettingsStore } from "../../stores/settings-store";
 
 type Theme = "auto" | "athas-light" | "athas-dark";
 

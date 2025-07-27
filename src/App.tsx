@@ -6,7 +6,7 @@ import { MainLayout } from "./components/layout/main-layout";
 import { ToastContainer } from "./components/ui/toast";
 import WelcomeScreen from "./components/window/welcome-screen";
 import { ZoomIndicator } from "./components/zoom-indicator";
-import { useSettingsSync } from "./hooks/use-settings-sync";
+import { useSettingsSync } from "./settings/hooks/use-settings-sync";
 import { useAppStore } from "./stores/app-store";
 import { useFileSystemStore } from "./stores/file-system/store";
 import {
@@ -15,7 +15,7 @@ import {
 } from "./stores/file-watcher-store";
 import { useFontStore } from "./stores/font-store";
 import { useRecentFoldersStore } from "./stores/recent-folders-store";
-import { useSettingsStore } from "./stores/settings-store";
+import { useSettingsStore } from "./settings/stores/settings-store";
 import { useZoomStore } from "./stores/zoom-store";
 import { cn } from "./utils/cn";
 import { isMac } from "./utils/platform";

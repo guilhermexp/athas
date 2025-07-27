@@ -5,6 +5,7 @@ import { SettingsVerticalTabs } from "./settings-vertical-tabs";
 import { AdvancedSettings } from "./tabs/advanced-settings";
 import { AISettings } from "./tabs/ai-settings";
 import { EditorSettings } from "./tabs/editor-settings";
+import { FeaturesSettings } from "./tabs/features-settings";
 import { GeneralSettings } from "./tabs/general-settings";
 import { KeyboardSettings } from "./tabs/keyboard-settings";
 import { LanguageSettings } from "./tabs/language-settings";
@@ -22,6 +23,7 @@ export type SettingsTab =
   | "ai"
   | "keyboard"
   | "language"
+  | "features"
   | "advanced";
 
 const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
@@ -55,6 +57,8 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
         return <KeyboardSettings />;
       case "language":
         return <LanguageSettings />;
+      case "features":
+        return <FeaturesSettings />;
       case "advanced":
         return <AdvancedSettings />;
       default:

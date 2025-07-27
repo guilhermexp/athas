@@ -1,6 +1,6 @@
 import { useAppStore } from "../stores/app-store";
 import { useBufferStore } from "../stores/buffer-store";
-import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
+import { usePersistentSettingsStore } from "../settings/stores/persistent-settings-store";
 import { useUIState } from "../stores/ui-state-store";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
 

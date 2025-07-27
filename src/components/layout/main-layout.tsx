@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { createCoreFeaturesList } from "../../constants/core-features";
 import { ProjectNameMenu } from "../../hooks/use-context-menus";
 import { useKeyboardShortcutsWrapper } from "../../hooks/use-keyboard-shortcuts-wrapper";
 import { useMenuEventsWrapper } from "../../hooks/use-menu-events-wrapper";
 import { useBufferStore } from "../../stores/buffer-store";
 import { useFileSystemStore } from "../../stores/file-system/store";
-import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
-import { useSettingsStore } from "../../stores/settings-store";
+import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
+import { useSettingsStore } from "../../settings/stores/settings-store";
 import { useUIState } from "../../stores/ui-state-store";
 import { type GitHunk, stageHunk, unstageHunk } from "../../utils/git";
 import AIChat from "../ai-chat/ai-chat";
@@ -24,7 +23,7 @@ import GitHubCopilotSettings from "../github-copilot-settings";
 import { ImageViewer } from "../image-viewer/image-viewer";
 import ResizableRightPane from "../resizable-right-pane";
 import ResizableSidebar from "../resizable-sidebar";
-import SettingsDialog from "../settings/settings-dialog";
+import SettingsDialog from "../../settings/components/settings-dialog";
 import SQLiteViewer from "../../database/sqlite-viewer";
 import TabBar from "../tab-bar/tab-bar";
 import CustomTitleBarWithSettings from "../window/custom-title-bar";
@@ -42,25 +41,12 @@ export function MainLayout() {
     setIsSettingsDialogVisible,
     setIsThemeSelectorVisible,
   } = useUIState();
-  const { isAIChatVisible, coreFeatures: persistentCoreFeatures } =
-    usePersistentSettingsStore();
+  const { isAIChatVisible } = usePersistentSettingsStore();
   const { settings, updateTheme } = useSettingsStore();
   const { rootFolderPath } = useFileSystemStore();
 
   const [diagnostics] = useState<Diagnostic[]>([]);
   const sidebarPosition = "left" as "left" | "right";
-
-  // Create core features list
-  const coreFeaturesList = createCoreFeaturesList(persistentCoreFeatures);
-
-  // Handle core feature toggle
-  const handleCoreFeatureToggle = (featureId: string, enabled: boolean) => {
-    const { setCoreFeatures } = usePersistentSettingsStore.getState();
-    setCoreFeatures({
-      ...persistentCoreFeatures,
-      [featureId]: enabled,
-    });
-  };
 
   // Handle theme change
   const handleThemeChange = (theme: "auto" | "athas-light" | "athas-dark") => {
@@ -166,8 +152,6 @@ export function MainLayout() {
                     }
                     onThemeChange={handleThemeChange}
                     currentTheme={settings.theme}
-                    coreFeatures={coreFeaturesList}
-                    onCoreFeatureToggle={handleCoreFeatureToggle}
                   />
                 );
               } else {
@@ -192,7 +176,7 @@ export function MainLayout() {
 
         <BottomPane diagnostics={diagnostics} />
       </div>
-      
+
       <EditorFooter />
 
       {/* Global modals and overlays */}

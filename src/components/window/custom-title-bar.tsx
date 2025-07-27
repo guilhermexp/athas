@@ -2,8 +2,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
 import { Maximize2, Minimize2, Minus, Settings, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import SettingsDialog from "@/components/settings/settings-dialog";
-import { usePersistentSettingsStore } from "@/stores/persistent-settings-store";
+import SettingsDialog from "@/settings/components/settings-dialog";
+import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
 import { useProjectStore } from "@/stores/project-store";
 import { cn } from "@/utils/cn";
 
