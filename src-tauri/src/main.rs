@@ -242,7 +242,10 @@ fn main() {
          get_monospace_fonts,
          validate_font,
          // Token commands
-         get_tokens
+         get_tokens,
+         // SQLite commands
+         get_sqlite_tables,
+         query_sqlite
       ])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");
