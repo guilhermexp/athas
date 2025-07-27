@@ -26,13 +26,13 @@
 
 /* Line Gutter */
 .editor-gutter {
-  background-color: var(--color-gutter-background, rgba(128, 128, 128, 0.05));
+  background-color: transparent;
   color: var(--color-gutter-text, rgba(128, 128, 128, 0.6));
   text-align: right;
   padding-right: 8px;
   padding-left: 8px;
   user-select: none;
-  border-right: 1px solid var(--color-gutter-border, rgba(128, 128, 128, 0.2));
+  height: 100%;
 }
 
 .editor-gutter .line-number {
