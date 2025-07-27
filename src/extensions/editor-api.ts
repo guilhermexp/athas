@@ -8,6 +8,7 @@ class EditorAPIImpl implements EditorAPI {
   private eventHandlers: Map<EditorEvent, Set<EventHandler>> = new Map();
   private cursorPosition: Position = { line: 0, column: 0, offset: 0 };
   private selection: Range | null = null;
+  private textareaRef: HTMLTextAreaElement | null = null;
 
   constructor() {
     // Initialize event handler sets
@@ -30,7 +31,6 @@ class EditorAPIImpl implements EditorAPI {
   }
 
   setContent(content: string): void {
-    console.log(`EditorAPI: Setting content, length: ${content.length}`);
     useEditorContentStore.getState().actions.setContent(content);
     this.emit("contentChange", { content, changes: [] });
   }
@@ -41,12 +41,26 @@ class EditorAPIImpl implements EditorAPI {
     const before = content.substring(0, pos.offset);
     const after = content.substring(pos.offset);
     const newContent = before + text + after;
-
-    this.setContent(newContent);
-
-    // Update cursor position
+    
+    // Calculate new cursor position first
     const newOffset = pos.offset + text.length;
-    this.setCursorPosition(this.offsetToPosition(newOffset));
+    const newPos = this.offsetToPosition(newOffset);
+
+    // Update textarea selection BEFORE setting content
+    if (this.textareaRef) {
+      // Set the value directly on the textarea
+      this.textareaRef.value = newContent;
+      // Set selection to new position
+      this.textareaRef.selectionStart = this.textareaRef.selectionEnd = newOffset;
+      
+      // Now trigger the change event so React updates
+      const event = new Event('input', { bubbles: true });
+      this.textareaRef.dispatchEvent(event);
+    } else {
+      // Fallback if no textarea ref
+      this.setContent(newContent);
+      this.setCursorPosition(newPos);
+    }
   }
 
   deleteRange(range: Range): void {
@@ -80,6 +94,11 @@ class EditorAPIImpl implements EditorAPI {
   setCursorPosition(position: Position): void {
     this.cursorPosition = position;
     this.emit("cursorChange", position);
+    
+    // Sync with textarea if available
+    if (this.textareaRef) {
+      this.textareaRef.selectionStart = this.textareaRef.selectionEnd = position.offset;
+    }
   }
 
   // Internal method to update cursor and selection from external changes
@@ -219,6 +238,11 @@ class EditorAPIImpl implements EditorAPI {
   // Public method to safely emit events (for extensions)
   emitEvent(event: EditorEvent, data?: any): void {
     this.emit(event, data);
+  }
+
+  // Set the textarea ref for syncing cursor position
+  setTextareaRef(ref: HTMLTextAreaElement | null): void {
+    this.textareaRef = ref;
   }
 
   private offsetToPosition(offset: number): Position {
