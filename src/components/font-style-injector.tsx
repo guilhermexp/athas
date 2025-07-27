@@ -14,8 +14,6 @@ export const FontStyleInjector = () => {
     const fallbackChain = `"${fontFamily}", "JetBrains Mono", monospace`;
     document.documentElement.style.setProperty("--editor-font-family", fallbackChain);
     document.documentElement.style.setProperty("--app-font-family", fallbackChain);
-
-    console.log("Setting font family:", fontFamily, "| Full chain:", fallbackChain);
   }, [settings.fontFamily, codeEditorFontFamily]);
 
   // Set initial default styles immediately on mount
@@ -26,7 +24,6 @@ export const FontStyleInjector = () => {
       const defaultChain = `"JetBrains Mono", monospace`;
       document.documentElement.style.setProperty("--editor-font-family", defaultChain);
       document.documentElement.style.setProperty("--app-font-family", defaultChain);
-      console.log("Set initial default font:", defaultChain);
     }
   }, []); // Run only once on mount
 

@@ -60,11 +60,9 @@ class SSEStreamParser {
 
   private processLine(line: string): void {
     const trimmedLine = line.trim();
-    console.log("🔍 Processing line:", trimmedLine);
 
     if (trimmedLine === "") return;
     if (trimmedLine === "data: [DONE]") {
-      console.log("✅ Received [DONE] signal");
       this.handlers.onComplete();
       return;
     }
@@ -72,9 +70,7 @@ class SSEStreamParser {
     if (trimmedLine.startsWith("data: ")) {
       try {
         const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
-        console.log("🔍 Parsing SSE data:", jsonStr);
         const data = JSON.parse(jsonStr) as SSEData;
-        console.log("🔍 Parsed data:", data);
 
         // Handle different response formats
         let content = "";
@@ -93,11 +89,14 @@ class SSEStreamParser {
         if (content) {
           console.log("✅ Sending chunk to callback:", content);
           this.handlers.onChunk(content);
-        } else {
-          console.log("⚠️ No content found in chunk");
         }
       } catch (parseError) {
-        console.warn("❌ Failed to parse SSE data:", parseError, "Raw data:", trimmedLine);
+        console.warn(
+          "❌ Failed to parse SSE data:",
+          parseError,
+          "Raw data:",
+          trimmedLine,
+        );
       }
     }
   }

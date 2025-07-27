@@ -14,6 +14,7 @@ import React, { useEffect, useRef, useState } from "react";
 import type { Terminal } from "../../types/terminal";
 import { cn } from "../../utils/cn";
 import KeybindingBadge from "../ui/keybinding-badge";
+import Tooltip from "../ui/tooltip";
 
 interface TerminalContextMenuProps {
   isOpen: boolean;
@@ -89,7 +90,6 @@ const TerminalContextMenu = ({
         className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           // Duplicate terminal with same directory
-          console.log("Duplicate terminal:", terminal.id);
           onClose();
         }}
       >
@@ -101,7 +101,6 @@ const TerminalContextMenu = ({
         className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           // Clear terminal screen
-          console.log("Clear terminal:", terminal.id);
           onClose();
         }}
       >
@@ -219,12 +218,14 @@ const TerminalTabBar = ({
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (draggedIndex === null || !dragStartPosition || !tabBarRef.current) return;
+    if (draggedIndex === null || !dragStartPosition || !tabBarRef.current)
+      return;
 
     setDragCurrentPosition({ x: e.clientX, y: e.clientY });
 
     const distance = Math.sqrt(
-      (e.clientX - dragStartPosition.x) ** 2 + (e.clientY - dragStartPosition.y) ** 2,
+      (e.clientX - dragStartPosition.x) ** 2 +
+        (e.clientY - dragStartPosition.y) ** 2,
     );
 
     if (distance > 5 && !isDragging) {
@@ -237,14 +238,19 @@ const TerminalTabBar = ({
       const y = e.clientY - rect.top;
 
       // Check if dragged outside the tab bar
-      const isOutside = x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
+      const isOutside =
+        x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
       setIsDraggedOutside(isOutside);
 
       if (!isOutside) {
         // Handle internal reordering
-        const tabContainer = tabBarRef.current.querySelector("[data-tab-container]");
+        const tabContainer = tabBarRef.current.querySelector(
+          "[data-tab-container]",
+        );
         if (tabContainer) {
-          const tabElements = Array.from(tabContainer.children) as HTMLElement[];
+          const tabElements = Array.from(
+            tabContainer.children,
+          ) as HTMLElement[];
 
           let newDropTarget: number | null = null;
           for (let i = 0; i < tabElements.length; i++) {
@@ -266,7 +272,10 @@ const TerminalTabBar = ({
 
           // Clamp drop target to valid range
           if (newDropTarget !== null) {
-            newDropTarget = Math.max(0, Math.min(tabElements.length, newDropTarget));
+            newDropTarget = Math.max(
+              0,
+              Math.min(tabElements.length, newDropTarget),
+            );
           }
 
           if (newDropTarget !== dropTarget) {
@@ -281,7 +290,12 @@ const TerminalTabBar = ({
 
   const handleMouseUp = () => {
     if (draggedIndex !== null) {
-      if (!isDraggedOutside && dropTarget !== null && dropTarget !== draggedIndex && onTabReorder) {
+      if (
+        !isDraggedOutside &&
+        dropTarget !== null &&
+        dropTarget !== draggedIndex &&
+        onTabReorder
+      ) {
         // Adjust dropTarget if moving right (forward)
         let adjustedDropTarget = dropTarget;
         if (draggedIndex < dropTarget) {
@@ -350,19 +364,22 @@ const TerminalTabBar = ({
       >
         <div className="flex items-center gap-1.5">
           <TerminalIcon size={10} className="text-text-lighter" />
-          <span className="font-mono text-text-lighter text-xs">No terminals</span>
+          <span className="font-mono text-text-lighter text-xs">
+            No terminals
+          </span>
         </div>
         {onNewTerminal && (
-          <button
-            onClick={onNewTerminal}
-            className={cn(
-              "flex items-center gap-0.5 px-1.5 py-1",
-              "text-text-lighter text-xs transition-colors hover:bg-hover",
-            )}
-            title="New Terminal (Cmd+T)"
-          >
-            <Plus size={9} />
-          </button>
+          <Tooltip content="New Terminal (Cmd+T)" side="bottom">
+            <button
+              onClick={onNewTerminal}
+              className={cn(
+                "flex items-center gap-0.5 px-1.5 py-1",
+                "text-text-lighter text-xs transition-colors hover:bg-hover",
+              )}
+            >
+              <Plus size={9} />
+            </button>
+          </Tooltip>
         )}
       </div>
     );
@@ -383,12 +400,17 @@ const TerminalTabBar = ({
         }}
       >
         {/* Left side - Terminal tabs */}
-        <div className="scrollbar-hidden flex overflow-x-auto" data-tab-container>
+        <div
+          className="scrollbar-hidden flex overflow-x-auto"
+          data-tab-container
+        >
           {sortedTerminals.map((terminal, index) => {
             const isActive = terminal.id === activeTerminalId;
             // Drop indicator should be shown before the tab at dropTarget
             const showDropIndicator =
-              dropTarget === index && draggedIndex !== null && !isDraggedOutside;
+              dropTarget === index &&
+              draggedIndex !== null &&
+              !isDraggedOutside;
 
             return (
               <React.Fragment key={terminal.id}>
@@ -401,25 +423,28 @@ const TerminalTabBar = ({
                     />
                   </div>
                 )}
-                <div
-                  ref={(el) => {
-                    tabRefs.current[index] = el;
-                  }}
-                  className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-3 py-1 transition-all duration-150 ${
-                    isActive
-                      ? "bg-bg text-text"
-                      : "bg-transparent text-text-lighter hover:text-text"
-                  } ${terminal.isPinned ? "border-l-2 border-l-blue-500" : ""}`}
-                  style={{ minWidth: "120px", maxWidth: "200px" }}
-                  onMouseDown={(e) => handleMouseDown(e, index)}
-                  onClick={() => {
-                    if (!isDragging) {
-                      onTabClick(terminal.id);
-                    }
-                  }}
-                  onContextMenu={(e) => handleContextMenu(e, terminal)}
-                  title={`${terminal.name}\n${terminal.currentDirectory}`}
+                <Tooltip 
+                  content={`${terminal.name}${terminal.isPinned ? ' (Pinned)' : ''}\n${terminal.currentDirectory}`} 
+                  side="bottom"
                 >
+                  <div
+                    ref={(el) => {
+                      tabRefs.current[index] = el;
+                    }}
+                    className={`group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-3 py-1 transition-all duration-150 ${
+                      isActive
+                        ? "bg-bg text-text"
+                        : "bg-transparent text-text-lighter hover:text-text"
+                    } ${terminal.isPinned ? "border-l-2 border-l-blue-500" : ""}`}
+                    style={{ minWidth: "120px", maxWidth: "200px" }}
+                    onMouseDown={(e) => handleMouseDown(e, index)}
+                    onClick={() => {
+                      if (!isDragging) {
+                        onTabClick(terminal.id);
+                      }
+                    }}
+                    onContextMenu={(e) => handleContextMenu(e, terminal)}
+                  >
                   {/* Active tab indicator */}
                   {isActive && (
                     <div className="absolute right-0 bottom-0 left-0 h-[2px] bg-blue-500" />
@@ -431,7 +456,9 @@ const TerminalTabBar = ({
                   </div>
 
                   {/* Pin indicator */}
-                  {terminal.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
+                  {terminal.isPinned && (
+                    <Pin size={8} className="flex-shrink-0 text-blue-500" />
+                  )}
 
                   {/* Terminal Name */}
                   <span
@@ -453,84 +480,90 @@ const TerminalTabBar = ({
                         "text-text-lighter opacity-0 transition-all duration-150",
                         "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
                       )}
-                      title={`Close ${terminal.name}`}
                     >
                       <X size={12} />
                     </button>
                   )}
-                </div>
+                  </div>
+                </Tooltip>
               </React.Fragment>
             );
           })}
           {/* Drop indicator after the last tab */}
-          {dropTarget === sortedTerminals.length && draggedIndex !== null && !isDraggedOutside && (
-            <div className="relative flex items-center">
-              <div
-                className="absolute top-0 bottom-0 z-10 w-0.5 bg-accent"
-                style={{ height: "100%" }}
-              />
-            </div>
-          )}
+          {dropTarget === sortedTerminals.length &&
+            draggedIndex !== null &&
+            !isDraggedOutside && (
+              <div className="relative flex items-center">
+                <div
+                  className="absolute top-0 bottom-0 z-10 w-0.5 bg-accent"
+                  style={{ height: "100%" }}
+                />
+              </div>
+            )}
         </div>
 
         {/* Right side - Action buttons */}
         <div className="flex items-center gap-0.5">
           {/* New Terminal Button */}
           {onNewTerminal && (
-            <button
-              onClick={onNewTerminal}
-              className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center p-1",
-                "text-text-lighter transition-colors hover:bg-hover",
-              )}
-              title="New Terminal (Cmd+T)"
-            >
-              <Plus size={12} />
-            </button>
+            <Tooltip content="New Terminal (Cmd+T)" side="bottom">
+              <button
+                onClick={onNewTerminal}
+                className={cn(
+                  "flex flex-shrink-0 cursor-pointer items-center p-1",
+                  "text-text-lighter transition-colors hover:bg-hover",
+                )}
+              >
+                <Plus size={12} />
+              </button>
+            </Tooltip>
           )}
 
           {/* Split View Button */}
           {onSplitView && (
-            <button
-              onClick={onSplitView}
-              className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center p-1",
-                isSplitView
-                  ? "bg-selected text-text"
-                  : "text-text-lighter transition-colors hover:bg-hover",
-              )}
-              title={isSplitView ? "Exit Split View" : "Split Terminal View"}
-            >
-              <SplitSquareHorizontal size={12} />
-            </button>
+            <Tooltip content={isSplitView ? "Exit Split View" : "Split Terminal View (Cmd+D)"} side="bottom">
+              <button
+                onClick={onSplitView}
+                className={cn(
+                  "flex flex-shrink-0 cursor-pointer items-center p-1",
+                  isSplitView
+                    ? "bg-selected text-text"
+                    : "text-text-lighter transition-colors hover:bg-hover",
+                )}
+              >
+                <SplitSquareHorizontal size={12} />
+              </button>
+            </Tooltip>
           )}
 
           {/* Full Screen Button */}
           {onFullScreen && (
-            <button
-              onClick={onFullScreen}
-              className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center p-1",
-                "text-text-lighter transition-colors hover:bg-hover",
-              )}
-              title={isFullScreen ? "Exit Full Screen" : "Full Screen Terminal"}
-            >
-              {isFullScreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
-            </button>
+            <Tooltip content={isFullScreen ? "Exit Full Screen" : "Full Screen Terminal"} side="bottom">
+              <button
+                onClick={onFullScreen}
+                className={cn(
+                  "flex flex-shrink-0 cursor-pointer items-center p-1",
+                  "text-text-lighter transition-colors hover:bg-hover",
+                )}
+              >
+                {isFullScreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              </button>
+            </Tooltip>
           )}
 
           {/* Close Panel Button */}
           {onClosePanel && (
-            <button
-              onClick={onClosePanel}
-              className={cn(
-                "flex flex-shrink-0 cursor-pointer items-center p-1",
-                "text-text-lighter transition-colors hover:bg-hover",
-              )}
-              title="Close Panel"
-            >
-              <X size={12} />
-            </button>
+            <Tooltip content="Close Terminal Panel" side="bottom">
+              <button
+                onClick={onClosePanel}
+                className={cn(
+                  "flex flex-shrink-0 cursor-pointer items-center p-1",
+                  "text-text-lighter transition-colors hover:bg-hover",
+                )}
+              >
+                <X size={12} />
+              </button>
+            </Tooltip>
           )}
         </div>
         {/* Floating tab name while dragging */}
@@ -561,7 +594,9 @@ const TerminalTabBar = ({
             {sortedTerminals[draggedIndex].isPinned && (
               <Pin size={8} className="flex-shrink-0 text-blue-500" />
             )}
-            <span className="truncate">{sortedTerminals[draggedIndex].name}</span>
+            <span className="truncate">
+              {sortedTerminals[draggedIndex].name}
+            </span>
           </div>
         )}
       </div>

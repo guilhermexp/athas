@@ -91,24 +91,48 @@ export const useCustomDragDrop = (
                   (dragState.draggedItem.path.includes("\\") ? "\\" : "/"),
               )
             ) {
-              setDragState((prev) => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
+              setDragState((prev) => ({
+                ...prev,
+                dragOverPath: null,
+                dragOverIsDir: false,
+              }));
             } else {
-              setDragState((prev) => ({ ...prev, dragOverPath: path, dragOverIsDir: isDir }));
+              setDragState((prev) => ({
+                ...prev,
+                dragOverPath: path,
+                dragOverIsDir: isDir,
+              }));
             }
           } else {
-            setDragState((prev) => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
+            setDragState((prev) => ({
+              ...prev,
+              dragOverPath: null,
+              dragOverIsDir: false,
+            }));
           }
         } else if (fileTreeContainer) {
           // When hovering over empty space in the file tree container, treat it as dropping to root
-          setDragState((prev) => ({ ...prev, dragOverPath: "__ROOT__", dragOverIsDir: true }));
+          setDragState((prev) => ({
+            ...prev,
+            dragOverPath: "__ROOT__",
+            dragOverIsDir: true,
+          }));
         } else {
-          setDragState((prev) => ({ ...prev, dragOverPath: null, dragOverIsDir: false }));
+          setDragState((prev) => ({
+            ...prev,
+            dragOverPath: null,
+            dragOverIsDir: false,
+          }));
         }
       }
     };
 
     const handleMouseUp = async () => {
-      if (dragState.isDragging && dragState.dragOverPath && dragState.draggedItem) {
+      if (
+        dragState.isDragging &&
+        dragState.dragOverPath &&
+        dragState.draggedItem
+      ) {
         const { path: sourcePath, name: sourceName } = dragState.draggedItem;
         let targetPath = dragState.dragOverPath;
 
@@ -136,15 +160,11 @@ export const useCustomDragDrop = (
           targetPath = pathParts.join(pathSeparator) || rootFolderPath || "";
         }
 
-        console.log("Custom drop:", sourcePath, "->", targetPath);
-
         // Calculate new path
         const newPath = targetPath + pathSeparator + sourceName;
 
         try {
-          console.log("Moving file:", sourcePath, "->", newPath);
           await moveFile(sourcePath, newPath);
-          console.log("File moved successfully");
 
           if (onFileMove) {
             // The handleFileMove function will update the tree structure directly
@@ -181,20 +201,21 @@ export const useCustomDragDrop = (
     }
   }, [dragState, onFileMove, onRefreshDirectory, rootFolderPath]);
 
-  const startCustomDrag = useCallback((e: React.MouseEvent, file: FileEntry) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const startCustomDrag = useCallback(
+    (e: React.MouseEvent, file: FileEntry) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    console.log("Custom drag started:", file.path);
-
-    setDragState({
-      isDragging: true,
-      draggedItem: { path: file.path, name: file.name, isDir: file.isDir },
-      dragOverPath: null,
-      dragOverIsDir: false,
-      mousePosition: { x: e.clientX, y: e.clientY },
-    });
-  }, []);
+      setDragState({
+        isDragging: true,
+        draggedItem: { path: file.path, name: file.name, isDir: file.isDir },
+        dragOverPath: null,
+        dragOverIsDir: false,
+        mousePosition: { x: e.clientX, y: e.clientY },
+      });
+    },
+    [],
+  );
 
   return {
     dragState,

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { FontPreloader } from "./components/font-preloader";
 import { FontStyleInjector } from "./components/font-style-injector";
 import { MainLayout } from "./components/layout/main-layout";
-import { ToastContainer } from "./components/toast";
+import { ToastContainer } from "./components/ui/toast";
 import WelcomeScreen from "./components/window/welcome-screen";
 import { ZoomIndicator } from "./components/zoom-indicator";
 import { useSettingsSync } from "./hooks/use-settings-sync";
@@ -40,7 +40,10 @@ function App() {
     }
 
     return () => {
-      document.documentElement.classList.remove("platform-macos", "platform-other");
+      document.documentElement.classList.remove(
+        "platform-macos",
+        "platform-other",
+      );
       cleanup(); // Cleanup autosave timeouts
     };
   }, [cleanup]);
@@ -93,7 +96,8 @@ function App() {
   const isRemoteFromUrl = !!remoteParam;
 
   // Determine if we should show welcome screen
-  const shouldShowWelcome = files.length === 0 && !rootFolderPath && !isRemoteFromUrl;
+  const shouldShowWelcome =
+    files.length === 0 && !rootFolderPath && !isRemoteFromUrl;
 
   if (shouldShowWelcome) {
     return (
@@ -114,11 +118,17 @@ function App() {
   }
 
   return (
-    <div className={cn("flex h-screen w-screen flex-col overflow-hidden bg-transparent")}>
+    <div
+      className={cn(
+        "flex h-screen w-screen flex-col overflow-hidden bg-transparent",
+      )}
+    >
       <FontPreloader />
       <FontStyleInjector />
       <div
-        className={cn("window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg")}
+        className={cn(
+          "window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg",
+        )}
         style={{ zoom: zoomLevel }}
       >
         <MainLayout />

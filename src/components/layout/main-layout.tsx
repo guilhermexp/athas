@@ -115,81 +115,84 @@ export function MainLayout() {
       <CustomTitleBarWithSettings />
       <div className="h-px flex-shrink-0 bg-border" />
 
-      <div className="flex flex-1 flex-row overflow-hidden">
-        {/* Left sidebar or AI chat based on settings */}
-        {sidebarPosition === "right" ? (
-          <ResizableRightPane position="left" isVisible={isAIChatVisible}>
-            <AIChat mode="chat" />
-          </ResizableRightPane>
-        ) : (
-          isSidebarVisible && (
-            <ResizableSidebar>
-              <MainSidebar />
-            </ResizableSidebar>
-          )
-        )}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-row overflow-hidden">
+          {/* Left sidebar or AI chat based on settings */}
+          {sidebarPosition === "right" ? (
+            <ResizableRightPane position="left" isVisible={isAIChatVisible}>
+              <AIChat mode="chat" />
+            </ResizableRightPane>
+          ) : (
+            isSidebarVisible && (
+              <ResizableSidebar>
+                <MainSidebar />
+              </ResizableSidebar>
+            )
+          )}
 
-        {/* Main content area */}
-        <div className="flex h-full flex-1 flex-col overflow-hidden">
-          <TabBar />
-          {(() => {
-            if (!activeBuffer) {
-              return (
-                <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>
-              );
-            }
-            if (activeBuffer.isDiff) {
-              return (
-                <DiffViewer
-                  onStageHunk={handleStageHunk}
-                  onUnstageHunk={handleUnstageHunk}
-                />
-              );
-            } else if (activeBuffer.isImage) {
-              return (
-                <ImageViewer
-                  filePath={activeBuffer.path}
-                  fileName={activeBuffer.name}
-                />
-              );
-            } else if (activeBuffer.isSQLite) {
-              return <SQLiteViewer databasePath={activeBuffer.path} />;
-            } else if (activeBuffer.path === "extensions://marketplace") {
-              return (
-                <ExtensionsView
-                  onServerInstall={(server) =>
-                    console.log("Install server:", server)
-                  }
-                  onServerUninstall={(serverId) =>
-                    console.log("Uninstall server:", serverId)
-                  }
-                  onThemeChange={handleThemeChange}
-                  currentTheme={settings.theme}
-                  coreFeatures={coreFeaturesList}
-                  onCoreFeatureToggle={handleCoreFeatureToggle}
-                />
-              );
-            } else {
-              return <CodeEditor />;
-            }
-          })()}
+          {/* Main content area */}
+          <div className="flex h-full flex-1 flex-col overflow-hidden">
+            <TabBar />
+            {(() => {
+              if (!activeBuffer) {
+                return (
+                  <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>
+                );
+              }
+              if (activeBuffer.isDiff) {
+                return (
+                  <DiffViewer
+                    onStageHunk={handleStageHunk}
+                    onUnstageHunk={handleUnstageHunk}
+                  />
+                );
+              } else if (activeBuffer.isImage) {
+                return (
+                  <ImageViewer
+                    filePath={activeBuffer.path}
+                    fileName={activeBuffer.name}
+                  />
+                );
+              } else if (activeBuffer.isSQLite) {
+                return <SQLiteViewer databasePath={activeBuffer.path} />;
+              } else if (activeBuffer.path === "extensions://marketplace") {
+                return (
+                  <ExtensionsView
+                    onServerInstall={(server) =>
+                      console.log("Install server:", server)
+                    }
+                    onServerUninstall={(serverId) =>
+                      console.log("Uninstall server:", serverId)
+                    }
+                    onThemeChange={handleThemeChange}
+                    currentTheme={settings.theme}
+                    coreFeatures={coreFeaturesList}
+                    onCoreFeatureToggle={handleCoreFeatureToggle}
+                  />
+                );
+              } else {
+                return <CodeEditor />;
+              }
+            })()}
+          </div>
+
+          {/* Right sidebar or AI chat based on settings */}
+          {sidebarPosition === "right" ? (
+            isSidebarVisible && (
+              <ResizableRightPane position="right">
+                <MainSidebar />
+              </ResizableRightPane>
+            )
+          ) : (
+            <ResizableRightPane position="right" isVisible={isAIChatVisible}>
+              <AIChat mode="chat" />
+            </ResizableRightPane>
+          )}
         </div>
 
-        {/* Right sidebar or AI chat based on settings */}
-        {sidebarPosition === "right" ? (
-          isSidebarVisible && (
-            <ResizableRightPane position="right">
-              <MainSidebar />
-            </ResizableRightPane>
-          )
-        ) : (
-          <ResizableRightPane position="right" isVisible={isAIChatVisible}>
-            <AIChat mode="chat" />
-          </ResizableRightPane>
-        )}
+        <BottomPane diagnostics={diagnostics} />
       </div>
-
-      <BottomPane diagnostics={diagnostics} />
+      
       <EditorFooter />
 
       {/* Global modals and overlays */}
