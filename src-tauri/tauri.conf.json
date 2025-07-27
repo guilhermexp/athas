@@ -45,6 +45,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -56,6 +57,14 @@
   "plugins": {
     "fs": {
       "requireLiteralLeadingDot": false
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://athas.dev/updates/{{target}}/{{current_version}}"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUxRDJGNTM3M0M0M0U3NzEKUldSeDUwTThOL1hTNFRlYVNycS9QSFFaa29Rdy9xZUVRUU80Wi8wekxHS2EvWkk5dG5Xb1gxbnoK"
     }
   }
 }

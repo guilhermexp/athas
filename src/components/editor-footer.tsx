@@ -1,4 +1,4 @@
-import { AlertCircle, Terminal as TerminalIcon } from "lucide-react";
+import { AlertCircle, Terminal as TerminalIcon, Download } from "lucide-react";
 import { useBufferStore } from "../stores/buffer-store";
 import { useFileSystemStore } from "../stores/file-system/store";
 import { useGitStore } from "../stores/git-store";
@@ -7,6 +7,7 @@ import { useUIState } from "../stores/ui-state-store";
 import { getFilenameFromPath, getLanguageFromFilename } from "../utils/file-utils";
 import { getGitStatus } from "../utils/git";
 import GitBranchManager from "./git/git-branch-manager";
+import { useUpdater } from "../hooks/use-updater";
 
 const EditorFooter = () => {
   const buffers = useBufferStore.use.buffers();
@@ -16,6 +17,7 @@ const EditorFooter = () => {
   const uiState = useUIState();
   const { rootFolderPath } = useFileSystemStore();
   const { gitStatus, actions } = useGitStore();
+  const { available, downloading, installing, updateInfo, downloadAndInstall } = useUpdater(false);
   return (
     <div className="flex min-h-[32px] items-center justify-between border-border border-t bg-secondary-bg px-2 py-1">
       <div className="flex items-center gap-0.5 font-mono text-text-lighter text-xs">
@@ -69,6 +71,32 @@ const EditorFooter = () => {
           >
             <AlertCircle size={12} />
           </div>
+        )}
+
+        {/* Update indicator */}
+        {available && (
+          <button
+            onClick={downloadAndInstall}
+            disabled={downloading || installing}
+            className={`flex items-center gap-0.5 rounded px-1 py-0.5 transition-colors ${
+              downloading || installing
+                ? "text-text-lighter cursor-not-allowed"
+                : "text-blue-400 hover:bg-hover hover:text-blue-300"
+            }`}
+            style={{ minHeight: 0, minWidth: 0 }}
+            title={
+              downloading
+                ? "Downloading update..."
+                : installing
+                ? "Installing update..."
+                : `Update available: ${updateInfo?.version}`
+            }
+          >
+            <Download 
+              size={12} 
+              className={downloading || installing ? "animate-pulse" : ""}
+            />
+          </button>
         )}
       </div>
       <div className="flex items-center gap-0.5 font-mono text-[10px] text-text-lighter">

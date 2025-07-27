@@ -1,6 +1,7 @@
-import { Folder } from "lucide-react";
+import { Folder, Download, CheckCircle, AlertCircle } from "lucide-react";
 import Button from "@/components/ui/button";
 import { cn } from "@/utils/cn";
+import { useUpdater } from "@/hooks/use-updater";
 
 interface RecentFolder {
   name: string;
@@ -19,6 +20,8 @@ const WelcomeScreen = ({
   recentFolders = [],
   onOpenRecentFolder,
 }: WelcomeScreenProps) => {
+  const { available, checking, downloading, installing, error, updateInfo, downloadAndInstall, dismissUpdate } = useUpdater(true);
+
   const handleRecentFolderClick = (path: string) => {
     if (onOpenRecentFolder) {
       onOpenRecentFolder(path);
@@ -37,15 +40,100 @@ const WelcomeScreen = ({
       {/* Logo Section */}
       <div className={cn("mb-6 flex flex-col items-center")}>
         <div className={cn("mb-1 flex justify-center")}>
-          <img src="/logo.svg" alt="athas industries" className={cn("h-12")} />
+          <img
+            src="/logo.svg"
+            alt="athas industries"
+            className={cn("h-12")}
+            draggable="false"
+          />
         </div>
-        <p className={cn("paper-text-light font-mono font-normal text-xs")}>
-          v0.1.0
-        </p>
+        <div className={cn("flex items-center gap-2")}>
+          <p className={cn("paper-text-light font-mono font-normal text-xs")}>
+            v0.1.0
+          </p>
+          {checking && (
+            <div className={cn("paper-text-light text-xs")} title="Checking for updates...">
+              ⟳
+            </div>
+          )}
+          {available && (
+            <div className={cn("paper-text-accent text-xs")} title={`Update available: ${updateInfo?.version}`}>
+              •
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
       <div className={cn("flex w-full max-w-sm flex-col items-center px-4")}>
+        {/* Update Available Banner */}
+        {available && (
+          <div className={cn("mb-4 w-full")}>
+            <div className={cn("paper-border rounded-md border p-3")}>
+              <div className={cn("mb-2 flex items-center gap-2")}>
+                <Download size={14} className={cn("paper-text-accent")} />
+                <span className={cn("paper-text-primary font-mono text-xs")}>
+                  Update Available
+                </span>
+              </div>
+              <p className={cn("paper-text-secondary mb-3 font-mono text-xs")}>
+                Version {updateInfo?.version} is ready to install
+              </p>
+              <div className={cn("flex gap-2")}>
+                <Button
+                  onClick={downloadAndInstall}
+                  disabled={downloading || installing}
+                  variant="ghost"
+                  className={cn(
+                    "paper-button flex-1 gap-2 py-1 text-xs",
+                    "transition-all duration-200",
+                  )}
+                  size="sm"
+                >
+                  {downloading ? (
+                    <>⟳ Downloading</>
+                  ) : installing ? (
+                    <>⟳ Installing</>
+                  ) : (
+                    <>
+                      <Download size={12} />
+                      Install
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={dismissUpdate}
+                  variant="ghost"
+                  className={cn(
+                    "paper-button-secondary px-2 py-1 text-xs",
+                    "transition-all duration-200",
+                  )}
+                  size="sm"
+                >
+                  Later
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error Banner */}
+        {error && (
+          <div className={cn("mb-4 w-full")}>
+            <div className={cn("paper-border rounded-md border border-red-200 p-3")}>
+              <div className={cn("flex items-center gap-2")}>
+                <AlertCircle size={14} className={cn("text-red-500")} />
+                <span className={cn("paper-text-primary font-mono text-xs")}>
+                  Update Error
+                </span>
+              </div>
+              <p className={cn("paper-text-secondary mt-1 font-mono text-xs")}>
+                {error}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Open Folder Button */}
         <div className={cn("mb-6 w-full")}>
           <Button
