@@ -2,6 +2,8 @@ import { Code, Package, Palette, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import { usePersistentSettingsStore } from "../settings/stores/persistent-settings-store";
+import { themeRegistry } from "@/extensions/themes";
+import type { ThemeDefinition } from "@/extensions/themes";
 import Button from "./ui/button";
 
 interface Extension {
@@ -16,8 +18,8 @@ interface Extension {
 interface ExtensionsViewProps {
   onServerInstall: (server: Extension) => void;
   onServerUninstall: (serverId: string) => void;
-  onThemeChange: (theme: "auto" | "athas-light" | "athas-dark") => void;
-  currentTheme: "auto" | "athas-light" | "athas-dark";
+  onThemeChange: (theme: string) => void;
+  currentTheme: string;
 }
 
 const AVAILABLE_EXTENSIONS: Extension[] = [
@@ -74,7 +76,7 @@ interface ExtensionCardProps {
 
 const ExtensionCard = ({ extension, onToggle, isActive }: ExtensionCardProps) => {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary-bg p-4">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary-bg p-3">
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-sm text-text">{extension.name}</h3>
         <Button
@@ -86,7 +88,7 @@ const ExtensionCard = ({ extension, onToggle, isActive }: ExtensionCardProps) =>
           {isActive ? "Disable" : "Enable"}
         </Button>
       </div>
-      <p className="text-text-lighter text-xs">{extension.description}</p>
+      <p className="text-text-lighter text-xs leading-relaxed">{extension.description}</p>
     </div>
   );
 };
@@ -100,6 +102,7 @@ export default function ExtensionsView({
 }: ExtensionsViewProps) {
   const { extensionsActiveTab, setExtensionsActiveTab } = usePersistentSettingsStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [themeExtensions, setThemeExtensions] = useState<Extension[]>([]);
   const [extensions, setExtensions] = useState<Extension[]>(() => {
     // Initialize extensions with the current theme state
     return AVAILABLE_EXTENSIONS.map((ext) => ({
@@ -107,6 +110,30 @@ export default function ExtensionsView({
       status: ext.category === "theme" && ext.themeId === currentTheme ? "active" : "inactive",
     }));
   });
+
+  // Load theme extensions from registry
+  useEffect(() => {
+    const loadThemeExtensions = () => {
+      const themes = themeRegistry.getAllThemes();
+      const themeExts: Extension[] = themes.map((theme: ThemeDefinition) => ({
+        id: theme.id,
+        name: theme.name,
+        description: theme.description,
+        category: "theme" as const,
+        status: theme.id === currentTheme ? "active" : "inactive",
+        themeId: theme.id,
+      }));
+      setThemeExtensions(themeExts);
+    };
+
+    loadThemeExtensions();
+
+    const unsubscribe = themeRegistry.onRegistryChange(() => {
+      loadThemeExtensions();
+    });
+
+    return unsubscribe;
+  }, [currentTheme]);
 
   // Update extension states when currentTheme changes
   useEffect(() => {
@@ -127,16 +154,16 @@ export default function ExtensionsView({
       }
     } else if (extension.category === "theme") {
       // For themes, we just need to call onThemeChange
-      // The status will be updated via the useEffect above
-      onThemeChange(
-        extension.status === "inactive"
-          ? (extension.themeId as "auto" | "athas-light" | "athas-dark")
-          : ("auto" as "auto" | "athas-light" | "athas-dark"),
-      );
+      if (extension.themeId) {
+        onThemeChange(extension.themeId);
+      }
     }
   };
 
-  const filteredExtensions = extensions.filter((extension) => {
+  // Combine all extensions
+  const allExtensions = [...extensions, ...themeExtensions];
+
+  const filteredExtensions = allExtensions.filter((extension) => {
     const matchesSearch =
       extension.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       extension.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -202,43 +229,47 @@ export default function ExtensionsView({
           onClick={() => setExtensionsActiveTab("theme")}
           variant="ghost"
           size="sm"
-          disabled
           data-active={extensionsActiveTab === "theme"}
           className={cn(
-            "flex cursor-not-allowed items-center gap-1 text-xs opacity-50",
+            "flex items-center gap-1 text-xs",
             extensionsActiveTab === "theme"
               ? "bg-selected text-text"
-              : "bg-transparent text-text-lighter",
+              : "bg-transparent text-text-lighter hover:bg-hover",
           )}
         >
           <Palette size={14} />
-          Themes (Coming Soon)
+          Themes
         </Button>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
 
         {/* Extensions */}
-        {extensionsActiveTab !== "theme" && (
-          <div>
-            {extensionsActiveTab === "all" && filteredExtensions.length > 0 && (
-              <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">
-                <Package size={16} />
-                Extensions
-              </h3>
-            )}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredExtensions.map((extension) => (
-                <ExtensionCard
-                  key={extension.id}
-                  extension={extension}
-                  onToggle={() => handleToggle(extension)}
-                  isActive={extension.status === "active"}
-                />
-              ))}
-            </div>
+        <div>
+          {extensionsActiveTab === "all" && filteredExtensions.filter(ext => ext.category !== "theme").length > 0 && (
+            <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">
+              <Package size={16} />
+              Extensions
+            </h3>
+          )}
+          
+          {extensionsActiveTab === "theme" && filteredExtensions.length > 0 && (
+            <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">
+              <Palette size={16} />
+              Themes
+            </h3>
+          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredExtensions.map((extension) => (
+              <ExtensionCard
+                key={extension.id}
+                extension={extension}
+                onToggle={() => handleToggle(extension)}
+                isActive={extension.status === "active"}
+              />
+            ))}
           </div>
-        )}
+        </div>
 
         {/* No results */}
         {filteredExtensions.length === 0 && (

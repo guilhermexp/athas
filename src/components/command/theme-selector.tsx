@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Command, {
@@ -8,16 +8,10 @@ import Command, {
   CommandItem,
   CommandList,
 } from "../ui/command";
+import { themeRegistry } from "../../extensions/themes";
+import type { ThemeDefinition } from "../../extensions/themes";
 
-type Theme = "auto" | "athas-light" | "athas-dark";
-
-interface ThemeInfo {
-  id: Theme;
-  name: string;
-  description: string;
-  category: "System" | "Light" | "Dark" | "Colorful";
-  icon?: React.ReactNode;
-}
+type Theme = string;
 
 interface ThemeSelectorProps {
   isVisible: boolean;
@@ -26,46 +20,62 @@ interface ThemeSelectorProps {
   currentTheme?: Theme;
 }
 
-// Dynamic theme definitions based on existing theme system
-const THEME_DEFINITIONS: ThemeInfo[] = [
-  // System
-  {
-    id: "auto",
-    name: "Auto",
-    description: "Follow system preference",
-    category: "System",
-    icon: <Monitor size={14} />,
-  },
-  // Light theme
-  {
-    id: "athas-light",
-    name: "Athas Light",
-    description: "Clean and bright theme",
-    category: "Light",
-    icon: <Sun size={14} />,
-  },
-  // Dark theme
-  {
-    id: "athas-dark",
-    name: "Athas Dark",
-    description: "Modern dark theme",
-    category: "Dark",
-    icon: <Moon size={14} />,
-  },
-];
-
 const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: ThemeSelectorProps) => {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [initialTheme, setInitialTheme] = useState(currentTheme);
   const [previewTheme, setPreviewTheme] = useState<Theme | null>(null);
+  const [availableThemes, setAvailableThemes] = useState<ThemeDefinition[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Focus is handled internally when the selector becomes visible
+  // Load available themes from theme registry
+  useEffect(() => {
+    const loadThemes = () => {
+      const themes = themeRegistry.getAllThemes();
+      console.log("ThemeSelector: Loading themes from registry, found:", themes.length);
+      setAvailableThemes(themes);
+    };
+
+    // Load themes immediately
+    loadThemes();
+
+    // Also listen for theme registry changes
+    const unsubscribe = themeRegistry.onRegistryChange(() => {
+      console.log("ThemeSelector: Registry changed, reloading themes");
+      loadThemes();
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Helper functions for theme preview
+  const clearHoverTimeout = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  }, []);
+
+  const previewThemeWithDelay = useCallback((themeId: string) => {
+    clearHoverTimeout();
+    setPreviewTheme(themeId);
+    themeRegistry.applyTheme(themeId);
+  }, [clearHoverTimeout]);
+
+  const revertToInitialTheme = useCallback(() => {
+    clearHoverTimeout();
+    hoverTimeoutRef.current = setTimeout(() => {
+      setPreviewTheme(null);
+      if (initialTheme) {
+        themeRegistry.applyTheme(initialTheme);
+      }
+    }, 150); // Small delay to prevent flickering when moving between items
+  }, [clearHoverTimeout, initialTheme]);
 
   // Filter themes based on query
-  const filteredThemes = THEME_DEFINITIONS.filter(
+  const filteredThemes = availableThemes.filter(
     (theme) =>
       theme.name.toLowerCase().includes(query.toLowerCase()) ||
       theme.description?.toLowerCase().includes(query.toLowerCase()) ||
@@ -79,15 +89,29 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
       setQuery("");
       setPreviewTheme(null);
 
-      const initialIndex = THEME_DEFINITIONS.findIndex((t) => t.id === currentTheme);
+      // Force load themes when selector becomes visible
+      const themes = themeRegistry.getAllThemes();
+      setAvailableThemes(themes);
+
+      const initialIndex = themes.findIndex((t) => t.id === currentTheme);
       setSelectedIndex(initialIndex >= 0 ? initialIndex : 0);
 
       requestAnimationFrame(() => inputRef.current?.focus());
     }
-  }, [isVisible]);
+  }, [isVisible, currentTheme]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (initialTheme) {
+          themeRegistry.applyTheme(initialTheme);
+        }
+        onClose();
+        return;
+      }
+
       if (!filteredThemes.length) return;
 
       let nextIndex = selectedIndex;
@@ -102,13 +126,6 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
         onThemeChange(filteredThemes[selectedIndex].id);
         onClose();
         return;
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        if (initialTheme) {
-          onThemeChange(initialTheme);
-        }
-        onClose();
-        return;
       }
 
       if (nextIndex !== selectedIndex) {
@@ -116,19 +133,20 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
         // Preview theme when navigating with keyboard
         const theme = filteredThemes[nextIndex];
         if (theme) {
-          setPreviewTheme(theme.id);
-          onThemeChange(theme.id);
+          previewThemeWithDelay(theme.id);
         }
       }
     },
-    [selectedIndex, filteredThemes, onThemeChange, onClose, initialTheme],
+    [selectedIndex, filteredThemes, onThemeChange, onClose, initialTheme, previewThemeWithDelay],
   );
 
   // Reset state when visibility changes
   useEffect(() => {
     if (isVisible) {
       document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
     }
   }, [isVisible, handleKeyDown]);
 
@@ -136,6 +154,13 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      clearHoverTimeout();
+    };
+  }, []);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -146,8 +171,10 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
   if (!isVisible) return null;
 
   const handleClose = () => {
+    clearHoverTimeout();
+    setPreviewTheme(null);
     if (initialTheme) {
-      onThemeChange(initialTheme);
+      themeRegistry.applyTheme(initialTheme);
     }
     onClose();
   };
@@ -163,10 +190,24 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
         />
       </CommandHeader>
 
-      <CommandList ref={resultsRef}>
-        {filteredThemes.length === 0 ? (
+      <div
+        onMouseLeave={() => {
+          // When leaving the entire list, immediately revert to initial theme
+          clearHoverTimeout();
+          setPreviewTheme(null);
+          if (initialTheme) {
+            themeRegistry.applyTheme(initialTheme);
+          }
+        }}
+      >
+        <CommandList ref={resultsRef}>
+        {availableThemes.length === 0 && (
+          <CommandEmpty>Loading themes...</CommandEmpty>
+        )}
+        {availableThemes.length > 0 && filteredThemes.length === 0 && (
           <CommandEmpty>No themes found</CommandEmpty>
-        ) : (
+        )}
+        {filteredThemes.length > 0 && (
           filteredThemes.map((theme, index) => {
             const isSelected = index === selectedIndex;
             const isCurrent = theme.id === initialTheme;
@@ -181,16 +222,11 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
                 }}
                 onMouseEnter={() => {
                   setSelectedIndex(index);
-                  setPreviewTheme(theme.id);
-                  onThemeChange(theme.id);
+                  previewThemeWithDelay(theme.id);
                 }}
                 onMouseLeave={() => {
-                  if (previewTheme === theme.id) {
-                    setPreviewTheme(null);
-                    if (initialTheme) {
-                      onThemeChange(initialTheme);
-                    }
-                  }
+                  // Only revert if we're actually leaving the theme (not just moving to another theme)
+                  revertToInitialTheme();
                 }}
                 isSelected={isSelected}
                 className="gap-3 px-2 py-1.5"
@@ -212,7 +248,8 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
             );
           })
         )}
-      </CommandList>
+        </CommandList>
+      </div>
     </Command>
   );
 };

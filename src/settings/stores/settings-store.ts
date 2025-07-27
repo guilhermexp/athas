@@ -2,8 +2,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { themeRegistry } from "@/extensions/themes";
 
-type Theme = "auto" | "athas-light" | "athas-dark";
+type Theme = string;
 
 interface Settings {
   theme: Theme;
@@ -21,9 +22,9 @@ interface Settings {
 }
 
 const defaultSettings: Settings = {
-  theme: "athas-dark", // Changed from "auto" since we don't support continuous monitoring
-  autoThemeLight: "athas-light",
-  autoThemeDark: "athas-dark",
+  theme: "github-dark", // Use GitHub Dark as default
+  autoThemeLight: "github-light",
+  autoThemeDark: "github-dark",
   fontSize: 14,
   fontFamily: "JetBrains Mono",
   tabSize: 2,
@@ -41,15 +42,11 @@ const ALL_THEME_CLASSES = ["force-athas-light", "force-athas-dark"];
 // Apply theme to document
 const applyTheme = (theme: Theme) => {
   if (typeof window === "undefined") return;
-
-  // Remove all existing theme classes
-  ALL_THEME_CLASSES.forEach((cls) => document.documentElement.classList.remove(cls));
-
-  // Apply new theme if not auto
-  if (theme && theme !== "auto") {
-    const themeClass = `force-${theme}`;
-    document.documentElement.classList.add(themeClass);
-  }
+  
+  console.log(`Settings store: Applying theme ${theme}`);
+  
+  // Use theme registry for all themes
+  themeRegistry.applyTheme(theme);
 };
 
 // Get system theme preference
@@ -61,6 +58,25 @@ const getSystemThemePreference = (): "light" | "dark" => {
       console.warn("matchMedia not available:", error);
     }
   }
+  return "dark";
+};
+
+// Determine if a theme is light or dark based on its properties
+const getThemeType = (themeId: Theme): "light" | "dark" => {
+  const theme = themeRegistry.getTheme(themeId);
+  if (theme?.isDark !== undefined) {
+    return theme.isDark ? "dark" : "light";
+  }
+  
+  // Fallback: categorize by theme ID patterns
+  if (themeId.includes("light") || themeId.includes("latte")) {
+    return "light";
+  }
+  if (themeId.includes("dark") || themeId.includes("mocha") || themeId.includes("night") || themeId.includes("nord")) {
+    return "dark";
+  }
+  
+  // Default to dark for unknown themes
   return "dark";
 };
 
@@ -82,7 +98,7 @@ const getInitialSettings = (): Settings => {
   const systemTheme = getSystemThemePreference();
   const defaultWithOSTheme = {
     ...defaultSettings,
-    theme: systemTheme === "dark" ? "athas-dark" : ("athas-light" as Theme),
+    theme: systemTheme === "dark" ? "github-dark" : ("github-light" as Theme),
   };
 
   // Also detect OS theme asynchronously for more accurate detection
@@ -95,10 +111,10 @@ const getInitialSettings = (): Settings => {
           "athas-code-settings",
           JSON.stringify({
             ...defaultWithOSTheme,
-            theme: theme === "dark" ? "athas-dark" : "athas-light",
+            theme: theme === "dark" ? "github-dark" : "github-light",
           }),
         );
-        applyTheme(theme === "dark" ? "athas-dark" : ("athas-light" as Theme));
+        applyTheme(theme === "dark" ? "github-dark" : ("github-light" as Theme));
       }
     })
     .catch(() => {
@@ -111,8 +127,10 @@ const getInitialSettings = (): Settings => {
 // Apply initial theme
 const initialSettings = getInitialSettings();
 if (typeof window !== "undefined") {
-  // Apply theme immediately on module load
-  applyTheme(initialSettings.theme);
+  // Apply theme immediately on module load, but after a small delay to ensure theme registry is loaded
+  setTimeout(() => {
+    applyTheme(initialSettings.theme);
+  }, 100);
 }
 
 export const useSettingsStore = create(
@@ -166,17 +184,69 @@ export const useSettingsStore = create(
           localStorage.setItem("athas-code-settings", JSON.stringify(newSettings, null, 2));
         },
 
-        // Update theme
+        // Update theme with system mode preference tracking
         updateTheme: (theme: Theme) => {
+          const currentSystemMode = getSystemThemePreference();
+          
           set((state) => {
             state.settings.theme = theme;
+            // Update the preference for the current system mode
+            if (currentSystemMode === "light") {
+              state.settings.autoThemeLight = theme;
+            } else {
+              state.settings.autoThemeDark = theme;
+            }
           });
+          
           localStorage.setItem("athas-code-settings", JSON.stringify(get().settings, null, 2));
 
           // Apply theme to document immediately
           applyTheme(theme);
         },
+
+        // Get the appropriate theme based on system preference
+        getSystemAwareTheme: (): Theme => {
+          const { autoThemeLight, autoThemeDark } = get().settings;
+          const systemPreference = getSystemThemePreference();
+          return systemPreference === "light" ? autoThemeLight : autoThemeDark;
+        },
+
+        // Apply system-aware theme
+        applySystemAwareTheme: () => {
+          const { autoThemeLight, autoThemeDark } = get().settings;
+          const systemPreference = getSystemThemePreference();
+          const systemAwareTheme = systemPreference === "light" ? autoThemeLight : autoThemeDark;
+          
+          set((state) => {
+            state.settings.theme = systemAwareTheme;
+          });
+          localStorage.setItem("athas-code-settings", JSON.stringify(get().settings, null, 2));
+          applyTheme(systemAwareTheme);
+        },
       }),
     ),
   ),
 );
+
+// Set up system theme monitoring
+if (typeof window !== "undefined") {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  
+  const handleSystemThemeChange = () => {
+    console.log("System theme changed, applying system-aware theme");
+    useSettingsStore.getState().applySystemAwareTheme();
+  };
+
+  // Listen for system theme changes
+  if (mediaQuery.addEventListener) {
+    mediaQuery.addEventListener("change", handleSystemThemeChange);
+  } else {
+    // Fallback for older browsers
+    mediaQuery.addListener(handleSystemThemeChange);
+  }
+
+  // Apply system-aware theme on initial load (after a delay to ensure theme registry is loaded)
+  setTimeout(() => {
+    useSettingsStore.getState().applySystemAwareTheme();
+  }, 150);
+}

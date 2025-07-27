@@ -49,7 +49,7 @@ export function MainLayout() {
   const sidebarPosition = "left" as "left" | "right";
 
   // Handle theme change
-  const handleThemeChange = (theme: "auto" | "athas-light" | "athas-dark") => {
+  const handleThemeChange = (theme: string) => {
     updateTheme(theme);
   };
 

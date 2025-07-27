@@ -32,11 +32,14 @@ class ExtensionManager {
   }
 
   async loadExtension(extension: EditorExtension): Promise<void> {
+    console.log(`ExtensionManager: Loading extension ${extension.name}`);
+    
     if (!this.editor) {
       throw new Error("Editor API not initialized");
     }
 
     const extensionId = this.generateExtensionId(extension.name);
+    console.log(`ExtensionManager: Generated extension ID: ${extensionId}`);
 
     if (this.extensions.has(extensionId)) {
       throw new Error(`Extension ${extension.name} is already loaded`);
@@ -74,11 +77,15 @@ class ExtensionManager {
 
     // Initialize extension
     if (extension.initialize) {
+      console.log(`ExtensionManager: Initializing extension ${extension.name}`);
       await extension.initialize(this.editor);
+      console.log(`ExtensionManager: Extension ${extension.name} initialized successfully`);
     }
 
     // Set up event handlers
     this.setupEventHandlers(extension);
+    
+    console.log(`ExtensionManager: Extension ${extension.name} loaded successfully`);
   }
 
   unloadExtension(extensionName: string): void {

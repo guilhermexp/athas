@@ -19,6 +19,8 @@ import { useSettingsStore } from "./settings/stores/settings-store";
 import { useZoomStore } from "./stores/zoom-store";
 import { cn } from "./utils/cn";
 import { isMac } from "./utils/platform";
+import { initializeThemeSystem } from "./extensions/themes";
+import { extensionManager } from "./extensions/extension-manager";
 
 function App() {
   enableMapSet();
@@ -52,6 +54,20 @@ function App() {
   useEffect(() => {
     loadAvailableFonts();
   }, [loadAvailableFonts]);
+
+  // Initialize extension system and themes
+  useEffect(() => {
+    const initializeExtensions = async () => {
+      console.log("Starting extension system initialization...");
+      extensionManager.initialize();
+      console.log("Extension manager initialized");
+      await initializeThemeSystem();
+      console.log("Theme system initialization completed");
+    };
+    initializeExtensions().catch(error => {
+      console.error("Failed to initialize extensions:", error);
+    });
+  }, []);
 
   // Mouse wheel zoom functionality
   useEffect(() => {
