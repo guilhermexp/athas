@@ -1,7 +1,7 @@
 import { Folder, Download, CheckCircle, AlertCircle } from "lucide-react";
 import Button from "@/components/ui/button";
 import { cn } from "@/utils/cn";
-import { useUpdater } from "@/hooks/use-updater";
+import { useUpdater } from "@/settings/hooks/use-updater";
 
 interface RecentFolder {
   name: string;
@@ -20,7 +20,16 @@ const WelcomeScreen = ({
   recentFolders = [],
   onOpenRecentFolder,
 }: WelcomeScreenProps) => {
-  const { available, checking, downloading, installing, error, updateInfo, downloadAndInstall, dismissUpdate } = useUpdater(true);
+  const {
+    available,
+    checking,
+    downloading,
+    installing,
+    error,
+    updateInfo,
+    downloadAndInstall,
+    dismissUpdate,
+  } = useUpdater(true);
 
   const handleRecentFolderClick = (path: string) => {
     if (onOpenRecentFolder) {
@@ -52,12 +61,18 @@ const WelcomeScreen = ({
             v0.1.0
           </p>
           {checking && (
-            <div className={cn("paper-text-light text-xs")} title="Checking for updates...">
+            <div
+              className={cn("paper-text-light text-xs")}
+              title="Checking for updates..."
+            >
               ⟳
             </div>
           )}
           {available && (
-            <div className={cn("paper-text-accent text-xs")} title={`Update available: ${updateInfo?.version}`}>
+            <div
+              className={cn("paper-text-accent text-xs")}
+              title={`Update available: ${updateInfo?.version}`}
+            >
               •
             </div>
           )}
@@ -120,7 +135,11 @@ const WelcomeScreen = ({
         {/* Error Banner */}
         {error && (
           <div className={cn("mb-4 w-full")}>
-            <div className={cn("paper-border rounded-md border border-red-200 p-3")}>
+            <div
+              className={cn(
+                "paper-border rounded-md border border-red-200 p-3",
+              )}
+            >
               <div className={cn("flex items-center gap-2")}>
                 <AlertCircle size={14} className={cn("text-red-500")} />
                 <span className={cn("paper-text-primary font-mono text-xs")}>

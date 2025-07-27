@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useEditorCompletionStore } from "../stores/editor-completion-store";
-import { useEditorSettingsStore } from "../stores/editor-settings-store";
+import { useEditorCompletionStore } from "../../stores/editor-completion-store";
+import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 import { useSettingsStore } from "../stores/settings-store";
 
 export const useSettingsSync = () => {

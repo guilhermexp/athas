@@ -1,8 +1,7 @@
-import { Code, Package, Palette, Search, Settings } from "lucide-react";
+import { Code, Package, Palette, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
-import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
-import type { CoreFeature } from "../types/core-features";
+import { usePersistentSettingsStore } from "../settings/stores/persistent-settings-store";
 import Button from "./ui/button";
 
 interface Extension {
@@ -19,8 +18,6 @@ interface ExtensionsViewProps {
   onServerUninstall: (serverId: string) => void;
   onThemeChange: (theme: "auto" | "athas-light" | "athas-dark") => void;
   currentTheme: "auto" | "athas-light" | "athas-dark";
-  coreFeatures?: CoreFeature[];
-  onCoreFeatureToggle?: (featureId: string, enabled: boolean) => void;
 }
 
 const AVAILABLE_EXTENSIONS: Extension[] = [
@@ -94,42 +91,12 @@ const ExtensionCard = ({ extension, onToggle, isActive }: ExtensionCardProps) =>
   );
 };
 
-interface CoreFeatureCardProps {
-  feature: CoreFeature;
-  onToggle: () => void;
-}
-
-const CoreFeatureCard = ({ feature, onToggle }: CoreFeatureCardProps) => {
-  const Icon = feature.icon;
-
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary-bg p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Icon size={16} className="text-text-lighter" />
-          <h3 className="font-medium text-sm text-text">{feature.name}</h3>
-        </div>
-        <Button
-          onClick={onToggle}
-          variant={feature.enabled ? "default" : "outline"}
-          size="xs"
-          className="font-normal text-xs opacity-80 hover:opacity-100"
-        >
-          {feature.enabled ? "Enabled" : "Disabled"}
-        </Button>
-      </div>
-      <p className="text-text-lighter text-xs">{feature.description}</p>
-    </div>
-  );
-};
 
 export default function ExtensionsView({
   onServerInstall,
   onServerUninstall,
   onThemeChange,
   currentTheme,
-  coreFeatures,
-  onCoreFeatureToggle,
 }: ExtensionsViewProps) {
   const { extensionsActiveTab, setExtensionsActiveTab } = usePersistentSettingsStore();
   const [searchQuery, setSearchQuery] = useState("");
@@ -177,13 +144,6 @@ export default function ExtensionsView({
     return matchesSearch && matchesTab;
   });
 
-  const filteredCoreFeatures =
-    coreFeatures?.filter((feature) => {
-      const matchesSearch =
-        feature.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        feature.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
-    }) || [];
 
   return (
     <div className="flex h-full flex-col bg-primary-bg">
@@ -224,21 +184,6 @@ export default function ExtensionsView({
           All
         </Button>
         <Button
-          onClick={() => setExtensionsActiveTab("core")}
-          variant="ghost"
-          size="sm"
-          data-active={extensionsActiveTab === "core"}
-          className={cn(
-            "flex items-center gap-1 text-xs",
-            extensionsActiveTab === "core"
-              ? "bg-selected text-text"
-              : "bg-transparent text-text-lighter hover:bg-hover",
-          )}
-        >
-          <Settings size={14} />
-          Core
-        </Button>
-        <Button
           onClick={() => setExtensionsActiveTab("language-server")}
           variant="ghost"
           size="sm"
@@ -272,31 +217,9 @@ export default function ExtensionsView({
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {/* Core Features */}
-        {(extensionsActiveTab === "all" || extensionsActiveTab === "core") &&
-          coreFeatures &&
-          coreFeatures.length > 0 && (
-            <div className="mb-6">
-              {extensionsActiveTab === "all" && (
-                <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">
-                  <Settings size={16} />
-                  Core Features
-                </h3>
-              )}
-              <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredCoreFeatures.map((feature) => (
-                  <CoreFeatureCard
-                    key={feature.id}
-                    feature={feature}
-                    onToggle={() => onCoreFeatureToggle?.(feature.id, !feature.enabled)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
 
         {/* Extensions */}
-        {extensionsActiveTab !== "core" && extensionsActiveTab !== "theme" && (
+        {extensionsActiveTab !== "theme" && (
           <div>
             {extensionsActiveTab === "all" && filteredExtensions.length > 0 && (
               <h3 className="mb-3 flex items-center gap-2 font-medium text-sm text-text">
@@ -318,13 +241,7 @@ export default function ExtensionsView({
         )}
 
         {/* No results */}
-        {((extensionsActiveTab === "core" && filteredCoreFeatures.length === 0) ||
-          (extensionsActiveTab !== "core" &&
-            extensionsActiveTab !== "all" &&
-            filteredExtensions.length === 0) ||
-          (extensionsActiveTab === "all" &&
-            filteredCoreFeatures.length === 0 &&
-            filteredExtensions.length === 0)) && (
+        {filteredExtensions.length === 0 && (
           <div className="py-8 text-center text-text-lighter">
             <Package size={24} className="mx-auto mb-2 opacity-50" />
             <p className="text-sm">No items found matching your search.</p>

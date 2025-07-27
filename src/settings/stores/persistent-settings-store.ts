@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { combine, persist } from "zustand/middleware";
-import type { CoreFeaturesState } from "../types/core-features";
+import type { CoreFeaturesState } from "../models/feature.types";
 
 const initialState = {
   // AI Chat Settings
@@ -20,6 +20,7 @@ const initialState = {
     search: true,
     diagnostics: true,
     aiChat: true,
+    breadcrumbs: true,
   } as CoreFeaturesState,
 };
 
@@ -33,10 +34,13 @@ const storeCreator = combine(initialState, (set) => ({
   setIsAIChatVisible: (visible: boolean) => set({ isAIChatVisible: visible }),
   setExtensionsActiveTab: (tab: "all" | "core" | "language-server" | "theme") =>
     set({ extensionsActiveTab: tab }),
-  setCoreFeatures: (features: CoreFeaturesState) => set({ coreFeatures: features }),
+  setCoreFeatures: (features: CoreFeaturesState) =>
+    set({ coreFeatures: features }),
 }));
 
-export const usePersistentSettingsStore = create<ReturnType<typeof storeCreator>>()(
+export const usePersistentSettingsStore = create<
+  ReturnType<typeof storeCreator>
+>()(
   persist(storeCreator, {
     name: "athas-persistent-settings",
     version: 1,

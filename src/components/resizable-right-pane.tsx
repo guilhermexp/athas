@@ -1,6 +1,6 @@
 import type React from "react";
 import { useCallback, useRef, useState } from "react";
-import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
+import { usePersistentSettingsStore } from "../settings/stores/persistent-settings-store";
 import { cn } from "../utils/cn";
 
 // Constants for resizable pane

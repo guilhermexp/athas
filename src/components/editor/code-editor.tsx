@@ -11,6 +11,7 @@ import { useEditorInstanceStore } from "../../stores/editor-instance-store";
 import { useEditorSearchStore } from "../../stores/editor-search-store";
 import { useEditorSettingsStore } from "../../stores/editor-settings-store";
 import { useFileSystemStore } from "../../stores/file-system/store";
+import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
 import FindBar from "../find-bar";
 import Breadcrumb from "./breadcrumb";
 import { TextEditor } from "./core/text-editor";
@@ -50,6 +51,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
   const { searchQuery, searchMatches, currentMatchIndex, setSearchMatches, setCurrentMatchIndex } =
     useEditorSearchStore();
   const isFileTreeLoading = useFileSystemStore((state) => state.isFileTreeLoading);
+  const { coreFeatures } = usePersistentSettingsStore();
 
   // Extract values from active buffer or use defaults
   const value = activeBuffer?.content || "";
@@ -185,7 +187,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
       <EditorStylesheet />
       <div className="flex h-full flex-col">
         {/* Breadcrumbs */}
-        <Breadcrumb />
+        {coreFeatures.breadcrumbs && <Breadcrumb />}
 
         {/* Find Bar */}
         <FindBar />

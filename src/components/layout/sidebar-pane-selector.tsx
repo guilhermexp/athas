@@ -1,15 +1,12 @@
 import { Folder, GitBranch, Package, Search, Server } from "lucide-react";
+import type { CoreFeaturesState } from "../../settings/models/feature.types";
 import Button from "../ui/button";
 
 interface SidebarPaneSelectorProps {
   isGitViewActive: boolean;
   isSearchViewActive: boolean;
   isRemoteViewActive: boolean;
-  coreFeatures: {
-    search: boolean;
-    git: boolean;
-    remote: boolean;
-  };
+  coreFeatures: CoreFeaturesState;
   onViewChange: (view: "files" | "git" | "search" | "remote") => void;
   onOpenExtensions: () => void;
 }

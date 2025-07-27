@@ -3,8 +3,8 @@ import Button from "@/components/ui/button";
 import Dropdown from "@/components/ui/dropdown";
 import Section, { SettingRow } from "@/components/ui/section";
 import Switch from "@/components/ui/switch";
-import { usePersistentSettingsStore } from "@/stores/persistent-settings-store";
-import { useSettingsStore } from "@/stores/settings-store";
+import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
+import { useSettingsStore } from "@/settings/stores/settings-store";
 import { getAvailableProviders, getModelById } from "@/types/ai-provider";
 
 export const AISettings = () => {

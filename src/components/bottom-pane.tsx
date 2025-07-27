@@ -1,7 +1,7 @@
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
-import { usePersistentSettingsStore } from "../stores/persistent-settings-store";
+import { usePersistentSettingsStore } from "../settings/stores/persistent-settings-store";
 import { useProjectStore } from "../stores/project-store";
 import { useUIState } from "../stores/ui-state-store";
 import DiagnosticsPane, {

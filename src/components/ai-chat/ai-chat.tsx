@@ -3,7 +3,7 @@ import { MessageSquare, Plus, Sparkles } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { useAIChatStore } from "../../stores/ai-chat/store";
-import { usePersistentSettingsStore } from "../../stores/persistent-settings-store";
+import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
 import { useProjectStore } from "../../stores/project-store";
 import {
   getAvailableProviders,

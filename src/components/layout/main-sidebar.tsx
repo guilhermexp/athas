@@ -7,6 +7,7 @@ import { useFileSystemStore } from "../../stores/file-system/store";
 import { useProjectStore } from "../../stores/project-store";
 import { useSidebarStore } from "../../stores/sidebar-store";
 import { useUIState } from "../../stores/ui-state-store";
+import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
 import type { FileEntry } from "../../types/app";
 import FileTree from "../file-tree/file-tree";
 import GitView from "../git/git-view";
@@ -60,9 +61,11 @@ export const MainSidebar = () => {
 
   // sidebar store
   const activeBufferPath = useSidebarStore.use.activeBufferPath?.();
-  const coreFeatures = useSidebarStore.use.coreFeatures?.();
   const isRemoteWindow = useSidebarStore.use.isRemoteWindow();
   const remoteConnectionName = useSidebarStore.use.remoteConnectionName?.();
+
+  // persistent settings store
+  const { coreFeatures } = usePersistentSettingsStore();
 
   const showFileTreeHeader =
     !isGitViewActive && !isSearchViewActive && !isRemoteViewActive && !isRemoteWindow;
