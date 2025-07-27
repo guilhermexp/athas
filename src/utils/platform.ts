@@ -82,10 +82,8 @@ export async function readDirectory(path: string): Promise<any[]> {
 
     // Normalize the path - remove any trailing slashes
     const normalizedPath = path.replace(/[/\\]+$/, "");
-    console.log("readDirectory: Normalized path:", normalizedPath);
 
     const entries = await readDir(normalizedPath);
-    console.log("readDirectory: Successfully read", entries.length, "entries");
 
     // Use the appropriate path separator based on the input path
     const separator = normalizedPath.includes("\\") ? "\\" : "/";
@@ -96,7 +94,10 @@ export async function readDirectory(path: string): Promise<any[]> {
     }));
   } catch (error) {
     console.error("readDirectory: Error reading directory:", path, error);
-    console.error("readDirectory: Error details:", JSON.stringify(error, null, 2));
+    console.error(
+      "readDirectory: Error details:",
+      JSON.stringify(error, null, 2),
+    );
     throw error;
   }
 }
@@ -106,6 +107,9 @@ export async function readDirectory(path: string): Promise<any[]> {
  * @param sourcePath The path of the file to move
  * @param targetPath The destination path where the file should be moved
  */
-export async function moveFile(sourcePath: string, targetPath: string): Promise<void> {
+export async function moveFile(
+  sourcePath: string,
+  targetPath: string,
+): Promise<void> {
   await invoke("move_file", { sourcePath, targetPath });
 }

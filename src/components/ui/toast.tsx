@@ -1,8 +1,7 @@
 import { X } from "lucide-react";
-import type React from "react";
 import { useToast } from "@/contexts/toast-context";
 
-export const ToastContainer: React.FC = () => {
+export const ToastContainer = () => {
   const { toasts, dismissToast } = useToast();
 
   return (

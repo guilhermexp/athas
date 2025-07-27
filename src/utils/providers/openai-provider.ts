@@ -1,4 +1,8 @@
-import { AIProvider, type ProviderHeaders, type StreamRequest } from "./provider-interface";
+import {
+  AIProvider,
+  type ProviderHeaders,
+  type StreamRequest,
+} from "./provider-interface";
 
 export class OpenAIProvider extends AIProvider {
   buildHeaders(apiKey?: string): ProviderHeaders {
@@ -34,7 +38,6 @@ export class OpenAIProvider extends AIProvider {
       });
 
       if (response.ok) {
-        console.log(`${this.name} API key validated successfully`);
         return true;
       } else {
         console.error(`${this.name} API validation error:`, response.status);

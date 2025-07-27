@@ -46,14 +46,16 @@ const GitActionsMenu = ({
   const [isLoading, setIsLoading] = useState(false);
   const { isRefreshing } = useGitStore();
 
-  const handleAction = async (action: () => Promise<boolean>, actionName: string) => {
+  const handleAction = async (
+    action: () => Promise<boolean>,
+    actionName: string,
+  ) => {
     if (!repoPath) return;
 
     setIsLoading(true);
     try {
       const success = await action();
       if (success) {
-        console.log(`${actionName} completed successfully`);
         onRefresh?.();
       } else {
         console.error(`${actionName} failed`);
@@ -240,7 +242,10 @@ const GitActionsMenu = ({
               "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
             )}
           >
-            <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
+            <RefreshCw
+              size={12}
+              className={isRefreshing ? "animate-spin" : ""}
+            />
             Refresh Status
           </button>
 
@@ -296,7 +301,10 @@ const GitActionsMenu = ({
               "text-left font-mono text-text text-xs hover:bg-hover disabled:opacity-50",
             )}
           >
-            <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
+            <RefreshCw
+              size={12}
+              className={isRefreshing ? "animate-spin" : ""}
+            />
             Refresh Status
           </button>
         </>

@@ -206,7 +206,23 @@ const TerminalContainer = ({
   // Terminal-specific keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle shortcuts when the terminal container or its children have focus
+      // Handle terminal tab navigation regardless of focus (when bottom pane is visible)
+      const isBottomPaneVisible = document.querySelector('[data-terminal-container="active"]');
+      if (isBottomPaneVisible) {
+        // Terminal tab navigation with Ctrl+Tab and Ctrl+Shift+Tab
+        if (e.ctrlKey && e.key === "Tab") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.shiftKey) {
+            switchToPrevTerminal();
+          } else {
+            switchToNextTerminal();
+          }
+          return;
+        }
+      }
+
+      // Only handle other shortcuts when the terminal container or its children have focus
       const terminalContainer = document.querySelector('[data-terminal-container="active"]');
       if (!terminalContainer || !terminalContainer.contains(document.activeElement)) {
         return;
@@ -262,16 +278,6 @@ const TerminalContainer = ({
         return;
       }
 
-      // Terminal tab navigation with Ctrl+Tab and Ctrl+Shift+Tab
-      if (e.ctrlKey && e.key === "Tab") {
-        e.preventDefault();
-        if (e.shiftKey) {
-          switchToPrevTerminal();
-        } else {
-          switchToNextTerminal();
-        }
-        return;
-      }
 
       // Terminal tab navigation with Alt+Left/Right
       if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {

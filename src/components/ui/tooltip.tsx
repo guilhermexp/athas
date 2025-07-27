@@ -71,12 +71,10 @@ export default function Tooltip({ content, children, side = "top", className }: 
   };
 
   const arrowClasses = {
-    top: "top-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-gray-900 dark:border-t-gray-100",
-    bottom:
-      "bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-gray-900 dark:border-b-gray-100",
-    left: "left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-gray-900 dark:border-l-gray-100",
-    right:
-      "right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-gray-900 dark:border-r-gray-100",
+    top: "top-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-border",
+    bottom: "bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-border",
+    left: "left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-border",
+    right: "right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-border",
   };
 
   return (
@@ -94,7 +92,7 @@ export default function Tooltip({ content, children, side = "top", className }: 
         createPortal(
           <div
             className={cn(
-              "pointer-events-none fixed z-[99999] whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-gray-100 text-xs shadow-lg dark:bg-gray-100 dark:text-gray-900",
+              "pointer-events-none fixed z-[99999] whitespace-nowrap rounded bg-secondary-bg border border-border px-2 py-1 text-text text-xs shadow-lg",
               tooltipClasses[side],
               className,
             )}
@@ -104,7 +102,6 @@ export default function Tooltip({ content, children, side = "top", className }: 
             }}
           >
             {content}
-            <div className={cn("absolute h-0 w-0 border-2", arrowClasses[side])} />
           </div>,
           document.body,
         )}

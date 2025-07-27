@@ -34,7 +34,10 @@ interface FileTreeProps {
   rootFolderPath?: string;
   onFileSelect: (path: string, isDir: boolean) => void;
   onCreateNewFileInDirectory: (directoryPath: string, fileName: string) => void;
-  onCreateNewFolderInDirectory?: (directoryPath: string, folderName: string) => void;
+  onCreateNewFolderInDirectory?: (
+    directoryPath: string,
+    folderName: string,
+  ) => void;
   onDeletePath?: (path: string, isDir: boolean) => void;
   onGenerateImage?: (directoryPath: string) => void;
   onUpdateFiles?: (files: FileEntry[]) => void;
@@ -70,9 +73,13 @@ const FileTree = ({
   const [editingValue, setEditingValue] = useState<string>("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [gitIgnore, setGitIgnore] = useState<ReturnType<typeof ignore> | null>(null);
+  const [gitIgnore, setGitIgnore] = useState<ReturnType<typeof ignore> | null>(
+    null,
+  );
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
-  const [deepestStickyFolder, setDeepestStickyFolder] = useState<string | null>(null);
+  const [deepestStickyFolder, setDeepestStickyFolder] = useState<string | null>(
+    null,
+  );
 
   // Track scroll for deepest sticky folder detection
   useEffect(() => {
@@ -219,7 +226,10 @@ const FileTree = ({
       // Find any file within this directory that has changes
       const fileWithChanges = gitStatus.files.find((file) => {
         const filePath = file.path;
-        return filePath.startsWith(`${relativeDirPath}/`) || filePath === relativeDirPath;
+        return (
+          filePath.startsWith(`${relativeDirPath}/`) ||
+          filePath === relativeDirPath
+        );
       });
 
       return fileWithChanges || null;
@@ -315,11 +325,6 @@ const FileTree = ({
     file: FileEntry;
   } | null>(null);
 
-  // Log when files prop changes
-  useEffect(() => {
-    console.log(`🌳 FileTree received ${files.length} files`, files);
-  }, [files]);
-
   const startInlineEditing = (parentPath: string, isFolder: boolean) => {
     if (!onUpdateFiles) return;
 
@@ -333,7 +338,10 @@ const FileTree = ({
     };
 
     // Add the new item to the file tree
-    const addNewItemToTree = (items: FileEntry[], targetPath: string): FileEntry[] => {
+    const addNewItemToTree = (
+      items: FileEntry[],
+      targetPath: string,
+    ): FileEntry[] => {
       return items.map((item) => {
         if (item.path === targetPath && item.isDir) {
           // Add the new item to this directory
@@ -350,7 +358,10 @@ const FileTree = ({
     };
 
     // If it's the root directory, add to root level
-    if (parentPath === files[0]?.path.split("/").slice(0, -1).join("/") || !parentPath) {
+    if (
+      parentPath === files[0]?.path.split("/").slice(0, -1).join("/") ||
+      !parentPath
+    ) {
       onUpdateFiles([...files, newItem]);
     } else {
       const updatedFiles = addNewItemToTree(files, parentPath);
@@ -365,7 +376,9 @@ const FileTree = ({
 
     if (newName.trim()) {
       // Create the actual file/folder
-      let parentPath = item.path.endsWith("/") ? item.path.slice(0, -1) : item.path;
+      let parentPath = item.path.endsWith("/")
+        ? item.path.slice(0, -1)
+        : item.path;
 
       // Ensure parentPath is not empty - use rootFolderPath as fallback
       if (!parentPath && rootFolderPath) {
@@ -418,7 +431,11 @@ const FileTree = ({
     setEditingValue("");
   };
 
-  const handleContextMenu = (e: React.MouseEvent, filePath: string, isDir: boolean) => {
+  const handleContextMenu = (
+    e: React.MouseEvent,
+    filePath: string,
+    isDir: boolean,
+  ) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -491,7 +508,10 @@ const FileTree = ({
       <div key={file.path} className="file-tree-item" data-depth={depth}>
         {file.isEditing ? (
           <div
-            className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
+            className={cn(
+              "flex min-h-[22px] w-full items-center",
+              "gap-1.5 px-1.5 py-1",
+            )}
             style={{ paddingLeft: `${12 + depth * 20}px`, paddingRight: "8px" }}
           >
             <FileIcon
@@ -577,7 +597,9 @@ const FileTree = ({
               dragState.isDragging && "cursor-move",
               file.ignored && "opacity-50",
               file.isDir && "file-tree-item-dir",
-              file.isDir && deepestStickyFolder === file.path && "border-white/5 border-b",
+              file.isDir &&
+                deepestStickyFolder === file.path &&
+                "border-white/5 border-b",
             )}
             data-path={file.path}
             data-depth={depth}
@@ -612,7 +634,9 @@ const FileTree = ({
             </span>
           </button>
         )}
-        {file.expanded && file.children && <div>{renderFileTree(file.children, depth + 1)}</div>}
+        {file.expanded && file.children && (
+          <div>{renderFileTree(file.children, depth + 1)}</div>
+        )}
       </div>
     ));
   };
@@ -639,22 +663,20 @@ const FileTree = ({
         return;
       }
 
-      console.log("Drop to root - source:", sourcePath, "target:", targetPath);
-
       // Check if file is already at root level
       const pathSeparator = sourcePath.includes("\\") ? "\\" : "/";
       const sourceParentPath =
-        sourcePath.split(pathSeparator).slice(0, -1).join(pathSeparator) || rootFolderPath || "";
+        sourcePath.split(pathSeparator).slice(0, -1).join(pathSeparator) ||
+        rootFolderPath ||
+        "";
 
       if (targetPath === sourceParentPath) {
-        console.log("File is already at root level");
         setDraggedItem(null);
         return;
       }
 
       try {
         const newPath = targetPath + pathSeparator + sourceName;
-        console.log("Moving file to root:", sourcePath, "->", newPath);
         await moveFile(sourcePath, newPath);
 
         if (onFileMove) {
@@ -683,12 +705,11 @@ const FileTree = ({
       // Get root path - handle both forward and backslashes
       const firstFilePath = files[0]?.path || "";
       const pathSep = firstFilePath.includes("\\") ? "\\" : "/";
-      const rootPath = firstFilePath.split(pathSep).slice(0, -1).join(pathSep) || ".";
-      console.log("External files dropped to root:", rootPath);
+      const rootPath =
+        firstFilePath.split(pathSep).slice(0, -1).join(pathSep) || ".";
 
       for (let i = 0; i < e.dataTransfer.files.length; i++) {
         const file = e.dataTransfer.files[i];
-        console.log("File to upload:", file.name);
         // TODO: Implement file upload
       }
     }
@@ -758,7 +779,6 @@ const FileTree = ({
                     if (onCreateNewFolderInDirectory) {
                       startInlineEditing(contextMenu.path, true);
                     } else {
-                      console.log("New folder in:", contextMenu.path);
                     }
                     setContextMenu(null);
                   }}
@@ -778,7 +798,6 @@ const FileTree = ({
                     if (onUploadFile) {
                       onUploadFile(contextMenu.path);
                     } else {
-                      console.log("Upload files to:", contextMenu.path);
                     }
                     setContextMenu(null);
                   }}
@@ -798,7 +817,6 @@ const FileTree = ({
                     if (onRefreshDirectory) {
                       onRefreshDirectory(contextMenu.path);
                     } else {
-                      console.log("Refresh directory:", contextMenu.path);
                     }
                     setContextMenu(null);
                   }}
@@ -819,7 +837,6 @@ const FileTree = ({
                     if (window.electron) {
                       window.electron.shell.openPath(contextMenu.path);
                     } else {
-                      console.log("Open in terminal:", contextMenu.path);
                     }
                     setContextMenu(null);
                   }}
@@ -836,7 +853,6 @@ const FileTree = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log("Find in folder:", contextMenu.path);
                     setContextMenu(null);
                   }}
                   className={cn(
@@ -876,7 +892,6 @@ const FileTree = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log("Open file:", contextMenu.path);
                     onFileSelect(contextMenu.path, false);
                     setContextMenu(null);
                   }}
@@ -897,9 +912,8 @@ const FileTree = ({
                       const response = await fetch(contextMenu.path);
                       const content = await response.text();
                       await navigator.clipboard.writeText(content);
-                      console.log("Copied file content to clipboard");
                     } catch (error) {
-                      console.log("Failed to copy file content:", error);
+                      console.error("Failed to copy file content:", error);
                     }
                     setContextMenu(null);
                   }}
@@ -919,7 +933,6 @@ const FileTree = ({
                     if (onDuplicatePath) {
                       onDuplicatePath(contextMenu.path);
                     } else {
-                      console.log("Duplicate file:", contextMenu.path);
                     }
                     setContextMenu(null);
                   }}
@@ -940,7 +953,8 @@ const FileTree = ({
                       const stats = await fetch(`file://${contextMenu.path}`, {
                         method: "HEAD",
                       });
-                      const size = stats.headers.get("content-length") || "Unknown";
+                      const size =
+                        stats.headers.get("content-length") || "Unknown";
                       const fileName = contextMenu.path.split("/").pop() || "";
                       const extension = fileName.includes(".")
                         ? fileName.split(".").pop()
@@ -973,10 +987,7 @@ const FileTree = ({
                 e.stopPropagation();
                 try {
                   await navigator.clipboard.writeText(contextMenu.path);
-                  console.log("Copied absolute path:", contextMenu.path);
-                } catch (error) {
-                  console.log("Failed to copy path:", error);
-                }
+                } catch (error) {}
                 setContextMenu(null);
               }}
               className={cn(
@@ -995,13 +1006,17 @@ const FileTree = ({
                 e.stopPropagation();
                 try {
                   let relativePath = contextMenu.path;
-                  if (rootFolderPath && contextMenu.path.startsWith(rootFolderPath)) {
-                    relativePath = contextMenu.path.substring(rootFolderPath.length + 1);
+                  if (
+                    rootFolderPath &&
+                    contextMenu.path.startsWith(rootFolderPath)
+                  ) {
+                    relativePath = contextMenu.path.substring(
+                      rootFolderPath.length + 1,
+                    );
                   }
                   await navigator.clipboard.writeText(relativePath);
-                  console.log("Copied relative path:", relativePath);
                 } catch (error) {
-                  console.log("Failed to copy relative path:", error);
+                  console.error("Failed to copy relative path:", error);
                 }
                 setContextMenu(null);
               }}
@@ -1022,7 +1037,6 @@ const FileTree = ({
                 if (onCutPath) {
                   onCutPath(contextMenu.path);
                 } else {
-                  console.log("Cut:", contextMenu.path);
                 }
                 setContextMenu(null);
               }}
@@ -1040,12 +1054,14 @@ const FileTree = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const newName = prompt("Enter new name:", contextMenu.path.split("/").pop() || "");
+                const newName = prompt(
+                  "Enter new name:",
+                  contextMenu.path.split("/").pop() || "",
+                );
                 if (newName?.trim()) {
                   if (onRenamePath) {
                     onRenamePath(contextMenu.path, newName.trim());
                   } else {
-                    console.log("Rename:", contextMenu.path, "to", newName.trim());
                   }
                 }
                 setContextMenu(null);
@@ -1096,7 +1112,6 @@ const FileTree = ({
                 if (onDeletePath) {
                   onDeletePath(contextMenu.path, contextMenu.isDir);
                 } else {
-                  console.log("Delete:", contextMenu.path);
                 }
                 setContextMenu(null);
               }}

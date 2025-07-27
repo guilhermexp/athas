@@ -16,7 +16,6 @@ const clearLocalStorageByPrefix = (prefix: string): void => {
   }
 
   keysToRemove.forEach((key) => localStorage.removeItem(key));
-  console.log(`Cleared ${keysToRemove.length} items with prefix "${prefix}"`);
 };
 
 /**
@@ -59,7 +58,10 @@ export const safeLocalStorageSetItem = (
       return true;
     } catch (error) {
       if (error instanceof Error && error.name === "QuotaExceededError") {
-        console.warn(`localStorage quota exceeded on attempt ${attempts + 1}`, error);
+        console.warn(
+          `localStorage quota exceeded on attempt ${attempts + 1}`,
+          error,
+        );
 
         if (attempts === 0 && clearPrefix) {
           // First attempt: try clearing items with specified prefix

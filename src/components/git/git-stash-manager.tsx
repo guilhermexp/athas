@@ -1,4 +1,12 @@
-import { Archive, Clock, Download, Plus, Trash2, Upload, X } from "lucide-react";
+import {
+  Archive,
+  Clock,
+  Download,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import {
@@ -17,7 +25,12 @@ interface GitStashManagerProps {
   onRefresh?: () => void;
 }
 
-const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManagerProps) => {
+const GitStashManager = ({
+  isOpen,
+  onClose,
+  repoPath,
+  onRefresh,
+}: GitStashManagerProps) => {
   const [stashes, setStashes] = useState<GitStash[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [newStashMessage, setNewStashMessage] = useState("");
@@ -77,7 +90,6 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
     try {
       const success = await action();
       if (success) {
-        console.log(`${actionName} completed successfully`);
         await loadStashes();
         onRefresh?.();
       } else {
@@ -95,15 +107,27 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
   };
 
   const handleApplyStash = (stashIndex: number) => {
-    handleStashAction(() => applyStash(repoPath!, stashIndex), stashIndex, "Apply stash");
+    handleStashAction(
+      () => applyStash(repoPath!, stashIndex),
+      stashIndex,
+      "Apply stash",
+    );
   };
 
   const handlePopStash = (stashIndex: number) => {
-    handleStashAction(() => popStash(repoPath!, stashIndex), stashIndex, "Pop stash");
+    handleStashAction(
+      () => popStash(repoPath!, stashIndex),
+      stashIndex,
+      "Pop stash",
+    );
   };
 
   const handleDropStash = (stashIndex: number) => {
-    handleStashAction(() => dropStash(repoPath!, stashIndex), stashIndex, "Drop stash");
+    handleStashAction(
+      () => dropStash(repoPath!, stashIndex),
+      stashIndex,
+      "Drop stash",
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -137,7 +161,12 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
   }
 
   return (
-    <div className={cn("fixed inset-0 z-50 flex items-center justify-center", "bg-opacity-50")}>
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center",
+        "bg-opacity-50",
+      )}
+    >
       <div
         className={cn(
           "flex max-h-[80vh] w-96 flex-col rounded-lg",
@@ -150,7 +179,10 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
             <Archive size={16} className="text-text-lighter" />
             <h2 className="font-medium text-sm text-text">Stash Manager</h2>
           </div>
-          <button onClick={onClose} className="text-text-lighter transition-colors hover:text-text">
+          <button
+            onClick={onClose}
+            className="text-text-lighter transition-colors hover:text-text"
+          >
             <X size={16} />
           </button>
         </div>
@@ -160,7 +192,9 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
           <div className="space-y-2">
             <div className="mb-2 flex items-center gap-2">
               <Plus size={12} className="text-text-lighter" />
-              <span className="font-medium text-text text-xs">Create New Stash</span>
+              <span className="font-medium text-text text-xs">
+                Create New Stash
+              </span>
             </div>
 
             <input
@@ -209,9 +243,13 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
         {/* Stash List */}
         <div className="flex-1 overflow-y-auto">
           {isLoading && stashes.length === 0 ? (
-            <div className="p-4 text-center text-text-lighter text-xs">Loading stashes...</div>
+            <div className="p-4 text-center text-text-lighter text-xs">
+              Loading stashes...
+            </div>
           ) : stashes.length === 0 ? (
-            <div className="p-4 text-center text-text-lighter text-xs">No stashes found</div>
+            <div className="p-4 text-center text-text-lighter text-xs">
+              No stashes found
+            </div>
           ) : (
             <div className="space-y-0">
               {stashes.map((stash) => {
@@ -220,7 +258,10 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
                 return (
                   <div
                     key={stash.index}
-                    className={cn("border-border border-b p-3", "last:border-b-0 hover:bg-hover")}
+                    className={cn(
+                      "border-border border-b p-3",
+                      "last:border-b-0 hover:bg-hover",
+                    )}
                   >
                     <div className="mb-2 flex items-start justify-between">
                       <div className="min-w-0 flex-1">
@@ -294,7 +335,10 @@ const GitStashManager = ({ isOpen, onClose, repoPath, onRefresh }: GitStashManag
 
         {/* Footer */}
         <div
-          className={cn("border-border border-t bg-primary-bg p-3", "text-[9px] text-text-lighter")}
+          className={cn(
+            "border-border border-t bg-primary-bg p-3",
+            "text-[9px] text-text-lighter",
+          )}
         >
           {stashes.length} stash{stashes.length !== 1 ? "es" : ""} total
         </div>

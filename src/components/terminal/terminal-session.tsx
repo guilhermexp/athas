@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Terminal as TerminalType } from "../../types/terminal";
 import { TerminalErrorBoundary } from "./terminal-error-boundary";
-import { XtermTerminal } from "./xterm-terminal";
+import { XtermTerminal } from "./terminal";
 
 interface TerminalSessionProps {
   terminal: TerminalType;

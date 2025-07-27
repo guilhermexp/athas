@@ -52,7 +52,6 @@ const GitHubCopilotSettings = () => {
       });
 
       if (response.ok) {
-        console.log("OpenAI API key validated successfully");
         return true;
       } else {
         throw new Error(`OpenAI API error: ${response.status}`);
