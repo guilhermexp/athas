@@ -1,0 +1,154 @@
+/* Customize scrollbar for Chrome, Safari and Opera */
+.file-tree-container::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+  display: block !important;
+}
+
+.file-tree-container::-webkit-scrollbar-track {
+  background: transparent !important;
+  display: block !important;
+}
+
+.file-tree-container::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.3) !important;
+  border-radius: 3px !important;
+  display: block !important;
+}
+
+.file-tree-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.5) !important;
+}
+
+/* Customize scrollbar for Firefox */
+.file-tree-container {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(155, 155, 155, 0.3) transparent !important;
+}
+
+/* Enable proper mouse wheel scrolling */
+.file-tree-container {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: 100% !important;
+  position: relative !important;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: auto !important;
+  scroll-behavior: auto !important;
+  pointer-events: auto !important;
+}
+
+/* Apply app-wide font family to file tree */
+.file-tree-container,
+.file-tree-container * {
+  font-family: var(--app-font-family, monospace) !important;
+}
+
+/* Sticky parent folders - simple and clean */
+.file-tree-item-dir {
+  position: sticky !important;
+  top: calc(var(--depth, 0) * 22px) !important;
+  z-index: calc(50 - var(--depth, 0)) !important;
+}
+
+/* All file tree items have same background behavior */
+.file-tree-container button {
+  background-color: transparent !important;
+}
+
+.file-tree-container button:hover {
+  background-color: var(--color-hover) !important;
+}
+
+.file-tree-container button.bg-selected {
+  background-color: var(--color-selected) !important;
+}
+
+/* Sticky folders need solid background to hide text beneath */
+.file-tree-container .file-tree-item-dir {
+  background-color: var(--color-secondary-bg) !important;
+}
+
+.file-tree-container .file-tree-item-dir:hover {
+  background-color: var(--color-hover) !important;
+}
+
+.file-tree-container .file-tree-item-dir.bg-selected {
+  background-color: var(--color-selected) !important;
+}
+
+/* Hide vertical lines on sticky folders specifically */
+.file-tree-item-dir.file-tree-item[data-depth]::after {
+  display: none !important;
+}
+
+/* Vertical nesting lines - show all parent levels */
+.file-tree-item {
+  position: relative;
+}
+
+/* Vertical lines aligned with icons */
+.file-tree-item[data-depth="1"]::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.file-tree-item[data-depth="2"]::after {
+  content: "";
+  position: absolute;
+  left: 40px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.file-tree-item[data-depth="3"]::after {
+  content: "";
+  position: absolute;
+  left: 60px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.file-tree-item[data-depth="4"]::after {
+  content: "";
+  position: absolute;
+  left: 80px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.file-tree-item[data-depth="5"]::after {
+  content: "";
+  position: absolute;
+  left: 100px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 100;
+}
