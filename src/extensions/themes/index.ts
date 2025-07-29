@@ -1,14 +1,5 @@
 export * from "./base-theme-extension";
-export { athasThemesExtension } from "./builtin/athas-themes";
-export { catppuccinExtension } from "./builtin/catppuccin";
-export { contrastThemesExtension } from "./builtin/contrast-themes";
-export { draculaExtension } from "./builtin/dracula";
-export { githubExtension } from "./builtin/github";
-export { nordExtension } from "./builtin/nord";
-export { oneDarkExtension } from "./builtin/one-dark";
-export { solarizedExtension } from "./builtin/solarized";
-export { tokyoNightExtension } from "./builtin/tokyo-night";
-export { vscodeExtension } from "./builtin/vscode";
 export * from "./theme-initializer";
+export * from "./theme-loader";
 export * from "./theme-registry";
 export * from "./types";

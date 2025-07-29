@@ -5,7 +5,6 @@ class ThemeRegistry implements ThemeRegistryAPI {
   private currentTheme: string | null = null;
   private changeCallbacks = new Set<(themeId: string) => void>();
   private registryCallbacks = new Set<() => void>();
-  private initialized = false;
 
   registerTheme(theme: ThemeDefinition): void {
     console.log("Theme registry: Registering theme", theme.id, theme.name);

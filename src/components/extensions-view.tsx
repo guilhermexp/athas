@@ -200,17 +200,16 @@ export default function ExtensionsView({
           onClick={() => setExtensionsActiveTab("theme")}
           variant="ghost"
           size="sm"
-          disabled
           data-active={extensionsActiveTab === "theme"}
           className={cn(
-            "flex cursor-not-allowed items-center gap-1 text-xs opacity-50",
+            "flex items-center gap-1 text-xs",
             extensionsActiveTab === "theme"
               ? "bg-selected text-text"
-              : "bg-transparent text-text-lighter",
+              : "bg-transparent text-text-lighter hover:bg-hover",
           )}
         >
           <Palette size={14} />
-          Themes (Coming Soon)
+          Themes
         </Button>
       </div>
 

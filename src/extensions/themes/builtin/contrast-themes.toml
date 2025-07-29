@@ -1,0 +1,107 @@
+[[themes]]
+id = "high-contrast-light"
+name = "High Contrast Light"
+description = "Maximum contrast light theme for accessibility"
+category = "Light"
+is_dark = false
+
+[themes.css_variables]
+"--tw-primary-bg" = "#ffffff"
+"--tw-secondary-bg" = "#f5f5f5"
+"--tw-text" = "#000000"
+"--tw-text-light" = "#333333"
+"--tw-text-lighter" = "#666666"
+"--tw-border" = "#cccccc"
+"--tw-hover" = "#e5e5e5"
+"--tw-selected" = "#e5e5e5"
+"--tw-accent" = "#0066cc"
+
+[themes.syntax_tokens]
+"--color-syntax-keyword" = "#0000ff"
+"--color-syntax-string" = "#008800"
+"--color-syntax-number" = "#cc6600"
+"--color-syntax-comment" = "#666666"
+"--color-syntax-variable" = "#cc0000"
+"--color-syntax-function" = "#8800cc"
+"--color-syntax-constant" = "#cc6600"
+"--color-syntax-property" = "#0066cc"
+"--color-syntax-type" = "#cc6600"
+"--color-syntax-operator" = "#0000ff"
+"--color-syntax-punctuation" = "#000000"
+"--color-syntax-boolean" = "#cc6600"
+"--color-syntax-null" = "#cc6600"
+"--color-syntax-regex" = "#008800"
+"--color-syntax-jsx" = "#0066cc"
+"--color-syntax-jsx-attribute" = "#8800cc"
+
+[[themes]]
+id = "high-contrast-dark"
+name = "High Contrast Dark"
+description = "Maximum contrast dark theme for accessibility"
+category = "Dark"
+is_dark = true
+
+[themes.css_variables]
+"--tw-primary-bg" = "#000000"
+"--tw-secondary-bg" = "#1a1a1a"
+"--tw-text" = "#ffffff"
+"--tw-text-light" = "#cccccc"
+"--tw-text-lighter" = "#999999"
+"--tw-border" = "#666666"
+"--tw-hover" = "#333333"
+"--tw-selected" = "#333333"
+"--tw-accent" = "#66ccff"
+
+[themes.syntax_tokens]
+"--color-syntax-keyword" = "#66ccff"
+"--color-syntax-string" = "#66ff66"
+"--color-syntax-number" = "#ffcc66"
+"--color-syntax-comment" = "#999999"
+"--color-syntax-variable" = "#ff9999"
+"--color-syntax-function" = "#cc99ff"
+"--color-syntax-constant" = "#ffcc66"
+"--color-syntax-property" = "#66ccff"
+"--color-syntax-type" = "#ffcc66"
+"--color-syntax-operator" = "#66ccff"
+"--color-syntax-punctuation" = "#ffffff"
+"--color-syntax-boolean" = "#ffcc66"
+"--color-syntax-null" = "#ffcc66"
+"--color-syntax-regex" = "#66ff66"
+"--color-syntax-jsx" = "#66ccff"
+"--color-syntax-jsx-attribute" = "#cc99ff"
+
+[[themes]]
+id = "monochrome"
+name = "Monochrome"
+description = "Pure black and white theme for minimal distraction"
+category = "Dark"
+is_dark = true
+
+[themes.css_variables]
+"--tw-primary-bg" = "#000000"
+"--tw-secondary-bg" = "#111111"
+"--tw-text" = "#ffffff"
+"--tw-text-light" = "#cccccc"
+"--tw-text-lighter" = "#888888"
+"--tw-border" = "#444444"
+"--tw-hover" = "#222222"
+"--tw-selected" = "#222222"
+"--tw-accent" = "#ffffff"
+
+[themes.syntax_tokens]
+"--color-syntax-keyword" = "#ffffff"
+"--color-syntax-string" = "#cccccc"
+"--color-syntax-number" = "#aaaaaa"
+"--color-syntax-comment" = "#666666"
+"--color-syntax-variable" = "#cccccc"
+"--color-syntax-function" = "#ffffff"
+"--color-syntax-constant" = "#aaaaaa"
+"--color-syntax-property" = "#cccccc"
+"--color-syntax-type" = "#ffffff"
+"--color-syntax-operator" = "#ffffff"
+"--color-syntax-punctuation" = "#ffffff"
+"--color-syntax-boolean" = "#aaaaaa"
+"--color-syntax-null" = "#aaaaaa"
+"--color-syntax-regex" = "#cccccc"
+"--color-syntax-jsx" = "#ffffff"
+"--color-syntax-jsx-attribute" = "#ffffff"

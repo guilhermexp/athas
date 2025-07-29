@@ -1,14 +1,5 @@
 import { extensionManager } from "../extension-manager";
-import { athasThemesExtension } from "./builtin/athas-themes";
-import { catppuccinExtension } from "./builtin/catppuccin";
-import { contrastThemesExtension } from "./builtin/contrast-themes";
-import { draculaExtension } from "./builtin/dracula";
-import { githubExtension } from "./builtin/github";
-import { nordExtension } from "./builtin/nord";
-import { oneDarkExtension } from "./builtin/one-dark";
-import { solarizedExtension } from "./builtin/solarized";
-import { tokyoNightExtension } from "./builtin/tokyo-night";
-import { vscodeExtension } from "./builtin/vscode";
+import { themeLoader } from "./theme-loader";
 import { themeRegistry } from "./theme-registry";
 
 export const initializeThemeSystem = async () => {
@@ -59,29 +50,13 @@ export const initializeThemeSystem = async () => {
     console.log("initializeThemeSystem: Setting editor API...");
     extensionManager.setEditor(dummyEditorAPI);
 
-    // Load built-in theme extensions
-    const extensions = [
-      { name: "GitHub", extension: githubExtension },
-      { name: "VS Code", extension: vscodeExtension },
-      { name: "Tokyo Night", extension: tokyoNightExtension },
-      { name: "Dracula", extension: draculaExtension },
-      { name: "One Dark", extension: oneDarkExtension },
-      { name: "Catppuccin", extension: catppuccinExtension },
-      { name: "Nord", extension: nordExtension },
-      { name: "Solarized", extension: solarizedExtension },
-      { name: "Contrast", extension: contrastThemesExtension },
-    ];
-
-    for (const { name, extension } of extensions) {
-      try {
-        console.log(`initializeThemeSystem: Loading ${name} themes extension...`);
-        await extensionManager.loadExtension(extension);
-        console.log(
-          `initializeThemeSystem: ${name} themes loaded - ${extension.themes.length} themes`,
-        );
-      } catch (error) {
-        console.error(`initializeThemeSystem: Failed to load ${name} themes:`, error);
-      }
+    // Load theme loader
+    try {
+      console.log("initializeThemeSystem: Loading theme loader...");
+      await extensionManager.loadExtension(themeLoader);
+      console.log(`initializeThemeSystem: Themes loaded - ${themeLoader.themes.length} themes`);
+    } catch (error) {
+      console.error("initializeThemeSystem: Failed to load themes:", error);
     }
 
     // Check what's in the registry

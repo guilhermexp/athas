@@ -14,6 +14,12 @@ Designed for developers who want a fast and customizable development environment
 3. Build and run:
    `bun tauri dev`
 
+## Customizing
+
+### Themes
+
+Create custom themes by adding TOML files. See the [themes documentation](src/extensions/themes/builtin/README.md) for details.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.

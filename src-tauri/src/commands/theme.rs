@@ -1,4 +1,31 @@
 use std::process::Command;
+use std::fs;
+use std::path::Path;
+use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use tauri::State;
+use tokio::sync::RwLock;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TomlTheme {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub category: String, // "System" | "Light" | "Dark"
+    #[serde(rename = "is_dark")]
+    pub is_dark: Option<bool>,
+    #[serde(rename = "css_variables")]
+    pub css_variables: HashMap<String, String>,
+    #[serde(rename = "syntax_tokens")]
+    pub syntax_tokens: Option<HashMap<String, String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TomlThemeFile {
+    pub themes: Vec<TomlTheme>,
+}
+
+pub type ThemeCache = RwLock<HashMap<String, TomlTheme>>;
 
 fn get_system_theme_sync() -> String {
    #[cfg(target_os = "linux")]
@@ -103,4 +130,71 @@ fn get_system_theme_sync() -> String {
 #[tauri::command]
 pub async fn get_system_theme() -> Result<String, String> {
    Ok(get_system_theme_sync())
+}
+
+pub fn load_theme_from_toml(toml_path: &Path) -> Result<Vec<TomlTheme>, String> {
+    let content = fs::read_to_string(toml_path)
+        .map_err(|e| format!("Failed to read theme file {}: {}", toml_path.display(), e))?;
+    
+    let theme_file: TomlThemeFile = toml::from_str(&content)
+        .map_err(|e| format!("Failed to parse TOML theme file {}: {}", toml_path.display(), e))?;
+    
+    Ok(theme_file.themes)
+}
+
+pub fn load_themes_from_directory(themes_dir: &Path) -> Result<Vec<TomlTheme>, String> {
+    let mut all_themes = Vec::new();
+    
+    if !themes_dir.exists() {
+        return Ok(all_themes);
+    }
+    
+    let entries = fs::read_dir(themes_dir)
+        .map_err(|e| format!("Failed to read themes directory {}: {}", themes_dir.display(), e))?;
+    
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
+        let path = entry.path();
+        
+        if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("toml") {
+            match load_theme_from_toml(&path) {
+                Ok(mut themes) => all_themes.append(&mut themes),
+                Err(e) => {
+                    eprintln!("Warning: Failed to load theme from {}: {}", path.display(), e);
+                }
+            }
+        }
+    }
+    
+    Ok(all_themes)
+}
+
+#[tauri::command]
+pub async fn load_toml_themes(themes_dir: String) -> Result<Vec<TomlTheme>, String> {
+    let themes_path = Path::new(&themes_dir);
+    load_themes_from_directory(themes_path)
+}
+
+#[tauri::command]
+pub async fn load_single_toml_theme(theme_path: String) -> Result<Vec<TomlTheme>, String> {
+    let path = Path::new(&theme_path);
+    load_theme_from_toml(path)
+}
+
+#[tauri::command]
+pub async fn get_cached_themes(cache: State<'_, ThemeCache>) -> Result<Vec<TomlTheme>, String> {
+    let themes = cache.read().await;
+    Ok(themes.values().cloned().collect())
+}
+
+#[tauri::command]
+pub async fn cache_themes(
+    themes: Vec<TomlTheme>,
+    cache: State<'_, ThemeCache>,
+) -> Result<(), String> {
+    let mut theme_cache = cache.write().await;
+    for theme in themes {
+        theme_cache.insert(theme.id.clone(), theme);
+    }
+    Ok(())
 }

@@ -50,6 +50,9 @@ fn main() {
          // Set up LSP manager
          app.manage(LspManager::new(app.handle().clone()));
 
+         // Set up theme cache
+         app.manage(theme::ThemeCache::new(std::collections::HashMap::new()));
+
          // Auto-start interceptor on app launch
          {
             let claude_bridge_clone = claude_bridge.clone();
@@ -242,6 +245,10 @@ fn main() {
          get_claude_status,
          // Theme commands
          get_system_theme,
+         load_toml_themes,
+         load_single_toml_theme,
+         get_cached_themes,
+         cache_themes,
          // Font commands
          get_system_fonts,
          get_monospace_fonts,
