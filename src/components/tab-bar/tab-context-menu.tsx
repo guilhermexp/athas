@@ -103,7 +103,7 @@ const TabContextMenu = ({
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
-        transform: 'translateZ(0)' // Force GPU acceleration for consistent rendering
+        transform: "translateZ(0)", // Force GPU acceleration for consistent rendering
       }}
     >
       <button
