@@ -5,7 +5,8 @@ import type { ThemeDefinition } from "../types";
 class TokyoNightExtension extends BaseThemeExtension {
   readonly name = "Tokyo Night";
   readonly version = "1.0.0";
-  readonly description = "Tokyo Night theme variants - a clean, dark theme inspired by the neon lights of Tokyo";
+  readonly description =
+    "Tokyo Night theme variants - a clean, dark theme inspired by the neon lights of Tokyo";
 
   readonly themes: ThemeDefinition[] = [
     {

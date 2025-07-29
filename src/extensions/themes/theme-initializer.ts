@@ -1,20 +1,20 @@
 import { extensionManager } from "../extension-manager";
-import { themeRegistry } from "./theme-registry";
 import { athasThemesExtension } from "./builtin/athas-themes";
-import { githubExtension } from "./builtin/github";
-import { vscodeExtension } from "./builtin/vscode";
-import { tokyoNightExtension } from "./builtin/tokyo-night";
-import { draculaExtension } from "./builtin/dracula";
-import { oneDarkExtension } from "./builtin/one-dark";
 import { catppuccinExtension } from "./builtin/catppuccin";
-import { nordExtension } from "./builtin/nord";
-import { solarizedExtension } from "./builtin/solarized";
 import { contrastThemesExtension } from "./builtin/contrast-themes";
+import { draculaExtension } from "./builtin/dracula";
+import { githubExtension } from "./builtin/github";
+import { nordExtension } from "./builtin/nord";
+import { oneDarkExtension } from "./builtin/one-dark";
+import { solarizedExtension } from "./builtin/solarized";
+import { tokyoNightExtension } from "./builtin/tokyo-night";
+import { vscodeExtension } from "./builtin/vscode";
+import { themeRegistry } from "./theme-registry";
 
 export const initializeThemeSystem = async () => {
   try {
     console.log("initializeThemeSystem: Starting...");
-    
+
     // Initialize extension manager if not already done
     if (!extensionManager.isInitialized()) {
       console.log("initializeThemeSystem: Initializing extension manager...");
@@ -48,12 +48,12 @@ export const initializeThemeSystem = async () => {
         tabSize: 2,
         lineNumbers: true,
         wordWrap: false,
-        theme: "athas-dark"
+        theme: "athas-dark",
       }),
       updateSettings: () => {},
       on: () => () => {},
       off: () => {},
-      emitEvent: () => {}
+      emitEvent: () => {},
     };
 
     console.log("initializeThemeSystem: Setting editor API...");
@@ -76,15 +76,17 @@ export const initializeThemeSystem = async () => {
       try {
         console.log(`initializeThemeSystem: Loading ${name} themes extension...`);
         await extensionManager.loadExtension(extension);
-        console.log(`initializeThemeSystem: ${name} themes loaded - ${extension.themes.length} themes`);
+        console.log(
+          `initializeThemeSystem: ${name} themes loaded - ${extension.themes.length} themes`,
+        );
       } catch (error) {
         console.error(`initializeThemeSystem: Failed to load ${name} themes:`, error);
       }
     }
-    
+
     // Check what's in the registry
     console.log("initializeThemeSystem: Themes in registry:", themeRegistry.getAllThemes());
-    
+
     console.log("Theme system initialized successfully");
   } catch (error) {
     console.error("Failed to initialize theme system:", error);

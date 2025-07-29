@@ -39,7 +39,7 @@ class ThemeRegistry implements ThemeRegistryAPI {
     console.log("Theme registry: Loading fallback builtin themes");
     // Register builtin themes directly without async loading (only if not already present)
     const builtinThemes = this.getBuiltinThemes();
-    builtinThemes.forEach(theme => {
+    builtinThemes.forEach((theme) => {
       if (!this.themes.has(theme.id)) {
         console.log("Theme registry: Adding fallback theme", theme.id);
         this.themes.set(theme.id, theme);
@@ -126,7 +126,7 @@ class ThemeRegistry implements ThemeRegistryAPI {
   }
 
   getThemesByCategory(category: ThemeDefinition["category"]): ThemeDefinition[] {
-    return this.getAllThemes().filter(theme => theme.category === category);
+    return this.getAllThemes().filter((theme) => theme.category === category);
   }
 
   applyTheme(id: string): void {
@@ -137,14 +137,14 @@ class ThemeRegistry implements ThemeRegistryAPI {
     }
 
     console.log(`Theme registry: Applying theme ${id}`, theme);
-    console.log('Available themes in registry:', Array.from(this.themes.keys()));
+    console.log("Available themes in registry:", Array.from(this.themes.keys()));
 
     // Apply CSS variables to document root
     const root = document.documentElement;
-    
+
     // Clear any existing theme-specific classes
-    root.classList.remove('force-athas-light', 'force-athas-dark');
-    
+    root.classList.remove("force-athas-light", "force-athas-dark");
+
     // Apply CSS variables
     Object.entries(theme.cssVariables).forEach(([key, value]) => {
       root.style.setProperty(key, value);
@@ -158,14 +158,14 @@ class ThemeRegistry implements ThemeRegistryAPI {
     }
 
     // Handle special theme classes for backward compatibility
-    if (id === 'github-light') {
-      root.classList.add('force-athas-light'); // Keep for backward compatibility
-    } else if (id === 'github-dark') {
-      root.classList.add('force-athas-dark'); // Keep for backward compatibility
+    if (id === "github-light") {
+      root.classList.add("force-athas-light"); // Keep for backward compatibility
+    } else if (id === "github-dark") {
+      root.classList.add("force-athas-dark"); // Keep for backward compatibility
     }
 
     // Set data attribute for the current theme
-    root.setAttribute('data-theme', id);
+    root.setAttribute("data-theme", id);
 
     this.currentTheme = id;
     console.log(`Theme registry: Successfully applied theme ${id}`);
@@ -191,21 +191,21 @@ class ThemeRegistry implements ThemeRegistryAPI {
   }
 
   private notifyThemeChange(themeId: string): void {
-    this.changeCallbacks.forEach(callback => {
+    this.changeCallbacks.forEach((callback) => {
       try {
         callback(themeId);
       } catch (error) {
-        console.error('Error in theme change callback:', error);
+        console.error("Error in theme change callback:", error);
       }
     });
   }
 
   private notifyRegistryChange(): void {
-    this.registryCallbacks.forEach(callback => {
+    this.registryCallbacks.forEach((callback) => {
       try {
         callback();
       } catch (error) {
-        console.error('Error in registry change callback:', error);
+        console.error("Error in registry change callback:", error);
       }
     });
   }

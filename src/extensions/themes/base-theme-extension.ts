@@ -1,6 +1,6 @@
 import type { EditorAPI } from "../extension-types";
-import type { ThemeDefinition, ThemeExtension } from "./types";
 import { themeRegistry } from "./theme-registry";
+import type { ThemeDefinition, ThemeExtension } from "./types";
 
 export abstract class BaseThemeExtension implements ThemeExtension {
   readonly extensionType = "theme" as const;
@@ -13,9 +13,9 @@ export abstract class BaseThemeExtension implements ThemeExtension {
 
   async initialize(editor: EditorAPI): Promise<void> {
     console.log(`BaseThemeExtension: Initializing ${this.name} with ${this.themes.length} themes`);
-    
+
     // Register all themes in this extension
-    this.themes.forEach(theme => {
+    this.themes.forEach((theme) => {
       console.log(`BaseThemeExtension: Registering theme ${theme.id} from ${this.name}`);
       themeRegistry.registerTheme(theme);
       this.registeredThemes.add(theme.id);
@@ -29,7 +29,7 @@ export abstract class BaseThemeExtension implements ThemeExtension {
 
   dispose(): void {
     // Unregister all themes
-    this.registeredThemes.forEach(themeId => {
+    this.registeredThemes.forEach((themeId) => {
       themeRegistry.unregisterTheme(themeId);
     });
     this.registeredThemes.clear();
@@ -39,7 +39,7 @@ export abstract class BaseThemeExtension implements ThemeExtension {
   }
 
   getTheme(id: string): ThemeDefinition | undefined {
-    return this.themes.find(theme => theme.id === id);
+    return this.themes.find((theme) => theme.id === id);
   }
 
   applyTheme(id: string): void {

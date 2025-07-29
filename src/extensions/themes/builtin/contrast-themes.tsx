@@ -1,4 +1,4 @@
-import { Eye, Sun, Moon } from "lucide-react";
+import { Eye, Moon, Sun } from "lucide-react";
 import { BaseThemeExtension } from "../base-theme-extension";
 import type { ThemeDefinition } from "../types";
 

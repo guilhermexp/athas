@@ -103,5 +103,5 @@ export const customColorfulThemesExtension = new CustomColorfulThemesExtension()
 // Example of how to load this extension:
 // import { extensionManager } from "../../extension-manager";
 // import { customColorfulThemesExtension } from "./custom-theme-example";
-// 
+//
 // extensionManager.loadExtension(customColorfulThemesExtension);
