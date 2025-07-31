@@ -41,6 +41,7 @@ const WelcomeScreen = ({
 
   return (
     <div
+      data-tauri-drag-region
       className={cn(
         "paper-texture paper-noise",
         "flex h-screen w-screen select-none flex-col items-center justify-center",
