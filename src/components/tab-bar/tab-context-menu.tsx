@@ -99,7 +99,7 @@ const TabContextMenu = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-[180px] select-none rounded-md border border-border bg-secondary-bg py-1 shadow-lg"
+      className="fixed z-50 w-[190px] select-none rounded-md border border-border bg-secondary-bg py-0.5 shadow-lg"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -107,20 +107,20 @@ const TabContextMenu = ({
       }}
     >
       <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className="flex w-full items-center gap-2 px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onPin(buffer.id);
           onClose();
         }}
       >
-        {buffer.isPinned ? <PinOff size={12} /> : <Pin size={12} />}
+        {buffer.isPinned ? <PinOff size={11} /> : <Pin size={11} />}
         {buffer.isPinned ? "Unpin Tab" : "Pin Tab"}
       </button>
 
-      <div className="my-1 border-border border-t" />
+      <div className="my-0.5 border-border border-t" />
 
       <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className="flex w-full items-center gap-2 px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={async () => {
           if (onCopyPath) {
             onCopyPath(buffer.path);
@@ -134,12 +134,12 @@ const TabContextMenu = ({
           onClose();
         }}
       >
-        <Copy size={12} />
+        <Copy size={11} />
         Copy Path
       </button>
 
       <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className="flex w-full items-center gap-2 px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           if (onRevealInFinder) {
             onRevealInFinder(buffer.path);
@@ -147,13 +147,13 @@ const TabContextMenu = ({
           onClose();
         }}
       >
-        <FolderOpen size={12} />
+        <FolderOpen size={11} />
         Reveal in Finder
       </button>
 
       {buffer.path !== "extensions://marketplace" && (
         <button
-          className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+          className="flex w-full items-center gap-2 px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
           onClick={() => {
             if (onReload) {
               onReload(buffer.id);
@@ -161,14 +161,14 @@ const TabContextMenu = ({
             onClose();
           }}
         >
-          <RotateCcw size={12} />
+          <RotateCcw size={11} />
           Reload
         </button>
       )}
 
-      <div className="my-1 border-border border-t" />
+      <div className="my-0.5 border-border border-t" />
       <button
-        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className="flex w-full items-center justify-between gap-2 px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseTab(buffer.id);
           onClose();
@@ -178,7 +178,7 @@ const TabContextMenu = ({
         <KeybindingBadge keys={["⌘", "W"]} className="opacity-60" />
       </button>
       <button
-        className="w-full px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className="w-full px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseOthers(buffer.id);
           onClose();
@@ -187,7 +187,7 @@ const TabContextMenu = ({
         Close Others
       </button>
       <button
-        className="w-full px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className="w-full px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseToRight(buffer.id);
           onClose();
@@ -196,7 +196,7 @@ const TabContextMenu = ({
         Close to Right
       </button>
       <button
-        className="w-full px-3 py-1.5 text-left font-mono text-text text-xs hover:bg-hover"
+        className="w-full px-2.5 py-1 text-left font-mono text-text text-xs hover:bg-hover"
         onClick={() => {
           onCloseAll();
           onClose();

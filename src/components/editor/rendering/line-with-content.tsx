@@ -30,6 +30,7 @@ export const LineWithContent = memo<LineWithContentProps>(
           right: 0,
           height: `${lineHeight}px`,
           display: "flex",
+          overflow: "hidden",
         }}
       >
         {showLineNumbers && (
@@ -45,6 +46,9 @@ export const LineWithContent = memo<LineWithContentProps>(
           style={{
             flex: 1,
             paddingLeft: showLineNumbers ? 0 : `16px`,
+            lineHeight: `${lineHeight}px`,
+            height: `${lineHeight}px`,
+            overflow: "hidden",
           }}
         >
           <LineRenderer

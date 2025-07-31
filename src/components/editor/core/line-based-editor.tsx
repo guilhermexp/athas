@@ -15,10 +15,11 @@ interface LineBasedEditorProps {
   onPositionClick?: (position: Position) => void;
   onSelectionDrag?: (start: Position, end: Position) => void;
   viewportRef?: React.MutableRefObject<HTMLDivElement | null>;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 export const LineBasedEditor = memo<LineBasedEditorProps>(
-  ({ onPositionClick, onSelectionDrag, viewportRef }) => {
+  ({ onPositionClick, onSelectionDrag, viewportRef, onContextMenu }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const internalViewportRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +61,7 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
           overflow: "hidden",
           fontSize: `${fontSize}px`,
           fontFamily: "JetBrains Mono, monospace",
+          lineHeight: `${lineHeight}px`,
         }}
       >
         <EditorLayers>
@@ -71,6 +73,7 @@ export const LineBasedEditor = memo<LineBasedEditorProps>(
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
+              onContextMenu={onContextMenu}
             />
           </EditorLayer>
           <EditorLayer type="decoration">

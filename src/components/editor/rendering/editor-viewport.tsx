@@ -14,12 +14,13 @@ interface EditorViewportProps {
   onMouseDown?: (e: React.MouseEvent<HTMLElement>) => void;
   onMouseMove?: (e: React.MouseEvent<HTMLElement>) => void;
   onMouseUp?: (e: React.MouseEvent<HTMLElement>) => void;
+  onContextMenu?: (e: React.MouseEvent<HTMLElement>) => void;
 }
 
 // TODO: use ref as props since we are in React 19
 export const EditorViewport = memo(
   forwardRef<HTMLDivElement, EditorViewportProps>(
-    ({ onScroll, onClick, onMouseDown, onMouseMove, onMouseUp }, ref) => {
+    ({ onScroll, onClick, onMouseDown, onMouseMove, onMouseUp, onContextMenu }, ref) => {
       const selection = useEditorCursorStore.use.selection?.() ?? undefined;
       const lineCount = useEditorViewStore((state) => state.lines.length);
       const showLineNumbers = useEditorSettingsStore.use.lineNumbers();
@@ -144,6 +145,7 @@ export const EditorViewport = memo(
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseUp}
+            onContextMenu={onContextMenu}
           >
             {/* Array.from creates an array of specified length, then maps over
               indices to generate line components */}

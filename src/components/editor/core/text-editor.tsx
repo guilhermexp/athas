@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
 import { basicEditingExtension } from "../../../extensions/basic-editing-extension";
 import { editorAPI } from "../../../extensions/editor-api";
@@ -7,6 +7,7 @@ import {
   setSyntaxHighlightingFilePath,
   syntaxHighlightingExtension,
 } from "../../../extensions/syntax-highlighting-extension";
+import { useEditorLayout } from "../../../hooks/use-editor-layout";
 import { useBufferStore } from "../../../stores/buffer-store";
 import { useEditorCompletionStore } from "../../../stores/editor-completion-store";
 import { useEditorCursorStore } from "../../../stores/editor-cursor-store";
@@ -21,6 +22,7 @@ import {
   calculateOffsetFromPosition,
 } from "../../../utils/editor-position";
 import { CompletionDropdown } from "../overlays/completion-dropdown";
+import EditorContextMenu from "../overlays/editor-context-menu";
 import { LineBasedEditor } from "./line-based-editor";
 
 export function TextEditor() {
@@ -31,8 +33,10 @@ export function TextEditor() {
   const activeBufferId = useBufferStore.use.activeBufferId();
   const { onChange, disabled, filePath, editorRef } = useEditorInstanceStore();
   const { setViewportHeight } = useEditorLayoutStore.use.actions();
-  const lineHeight =
-    EDITOR_CONSTANTS.LINE_HEIGHT_MULTIPLIER * useEditorSettingsStore.use.fontSize();
+  const fontSize = useEditorSettingsStore.use.fontSize();
+
+  // Use the same layout calculations as the visual editor
+  const { lineHeight, gutterWidth: layoutGutterWidth } = useEditorLayout();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const localRef = useRef<HTMLDivElement>(null);
@@ -44,6 +48,12 @@ export function TextEditor() {
 
   // Use the ref from the store or fallback to local ref
   const containerRef = editorRef || localRef;
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean;
+    position: { x: number; y: number };
+  }>({ isOpen: false, position: { x: 0, y: 0 } });
 
   // Get content as string when needed
   const content = getContent();
@@ -155,6 +165,13 @@ export function TextEditor() {
     }
 
     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      // Don't prevent default if Shift is held - allow native selection behavior
+      if (e.shiftKey) {
+        // Reset desired column on selection
+        setDesiredColumn(undefined);
+        return;
+      }
+
       e.preventDefault();
 
       const targetLine = e.key === "ArrowUp" ? currentPosition.line - 1 : currentPosition.line + 1;
@@ -202,6 +219,12 @@ export function TextEditor() {
         setDesiredColumn(currentPosition.column);
       }
     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      // Don't interfere with Shift+Arrow selection
+      if (e.shiftKey) {
+        setDesiredColumn(undefined);
+        return;
+      }
+
       // Handle horizontal movement with boundary checking
       const isLeft = e.key === "ArrowLeft";
 
@@ -415,10 +438,311 @@ export function TextEditor() {
     [content, onChange, updateBufferContent, activeBufferId, lspActions],
   );
 
+  // Context menu handlers
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+    });
+  }, []);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu({ isOpen: false, position: { x: 0, y: 0 } });
+  }, []);
+
+  const handleCopy = useCallback(async () => {
+    const selection = useEditorCursorStore.getState().selection;
+    if (selection && textareaRef.current) {
+      const selectedText = content.slice(selection.start.offset, selection.end.offset);
+      try {
+        await navigator.clipboard.writeText(selectedText);
+      } catch (error) {
+        console.error("Failed to copy text:", error);
+      }
+    }
+  }, [content]);
+
+  const handleCut = useCallback(async () => {
+    const selection = useEditorCursorStore.getState().selection;
+    if (selection && textareaRef.current) {
+      const selectedText = content.slice(selection.start.offset, selection.end.offset);
+      try {
+        await navigator.clipboard.writeText(selectedText);
+
+        // Remove the selected text
+        const newContent =
+          content.slice(0, selection.start.offset) + content.slice(selection.end.offset);
+        onChange?.(newContent);
+        if (activeBufferId) {
+          updateBufferContent(activeBufferId, newContent);
+        }
+
+        // Update cursor position
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
+              selection.start.offset;
+            handleSelectionChange();
+          }
+        }, 0);
+      } catch (error) {
+        console.error("Failed to cut text:", error);
+      }
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId, handleSelectionChange]);
+
+  const handlePaste = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (textareaRef.current) {
+        const cursorPos = textareaRef.current.selectionStart;
+        const selection = useEditorCursorStore.getState().selection;
+
+        let newContent: string;
+        let newCursorPos: number;
+
+        if (selection && selection.start.offset !== selection.end.offset) {
+          // Replace selection with pasted text
+          newContent =
+            content.slice(0, selection.start.offset) + text + content.slice(selection.end.offset);
+          newCursorPos = selection.start.offset + text.length;
+        } else {
+          // Insert at cursor position
+          newContent = content.slice(0, cursorPos) + text + content.slice(cursorPos);
+          newCursorPos = cursorPos + text.length;
+        }
+
+        onChange?.(newContent);
+        if (activeBufferId) {
+          updateBufferContent(activeBufferId, newContent);
+        }
+
+        // Update cursor position
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.selectionStart = textareaRef.current.selectionEnd = newCursorPos;
+            handleSelectionChange();
+          }
+        }, 0);
+      }
+    } catch (error) {
+      console.error("Failed to paste text:", error);
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId, handleSelectionChange]);
+
+  const handleSelectAll = useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.select();
+      handleSelectionChange();
+    }
+  }, [handleSelectionChange]);
+
+  // Additional context menu handlers
+  const handleDelete = useCallback(() => {
+    const selection = useEditorCursorStore.getState().selection;
+    if (selection && textareaRef.current && selection.start.offset !== selection.end.offset) {
+      const newContent =
+        content.slice(0, selection.start.offset) + content.slice(selection.end.offset);
+      onChange?.(newContent);
+      if (activeBufferId) {
+        updateBufferContent(activeBufferId, newContent);
+      }
+
+      // Update cursor position
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
+            selection.start.offset;
+          handleSelectionChange();
+        }
+      }, 0);
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId, handleSelectionChange]);
+
+  const handleDuplicate = useCallback(() => {
+    if (textareaRef.current) {
+      const cursorPos = textareaRef.current.selectionStart;
+      const selection = useEditorCursorStore.getState().selection;
+
+      if (selection && selection.start.offset !== selection.end.offset) {
+        // Duplicate selected text
+        const selectedText = content.slice(selection.start.offset, selection.end.offset);
+        const newContent =
+          content.slice(0, selection.end.offset) +
+          selectedText +
+          content.slice(selection.end.offset);
+        onChange?.(newContent);
+        if (activeBufferId) {
+          updateBufferContent(activeBufferId, newContent);
+        }
+      } else {
+        // Duplicate current line
+        const lineStart = content.lastIndexOf("\n", cursorPos - 1) + 1;
+        const lineEnd = content.indexOf("\n", cursorPos);
+        const actualLineEnd = lineEnd === -1 ? content.length : lineEnd;
+        const currentLine = content.slice(lineStart, actualLineEnd);
+        const newContent = `${content.slice(0, actualLineEnd)}\n${currentLine}${content.slice(actualLineEnd)}`;
+
+        onChange?.(newContent);
+        if (activeBufferId) {
+          updateBufferContent(activeBufferId, newContent);
+        }
+      }
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId]);
+
+  const handleIndent = useCallback(() => {
+    const selection = useEditorCursorStore.getState().selection;
+    if (!textareaRef.current) return;
+
+    if (selection && selection.start.offset !== selection.end.offset) {
+      // Indent selected lines
+      const selectedText = content.slice(selection.start.offset, selection.end.offset);
+      const indentedText = selectedText
+        .split("\n")
+        .map((line) => `  ${line}`)
+        .join("\n");
+      const newContent =
+        content.slice(0, selection.start.offset) +
+        indentedText +
+        content.slice(selection.end.offset);
+
+      onChange?.(newContent);
+      if (activeBufferId) {
+        updateBufferContent(activeBufferId, newContent);
+      }
+    } else {
+      // Insert tab at cursor
+      const cursorPos = textareaRef.current.selectionStart;
+      const newContent = `${content.slice(0, cursorPos)}  ${content.slice(cursorPos)}`;
+
+      onChange?.(newContent);
+      if (activeBufferId) {
+        updateBufferContent(activeBufferId, newContent);
+      }
+
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = cursorPos + 2;
+          handleSelectionChange();
+        }
+      }, 0);
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId, handleSelectionChange]);
+
+  const handleOutdent = useCallback(() => {
+    const selection = useEditorCursorStore.getState().selection;
+    if (!textareaRef.current) return;
+
+    if (selection && selection.start.offset !== selection.end.offset) {
+      // Outdent selected lines
+      const selectedText = content.slice(selection.start.offset, selection.end.offset);
+      const outdentedText = selectedText
+        .split("\n")
+        .map((line) => {
+          if (line.startsWith("  ")) return line.slice(2);
+          if (line.startsWith("\t")) return line.slice(1);
+          return line;
+        })
+        .join("\n");
+      const newContent =
+        content.slice(0, selection.start.offset) +
+        outdentedText +
+        content.slice(selection.end.offset);
+
+      onChange?.(newContent);
+      if (activeBufferId) {
+        updateBufferContent(activeBufferId, newContent);
+      }
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId]);
+
+  const handleToggleComment = useCallback(() => {
+    // Simple toggle comment implementation
+    console.log("Toggle comment - not implemented yet");
+  }, []);
+
+  const handleFormat = useCallback(() => {
+    // Format document - would integrate with LSP or prettier
+    console.log("Format document - not implemented yet");
+  }, []);
+
+  const handleToggleCase = useCallback(() => {
+    const selection = useEditorCursorStore.getState().selection;
+    if (selection && textareaRef.current && selection.start.offset !== selection.end.offset) {
+      const selectedText = content.slice(selection.start.offset, selection.end.offset);
+      const toggledText =
+        selectedText === selectedText.toUpperCase()
+          ? selectedText.toLowerCase()
+          : selectedText.toUpperCase();
+
+      const newContent =
+        content.slice(0, selection.start.offset) +
+        toggledText +
+        content.slice(selection.end.offset);
+      onChange?.(newContent);
+      if (activeBufferId) {
+        updateBufferContent(activeBufferId, newContent);
+      }
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId]);
+
+  const handleMoveLineUp = useCallback(() => {
+    // Move current line up - not implemented yet
+    console.log("Move line up - not implemented yet");
+  }, []);
+
+  const handleMoveLineDown = useCallback(() => {
+    // Move current line down - not implemented yet
+    console.log("Move line down - not implemented yet");
+  }, []);
+
+  const handleInsertLine = useCallback(() => {
+    if (textareaRef.current) {
+      const cursorPos = textareaRef.current.selectionStart;
+      const newContent = `${content.slice(0, cursorPos)}\n${content.slice(cursorPos)}`;
+
+      onChange?.(newContent);
+      if (activeBufferId) {
+        updateBufferContent(activeBufferId, newContent);
+      }
+
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = cursorPos + 1;
+          handleSelectionChange();
+        }
+      }, 0);
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId, handleSelectionChange]);
+
+  const handleToggleBookmark = useCallback(() => {
+    // Toggle bookmark - not implemented yet
+    console.log("Toggle bookmark - not implemented yet");
+  }, []);
+
+  // Get layout values for proper textarea positioning - use the same values as visual editor
+  const gutterWidth = layoutGutterWidth;
+  const GUTTER_MARGIN = 8; // mr-2 in Tailwind (0.5rem = 8px)
+
   // Line-based rendering
   return (
     <div ref={containerRef} className="virtual-editor-container relative h-full overflow-hidden">
-      {/* Hidden textarea for input */}
+      {/* Gutter area overlay to prevent selection in line numbers */}
+      {gutterWidth > 0 && (
+        <div
+          className="pointer-events-auto absolute top-0 left-0 h-full select-none"
+          style={{
+            width: `${gutterWidth + GUTTER_MARGIN}px`,
+            zIndex: 2,
+          }}
+          onMouseDown={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
+        />
+      )}
+
+      {/* Transparent textarea overlay for input and selection - positioned only over content area */}
       <textarea
         ref={textareaRef}
         value={content}
@@ -428,9 +752,23 @@ export function TextEditor() {
         onSelect={handleSelectionChange}
         onKeyUp={handleSelectionChange}
         onMouseUp={handleSelectionChange}
+        onContextMenu={handleContextMenu}
         disabled={disabled}
-        className="absolute top-0"
-        style={{ left: `${EDITOR_CONSTANTS.HIDDEN_TEXTAREA_POSITION}px` }}
+        className="absolute resize-none overflow-hidden border-none bg-transparent text-transparent caret-transparent outline-none"
+        style={{
+          left: `${gutterWidth + GUTTER_MARGIN}px`,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          fontSize: `${fontSize}px`,
+          fontFamily: "JetBrains Mono, monospace",
+          lineHeight: `${lineHeight}px`,
+          padding: 0,
+          margin: 0,
+          whiteSpace: "pre",
+          tabSize: 2,
+          zIndex: 1,
+        }}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
@@ -441,10 +779,33 @@ export function TextEditor() {
         onPositionClick={handleLineBasedClick}
         onSelectionDrag={handleLineBasedSelection}
         viewportRef={viewportRef}
+        onContextMenu={handleContextMenu}
       />
 
       {/* Completion dropdown */}
       <CompletionDropdown onApplyCompletion={handleApplyCompletion} />
+
+      {/* Context menu */}
+      <EditorContextMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        onClose={handleCloseContextMenu}
+        onCopy={handleCopy}
+        onCut={handleCut}
+        onPaste={handlePaste}
+        onSelectAll={handleSelectAll}
+        onDelete={handleDelete}
+        onDuplicate={handleDuplicate}
+        onIndent={handleIndent}
+        onOutdent={handleOutdent}
+        onToggleComment={handleToggleComment}
+        onFormat={handleFormat}
+        onToggleCase={handleToggleCase}
+        onMoveLineUp={handleMoveLineUp}
+        onMoveLineDown={handleMoveLineDown}
+        onInsertLine={handleInsertLine}
+        onToggleBookmark={handleToggleBookmark}
+      />
     </div>
   );
 }

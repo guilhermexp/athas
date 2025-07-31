@@ -83,8 +83,8 @@ export const useEditorInteractions = ({
         isDraggingRef.current = true;
         dragStartRef.current = position;
 
-        // Prevent default text selection
-        e.preventDefault();
+        // Don't prevent default - allow natural text selection behavior
+        // The textarea will handle the actual selection
       }
     },
     [getPositionFromCoordinates],
