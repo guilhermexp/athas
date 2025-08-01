@@ -12,9 +12,9 @@ import { useUIState } from "../../stores/ui-state-store";
 import { type GitHunk, stageHunk, unstageHunk } from "../../utils/git";
 import AIChat from "../ai-chat/ai-chat";
 import BottomPane from "../bottom-pane";
-import CommandBar from "../command/command-bar";
-import CommandPalette from "../command/command-palette";
-import ThemeSelector from "../command/theme-selector";
+import CommandBar from "../command/components/command-bar";
+import CommandPalette from "../command/components/command-palette";
+import ThemeSelector from "../command/components/theme-selector";
 import type { Diagnostic } from "../diagnostics/diagnostics-pane";
 import DiffViewer from "../diff-viewer/diff-viewer";
 import CodeEditor from "../editor/code-editor";
@@ -49,7 +49,7 @@ export function MainLayout() {
   const sidebarPosition = "left" as "left" | "right";
 
   // Handle theme change
-  const handleThemeChange = (theme: "auto" | "athas-light" | "athas-dark") => {
+  const handleThemeChange = (theme: string) => {
     updateTheme(theme);
   };
 

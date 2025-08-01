@@ -1,16 +1,16 @@
 import { Palette, Settings, Sparkles } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { useAppStore } from "../../stores/app-store";
-import { useUIState } from "../../stores/ui-state-store";
+import { useAppStore } from "../../../stores/app-store";
+import { useUIState } from "../../../stores/ui-state-store";
 import Command, {
   CommandEmpty,
   CommandHeader,
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import KeybindingBadge from "../ui/keybinding-badge";
+} from "../../ui/command";
+import KeybindingBadge from "../../ui/keybinding-badge";
 
 interface Action {
   id: string;

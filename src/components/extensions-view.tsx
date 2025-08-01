@@ -16,8 +16,8 @@ interface Extension {
 interface ExtensionsViewProps {
   onServerInstall: (server: Extension) => void;
   onServerUninstall: (serverId: string) => void;
-  onThemeChange: (theme: "auto" | "athas-light" | "athas-dark") => void;
-  currentTheme: "auto" | "athas-light" | "athas-dark";
+  onThemeChange: (theme: string) => void;
+  currentTheme: string;
 }
 
 const AVAILABLE_EXTENSIONS: Extension[] = [

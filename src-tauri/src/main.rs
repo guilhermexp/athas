@@ -249,6 +249,9 @@ fn main() {
          load_single_toml_theme,
          get_cached_themes,
          cache_themes,
+         get_temp_dir,
+         write_temp_file,
+         delete_temp_file,
          // Font commands
          get_system_fonts,
          get_monospace_fonts,

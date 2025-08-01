@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
-type Theme = "auto" | "athas-light" | "athas-dark";
+type Theme = string;
 
 interface Settings {
   theme: Theme;
@@ -39,17 +39,48 @@ const defaultSettings: Settings = {
 const ALL_THEME_CLASSES = ["force-athas-light", "force-athas-dark"];
 
 // Apply theme to document
-const applyTheme = (theme: Theme) => {
+const applyTheme = async (theme: Theme) => {
   if (typeof window === "undefined") return;
 
-  // Remove all existing theme classes
-  ALL_THEME_CLASSES.forEach((cls) => document.documentElement.classList.remove(cls));
-
-  // Apply new theme if not auto
-  if (theme && theme !== "auto") {
-    const themeClass = `force-${theme}`;
-    document.documentElement.classList.add(themeClass);
+  // Handle auto theme by detecting system preference
+  if (theme === "auto") {
+    const systemTheme = getSystemThemePreference();
+    // For auto theme, use the default light/dark behavior
+    ALL_THEME_CLASSES.forEach((cls) => document.documentElement.classList.remove(cls));
+    document.documentElement.classList.add(
+      systemTheme === "dark" ? "force-athas-dark" : "force-athas-light",
+    );
+    return;
   }
+
+  // For TOML themes, use the theme registry
+  try {
+    const { themeRegistry } = await import("../../extensions/themes/theme-registry");
+    console.log(`Settings store: Attempting to apply theme "${theme}"`);
+
+    // Check if theme registry is ready
+    if (!themeRegistry.isRegistryReady()) {
+      console.log("Settings store: Theme registry not ready, waiting...");
+      themeRegistry.onReady(() => {
+        console.log("Settings store: Theme registry ready, applying theme");
+        themeRegistry.applyTheme(theme);
+      });
+      return;
+    }
+
+    themeRegistry.applyTheme(theme);
+  } catch (error) {
+    console.error("Failed to apply theme via registry:", error);
+    applyFallbackTheme(theme);
+  }
+};
+
+// Fallback theme application using CSS classes
+const applyFallbackTheme = (theme: Theme) => {
+  console.log(`Settings store: Falling back to class-based theme "${theme}"`);
+  ALL_THEME_CLASSES.forEach((cls) => document.documentElement.classList.remove(cls));
+  const themeClass = `force-${theme}`;
+  document.documentElement.classList.add(themeClass);
 };
 
 // Get system theme preference
@@ -98,7 +129,7 @@ const getInitialSettings = (): Settings => {
             theme: theme === "dark" ? "athas-dark" : "athas-light",
           }),
         );
-        applyTheme(theme === "dark" ? "athas-dark" : ("athas-light" as Theme));
+        applyTheme(theme === "dark" ? "athas-dark" : ("athas-light" as Theme)).catch(console.error);
       }
     })
     .catch(() => {
@@ -112,7 +143,7 @@ const getInitialSettings = (): Settings => {
 const initialSettings = getInitialSettings();
 if (typeof window !== "undefined") {
   // Apply theme immediately on module load
-  applyTheme(initialSettings.theme);
+  applyTheme(initialSettings.theme).catch(console.error);
 }
 
 export const useSettingsStore = create(
@@ -174,7 +205,7 @@ export const useSettingsStore = create(
           localStorage.setItem("athas-code-settings", JSON.stringify(get().settings, null, 2));
 
           // Apply theme to document immediately
-          applyTheme(theme);
+          applyTheme(theme).catch(console.error);
         },
       }),
     ),

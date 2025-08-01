@@ -6,6 +6,7 @@ import { MainLayout } from "./components/layout/main-layout";
 import { ToastContainer } from "./components/ui/toast";
 import WelcomeScreen from "./components/window/welcome-screen";
 import { ZoomIndicator } from "./components/zoom-indicator";
+import { initializeThemeSystem } from "./extensions/themes/theme-initializer";
 import { useScroll } from "./hooks/use-scroll";
 import { useAppStore } from "./stores/app-store";
 import { useFileSystemStore } from "./stores/file-system/store";
@@ -18,6 +19,10 @@ import { useRecentFoldersStore } from "./stores/recent-folders-store";
 import { useZoomStore } from "./stores/zoom-store";
 import { cn } from "./utils/cn";
 import { isMac } from "./utils/platform";
+
+// Initialize theme system immediately when the module loads
+// This ensures themes are loaded before the settings store tries to apply them
+initializeThemeSystem().catch(console.error);
 
 function App() {
   enableMapSet();
