@@ -2,49 +2,15 @@
 
 ## Prerequisites
 
-- macOS 10.15 (Catalina) or later
-- Command Line Tools for Xcode
+1. **Install Bun**: Visit [bun.sh](https://bun.sh) for installation instructions
+2. **Install Rust**: Visit [rustup.rs](https://rustup.rs) for installation instructions
 
-## Installation Steps
-
-### 1. Install Rust
+## Setup
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.cargo/env
-```
-
-### 2. Install Bun
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-source ~/.bashrc
-```
-
-### 3. Install Project Dependencies
-
-```bash
+# Install project dependencies
 bun install
-```
 
-### 4. Run Development Server
-
-```bash
+# Start development server
 bun run tauri dev
-```
-
-## Troubleshooting
-
-### Command not found errors
-If you get "command not found" errors, restart your terminal or run:
-```bash
-source ~/.zshrc
-# or
-source ~/.bashrc
-```
-
-### Build errors
-Make sure Xcode Command Line Tools are installed:
-```bash
-xcode-select --install
 ```
