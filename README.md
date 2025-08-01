@@ -3,32 +3,15 @@
 A lightweight code editor built with React, TypeScript, and Tauri.
 Designed for developers who want a fast and customizable development environment.
 
-## Building
+---
 
-### Quick Setup (Linux)
+## Developing Athas
 
-Run the automated setup script:
+Choose your platform for detailed setup instructions:
 
-```bash
-bun run setup
-# or manually: chmod +x setup.sh && ./setup.sh
-```
-
-### Manual Setup (Linux/MacOS/Windows)
-
-1. **System dependencies** (Linux only):
-   - Ubuntu/Debian: `sudo apt install libwebkit2gtk-4.1-dev libsoup-3.0-dev build-essential`
-   - Fedora: `sudo dnf install webkit2gtk4.1-devel libsoup3-devel gcc gcc-c++`
-   - Arch: `sudo pacman -S webkit2gtk-4.1 libsoup3 base-devel`
-
-2. **Download dependencies:**
-   rust, bun, tauri
-
-3. **Install packages:**
-   `bun install`
-
-4. **Build and run:**
-   `bun run dev` or `bun tauri dev`
+- [**macOS**](docs/develop/macos.md) - Setup for macOS development
+- [**Windows**](docs/develop/windows.md) - Setup for Windows development  
+- [**Linux**](docs/develop/linux.md) - Setup for Linux development (includes automated script)
 
 ## Customizing
 
