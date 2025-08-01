@@ -1,17 +1,17 @@
 import { ClockIcon, File } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IGNORED_PATTERNS } from "@/constants/ignored-patterns";
-import { useBufferStore } from "../../stores/buffer-store";
-import { useFileSystemStore } from "../../stores/file-system/store";
-import { useRecentFilesStore } from "../../stores/recent-files-store";
-import { useUIState } from "../../stores/ui-state-store";
+import { IGNORED_PATTERNS } from "@/components/command/constants/ignored-patterns";
+import { useBufferStore } from "../../../stores/buffer-store";
+import { useFileSystemStore } from "../../../stores/file-system/store";
+import { useRecentFilesStore } from "../../../stores/recent-files-store";
+import { useUIState } from "../../../stores/ui-state-store";
 import Command, {
   CommandEmpty,
   CommandHeader,
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
+} from "../../ui/command";
 
 // Function to check if a file should be ignored
 const shouldIgnoreFile = (filePath: string): boolean => {

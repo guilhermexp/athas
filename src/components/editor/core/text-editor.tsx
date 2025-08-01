@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EDITOR_CONSTANTS } from "../../../constants/editor-constants";
 import { basicEditingExtension } from "../../../extensions/basic-editing-extension";
 import { editorAPI } from "../../../extensions/editor-api";
 import { extensionManager } from "../../../extensions/extension-manager";

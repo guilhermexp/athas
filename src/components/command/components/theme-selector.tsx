@@ -1,18 +1,19 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Palette, Sun, Upload } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { themeRegistry } from "../../../extensions/themes/theme-registry";
+import type { ThemeDefinition } from "../../../extensions/themes/types";
+import Button from "../../ui/button";
 import Command, {
   CommandEmpty,
   CommandHeader,
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-
-type Theme = "auto" | "athas-light" | "athas-dark";
+} from "../../ui/command";
 
 interface ThemeInfo {
-  id: Theme;
+  id: string;
   name: string;
   description: string;
   category: "System" | "Light" | "Dark" | "Colorful";
@@ -22,50 +23,68 @@ interface ThemeInfo {
 interface ThemeSelectorProps {
   isVisible: boolean;
   onClose: () => void;
-  onThemeChange: (theme: Theme) => void;
-  currentTheme?: Theme;
+  onThemeChange: (theme: string) => void;
+  currentTheme?: string;
 }
 
-// Dynamic theme definitions based on existing theme system
-const THEME_DEFINITIONS: ThemeInfo[] = [
-  // System
-  {
-    id: "auto",
-    name: "Auto",
-    description: "Follow system preference",
-    category: "System",
-    icon: <Monitor size={14} />,
-  },
-  // Light theme
-  {
-    id: "athas-light",
-    name: "Athas Light",
-    description: "Clean and bright theme",
-    category: "Light",
-    icon: <Sun size={14} />,
-  },
-  // Dark theme
-  {
-    id: "athas-dark",
-    name: "Athas Dark",
-    description: "Modern dark theme",
-    category: "Dark",
-    icon: <Moon size={14} />,
-  },
-];
+const getThemeIcon = (category: string, _isDark?: boolean): React.ReactNode => {
+  switch (category) {
+    case "System":
+      return <Monitor size={14} />;
+    case "Light":
+      return <Sun size={14} />;
+    case "Dark":
+      return <Moon size={14} />;
+    default:
+      return <Palette size={14} />;
+  }
+};
 
 const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: ThemeSelectorProps) => {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [initialTheme, setInitialTheme] = useState(currentTheme);
-  const [previewTheme, setPreviewTheme] = useState<Theme | null>(null);
+  const [previewTheme, setPreviewTheme] = useState<string | null>(null);
+  const [themes, setThemes] = useState<ThemeInfo[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Focus is handled internally when the selector becomes visible
+  // Load themes from theme registry
+  useEffect(() => {
+    const loadThemes = () => {
+      const registryThemes = themeRegistry.getAllThemes();
+      const themeInfos: ThemeInfo[] = [
+        // System theme always first
+        {
+          id: "auto",
+          name: "Auto",
+          description: "Follow system preference",
+          category: "System",
+          icon: <Monitor size={14} />,
+        },
+        // Convert registry themes to ThemeInfo
+        ...registryThemes.map(
+          (theme: ThemeDefinition): ThemeInfo => ({
+            id: theme.id,
+            name: theme.name,
+            description: theme.description,
+            category: theme.category,
+            icon: getThemeIcon(theme.category, theme.isDark),
+          }),
+        ),
+      ];
+      setThemes(themeInfos);
+    };
+
+    loadThemes();
+
+    // Listen for theme registry changes
+    const unsubscribe = themeRegistry.onRegistryChange(loadThemes);
+    return unsubscribe;
+  }, []);
 
   // Filter themes based on query
-  const filteredThemes = THEME_DEFINITIONS.filter(
+  const filteredThemes = themes.filter(
     (theme) =>
       theme.name.toLowerCase().includes(query.toLowerCase()) ||
       theme.description?.toLowerCase().includes(query.toLowerCase()) ||
@@ -79,12 +98,12 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
       setQuery("");
       setPreviewTheme(null);
 
-      const initialIndex = THEME_DEFINITIONS.findIndex((t) => t.id === currentTheme);
+      const initialIndex = themes.findIndex((t) => t.id === currentTheme);
       setSelectedIndex(initialIndex >= 0 ? initialIndex : 0);
 
       requestAnimationFrame(() => inputRef.current?.focus());
     }
-  }, [isVisible]);
+  }, [isVisible, themes, currentTheme]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -143,6 +162,31 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
     selectedElement?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [selectedIndex]);
 
+  const handleUploadTheme = async () => {
+    // Create file input element
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".toml";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const { uploadTheme } = await import("../../../utils/theme-upload");
+        const result = await uploadTheme(file);
+        if (result.success) {
+          console.log("Theme uploaded successfully:", result.theme?.name);
+          // Optionally switch to the newly uploaded theme
+          if (result.theme) {
+            onThemeChange(result.theme.id);
+            onClose();
+          }
+        } else {
+          console.error("Theme upload failed:", result.error);
+        }
+      }
+    };
+    input.click();
+  };
+
   if (!isVisible) return null;
 
   const handleClose = () => {
@@ -155,12 +199,23 @@ const ThemeSelector = ({ isVisible, onClose, onThemeChange, currentTheme }: Them
   return (
     <Command isVisible={isVisible}>
       <CommandHeader onClose={handleClose}>
-        <CommandInput
-          ref={inputRef}
-          value={query}
-          onChange={setQuery}
-          placeholder="Search themes..."
-        />
+        <div className="flex w-full items-center gap-2">
+          <CommandInput
+            ref={inputRef}
+            value={query}
+            onChange={setQuery}
+            placeholder="Search themes..."
+            className="flex-1"
+          />
+          <Button
+            onClick={handleUploadTheme}
+            variant="ghost"
+            size="xs"
+            className="flex-shrink-0 gap-1 px-2"
+          >
+            <Upload size={12} />
+          </Button>
+        </div>
       </CommandHeader>
 
       <CommandList ref={resultsRef}>

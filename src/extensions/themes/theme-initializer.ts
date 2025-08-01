@@ -2,9 +2,17 @@ import { extensionManager } from "../extension-manager";
 import { themeLoader } from "./theme-loader";
 import { themeRegistry } from "./theme-registry";
 
+let isThemeSystemInitialized = false;
+
 export const initializeThemeSystem = async () => {
+  if (isThemeSystemInitialized) {
+    console.log("initializeThemeSystem: Already initialized, skipping...");
+    return;
+  }
+
   try {
     console.log("initializeThemeSystem: Starting...");
+    isThemeSystemInitialized = true;
 
     // Initialize extension manager if not already done
     if (!extensionManager.isInitialized()) {
@@ -62,8 +70,12 @@ export const initializeThemeSystem = async () => {
     // Check what's in the registry
     console.log("initializeThemeSystem: Themes in registry:", themeRegistry.getAllThemes());
 
+    // Mark theme registry as ready
+    themeRegistry.markAsReady();
+
     console.log("Theme system initialized successfully");
   } catch (error) {
     console.error("Failed to initialize theme system:", error);
+    isThemeSystemInitialized = false; // Reset flag on error
   }
 };
