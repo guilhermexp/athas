@@ -17,6 +17,8 @@ export default function Tooltip({ content, children, side = "top", className }: 
   const tooltipRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const TOOLTIP_MARGIN = 8;
+
   const updatePosition = () => {
     if (!triggerRef.current || !tooltipRef.current) return;
 
@@ -31,18 +33,18 @@ export default function Tooltip({ content, children, side = "top", className }: 
     switch (side) {
       case "top":
         x += rect.width / 2;
-        y -= 8;
+        y -= TOOLTIP_MARGIN;
         break;
       case "bottom":
         x += rect.width / 2;
-        y += rect.height + 8;
+        y += rect.height + TOOLTIP_MARGIN;
         break;
       case "left":
-        x -= 8;
+        x -= TOOLTIP_MARGIN;
         y += rect.height / 2;
         break;
       case "right":
-        x += rect.width + 8;
+        x += rect.width + TOOLTIP_MARGIN;
         y += rect.height / 2;
         break;
     }
@@ -50,32 +52,32 @@ export default function Tooltip({ content, children, side = "top", className }: 
     if (side === "top" || side === "bottom") {
       const tooltipWidth = tooltipRect.width;
 
-      if (x - tooltipWidth / 2 < 8) {
-        x = tooltipWidth / 2 + 8;
-      } else if (x + tooltipWidth / 2 > viewportWidth - 8) {
-        x = viewportWidth - tooltipWidth / 2 - 8;
+      if (x - tooltipWidth / 2 < TOOLTIP_MARGIN) {
+        x = tooltipWidth / 2 + TOOLTIP_MARGIN;
+      } else if (x + tooltipWidth / 2 > viewportWidth - TOOLTIP_MARGIN) {
+        x = viewportWidth - tooltipWidth / 2 - TOOLTIP_MARGIN;
       }
 
       const tooltipHeight = tooltipRect.height;
-      if (side === "top" && y - tooltipHeight < 8) {
-        y = rect.bottom + 8;
-      } else if (side === "bottom" && y + tooltipHeight > viewportHeight - 8) {
-        y = rect.top - 8;
+      if (side === "top" && y - tooltipHeight < TOOLTIP_MARGIN) {
+        y = rect.bottom + TOOLTIP_MARGIN;
+      } else if (side === "bottom" && y + tooltipHeight > viewportHeight - TOOLTIP_MARGIN) {
+        y = rect.top - TOOLTIP_MARGIN;
       }
     } else {
       const tooltipWidth = tooltipRect.width;
       const tooltipHeight = tooltipRect.height;
 
-      if (y - tooltipHeight / 2 < 8) {
-        y = tooltipHeight / 2 + 8;
-      } else if (y + tooltipHeight / 2 > viewportHeight - 8) {
-        y = viewportHeight - tooltipHeight / 2 - 8;
+      if (y - tooltipHeight / 2 < TOOLTIP_MARGIN) {
+        y = tooltipHeight / 2 + TOOLTIP_MARGIN;
+      } else if (y + tooltipHeight / 2 > viewportHeight - TOOLTIP_MARGIN) {
+        y = viewportHeight - tooltipHeight / 2 - TOOLTIP_MARGIN;
       }
 
-      if (side === "left" && x - tooltipWidth < 8) {
-        x = rect.right + 8;
-      } else if (side === "right" && x + tooltipWidth > viewportWidth - 8) {
-        x = rect.left - 8;
+      if (side === "left" && x - tooltipWidth < TOOLTIP_MARGIN) {
+        x = rect.right + TOOLTIP_MARGIN;
+      } else if (side === "right" && x + tooltipWidth > viewportWidth - TOOLTIP_MARGIN) {
+        x = rect.left - TOOLTIP_MARGIN;
       }
     }
 
