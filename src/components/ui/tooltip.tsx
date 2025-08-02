@@ -1,7 +1,7 @@
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 
 interface TooltipProps {
   content: string;
@@ -18,9 +18,12 @@ export default function Tooltip({ content, children, side = "top", className }: 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updatePosition = () => {
-    if (!triggerRef.current) return;
+    if (!triggerRef.current || !tooltipRef.current) return;
 
     const rect = triggerRef.current.getBoundingClientRect();
+    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
     let x = rect.left;
     let y = rect.top;
@@ -42,6 +45,38 @@ export default function Tooltip({ content, children, side = "top", className }: 
         x += rect.width + 8;
         y += rect.height / 2;
         break;
+    }
+
+    if (side === "top" || side === "bottom") {
+      const tooltipWidth = tooltipRect.width;
+
+      if (x - tooltipWidth / 2 < 8) {
+        x = tooltipWidth / 2 + 8;
+      } else if (x + tooltipWidth / 2 > viewportWidth - 8) {
+        x = viewportWidth - tooltipWidth / 2 - 8;
+      }
+
+      const tooltipHeight = tooltipRect.height;
+      if (side === "top" && y - tooltipHeight < 8) {
+        y = rect.bottom + 8;
+      } else if (side === "bottom" && y + tooltipHeight > viewportHeight - 8) {
+        y = rect.top - 8;
+      }
+    } else {
+      const tooltipWidth = tooltipRect.width;
+      const tooltipHeight = tooltipRect.height;
+
+      if (y - tooltipHeight / 2 < 8) {
+        y = tooltipHeight / 2 + 8;
+      } else if (y + tooltipHeight / 2 > viewportHeight - 8) {
+        y = viewportHeight - tooltipHeight / 2 - 8;
+      }
+
+      if (side === "left" && x - tooltipWidth < 8) {
+        x = rect.right + 8;
+      } else if (side === "right" && x + tooltipWidth > viewportWidth - 8) {
+        x = rect.left - 8;
+      }
     }
 
     setPosition({ x, y });
