@@ -804,6 +804,7 @@ export function TextEditor() {
           fontFamily: "JetBrains Mono, monospace",
           lineHeight: `${lineHeight}px`,
           padding: 0,
+          paddingBottom: `${20 * lineHeight}px`, // Add 20 lines worth of bottom padding
           margin: 0,
           whiteSpace: "pre",
           tabSize: 2,
