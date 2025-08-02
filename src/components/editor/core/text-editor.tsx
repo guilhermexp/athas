@@ -290,9 +290,14 @@ export function TextEditor() {
         // Initialize extension manager if not already done
         if (!extensionManager.isInitialized()) {
           extensionManager.initialize();
+        }
 
-          // Load core extensions
+        // Load core extensions if not already loaded
+        if (!extensionManager.isExtensionLoaded("Syntax Highlighting")) {
           await extensionManager.loadExtension(syntaxHighlightingExtension);
+        }
+
+        if (!extensionManager.isExtensionLoaded("Basic Editing")) {
           await extensionManager.loadExtension(basicEditingExtension);
         }
 
