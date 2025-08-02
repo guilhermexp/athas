@@ -74,5 +74,8 @@
     "*.{ts,tsx,js,jsx,json}": [
       "biome check --no-errors-on-unmatched"
     ]
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
