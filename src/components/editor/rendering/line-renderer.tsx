@@ -19,6 +19,11 @@ export const LineRenderer = ({
   searchHighlight = [],
 }: LineRendererProps) => {
   const renderTokenizedContent = () => {
+    // Debug logging
+    if (lineNumber === 0 || (lineNumber < 5 && tokens.length > 0)) {
+      console.log(`Line ${lineNumber}: tokens=`, tokens, "content=", content);
+    }
+
     if (!tokens || tokens.length === 0) {
       return <span>{content || "\u00A0"}</span>;
     }
