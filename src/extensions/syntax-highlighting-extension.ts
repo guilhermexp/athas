@@ -18,18 +18,13 @@ class SyntaxHighlighter {
   }
 
   setFilePath(filePath: string) {
-    console.log(`[DEBUG] setFilePath called with: ${filePath}`);
     this.filePath = filePath;
     // When switching files, try to use cached tokens immediately
     this.updateHighlighting(true);
   }
 
   async updateHighlighting(immediate = false, affectedLines?: Set<number>) {
-    console.log(
-      `[DEBUG] updateHighlighting called: filePath=${this.filePath}, immediate=${immediate}`,
-    );
     if (!this.filePath) {
-      console.log(`[DEBUG] updateHighlighting: no filePath, returning early`);
       return;
     }
 
@@ -97,15 +92,8 @@ class SyntaxHighlighter {
       const content = this.editor.getContent();
       const extension = this.filePath?.split(".").pop() || "txt";
 
-      console.log(
-        `[DEBUG] fetchAndCacheTokens: file=${this.filePath}, extension=${extension}, contentLength=${content.length}`,
-      );
-
       // Fetch tokens from Rust API
       this.tokens = await getTokens(content, extension);
-      console.log(
-        `[DEBUG] fetchAndCacheTokens: received ${this.tokens.length} tokens from Rust API`,
-      );
 
       // Cache tokens in buffer store
       const bufferStore = useBufferStore.getState();
@@ -143,7 +131,6 @@ export const syntaxHighlightingExtension: EditorExtension = {
   description: "Provides syntax highlighting for various programming languages",
 
   initialize: (editor: EditorAPI) => {
-    console.log(`[DEBUG] Syntax highlighting extension initializing`);
     highlighter = new SyntaxHighlighter(editor);
     highlighter.updateHighlighting();
   },
@@ -156,13 +143,8 @@ export const syntaxHighlightingExtension: EditorExtension = {
   },
 
   onContentChange: (_content: string, _changes: Change[], affectedLines?: Set<number>) => {
-    console.log(
-      `[DEBUG] onContentChange called, highlighter exists: ${!!highlighter}, content length: ${_content.length}`,
-    );
     if (highlighter) {
       highlighter.updateHighlighting(false, affectedLines);
-    } else {
-      console.log(`[DEBUG] onContentChange: no highlighter available`);
     }
   },
 
@@ -176,12 +158,7 @@ export const syntaxHighlightingExtension: EditorExtension = {
 
 // Export function to set file path (temporary until editor instance provides it)
 export function setSyntaxHighlightingFilePath(filePath: string) {
-  console.log(
-    `[DEBUG] setSyntaxHighlightingFilePath called with: ${filePath}, highlighter exists: ${!!highlighter}`,
-  );
   if (highlighter) {
     highlighter.setFilePath(filePath);
-  } else {
-    console.log(`[DEBUG] setSyntaxHighlightingFilePath: no highlighter instance available`);
   }
 }

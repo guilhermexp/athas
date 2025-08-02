@@ -287,36 +287,23 @@ export function TextEditor() {
     // Load core extensions only once per app lifecycle
     const loadExtensions = async () => {
       try {
-        console.log(`[DEBUG] TextEditor: loadExtensions() called`);
         // Initialize extension manager if not already done
         if (!extensionManager.isInitialized()) {
-          console.log(`[DEBUG] TextEditor: Extension manager not initialized, initializing...`);
           extensionManager.initialize();
-        } else {
-          console.log(`[DEBUG] TextEditor: Extension manager already initialized`);
         }
 
         // Load core extensions if not already loaded
         if (!extensionManager.isExtensionLoaded("Syntax Highlighting")) {
-          console.log(`[DEBUG] TextEditor: Loading syntax highlighting extension`);
           await extensionManager.loadExtension(syntaxHighlightingExtension);
-        } else {
-          console.log(`[DEBUG] TextEditor: Syntax highlighting extension already loaded`);
         }
 
         if (!extensionManager.isExtensionLoaded("Basic Editing")) {
-          console.log(`[DEBUG] TextEditor: Loading basic editing extension`);
           await extensionManager.loadExtension(basicEditingExtension);
-        } else {
-          console.log(`[DEBUG] TextEditor: Basic editing extension already loaded`);
         }
 
         // Set file path for syntax highlighting
         if (filePath) {
-          console.log(`[DEBUG] TextEditor: Setting file path for syntax highlighting: ${filePath}`);
           setSyntaxHighlightingFilePath(filePath);
-        } else {
-          console.log(`[DEBUG] TextEditor: No file path available for syntax highlighting`);
         }
       } catch (error) {
         console.error("Failed to load extensions:", error);

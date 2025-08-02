@@ -22,11 +22,6 @@ function convertToLineTokens(
   content: string,
   tokens: Array<{ start: number; end: number; class_name: string }>,
 ): Map<number, LineToken[]> {
-  console.log(`[DEBUG] convertToLineTokens called with ${tokens.length} tokens`);
-  if (tokens.length > 0) {
-    console.log("[DEBUG] Sample tokens:", tokens.slice(0, 3));
-  }
-
   const lines = content.split("\n");
   const tokensByLine = new Map<number, LineToken[]>();
 
@@ -57,15 +52,11 @@ function convertToLineTokens(
 
     if (lineTokens.length > 0) {
       tokensByLine.set(lineNumber, lineTokens);
-      if (lineNumber < 3) {
-        console.log(`[DEBUG] Line ${lineNumber} tokens:`, lineTokens);
-      }
     }
 
     currentOffset += lineLength + 1; // +1 for newline
   }
 
-  console.log(`[DEBUG] convertToLineTokens result: ${tokensByLine.size} lines with tokens`);
   return tokensByLine;
 }
 

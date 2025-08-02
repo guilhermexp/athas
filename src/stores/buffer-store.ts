@@ -220,21 +220,10 @@ export const useBufferStore = createSelectors(
         },
 
         updateBufferTokens: (bufferId: string, tokens: Buffer["tokens"]) => {
-          console.log(
-            `[DEBUG] updateBufferTokens called for buffer ${bufferId} with ${tokens.length} tokens`,
-          );
-          if (tokens.length > 0) {
-            console.log("[DEBUG] First few tokens:", tokens.slice(0, 3));
-          }
           set((state) => {
             const buffer = state.buffers.find((b) => b.id === bufferId);
             if (buffer) {
               buffer.tokens = tokens;
-              console.log(
-                `[DEBUG] Buffer ${bufferId} tokens updated. Total tokens: ${buffer.tokens.length}`,
-              );
-            } else {
-              console.log(`[DEBUG] Buffer ${bufferId} not found for token update`);
             }
           });
         },

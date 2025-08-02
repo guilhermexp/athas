@@ -15,16 +15,11 @@ class ExtensionManager {
   }
 
   isInitialized(): boolean {
-    console.log(`[DEBUG] ExtensionManager: isInitialized() = ${this.initialized}`);
     return this.initialized;
   }
 
   initialize(): void {
-    console.log(
-      `[DEBUG] ExtensionManager: initialize() called, currently initialized: ${this.initialized}`,
-    );
     if (this.initialized) {
-      console.log(`[DEBUG] ExtensionManager: Already initialized, returning early`);
       return;
     }
     // Clear any existing state
@@ -34,21 +29,16 @@ class ExtensionManager {
     this.keybindings.clear();
     this.decorationProviders.clear();
     this.initialized = true;
-    console.log(`[DEBUG] ExtensionManager: Initialization completed`);
   }
 
   async loadExtension(extension: EditorExtension): Promise<void> {
-    console.log(`[DEBUG] ExtensionManager: Loading extension "${extension.name}"`);
     if (!this.editor) {
-      console.log(`[DEBUG] ExtensionManager: Editor API not initialized`);
       throw new Error("Editor API not initialized");
     }
 
     const extensionId = this.generateExtensionId(extension.name);
-    console.log(`[DEBUG] ExtensionManager: Generated extension ID: ${extensionId}`);
 
     if (this.extensions.has(extensionId)) {
-      console.log(`[DEBUG] ExtensionManager: Extension ${extension.name} is already loaded`);
       throw new Error(`Extension ${extension.name} is already loaded`);
     }
 
@@ -84,11 +74,7 @@ class ExtensionManager {
 
     // Initialize extension
     if (extension.initialize) {
-      console.log(`[DEBUG] ExtensionManager: Calling initialize for ${extension.name}`);
       await extension.initialize(this.editor);
-      console.log(`[DEBUG] ExtensionManager: Initialize completed for ${extension.name}`);
-    } else {
-      console.log(`[DEBUG] ExtensionManager: No initialize method for ${extension.name}`);
     }
 
     // Set up event handlers
@@ -173,9 +159,7 @@ class ExtensionManager {
 
   isExtensionLoaded(extensionName: string): boolean {
     const extensionId = this.generateExtensionId(extensionName);
-    const isLoaded = this.extensions.has(extensionId);
-    console.log(`[DEBUG] ExtensionManager: isExtensionLoaded("${extensionName}") = ${isLoaded}`);
-    return isLoaded;
+    return this.extensions.has(extensionId);
   }
 
   private generateExtensionId(name: string): string {
