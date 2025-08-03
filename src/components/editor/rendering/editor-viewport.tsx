@@ -26,6 +26,7 @@ export const EditorViewport = memo(
       const showLineNumbers = useEditorSettingsStore.use.lineNumbers();
       const scrollTop = useEditorLayoutStore.use.scrollTop();
       const viewportHeight = useEditorLayoutStore.use.viewportHeight();
+      const tabSize = useEditorSettingsStore.use.tabSize();
       const { lineHeight, gutterWidth } = useEditorLayout();
 
       const selectedLines = useMemo(() => {
@@ -139,6 +140,7 @@ export const EditorViewport = memo(
               height: `${totalHeight}px`,
               minWidth: "100%",
               zIndex: 1,
+              tabSize: tabSize,
             }}
             onClick={onClick}
             onMouseDown={onMouseDown}
