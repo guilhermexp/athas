@@ -15,7 +15,6 @@ export default function Tooltip({ content, children, side = "top", className }: 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const TOOLTIP_MARGIN = 8;
 
@@ -85,20 +84,11 @@ export default function Tooltip({ content, children, side = "top", className }: 
   };
 
   const showTooltip = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
     setIsVisible(true);
   };
 
   const hideTooltip = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      setIsVisible(false);
-    }, 200);
+    setIsVisible(false);
   };
 
   useEffect(() => {
@@ -139,14 +129,6 @@ export default function Tooltip({ content, children, side = "top", className }: 
       };
     }
   }, [isVisible]);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
 
   const tooltipClasses = {
     top: "-translate-x-1/2 -translate-y-full",
