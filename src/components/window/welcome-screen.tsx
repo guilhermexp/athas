@@ -2,7 +2,7 @@ import { AlertCircle, Download, Folder } from "lucide-react";
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/button";
 import { useUpdater } from "@/settings/hooks/use-updater";
-import { fetchAppVersion } from "@/utils/app-utils";
+import { fetchRawAppVersion } from "@/utils/app-utils";
 import { cn } from "@/utils/cn";
 
 interface RecentFolder {
@@ -36,7 +36,7 @@ const WelcomeScreen = ({
 
   useEffect(() => {
     const loadVersion = async () => {
-      const version = await fetchAppVersion();
+      const version = await fetchRawAppVersion();
       setAppVersion(version);
     };
 
@@ -65,7 +65,7 @@ const WelcomeScreen = ({
           <img src="/logo.svg" alt="athas industries" className={cn("h-12")} draggable="false" />
         </div>
         <div className={cn("flex items-center gap-2")}>
-          <p className={cn("paper-text-light font-mono font-normal text-xs")}>{appVersion}</p>
+          <p className={cn("paper-text-light font-mono font-normal text-xs")}>v{appVersion}</p>
           {checking && (
             <div className={cn("paper-text-light text-xs")} title="Checking for updates...">
               ⟳

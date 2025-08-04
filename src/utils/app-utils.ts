@@ -1,21 +1,6 @@
 import { getVersion } from "@tauri-apps/api/app";
 
 /**
- * Fetches the application version from Tauri API
- * @returns Promise<string> - Application version with 'v' prefix (e.g., "v1.0.0")
- */
-export const fetchAppVersion = async (): Promise<string> => {
-  try {
-    const version = await getVersion();
-    return `v${version}`;
-  } catch (error) {
-    console.error("Failed to fetch app version:", error);
-    // Return default version if fetching fails
-    return "v0.1.0";
-  }
-};
-
-/**
  * Fetches the raw application version from Tauri API without 'v' prefix
  * @returns Promise<string> - Raw application version (e.g., "1.0.0")
  */
