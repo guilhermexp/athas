@@ -383,7 +383,24 @@ const TerminalTabBar = ({
         }}
       >
         {/* Left side - Terminal tabs */}
-        <div className="scrollbar-hidden flex overflow-x-auto" data-tab-container>
+        <div
+          className="scrollbar-hidden flex overflow-x-auto"
+          data-tab-container
+          onWheel={(e) => {
+            // Handle horizontal wheel scrolling with native delta values for natural acceleration
+            const container = e.currentTarget;
+            if (!container) return;
+
+            // Use deltaY for horizontal scrolling (common pattern for horizontal scrollable areas)
+            // Also support deltaX for devices that support horizontal scrolling directly
+            const deltaX = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+
+            container.scrollLeft += deltaX;
+
+            // Prevent default to avoid any browser interference
+            e.preventDefault();
+          }}
+        >
           {sortedTerminals.map((terminal, index) => {
             const isActive = terminal.id === activeTerminalId;
             // Drop indicator should be shown before the tab at dropTarget

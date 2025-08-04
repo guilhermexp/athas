@@ -696,6 +696,17 @@ const FileTree = ({
         scrollBehavior: "auto", // Disable smooth scrolling
         overscrollBehavior: "contain",
       }}
+      onWheel={(e) => {
+        // Handle wheel scrolling with native delta values for natural acceleration
+        const container = containerRef.current;
+        if (!container) return;
+
+        // Use the native deltaY value to preserve mouse acceleration
+        container.scrollTop += e.deltaY;
+
+        // Prevent default to avoid any browser interference
+        e.preventDefault();
+      }}
       onDragOver={(e) => {
         e.preventDefault();
         if (draggedItem) {
