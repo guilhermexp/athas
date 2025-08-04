@@ -1,4 +1,5 @@
 import { confirm } from "@tauri-apps/plugin-dialog";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createSelectors } from "@/utils/zustand-selectors";
@@ -548,6 +549,10 @@ export const useFileSystemStore = createSelectors(
           state.files = removeFileFromTree(state.files, path);
           state.filesVersion++;
         });
+      },
+
+      handleRevealInFolder: async (path: string) => {
+        await revealItemInDir(path);
       },
 
       // Setter methods
