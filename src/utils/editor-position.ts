@@ -58,7 +58,8 @@ export const calculateOffsetFromPosition = (
  * Get line height based on font size
  */
 export const getLineHeight = (fontSize: number): number => {
-  return fontSize * EDITOR_CONSTANTS.LINE_HEIGHT_MULTIPLIER;
+  // Fractional line-height causes subpixel misalignment between textarea and rendered lines
+  return Math.ceil(fontSize * EDITOR_CONSTANTS.LINE_HEIGHT_MULTIPLIER);
 };
 
 /**

@@ -58,6 +58,7 @@ export const MainSidebar = () => {
   const handleDeletePath = useFileSystemStore.use.handleDeletePath?.();
   const refreshDirectory = useFileSystemStore.use.refreshDirectory?.();
   const handleFileMove = useFileSystemStore.use.handleFileMove?.();
+  const handleRevealInFolder = useFileSystemStore.use.handleRevealInFolder?.();
 
   // sidebar store
   const activeBufferPath = useSidebarStore.use.activeBufferPath?.();
@@ -206,6 +207,7 @@ export const MainSidebar = () => {
             onDeletePath={handleDeletePath}
             onUpdateFiles={setFiles}
             onRefreshDirectory={refreshDirectory}
+            onRevealInFinder={handleRevealInFolder}
             onFileMove={handleFileMove}
           />
         )}
