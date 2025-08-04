@@ -25,7 +25,7 @@ import EditorContextMenu from "../overlays/editor-context-menu";
 import { LineBasedEditor } from "./line-based-editor";
 
 export function TextEditor() {
-  const _tabSize = useEditorSettingsStore.use.tabSize();
+  const tabSize = useEditorSettingsStore.use.tabSize();
   const lines = useEditorViewStore.use.lines();
   const { getContent } = useEditorViewStore.use.actions();
   const { updateBufferContent } = useBufferStore.use.actions();
@@ -812,7 +812,7 @@ export function TextEditor() {
           paddingBottom: `${20 * lineHeight}px`, // Add 20 lines worth of bottom padding
           margin: 0,
           whiteSpace: "pre",
-          tabSize: 2,
+          tabSize: tabSize,
           zIndex: 1,
         }}
         autoComplete="off"
