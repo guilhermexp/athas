@@ -1,5 +1,5 @@
-import { sortFileEntries } from "../../utils/file-tree-utils";
 import type { FileEntry } from "../models/app";
+import { sortFileEntries } from "./file-tree-utils";
 
 // Common directories and patterns to ignore for performance
 const IGNORE_PATTERNS = [
