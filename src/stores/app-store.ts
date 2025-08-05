@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createSelectors } from "@/utils/zustand-selectors";
-import { writeFile } from "../utils/platform";
+import { writeFile } from "../file-system/controllers/platform";
 
 interface AppState {
   // Autosave state

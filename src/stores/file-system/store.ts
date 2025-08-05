@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { CodeEditorRef } from "../../components/editor/code-editor";
+import { openFolder, readDirectory } from "../../file-system/controllers/platform";
 import type { FileEntry } from "../../types/app";
 import {
   createNewDirectory,
@@ -28,7 +29,6 @@ import {
 } from "../../utils/file-utils";
 import { getGitStatus } from "../../utils/git";
 import { isDiffFile, parseRawDiffContent } from "../../utils/git-diff-parser";
-import { openFolder, readDirectory } from "../../utils/platform";
 // Store imports - Note: Direct store communication via getState() is used here.
 // This is an acceptable Zustand pattern, though it creates coupling between stores.
 // See: https://github.com/pmndrs/zustand/discussions/1319
