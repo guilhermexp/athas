@@ -5,6 +5,7 @@ import { immer } from "zustand/middleware/immer";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { CodeEditorRef } from "../../components/editor/code-editor";
 import { openFolder, readDirectory } from "../../file-system/controllers/platform";
+import type { FsActions, FsState } from "../../file-system/models/interface";
 import type { FileEntry } from "../../types/app";
 import {
   createNewDirectory,
@@ -38,7 +39,6 @@ import { useFileWatcherStore } from "../file-watcher-store";
 import { useGitStore } from "../git-store";
 import { useProjectStore } from "../project-store";
 import { useRecentFoldersStore } from "../recent-folders-store";
-import type { FsActions, FsState } from "./interface";
 import { shouldIgnore, updateDirectoryContents } from "./utils";
 
 export const useFileSystemStore = createSelectors(
