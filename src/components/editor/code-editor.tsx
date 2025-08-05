@@ -1,17 +1,17 @@
 import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
-import { useFileSystemStore } from "../../file-system/controllers/store";
-import { useEditorScroll } from "../../hooks/use-editor-scroll";
-import { useHover } from "../../hooks/use-hover";
-import { LspClient } from "../../lib/lsp/lsp-client";
-import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
-import { useAppStore } from "../../stores/app-store";
-import { useBufferStore } from "../../stores/buffer-store";
-import { useEditorCursorStore } from "../../stores/editor-cursor-store";
-import { useEditorInstanceStore } from "../../stores/editor-instance-store";
-import { useEditorSearchStore } from "../../stores/editor-search-store";
-import { useEditorSettingsStore } from "../../stores/editor-settings-store";
-import { useLspStore } from "../../stores/lsp-store";
+import { useFileSystemStore } from "@/file-system/controllers/store";
+import { useEditorScroll } from "@/hooks/use-editor-scroll";
+import { useHover } from "@/hooks/use-hover";
+import { LspClient } from "@/lib/lsp/lsp-client";
+import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
+import { useAppStore } from "@/stores/app-store";
+import { useBufferStore } from "@/stores/buffer-store";
+import { useEditorCursorStore } from "@/stores/editor-cursor-store";
+import { useEditorInstanceStore } from "@/stores/editor-instance-store";
+import { useEditorSearchStore } from "@/stores/editor-search-store";
+import { useEditorSettingsStore } from "@/stores/editor-settings-store";
+import { useLspStore } from "@/stores/lsp-store";
 import FindBar from "../find-bar";
 import Breadcrumb from "./breadcrumb";
 import { TextEditor } from "./core/text-editor";
@@ -53,7 +53,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
   // Extract values from active buffer or use defaults
   const value = activeBuffer?.content || "";
   const filePath = activeBuffer?.path || "";
-  const onChange = activeBuffer ? handleContentChange : () => {};
+  const onChange = activeBuffer ? handleContentChange : () => { };
 
   // Initialize refs in store
   useEffect(() => {

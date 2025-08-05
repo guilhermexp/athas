@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import FileIcon from "../../file-explorer/views/file.icon";
-import type { FileEntry } from "../../file-system/models/app";
-import { useAIChatStore } from "../../stores/ai-chat/store";
-import { useProjectStore } from "../../stores/project-store";
+import FileIcon from "@/file-explorer/views/file.icon";
+import type { FileEntry } from "@/file-system/models/app";
+import { useAIChatStore } from "@/stores/ai-chat/store";
+import { useProjectStore } from "@/stores/project-store";
 
 interface FileMentionDropdownProps {
   files: FileEntry[];
@@ -141,9 +141,8 @@ export const FileMentionDropdown = React.memo(function FileMentionDropdown({
       {filteredFiles.map((file, index) => (
         <div
           key={file.path}
-          className={`flex cursor-pointer items-center gap-2 border-border border-b px-2 py-1.5 text-xs transition-all duration-100 last:border-b-0 ${
-            index === selectedIndex ? "bg-selected text-text shadow-sm" : "text-text hover:bg-hover"
-          }`}
+          className={`flex cursor-pointer items-center gap-2 border-border border-b px-2 py-1.5 text-xs transition-all duration-100 last:border-b-0 ${index === selectedIndex ? "bg-selected text-text shadow-sm" : "text-text hover:bg-hover"
+            }`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

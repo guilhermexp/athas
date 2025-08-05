@@ -1,10 +1,10 @@
 import { ClockIcon, File } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IGNORED_PATTERNS } from "@/components/command/constants/ignored-patterns";
-import { useRecentFilesStore } from "../../../file-system/controllers/recent-files-store";
-import { useFileSystemStore } from "../../../file-system/controllers/store";
-import { useBufferStore } from "../../../stores/buffer-store";
-import { useUIState } from "../../../stores/ui-state-store";
+import { useRecentFilesStore } from "@/file-system/controllers/recent-files-store";
+import { useFileSystemStore } from "@/file-system/controllers/store";
+import { useBufferStore } from "@/stores/buffer-store";
+import { useUIState } from "@/stores/ui-state-store";
 import Command, {
   CommandEmpty,
   CommandHeader,
@@ -385,8 +385,8 @@ const CommandBar = () => {
 
       <CommandList ref={scrollContainerRef}>
         {openBufferFiles.length === 0 &&
-        recentFilesInResults.length === 0 &&
-        otherFiles.length === 0 ? (
+          recentFilesInResults.length === 0 &&
+          otherFiles.length === 0 ? (
           <CommandEmpty>
             <div className="font-mono">
               {query ? "No matching files found" : "No files available"}

@@ -2,15 +2,15 @@ import { produce } from "immer";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import type { Chat } from "../../components/ai-chat/types";
-import type { FileEntry } from "../../file-system/models/app";
-import { AI_PROVIDERS } from "../../types/ai-provider";
+import type { Chat } from "@/components/ai-chat/types";
+import type { FileEntry } from "@/file-system/models/app";
+import { AI_PROVIDERS } from "@/types/ai-provider";
 import {
   getProviderApiToken,
   removeProviderApiToken,
   storeProviderApiToken,
   validateProviderApiKey,
-} from "../../utils/ai-chat";
+} from "@/utils/ai-chat";
 import type { AIChatActions, AIChatState } from "./types";
 
 export const useAIChatStore = create<AIChatState & AIChatActions>()(
