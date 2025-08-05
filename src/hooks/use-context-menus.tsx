@@ -1,7 +1,7 @@
 import { ClockIcon } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/utils/cn";
-import { useFileSystemStore } from "../stores/file-system/store";
+import { useFileSystemStore } from "../file-system/controllers/store";
 import { useRecentFoldersStore } from "../stores/recent-folders-store";
 import { useUIState } from "../stores/ui-state-store";
 import type { RecentFolder } from "../types/recent-folders";

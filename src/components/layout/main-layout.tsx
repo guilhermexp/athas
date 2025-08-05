@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SQLiteViewer from "../../database/sqlite-viewer";
+import { useFileSystemStore } from "../../file-system/controllers/store";
 import { ProjectNameMenu } from "../../hooks/use-context-menus";
 import { useKeyboardShortcutsWrapper } from "../../hooks/use-keyboard-shortcuts-wrapper";
 import { useMenuEventsWrapper } from "../../hooks/use-menu-events-wrapper";
@@ -7,7 +8,6 @@ import SettingsDialog from "../../settings/components/settings-dialog";
 import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
 import { useSettingsStore } from "../../settings/stores/settings-store";
 import { useBufferStore } from "../../stores/buffer-store";
-import { useFileSystemStore } from "../../stores/file-system/store";
 import { useUIState } from "../../stores/ui-state-store";
 import { type GitHunk, stageHunk, unstageHunk } from "../../utils/git";
 import AIChat from "../ai-chat/ai-chat";

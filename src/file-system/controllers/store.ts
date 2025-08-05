@@ -4,8 +4,15 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { CodeEditorRef } from "../../components/editor/code-editor";
-import { openFolder, readDirectory } from "../../file-system/controllers/platform";
-import type { FsActions, FsState } from "../../file-system/models/interface";
+// Store imports - Note: Direct store communication via getState() is used here.
+// This is an acceptable Zustand pattern, though it creates coupling between stores.
+// See: https://github.com/pmndrs/zustand/discussions/1319
+import { useBufferStore } from "../../stores/buffer-store";
+import { useFileTreeStore } from "../../stores/file-tree-store";
+import { useFileWatcherStore } from "../../stores/file-watcher-store";
+import { useGitStore } from "../../stores/git-store";
+import { useProjectStore } from "../../stores/project-store";
+import { useRecentFoldersStore } from "../../stores/recent-folders-store";
 import type { FileEntry } from "../../types/app";
 import {
   createNewDirectory,
@@ -30,15 +37,8 @@ import {
 } from "../../utils/file-utils";
 import { getGitStatus } from "../../utils/git";
 import { isDiffFile, parseRawDiffContent } from "../../utils/git-diff-parser";
-// Store imports - Note: Direct store communication via getState() is used here.
-// This is an acceptable Zustand pattern, though it creates coupling between stores.
-// See: https://github.com/pmndrs/zustand/discussions/1319
-import { useBufferStore } from "../buffer-store";
-import { useFileTreeStore } from "../file-tree-store";
-import { useFileWatcherStore } from "../file-watcher-store";
-import { useGitStore } from "../git-store";
-import { useProjectStore } from "../project-store";
-import { useRecentFoldersStore } from "../recent-folders-store";
+import type { FsActions, FsState } from "../models/interface";
+import { openFolder, readDirectory } from "./platform";
 import { shouldIgnore, updateDirectoryContents } from "./utils";
 
 export const useFileSystemStore = createSelectors(

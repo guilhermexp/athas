@@ -4,8 +4,8 @@ import { createPortal } from "react-dom";
 import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
 import FileIcon from "../../file-explorer/views/file.icon";
 import { readDirectory } from "../../file-system/controllers/platform";
+import { useFileSystemStore } from "../../file-system/controllers/store";
 import { useBufferStore } from "../../stores/buffer-store";
-import { useFileSystemStore } from "../../stores/file-system/store";
 import { useUIState } from "../../stores/ui-state-store";
 import type { FileEntry } from "../../types/app";
 

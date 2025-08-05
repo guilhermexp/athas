@@ -8,9 +8,9 @@ import WelcomeScreen from "./components/window/welcome-screen";
 import { ZoomIndicator } from "./components/zoom-indicator";
 import { initializeThemeSystem } from "./extensions/themes/theme-initializer";
 import { isMac } from "./file-system/controllers/platform";
+import { useFileSystemStore } from "./file-system/controllers/store";
 import { useScroll } from "./hooks/use-scroll";
 import { useAppStore } from "./stores/app-store";
-import { useFileSystemStore } from "./stores/file-system/store";
 import {
   cleanupFileWatcherListener,
   initializeFileWatcherListener,
