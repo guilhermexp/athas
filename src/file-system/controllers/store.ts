@@ -20,12 +20,6 @@ import {
   sortFileEntries,
   updateFileInTree,
 } from "../../utils/file-tree-utils";
-import {
-  getFilenameFromPath,
-  getRootPath,
-  isImageFile,
-  isSQLiteFile,
-} from "../../utils/file-utils";
 import { getGitStatus } from "../../utils/git";
 import { isDiffFile, parseRawDiffContent } from "../../utils/git-diff-parser";
 import type { FileEntry } from "../models/app";
@@ -37,6 +31,7 @@ import {
   readDirectoryContents,
   readFileContent,
 } from "./file-operations";
+import { getFilenameFromPath, getRootPath, isImageFile, isSQLiteFile } from "./file-utils";
 import { useFileWatcherStore } from "./file-watcher-store";
 import { openFolder, readDirectory } from "./platform";
 import { shouldIgnore, updateDirectoryContents } from "./utils";
