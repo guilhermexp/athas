@@ -12,11 +12,11 @@ import {
   initializeFileWatcherListener,
 } from "./file-system/controllers/file-watcher-store";
 import { isMac } from "./file-system/controllers/platform";
+import { useRecentFoldersStore } from "./file-system/controllers/recent-folders-store";
 import { useFileSystemStore } from "./file-system/controllers/store";
 import { useScroll } from "./hooks/use-scroll";
 import { useAppStore } from "./stores/app-store";
 import { useFontStore } from "./stores/font-store";
-import { useRecentFoldersStore } from "./stores/recent-folders-store";
 import { useZoomStore } from "./stores/zoom-store";
 import { cn } from "./utils/cn";
 

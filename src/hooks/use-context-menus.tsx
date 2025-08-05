@@ -1,9 +1,9 @@
 import { ClockIcon } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/utils/cn";
+import { useRecentFoldersStore } from "../file-system/controllers/recent-folders-store";
 import { useFileSystemStore } from "../file-system/controllers/store";
 import type { RecentFolder } from "../file-system/models/recent-folders";
-import { useRecentFoldersStore } from "../stores/recent-folders-store";
 import { useUIState } from "../stores/ui-state-store";
 
 export const ProjectNameMenu = () => {

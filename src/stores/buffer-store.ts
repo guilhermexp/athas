@@ -4,8 +4,8 @@ import { createWithEqualityFn } from "zustand/traditional";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { MultiFileDiff } from "../components/diff-viewer/utils/types";
 import { readFileContent } from "../file-system/controllers/file-operations";
+import { useRecentFilesStore } from "../file-system/controllers/recent-files-store";
 import type { GitDiff } from "../utils/git";
-import { useRecentFilesStore } from "./recent-files-store";
 
 interface Buffer {
   id: string;

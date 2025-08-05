@@ -11,7 +11,6 @@ import { useFileTreeStore } from "../../file-explorer/controllers/file-tree-stor
 import { useBufferStore } from "../../stores/buffer-store";
 import { useGitStore } from "../../stores/git-store";
 import { useProjectStore } from "../../stores/project-store";
-import { useRecentFoldersStore } from "../../stores/recent-folders-store";
 import { getGitStatus } from "../../utils/git";
 import { isDiffFile, parseRawDiffContent } from "../../utils/git-diff-parser";
 import type { FileEntry } from "../models/app";
@@ -34,6 +33,7 @@ import {
 import { getFilenameFromPath, getRootPath, isImageFile, isSQLiteFile } from "./file-utils";
 import { useFileWatcherStore } from "./file-watcher-store";
 import { openFolder, readDirectory } from "./platform";
+import { useRecentFoldersStore } from "./recent-folders-store";
 import { shouldIgnore, updateDirectoryContents } from "./utils";
 
 export const useFileSystemStore = createSelectors(
