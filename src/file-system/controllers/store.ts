@@ -4,11 +4,11 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { CodeEditorRef } from "../../components/editor/code-editor";
+import { useFileTreeStore } from "../../file-explorer/controllers/file-tree-store";
 // Store imports - Note: Direct store communication via getState() is used here.
 // This is an acceptable Zustand pattern, though it creates coupling between stores.
 // See: https://github.com/pmndrs/zustand/discussions/1319
 import { useBufferStore } from "../../stores/buffer-store";
-import { useFileTreeStore } from "../../stores/file-tree-store";
 import { useFileWatcherStore } from "../../stores/file-watcher-store";
 import { useGitStore } from "../../stores/git-store";
 import { useProjectStore } from "../../stores/project-store";
