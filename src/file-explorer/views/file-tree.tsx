@@ -21,10 +21,10 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/utils/cn";
+import FileIcon from "../../components/file-icon";
 import type { ContextMenuState, FileEntry } from "../../types/app";
 import { type GitFile, type GitStatus, getGitStatus } from "../../utils/git";
 import { moveFile, readDirectory, readFile } from "../../utils/platform";
-import FileIcon from "../file-icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
 import "./file-tree.css";
 
