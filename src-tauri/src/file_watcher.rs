@@ -5,7 +5,7 @@ use std::{
    collections::{HashMap, HashSet},
    path::PathBuf,
    sync::{Arc, Mutex},
-   time::Duration,
+   time::{Duration, SystemTime},
 };
 use tauri::{AppHandle, Emitter};
 
@@ -18,8 +18,8 @@ pub struct FileChangeEvent {
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FileChangeType {
-   Created,
-   Modified,
+   Opened,
+   Reloaded,
    Deleted,
 }
 
@@ -28,8 +28,7 @@ pub struct FileWatcher {
    debouncer: Arc<Mutex<Option<Debouncer<notify::RecommendedWatcher>>>>,
    watched_paths: Arc<Mutex<HashSet<PathBuf>>>,
    watched_directories: Arc<Mutex<HashSet<PathBuf>>>,
-   known_files: Arc<Mutex<HashMap<PathBuf, std::time::SystemTime>>>, /* Changed to HashMap with
-                                                                      * mtime */
+   known_files: Arc<Mutex<HashMap<PathBuf, SystemTime>>>,
 }
 
 impl FileWatcher {
@@ -39,7 +38,7 @@ impl FileWatcher {
          debouncer: Arc::new(Mutex::new(None)),
          watched_paths: Arc::new(Mutex::new(HashSet::new())),
          watched_directories: Arc::new(Mutex::new(HashSet::new())),
-         known_files: Arc::new(Mutex::new(HashMap::new())), // Initialize as HashMap
+         known_files: Arc::new(Mutex::new(HashMap::new())),
       }
    }
 
@@ -57,6 +56,17 @@ impl FileWatcher {
 
       self.ensure_debouncer_initialized()?;
       self.setup_path_watching(&path_buf, &mut watched_paths)?;
+
+      // Emit an "Opened" event for clarity in the app UI
+      let change_event = FileChangeEvent {
+         path: path_buf.to_string_lossy().to_string(),
+         event_type: FileChangeType::Opened,
+      };
+      log::debug!(
+         "[FileWatcher] Emitting opened event for: {}",
+         change_event.path
+      );
+      let _ = self.app_handle.emit("file-changed", &change_event);
 
       Ok(())
    }
@@ -99,7 +109,7 @@ impl FileWatcher {
       app_handle: &AppHandle,
       watched_paths: &Arc<Mutex<HashSet<PathBuf>>>,
       watched_directories: &Arc<Mutex<HashSet<PathBuf>>>,
-      known_files: &Arc<Mutex<HashMap<PathBuf, std::time::SystemTime>>>, // Updated type
+      known_files: &Arc<Mutex<HashMap<PathBuf, SystemTime>>>,
    ) {
       let watched_paths = watched_paths.lock().unwrap();
       let watched_dirs = watched_directories.lock().unwrap();
@@ -138,35 +148,44 @@ impl FileWatcher {
 
    fn determine_event_type(
       path: &PathBuf,
-      known_files: &Arc<Mutex<HashMap<PathBuf, std::time::SystemTime>>>, // Updated type
+      known_files: &Arc<Mutex<HashMap<PathBuf, SystemTime>>>,
    ) -> Option<FileChangeType> {
-      let mut known_files_map = known_files.lock().unwrap();
+      let mut files = known_files.lock().unwrap();
 
       if !path.exists() {
-         known_files_map.remove(path);
+         files.remove(path);
          Some(FileChangeType::Deleted)
       } else if let Ok(metadata) = std::fs::metadata(path) {
-         let current_mtime = metadata
-            .modified()
-            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+         // Handle modification time explicitly to avoid misleading UNIX_EPOCH fallback
+         let current_mtime = match metadata.modified() {
+            Ok(mtime) => mtime,
+            Err(err) => {
+               log::warn!(
+                  "[FileWatcher] Could not get modification time for {:?}: {}",
+                  path,
+                  err
+               );
+               SystemTime::now()
+            }
+         };
 
-         if let Some(&stored_mtime) = known_files_map.get(path) {
-            // If modification time hasn't changed, it's likely just access time - ignore
+         if let Some(&stored_mtime) = files.get(path) {
             if stored_mtime == current_mtime {
-               None // No actual content change
+               None
             } else {
-               // Modification time changed - actual content modification
-               known_files_map.insert(path.clone(), current_mtime);
-               Some(FileChangeType::Modified)
+               files.insert(path.clone(), current_mtime);
+               Some(FileChangeType::Reloaded)
             }
          } else {
-            // New file that wasn't tracked before
-            known_files_map.insert(path.clone(), current_mtime);
-            Some(FileChangeType::Created)
+            files.insert(path.clone(), current_mtime);
+            Some(FileChangeType::Opened)
          }
       } else {
-         // Can't get metadata, but file exists - treat as modification
-         Some(FileChangeType::Modified)
+         log::warn!(
+            "[FileWatcher] Could not read metadata for {:?}, treating as reload",
+            path
+         );
+         Some(FileChangeType::Reloaded)
       }
    }
 
@@ -191,11 +210,19 @@ impl FileWatcher {
       if path_buf.is_dir() {
          self.setup_directory_watching(path_buf)?;
       } else {
-         // Track initial modification time for files
+         // Track initial modification time for files, handle errors explicitly
          if let Ok(metadata) = std::fs::metadata(path_buf) {
-            let mtime = metadata
-               .modified()
-               .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+            let mtime = match metadata.modified() {
+               Ok(t) => t,
+               Err(err) => {
+                  log::warn!(
+                     "[FileWatcher] Could not get initial modification time for {:?}: {}",
+                     path_buf,
+                     err
+                  );
+                  SystemTime::now()
+               }
+            };
             self
                .known_files
                .lock()
@@ -224,9 +251,17 @@ impl FileWatcher {
          .filter(|path| path.is_file())
          .for_each(|path| {
             if let Ok(metadata) = std::fs::metadata(&path) {
-               let mtime = metadata
-                  .modified()
-                  .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+               let mtime = match metadata.modified() {
+                  Ok(t) => t,
+                  Err(err) => {
+                     log::warn!(
+                        "[FileWatcher] Could not get initial modification time for {:?}: {}",
+                        path,
+                        err
+                     );
+                     SystemTime::now()
+                  }
+               };
                known_files.insert(path, mtime);
             }
          });
