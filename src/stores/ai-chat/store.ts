@@ -3,8 +3,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { Chat } from "../../components/ai-chat/types";
+import type { FileEntry } from "../../file-system/models/app";
 import { AI_PROVIDERS } from "../../types/ai-provider";
-import type { FileEntry } from "../../types/app";
 import {
   getProviderApiToken,
   removeProviderApiToken,

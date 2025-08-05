@@ -13,7 +13,6 @@ import { useFileWatcherStore } from "../../stores/file-watcher-store";
 import { useGitStore } from "../../stores/git-store";
 import { useProjectStore } from "../../stores/project-store";
 import { useRecentFoldersStore } from "../../stores/recent-folders-store";
-import type { FileEntry } from "../../types/app";
 import {
   createNewDirectory,
   createNewFile,
@@ -37,6 +36,7 @@ import {
 } from "../../utils/file-utils";
 import { getGitStatus } from "../../utils/git";
 import { isDiffFile, parseRawDiffContent } from "../../utils/git-diff-parser";
+import type { FileEntry } from "../models/app";
 import type { FsActions, FsState } from "../models/interface";
 import { openFolder, readDirectory } from "./platform";
 import { shouldIgnore, updateDirectoryContents } from "./utils";

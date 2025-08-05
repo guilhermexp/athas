@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import FileIcon from "../../file-explorer/views/file.icon";
+import type { FileEntry } from "../../file-system/models/app";
 import { useAIChatStore } from "../../stores/ai-chat/store";
 import { useProjectStore } from "../../stores/project-store";
-import type { FileEntry } from "../../types/app";
 
 interface FileMentionDropdownProps {
   files: FileEntry[];

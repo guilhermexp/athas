@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import FileIcon from "../file-explorer/views/file.icon";
 import { readFile } from "../file-system/controllers/platform";
-import type { FileEntry } from "../types/app";
+import type { FileEntry } from "../file-system/models/app";
 import Toggle from "./ui/toggle";
 import Tooltip from "./ui/tooltip";
 

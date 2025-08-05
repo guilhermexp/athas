@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/utils/cn";
 import { moveFile, readDirectory, readFile } from "../../file-system/controllers/platform";
-import type { ContextMenuState, FileEntry } from "../../types/app";
+import type { ContextMenuState, FileEntry } from "../../file-system/models/app";
 import { type GitFile, type GitStatus, getGitStatus } from "../../utils/git";
 import FileIcon from "./file.icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";

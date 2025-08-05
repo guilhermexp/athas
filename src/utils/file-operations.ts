@@ -5,7 +5,7 @@ import {
   readFile as platformReadFile,
   writeFile as platformWriteFile,
 } from "../file-system/controllers/platform";
-import type { FileEntry } from "../types/app";
+import type { FileEntry } from "../file-system/models/app";
 
 export async function readFileContent(path: string): Promise<string> {
   try {
