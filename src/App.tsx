@@ -7,14 +7,14 @@ import { ToastContainer } from "./components/ui/toast";
 import WelcomeScreen from "./components/window/welcome-screen";
 import { ZoomIndicator } from "./components/zoom-indicator";
 import { initializeThemeSystem } from "./extensions/themes/theme-initializer";
+import {
+  cleanupFileWatcherListener,
+  initializeFileWatcherListener,
+} from "./file-system/controllers/file-watcher-store";
 import { isMac } from "./file-system/controllers/platform";
 import { useFileSystemStore } from "./file-system/controllers/store";
 import { useScroll } from "./hooks/use-scroll";
 import { useAppStore } from "./stores/app-store";
-import {
-  cleanupFileWatcherListener,
-  initializeFileWatcherListener,
-} from "./stores/file-watcher-store";
 import { useFontStore } from "./stores/font-store";
 import { useRecentFoldersStore } from "./stores/recent-folders-store";
 import { useZoomStore } from "./stores/zoom-store";
