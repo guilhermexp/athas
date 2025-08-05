@@ -1,11 +1,11 @@
+import type { FileEntry } from "../models/app";
 import {
   createDirectory as platformCreateDirectory,
   deletePath as platformDeletePath,
   readDirectory as platformReadDirectory,
   readFile as platformReadFile,
   writeFile as platformWriteFile,
-} from "../file-system/controllers/platform";
-import type { FileEntry } from "../file-system/models/app";
+} from "./platform";
 
 export async function readFileContent(path: string): Promise<string> {
   try {

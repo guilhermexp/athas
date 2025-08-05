@@ -13,13 +13,6 @@ import { useGitStore } from "../../stores/git-store";
 import { useProjectStore } from "../../stores/project-store";
 import { useRecentFoldersStore } from "../../stores/recent-folders-store";
 import {
-  createNewDirectory,
-  createNewFile,
-  deleteFileOrDirectory,
-  readDirectoryContents,
-  readFileContent,
-} from "../../utils/file-operations";
-import {
   addFileToTree,
   collapseAllFolders,
   findFileInTree,
@@ -37,6 +30,13 @@ import { getGitStatus } from "../../utils/git";
 import { isDiffFile, parseRawDiffContent } from "../../utils/git-diff-parser";
 import type { FileEntry } from "../models/app";
 import type { FsActions, FsState } from "../models/interface";
+import {
+  createNewDirectory,
+  createNewFile,
+  deleteFileOrDirectory,
+  readDirectoryContents,
+  readFileContent,
+} from "./file-operations";
 import { useFileWatcherStore } from "./file-watcher-store";
 import { openFolder, readDirectory } from "./platform";
 import { shouldIgnore, updateDirectoryContents } from "./utils";

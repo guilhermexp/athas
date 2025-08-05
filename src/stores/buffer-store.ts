@@ -3,7 +3,7 @@ import { immer } from "zustand/middleware/immer";
 import { createWithEqualityFn } from "zustand/traditional";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { MultiFileDiff } from "../components/diff-viewer/utils/types";
-import { readFileContent } from "../utils/file-operations";
+import { readFileContent } from "../file-system/controllers/file-operations";
 import type { GitDiff } from "../utils/git";
 import { useRecentFilesStore } from "./recent-files-store";
 
