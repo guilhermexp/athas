@@ -54,6 +54,7 @@ export interface AIChatActions {
   updateChatTitle: (chatId: string, title: string) => void;
   addMessage: (chatId: string, message: Message) => void;
   updateMessage: (chatId: string, messageId: string, updates: Partial<Message>) => void;
+  regenerateResponse: () => string | null;
   setIsChatHistoryVisible: (isChatHistoryVisible: boolean) => void;
 
   // Provider API key actions
