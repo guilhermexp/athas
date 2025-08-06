@@ -105,9 +105,9 @@ export function ContextSelector({
 }: Omit<ContextSelectorProps, "allProjectFiles">) {
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [allFiles, setAllFiles] = useState<
-    Array<{ name: string; path: string; isDir: boolean }>
-  >([]);
+  const [allFiles, setAllFiles] = useState<Array<{ name: string; path: string; isDir: boolean }>>(
+    [],
+  );
 
   // Get rootFolderPath from project store and file system store
   const { rootFolderPath } = useProjectStore();
@@ -133,12 +133,8 @@ export function ContextSelector({
     const normalizedRootPath = rootFolderPath.replace(/\\/g, "/");
 
     if (normalizedFullPath.startsWith(normalizedRootPath)) {
-      const relativePath = normalizedFullPath.substring(
-        normalizedRootPath.length,
-      );
-      return relativePath.startsWith("/")
-        ? relativePath.substring(1)
-        : relativePath;
+      const relativePath = normalizedFullPath.substring(normalizedRootPath.length);
+      return relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
     }
 
     return fullPath;
@@ -330,9 +326,7 @@ export function ContextSelector({
             <div className="py-1" role="listbox" aria-label="Files and buffers">
               {allItems.length === 0 ? (
                 <div className="px-3 py-2 text-center font-mono text-text-lighter text-xs">
-                  {searchTerm
-                    ? "No matching files found"
-                    : "No files available"}
+                  {searchTerm ? "No matching files found" : "No files available"}
                 </div>
               ) : (
                 allItems.map((item) => (
@@ -354,15 +348,9 @@ export function ContextSelector({
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       {item.type === "buffer" ? (
                         item.isSQLite ? (
-                          <Database
-                            size={10}
-                            className="flex-shrink-0 text-text-lighter"
-                          />
+                          <Database size={10} className="flex-shrink-0 text-text-lighter" />
                         ) : (
-                          <FileText
-                            size={10}
-                            className="flex-shrink-0 text-text-lighter"
-                          />
+                          <FileText size={10} className="flex-shrink-0 text-text-lighter" />
                         )
                       ) : (
                         <FileIcon
@@ -441,10 +429,7 @@ export function ContextSelector({
               {item.name}
             </span>
             {item.type === "buffer" && item.isDirty && (
-              <span
-                className="text-[8px] text-yellow-500"
-                title="Unsaved changes"
-              >
+              <span className="text-[8px] text-yellow-500" title="Unsaved changes">
                 ●
               </span>
             )}
@@ -460,13 +445,7 @@ export function ContextSelector({
               aria-label={`Remove ${item.name} from context`}
               tabIndex={0}
             >
-              <svg
-                width="8"
-                height="8"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                aria-hidden="true"
-              >
+              <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
               </svg>
             </button>
