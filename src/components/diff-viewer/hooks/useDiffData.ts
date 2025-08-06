@@ -32,12 +32,12 @@ export const useDiffData = (): UseDiffDataReturn => {
     activeBuffer?.diffData ||
     (activeBuffer?.isDiff && activeBuffer.content
       ? (() => {
-        try {
-          return JSON.parse(activeBuffer.content) as GitDiff;
-        } catch {
-          return null;
-        }
-      })()
+          try {
+            return JSON.parse(activeBuffer.content) as GitDiff;
+          } catch {
+            return null;
+          }
+        })()
       : null);
 
   // Filter out MultiFileDiff since this hook handles single file diffs only

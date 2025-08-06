@@ -20,9 +20,9 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/utils/cn";
 import { moveFile, readDirectory, readFile } from "@/file-system/controllers/platform";
 import type { ContextMenuState, FileEntry } from "@/file-system/models/app";
+import { cn } from "@/utils/cn";
 import { type GitFile, type GitStatus, getGitStatus } from "@/utils/git";
 import FileIcon from "./file.icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
@@ -568,7 +568,7 @@ const FileTree = ({
               "hover:bg-hover focus:outline-none",
               activeBufferPath === file.path && "bg-selected",
               dragState.dragOverPath === file.path &&
-              "!bg-accent !bg-opacity-20 !border-2 !border-accent !border-dashed",
+                "!bg-accent !bg-opacity-20 !border-2 !border-accent !border-dashed",
               dragState.isDragging && "cursor-move",
               file.ignored && "opacity-50",
               file.isDir && "file-tree-item-dir",
@@ -689,7 +689,7 @@ const FileTree = ({
         "file-tree-container flex flex-1 select-none",
         "flex-col gap-0 overflow-auto",
         dragState.dragOverPath === "__ROOT__" &&
-        "!bg-accent !bg-opacity-10 !border-2 !border-accent !border-dashed",
+          "!bg-accent !bg-opacity-10 !border-2 !border-accent !border-dashed",
       )}
       ref={containerRef}
       style={{
@@ -954,7 +954,7 @@ const FileTree = ({
                 e.stopPropagation();
                 try {
                   await navigator.clipboard.writeText(contextMenu.path);
-                } catch (_error) { }
+                } catch (_error) {}
                 setContextMenu(null);
               }}
               className={cn(

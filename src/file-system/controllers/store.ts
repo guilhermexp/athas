@@ -2,7 +2,6 @@ import { confirm } from "@tauri-apps/plugin-dialog";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { createSelectors } from "@/utils/zustand-selectors";
 import type { CodeEditorRef } from "@/components/editor/code-editor";
 import { useFileTreeStore } from "@/file-explorer/controllers/file-tree-store";
 // Store imports - Note: Direct store communication via getState() is used here.
@@ -13,6 +12,7 @@ import { useGitStore } from "@/stores/git-store";
 import { useProjectStore } from "@/stores/project-store";
 import { getGitStatus } from "@/utils/git";
 import { isDiffFile, parseRawDiffContent } from "@/utils/git-diff-parser";
+import { createSelectors } from "@/utils/zustand-selectors";
 import type { FileEntry } from "../models/app";
 import type { FsActions, FsState } from "../models/interface";
 import {
@@ -319,11 +319,11 @@ export const useFileSystemStore = createSelectors(
         const itemType = isDirectory ? "folder" : "file";
         const confirmMessage = isDirectory
           ? `Are you sure you want to delete the folder "${targetPath
-            .split("/")
-            .pop()}" and all its contents? This action cannot be undone.`
+              .split("/")
+              .pop()}" and all its contents? This action cannot be undone.`
           : `Are you sure you want to delete the file "${targetPath
-            .split("/")
-            .pop()}"? This action cannot be undone.`;
+              .split("/")
+              .pop()}"? This action cannot be undone.`;
 
         const confirmed = await confirm(confirmMessage, {
           title: `Delete ${itemType}`,

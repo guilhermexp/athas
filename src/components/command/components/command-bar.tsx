@@ -385,8 +385,8 @@ const CommandBar = () => {
 
       <CommandList ref={scrollContainerRef}>
         {openBufferFiles.length === 0 &&
-          recentFilesInResults.length === 0 &&
-          otherFiles.length === 0 ? (
+        recentFilesInResults.length === 0 &&
+        otherFiles.length === 0 ? (
           <CommandEmpty>
             <div className="font-mono">
               {query ? "No matching files found" : "No files available"}

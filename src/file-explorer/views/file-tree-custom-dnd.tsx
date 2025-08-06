@@ -88,7 +88,7 @@ export const useCustomDragDrop = (
               dragState.draggedItem?.isDir &&
               path.startsWith(
                 dragState.draggedItem.path +
-                (dragState.draggedItem.path.includes("\\") ? "\\" : "/"),
+                  (dragState.draggedItem.path.includes("\\") ? "\\" : "/"),
               )
             ) {
               setDragState((prev) => ({

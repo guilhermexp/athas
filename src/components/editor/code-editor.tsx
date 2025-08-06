@@ -53,7 +53,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
   // Extract values from active buffer or use defaults
   const value = activeBuffer?.content || "";
   const filePath = activeBuffer?.path || "";
-  const onChange = activeBuffer ? handleContentChange : () => { };
+  const onChange = activeBuffer ? handleContentChange : () => {};
 
   // Initialize refs in store
   useEffect(() => {

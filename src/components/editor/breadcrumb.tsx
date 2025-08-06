@@ -87,11 +87,11 @@ export default function Breadcrumb() {
       setDropdown((prev) =>
         prev
           ? {
-            ...prev,
-            items: fileEntries,
-            currentPath: previousPath,
-            navigationStack: prev.navigationStack.slice(0, -1),
-          }
+              ...prev,
+              items: fileEntries,
+              currentPath: previousPath,
+              navigationStack: prev.navigationStack.slice(0, -1),
+            }
           : null,
       );
     } catch (error) {
@@ -271,11 +271,11 @@ export default function Breadcrumb() {
                       setDropdown((prev) =>
                         prev
                           ? {
-                            ...prev,
-                            items: fileEntries,
-                            currentPath: item.path,
-                            navigationStack: [...prev.navigationStack, prev.currentPath],
-                          }
+                              ...prev,
+                              items: fileEntries,
+                              currentPath: item.path,
+                              navigationStack: [...prev.navigationStack, prev.currentPath],
+                            }
                           : null,
                       );
                     } catch (error) {
