@@ -21,6 +21,7 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
         isTyping: false,
         streamingMessageId: null,
         selectedBufferIds: new Set<string>(),
+        selectedFilesPaths: new Set<string>(),
         isContextDropdownOpen: false,
         isSendAnimating: false,
         hasApiKey: false,
@@ -65,6 +66,16 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
               state.selectedBufferIds.add(bufferId);
             }
           }),
+        toggleFileSelection: (filePath) =>
+          set((state) => {
+            // Create new Set for immutability
+            state.selectedFilesPaths = new Set(state.selectedFilesPaths);
+            if (state.selectedFilesPaths.has(filePath)) {
+              state.selectedFilesPaths.delete(filePath);
+            } else {
+              state.selectedFilesPaths.add(filePath);
+            }
+          }),
         setIsContextDropdownOpen: (isContextDropdownOpen) =>
           set((state) => {
             state.isContextDropdownOpen = isContextDropdownOpen;
@@ -81,9 +92,17 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
           set((state) => {
             state.selectedBufferIds = new Set<string>();
           }),
+        clearSelectedFiles: () =>
+          set((state) => {
+            state.selectedFilesPaths = new Set<string>();
+          }),
         setSelectedBufferIds: (selectedBufferIds) =>
           set((state) => {
             state.selectedBufferIds = selectedBufferIds;
+          }),
+        setSelectedFilesPaths: (selectedFilesPaths) =>
+          set((state) => {
+            state.selectedFilesPaths = selectedFilesPaths;
           }),
         autoSelectBuffer: (bufferId) =>
           set((state) => {
