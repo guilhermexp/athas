@@ -1,5 +1,5 @@
-import type { Chat, Message } from "../../components/ai-chat/types";
-import type { FileEntry } from "../../file-system/models/app";
+import type { Chat, Message } from "@/components/ai-chat/types";
+import type { FileEntry } from "@/file-system/models/app";
 
 export interface AIChatState {
   // Input state

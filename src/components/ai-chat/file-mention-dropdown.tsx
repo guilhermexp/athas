@@ -1,13 +1,13 @@
 import { Search } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { EDITOR_CONSTANTS } from "../../constants/editor-constants";
-import FileIcon from "../../file-explorer/views/file.icon";
-import { useFileSystemStore } from "../../file-system/controllers/store";
-import type { FileEntry } from "../../file-system/models/app";
-import { useAIChatStore } from "../../stores/ai-chat/store";
-import { useProjectStore } from "../../stores/project-store";
-import { cn } from "../../utils/cn";
+import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
+import FileIcon from "@/file-explorer/views/file.icon";
+import { useFileSystemStore } from "@/file-system/controllers/store";
+import type { FileEntry } from "@/file-system/models/app";
+import { useAIChatStore } from "@/stores/ai-chat/store";
+import { useProjectStore } from "@/stores/project-store";
+import { cn } from "@/utils/cn";
 import { IGNORED_PATTERNS } from "../command/constants/ignored-patterns";
 
 interface FileMentionDropdownProps {

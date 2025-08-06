@@ -1,4 +1,4 @@
-import type { CodeEditorRef } from "../../components/editor/code-editor";
+import type { CodeEditorRef } from "@/components/editor/code-editor";
 import type { FileEntry } from "./app";
 
 export interface FsState {

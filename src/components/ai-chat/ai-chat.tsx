@@ -2,18 +2,18 @@ import { invoke } from "@tauri-apps/api/core";
 import { MessageSquare, Plus, Sparkles } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
-import { useAIChatStore } from "../../stores/ai-chat/store";
-import { useProjectStore } from "../../stores/project-store";
+import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
+import { useAIChatStore } from "@/stores/ai-chat/store";
+import { useProjectStore } from "@/stores/project-store";
 import {
   getAvailableProviders,
   getProviderById,
   setClaudeCodeAvailability,
-} from "../../types/ai-provider";
-import type { ClaudeStatus } from "../../types/claude";
-import { getChatCompletionStream } from "../../utils/ai-chat";
-import { cn } from "../../utils/cn";
-import type { ContextInfo } from "../../utils/types";
+} from "@/types/ai-provider";
+import type { ClaudeStatus } from "@/types/claude";
+import { getChatCompletionStream } from "@/utils/ai-chat";
+import { cn } from "@/utils/cn";
+import type { ContextInfo } from "@/utils/types";
 import ApiKeyModal from "../api-key-modal";
 import AIChatInputBar from "./ai-chat-input-bar";
 import ChatHistoryModal from "./chat-history-modal";

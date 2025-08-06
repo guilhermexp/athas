@@ -1,8 +1,8 @@
 import { Send, Square } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
-import { usePersistentSettingsStore } from "../../settings/stores/persistent-settings-store";
-import { useAIChatStore } from "../../stores/ai-chat/store";
-import { cn } from "../../utils/cn";
+import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
+import { useAIChatStore } from "@/stores/ai-chat/store";
+import { cn } from "@/utils/cn";
 import ModelProviderSelector from "../model-provider-selector";
 import Button from "../ui/button";
 import { ContextSelector } from "./context-selector";

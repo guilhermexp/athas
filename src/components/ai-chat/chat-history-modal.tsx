@@ -1,6 +1,6 @@
 import { MessageSquare, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 import type { ChatHistoryModalProps } from "./types";
 import { getRelativeTime } from "./utils";
 
