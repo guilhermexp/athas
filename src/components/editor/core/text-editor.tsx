@@ -1,3 +1,4 @@
+import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { basicEditingExtension } from "../../../extensions/basic-editing-extension";
 import { editorAPI } from "../../../extensions/editor-api";
@@ -536,7 +537,7 @@ export function TextEditor() {
 
   const handlePaste = useCallback(async () => {
     try {
-      const text = await navigator.clipboard.readText();
+      const text = await readText();
       if (textareaRef.current) {
         const cursorPos = textareaRef.current.selectionStart;
         const selection = useEditorCursorStore.getState().selection;
