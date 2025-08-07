@@ -59,6 +59,7 @@ export const MainSidebar = () => {
   const refreshDirectory = useFileSystemStore.use.refreshDirectory?.();
   const handleFileMove = useFileSystemStore.use.handleFileMove?.();
   const handleRevealInFolder = useFileSystemStore.use.handleRevealInFolder?.();
+  const handleDuplicatePath = useFileSystemStore.use.handleDuplicatePath?.();
 
   // sidebar store
   const activeBufferPath = useSidebarStore.use.activeBufferPath?.();
@@ -209,6 +210,7 @@ export const MainSidebar = () => {
             onRefreshDirectory={refreshDirectory}
             onRevealInFinder={handleRevealInFolder}
             onFileMove={handleFileMove}
+            onDuplicatePath={handleDuplicatePath}
           />
         )}
       </div>
