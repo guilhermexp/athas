@@ -578,8 +578,6 @@ export const useFileSystemStore = createSelectors(
           counter++;
         } while (findFileInTree(get().files, finalPath));
 
-        console.log(`Duplicating file: ${path} to ${finalPath}`);
-
         await copyFile(path, finalPath);
 
         const newFile: FileEntry = {
