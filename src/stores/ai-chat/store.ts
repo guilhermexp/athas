@@ -199,6 +199,38 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
           });
         },
 
+        regenerateResponse: () => {
+          const { currentChatId, chats } = get();
+          if (!currentChatId) return null;
+
+          const chat = chats.find((c) => c.id === currentChatId);
+          if (!chat || chat.messages.length === 0) return null;
+
+          // Find the last user message
+          let lastUserMessageIndex = -1;
+          for (let i = chat.messages.length - 1; i >= 0; i--) {
+            if (chat.messages[i].role === "user") {
+              lastUserMessageIndex = i;
+              break;
+            }
+          }
+
+          if (lastUserMessageIndex === -1) return null;
+
+          const lastUserMessage = chat.messages[lastUserMessageIndex];
+
+          set((state) => {
+            const currentChat = state.chats.find((c) => c.id === currentChatId);
+            if (currentChat) {
+              // Remove all messages after the last user message
+              currentChat.messages.splice(lastUserMessageIndex + 1);
+              currentChat.lastMessageAt = new Date();
+            }
+          });
+
+          return lastUserMessage.content;
+        },
+
         setIsChatHistoryVisible: (isChatHistoryVisible) =>
           set((state) => {
             state.isChatHistoryVisible = isChatHistoryVisible;

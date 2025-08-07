@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { MessageSquare, Plus, Sparkles } from "lucide-react";
+import { MessageSquare, Plus, RefreshCw, Sparkles } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
@@ -114,6 +114,7 @@ export default function AIChat({
 
   // Get store state selectively to avoid re-renders
   const input = useAIChatStore((state) => state.input);
+  const isTyping = useAIChatStore((state) => state.isTyping);
   const selectedBufferIds = useAIChatStore((state) => state.selectedBufferIds);
   const selectedFilesPaths = useAIChatStore((state) => state.selectedFilesPaths);
   const hasApiKey = useAIChatStore((state) => state.hasApiKey);
@@ -134,6 +135,7 @@ export default function AIChat({
   const updateChatTitle = useAIChatStore((state) => state.updateChatTitle);
   const addMessage = useAIChatStore((state) => state.addMessage);
   const updateMessage = useAIChatStore((state) => state.updateMessage);
+  const regenerateResponse = useAIChatStore((state) => state.regenerateResponse);
   const setIsChatHistoryVisible = useAIChatStore((state) => state.setIsChatHistoryVisible);
   const setApiKeyModalState = useAIChatStore((state) => state.setApiKeyModalState);
   const saveApiKey = useAIChatStore((state) => state.saveApiKey);
@@ -279,8 +281,8 @@ export default function AIChat({
     setStreamingMessageId(null);
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || !hasApiKey) return;
+  const sendMessage = async (messageContent: string) => {
+    if (!messageContent.trim() || !hasApiKey) return;
 
     // Auto-start claude-code if needed
     if (aiProviderId === "claude-code") {
@@ -301,12 +303,15 @@ export default function AIChat({
     }
 
     // Parse @ mentions and load referenced files
-    const { processedMessage } = await parseMentionsAndLoadFiles(input.trim(), allProjectFiles);
+    const { processedMessage } = await parseMentionsAndLoadFiles(
+      messageContent.trim(),
+      allProjectFiles,
+    );
 
     const context = buildContext();
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input.trim(), // Show original message to user
+      content: messageContent.trim(), // Show original message to user
       role: "user",
       timestamp: new Date(),
     };
@@ -464,6 +469,13 @@ export default function AIChat({
     setApiKeyModalState({ isOpen: true, providerId });
   };
 
+  const handleRegenerate = async () => {
+    const contentToRegenerate = regenerateResponse();
+    if (contentToRegenerate) {
+      await sendMessage(contentToRegenerate);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -603,6 +615,21 @@ export default function AIChat({
                       )}
                     </div>
                   )}
+
+                  {/* Regenerate Button */}
+                  {index === messages.length - 1 && !isTyping && message.role === "assistant" && (
+                    <div className="mt-2">
+                      <button
+                        onClick={handleRegenerate}
+                        className="flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors hover:bg-hover"
+                        style={{ color: "var(--color-text-lighter)" }}
+                        title="Regenerate response"
+                      >
+                        <RefreshCw size={12} />
+                        <span>Regenerate</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -616,7 +643,7 @@ export default function AIChat({
       <AIChatInputBar
         buffers={buffers}
         allProjectFiles={allProjectFiles}
-        onSendMessage={sendMessage}
+        onSendMessage={() => sendMessage(input)}
         onStopStreaming={stopStreaming}
         onApiKeyRequest={handleApiKeyRequest}
         onProviderChange={handleProviderChange}
