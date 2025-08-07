@@ -1,4 +1,6 @@
+import { basename, dirname, extname } from "@tauri-apps/api/path";
 import { confirm } from "@tauri-apps/plugin-dialog";
+import { copyFile } from "@tauri-apps/plugin-fs";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
@@ -548,6 +550,47 @@ export const useFileSystemStore = createSelectors(
 
       handleRevealInFolder: async (path: string) => {
         await revealItemInDir(path);
+      },
+
+      handleDuplicatePath: async (path: string) => {
+        const dir = await dirname(path);
+        const base = await basename(path);
+        const ext = await extname(path);
+
+        const originalFile = findFileInTree(get().files, path);
+        if (!originalFile) return;
+
+        const nameWithoutExt = base.slice(0, base.length - ext.length);
+        let counter = 0;
+        let finalName = "";
+        let finalPath = "";
+
+        const generateCopyName = () => {
+          if (counter === 0) {
+            return `${nameWithoutExt}_copy.${ext}`;
+          }
+          return `${nameWithoutExt}_copy_${counter}.${ext}`;
+        };
+
+        do {
+          finalName = generateCopyName();
+          finalPath = `${dir}/${finalName}`;
+          counter++;
+        } while (findFileInTree(get().files, finalPath));
+
+        await copyFile(path, finalPath);
+
+        const newFile: FileEntry = {
+          name: finalName,
+          path: finalPath,
+          isDir: false,
+          expanded: false,
+        };
+
+        set((state) => {
+          state.files = addFileToTree(state.files, dir, newFile);
+          state.filesVersion++;
+        });
       },
 
       // Setter methods

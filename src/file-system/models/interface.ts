@@ -47,6 +47,7 @@ export interface FsActions {
   handleCollapseAllFolders: () => Promise<void>;
   handleFileMove: (oldPath: string, newPath: string) => Promise<void>;
   handleRevealInFolder: (path: string) => Promise<void>;
+  handleDuplicatePath: (path: string) => Promise<void>;
 
   // Search operations
   getAllProjectFiles: () => Promise<FileEntry[]>;

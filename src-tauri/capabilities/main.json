@@ -40,6 +40,7 @@
     "fs:allow-mkdir",
     "fs:allow-write-text-file",
     "fs:allow-remove",
+    "fs:allow-copy-file",
     "http:default",
     "http:allow-fetch",
     "process:allow-exit",
