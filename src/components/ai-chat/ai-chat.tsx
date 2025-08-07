@@ -524,7 +524,7 @@ export default function AIChat({
       </div>
 
       {/* Messages */}
-      <div className="custom-scrollbar flex-1 overflow-y-auto">
+      <div className="scrollbar-hidden flex-1 overflow-y-auto">
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center p-4 text-center">
             <div>
@@ -572,26 +572,13 @@ export default function AIChat({
                         style={{ color: "var(--color-text-lighter)" }}
                       >
                         <span>{getProviderById(aiProviderId)?.name || aiProviderId}</span>
-                        {message.isStreaming && (
-                          <div className="ml-1 flex items-center gap-1">
-                            <span className="h-1 w-1 animate-pulse rounded-full bg-text-lighter" />
-                            <span
-                              className="h-1 w-1 animate-pulse rounded-full bg-text-lighter"
-                              style={{ animationDelay: "0.2s" }}
-                            />
-                            <span
-                              className="h-1 w-1 animate-pulse rounded-full bg-text-lighter"
-                              style={{ animationDelay: "0.4s" }}
-                            />
-                          </div>
-                        )}
                       </div>
                     </div>
                   )}
 
                   {/* Tool Calls */}
                   {message.toolCalls && message.toolCalls.length > 0 && (
-                    <div className="mb-3 space-y-2">
+                    <div className="mb-1 space-y-0">
                       {message.toolCalls!.map((toolCall, toolIndex) => (
                         <ToolCallDisplay
                           key={`${message.id}-tool-${toolIndex}`}
@@ -609,10 +596,6 @@ export default function AIChat({
                   {message.content && (
                     <div className="pr-1 leading-relaxed">
                       <MarkdownRenderer content={message.content} onApplyCode={onApplyCode} />
-
-                      {message.isStreaming && (
-                        <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[var(--color-text-lighter)]" />
-                      )}
                     </div>
                   )}
 
