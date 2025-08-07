@@ -496,6 +496,18 @@ const FileTree = ({
               className="flex-shrink-0 text-text-lighter"
             />
             <input
+              ref={(inputElement) => {
+                if (inputElement) {
+                  // Focus the input
+                  inputElement.focus();
+                  // Scroll to the input element
+                  inputElement.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                    inline: "nearest",
+                  });
+                }
+              }}
               type="text"
               value={editingValue}
               onChange={(e) => setEditingValue(e.target.value)}
