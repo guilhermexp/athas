@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFileSystemStore } from "../../../file-system/controllers/store";
-import { useBufferStore } from "../../../stores/buffer-store";
-import type { GitDiff } from "../../../utils/git";
-import { getFileDiff } from "../../../utils/git";
+import { useFileSystemStore } from "@/file-system/controllers/store";
+import { useBufferStore } from "@/stores/buffer-store";
+import type { GitDiff } from "@/utils/git";
+import { getFileDiff } from "@/utils/git";
 
 interface UseDiffDataReturn {
   diff: GitDiff | null;

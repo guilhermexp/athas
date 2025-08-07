@@ -20,10 +20,10 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { moveFile, readDirectory, readFile } from "@/file-system/controllers/platform";
+import type { ContextMenuState, FileEntry } from "@/file-system/models/app";
 import { cn } from "@/utils/cn";
-import { moveFile, readDirectory, readFile } from "../../file-system/controllers/platform";
-import type { ContextMenuState, FileEntry } from "../../file-system/models/app";
-import { type GitFile, type GitStatus, getGitStatus } from "../../utils/git";
+import { type GitFile, type GitStatus, getGitStatus } from "@/utils/git";
 import FileIcon from "./file.icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
 import "./file-tree.css";
@@ -695,6 +695,17 @@ const FileTree = ({
       style={{
         scrollBehavior: "auto", // Disable smooth scrolling
         overscrollBehavior: "contain",
+      }}
+      onWheel={(e) => {
+        // Handle wheel scrolling with native delta values for natural acceleration
+        const container = containerRef.current;
+        if (!container) return;
+
+        // Use the native deltaY value to preserve mouse acceleration
+        container.scrollTop += e.deltaY;
+
+        // Prevent default to avoid any browser interference
+        e.preventDefault();
       }}
       onDragOver={(e) => {
         e.preventDefault();

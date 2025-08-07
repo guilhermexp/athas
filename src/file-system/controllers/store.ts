@@ -4,17 +4,17 @@ import { copyFile } from "@tauri-apps/plugin-fs";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { createSelectors } from "@/utils/zustand-selectors";
-import type { CodeEditorRef } from "../../components/editor/code-editor";
-import { useFileTreeStore } from "../../file-explorer/controllers/file-tree-store";
+import type { CodeEditorRef } from "@/components/editor/code-editor";
+import { useFileTreeStore } from "@/file-explorer/controllers/file-tree-store";
 // Store imports - Note: Direct store communication via getState() is used here.
 // This is an acceptable Zustand pattern, though it creates coupling between stores.
 // See: https://github.com/pmndrs/zustand/discussions/1319
-import { useBufferStore } from "../../stores/buffer-store";
-import { useGitStore } from "../../stores/git-store";
-import { useProjectStore } from "../../stores/project-store";
-import { getGitStatus } from "../../utils/git";
-import { isDiffFile, parseRawDiffContent } from "../../utils/git-diff-parser";
+import { useBufferStore } from "@/stores/buffer-store";
+import { useGitStore } from "@/stores/git-store";
+import { useProjectStore } from "@/stores/project-store";
+import { getGitStatus } from "@/utils/git";
+import { isDiffFile, parseRawDiffContent } from "@/utils/git-diff-parser";
+import { createSelectors } from "@/utils/zustand-selectors";
 import type { FileEntry } from "../models/app";
 import type { FsActions, FsState } from "../models/interface";
 import {
