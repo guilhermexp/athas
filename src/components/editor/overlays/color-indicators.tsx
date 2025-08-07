@@ -7,16 +7,17 @@ import { type ColorMatch, detectColors } from "@/utils/color-detection";
 interface ColorIndicatorProps {
   color: ColorMatch;
   lineHeight: number;
+  charWidth: number;
   scrollTop: number;
   scrollLeft: number;
   gutterWidth: number;
 }
 
 const ColorIndicator = memo<ColorIndicatorProps>(
-  ({ color, lineHeight, scrollTop, scrollLeft, gutterWidth }) => {
+  ({ color, lineHeight, charWidth, scrollTop, scrollLeft, gutterWidth }) => {
     // Calculate the position of the indicator
     const top = color.line * lineHeight - scrollTop;
-    const left = gutterWidth + 8 + (color.column + color.value.length) * 7.2 - scrollLeft; // Approximate character width
+    const left = gutterWidth + 8 + (color.column + color.value.length) * charWidth - scrollLeft;
 
     // Only render if visible in viewport
     if (top < -20 || top > window.innerHeight + 20) {
@@ -27,13 +28,13 @@ const ColorIndicator = memo<ColorIndicatorProps>(
       <div
         className="pointer-events-none absolute flex items-center justify-center"
         style={{
-          top: `${top + 2}px`, // Slight vertical offset to align with text
-          left: `${left + 4}px`, // Small horizontal offset from the color value
+          top: `${top + (lineHeight - 12) / 2}px`, // Center vertically with line height
+          left: `${left + 8}px`, // Margin between color value and indicator
           zIndex: 10,
         }}
       >
         <div
-          className="h-4 w-4 rounded border border-gray-400 shadow-sm"
+          className="h-3 w-3 rounded border border-gray-400 shadow-sm"
           style={{
             backgroundColor: color.normalizedValue,
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.2)",
@@ -51,7 +52,7 @@ export const ColorIndicators = memo(() => {
   const [colors, setColors] = useState<ColorMatch[]>([]);
   const { getContent } = useEditorViewStore.use.actions();
   const content = getContent();
-  const { lineHeight, gutterWidth } = useEditorLayout();
+  const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
   const { scrollTop, scrollLeft } = useEditorLayoutStore();
 
   // Detect colors in the content
@@ -81,6 +82,7 @@ export const ColorIndicators = memo(() => {
           key={`${color.start}-${color.end}-${index}`}
           color={color}
           lineHeight={lineHeight}
+          charWidth={charWidth}
           scrollTop={scrollTop}
           scrollLeft={scrollLeft}
           gutterWidth={gutterWidth}
