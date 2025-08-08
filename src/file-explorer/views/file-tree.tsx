@@ -27,6 +27,7 @@ import { type GitFile, type GitStatus, getGitStatus } from "@/utils/git";
 import FileIcon from "./file.icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
 import "./file-tree.css";
+import { findFileInTree } from "@/file-system/controllers/file-tree-utils";
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -381,6 +382,11 @@ const FileTree = ({
       if (item.isDir) {
         onCreateNewFolderInDirectory?.(parentPath, newName.trim());
       } else {
+        const file = findFileInTree(files, `${parentPath}/${newName.trim()}`);
+        if (file) {
+          alert("File already exists");
+          return;
+        }
         onCreateNewFileInDirectory(parentPath, newName.trim());
       }
     }
