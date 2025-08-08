@@ -63,8 +63,31 @@ export const getLineHeight = (fontSize: number): number => {
 };
 
 /**
- * Get character width based on font size (monospace approximation)
+ * Get character width based on font size using actual DOM measurement
+ * This ensures pixel-perfect alignment with the textarea
  */
-export const getCharWidth = (fontSize: number): number => {
-  return fontSize * EDITOR_CONSTANTS.CHAR_WIDTH_MULTIPLIER;
+export const getCharWidth = (
+  fontSize: number,
+  fontFamily: string = "JetBrains Mono, monospace",
+): number => {
+  // Create a temporary element to measure character width
+  const measureElement = document.createElement("span");
+  measureElement.style.position = "absolute";
+  measureElement.style.visibility = "hidden";
+  measureElement.style.whiteSpace = "pre";
+  measureElement.style.fontSize = `${fontSize}px`;
+  measureElement.style.fontFamily = fontFamily;
+  measureElement.style.lineHeight = "1";
+  measureElement.style.padding = "0";
+  measureElement.style.margin = "0";
+  measureElement.style.border = "none";
+
+  measureElement.textContent = "M";
+
+  document.body.appendChild(measureElement);
+  const width = measureElement.getBoundingClientRect().width;
+  document.body.removeChild(measureElement);
+
+  // Round to avoid subpixel issues
+  return Math.round(width * 100) / 100;
 };
