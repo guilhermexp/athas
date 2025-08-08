@@ -40,7 +40,7 @@ interface FileTreeProps {
   onUpdateFiles?: (files: FileEntry[]) => void;
   onCopyPath?: (path: string) => void;
   onCutPath?: (path: string) => void;
-  onRenamePath?: (path: string, newName: string) => void;
+  onRenamePath?: (path: string, newName?: string) => void;
   onDuplicatePath?: (path: string) => void;
   onRefreshDirectory?: (path: string) => void;
   onRevealInFinder?: (path: string) => void;
@@ -373,6 +373,11 @@ const FileTree = ({
         return;
       }
 
+      if (item.isRenaming) {
+        onRenamePath?.(item.path, newName.trim());
+        return;
+      }
+
       if (item.isDir) {
         onCreateNewFolderInDirectory?.(parentPath, newName.trim());
       } else {
@@ -395,8 +400,13 @@ const FileTree = ({
     setEditingValue("");
   };
 
-  const cancelInlineEditing = () => {
+  const cancelInlineEditing = (file: FileEntry) => {
     if (!onUpdateFiles) return;
+
+    if (file.isRenaming) {
+      onRenamePath?.(file.path);
+      return;
+    }
 
     // Remove the temporary item from the tree
     const removeNewItemFromTree = (items: FileEntry[]): FileEntry[] => {
@@ -481,10 +491,32 @@ const FileTree = ({
     [onFileSelect],
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent, file: FileEntry) => {
+      if (e.key === "Enter") {
+        finishInlineEditing(file, editingValue);
+      } else if (e.key === "Escape") {
+        cancelInlineEditing(file);
+      }
+    },
+    [finishInlineEditing, cancelInlineEditing, editingValue],
+  );
+
+  const handleBlur = useCallback(
+    (file: FileEntry) => {
+      if (editingValue.trim()) {
+        finishInlineEditing(file, editingValue);
+      } else {
+        cancelInlineEditing(file);
+      }
+    },
+    [finishInlineEditing, cancelInlineEditing, editingValue],
+  );
+
   const renderFileTree = (items: FileEntry[], depth = 0) => {
     return items.map((file) => (
       <div key={file.path} className="file-tree-item" data-depth={depth}>
-        {file.isEditing ? (
+        {file.isEditing || file.isRenaming ? (
           <div
             className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
             style={{ paddingLeft: `${12 + depth * 20}px`, paddingRight: "8px" }}
@@ -509,22 +541,19 @@ const FileTree = ({
                 }
               }}
               type="text"
+              autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
               value={editingValue}
+              onFocus={() => {
+                if (file.isRenaming) {
+                  setEditingValue(file.name);
+                }
+              }}
               onChange={(e) => setEditingValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  finishInlineEditing(file, editingValue);
-                } else if (e.key === "Escape") {
-                  cancelInlineEditing();
-                }
-              }}
-              onBlur={() => {
-                if (editingValue.trim()) {
-                  finishInlineEditing(file, editingValue);
-                } else {
-                  cancelInlineEditing();
-                }
-              }}
+              onKeyDown={(e) => handleKeyDown(e, file)}
+              onBlur={() => handleBlur(file)}
               className={cn(
                 "flex-1 border-text border-b border-none bg-transparent",
                 "font-mono text-text text-xs outline-none focus:border-text-lighter",
@@ -1039,13 +1068,7 @@ const FileTree = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const newName = prompt("Enter new name:", contextMenu.path.split("/").pop() || "");
-                if (newName?.trim()) {
-                  if (onRenamePath) {
-                    onRenamePath(contextMenu.path, newName.trim());
-                  } else {
-                  }
-                }
+                onRenamePath?.(contextMenu.path);
                 setContextMenu(null);
               }}
               className={cn(
