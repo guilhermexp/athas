@@ -31,7 +31,7 @@ export const LineGutter = ({
   return (
     <div
       className={cn(
-        "editor-gutter relative mx-2",
+        "editor-gutter relative",
         isBreakpoint && "has-breakpoint",
         hasError && "has-error",
         hasWarning && "has-warning",
@@ -43,6 +43,8 @@ export const LineGutter = ({
         alignItems: "center",
         justifyContent: showLineNumbers ? "flex-end" : "center",
         position: "relative",
+        paddingLeft: "2px",
+        paddingRight: "8px",
       }}
       data-line-number={lineNumber}
     >
@@ -53,7 +55,7 @@ export const LineGutter = ({
           className={cn("gutter-decoration", decoration.className)}
           style={{
             position: "absolute",
-            left: "0px",
+            left: "2px",
             top: decoration.className?.includes("git-gutter-deleted") ? "0px" : "50%",
             transform: decoration.className?.includes("git-gutter-deleted")
               ? "none"
@@ -89,7 +91,9 @@ export const LineGutter = ({
                 borderRadius: "2px",
                 border: "1px solid rgba(220, 53, 69, 0.3)",
               }}
-            />
+            >
+              {decoration.content}
+            </span>
           )}
         </div>
       ))}
@@ -106,8 +110,8 @@ export const LineGutter = ({
             fontFamily: "inherit",
             userSelect: "none",
             textAlign: "right",
-            minWidth: `${gutterWidth - 8}px`,
-            paddingRight: "4px",
+            minWidth: `${gutterWidth - 18}px`,
+            paddingRight: "0px",
           }}
         >
           {lineNumber + 1}

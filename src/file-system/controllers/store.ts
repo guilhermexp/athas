@@ -14,6 +14,7 @@ import { useGitStore } from "@/stores/git-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { getGitStatus } from "@/utils/git";
+import { gitDiffCache } from "@/utils/git-diff-cache";
 import { isDiffFile, parseRawDiffContent } from "@/utils/git-diff-parser";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { FileEntry } from "../models/app";
@@ -88,6 +89,9 @@ export const useFileSystemStore = createSelectors(
         const gitStatus = await getGitStatus(selected);
         useGitStore.getState().actions.setGitStatus(gitStatus);
 
+        // Clear git diff cache for new project
+        gitDiffCache.clear();
+
         set((state) => {
           state.isFileTreeLoading = false;
           state.files = fileTree;
@@ -124,6 +128,9 @@ export const useFileSystemStore = createSelectors(
         // Initialize git status
         const gitStatus = await getGitStatus(path);
         useGitStore.getState().actions.setGitStatus(gitStatus);
+
+        // Clear git diff cache for new project
+        gitDiffCache.clear();
 
         set((state) => {
           state.isFileTreeLoading = false;
@@ -428,6 +435,13 @@ export const useFileSystemStore = createSelectors(
             name: fileName,
           });
         }
+
+        // Invalidate git diff cache for moved files
+        const { rootFolderPath } = get();
+        if (rootFolderPath) {
+          gitDiffCache.invalidate(rootFolderPath, oldPath);
+          gitDiffCache.invalidate(rootFolderPath, newPath);
+        }
       },
 
       getAllProjectFiles: async (): Promise<FileEntry[]> => {
@@ -551,6 +565,12 @@ export const useFileSystemStore = createSelectors(
         buffers
           .filter((buffer) => buffer.path === path)
           .forEach((buffer) => actions.closeBuffer(buffer.id));
+
+        // Invalidate git diff cache for deleted file
+        const { rootFolderPath } = get();
+        if (rootFolderPath) {
+          gitDiffCache.invalidate(rootFolderPath, path);
+        }
 
         set((state) => {
           state.files = removeFileFromTree(state.files, path);

@@ -610,9 +610,9 @@ const FileTree = ({
             onClick={(e) => handleFileClick(e, file.path, file.isDir)}
             onContextMenu={(e) => handleContextMenu(e, file.path, file.isDir)}
             className={cn(
-              "flex min-h-[22px] w-full cursor-pointer",
-              "select-none items-center gap-1.5 overflow-hidden",
-              "text-ellipsis whitespace-nowrap border-none bg-transparent",
+              "flex min-h-[22px] w-full min-w-max cursor-pointer",
+              "select-none items-center gap-1.5",
+              "whitespace-nowrap border-none bg-transparent",
               "px-1.5 py-1 text-left font-mono text-text text-xs",
               "shadow-none outline-none transition-colors duration-150",
               "hover:bg-hover focus:outline-none",
@@ -641,11 +641,7 @@ const FileTree = ({
               className="flex-shrink-0 text-text-lighter"
             />
             <span
-              className={cn(
-                "flex-1 select-none overflow-hidden",
-                "text-ellipsis whitespace-nowrap",
-                getGitStatusColor(file),
-              )}
+              className={cn("select-none whitespace-nowrap", getGitStatusColor(file))}
               style={{
                 userSelect: "none",
                 WebkitUserSelect: "none",

@@ -173,85 +173,76 @@ export function EditorStylesheet() {
           -moz-user-select: none;
         }
 
-        /* Git gutter indicators base styles */
+        /* Git gutter indicators base styles - minimal design */
         .gutter-decoration.git-gutter-added,
         .gutter-decoration.git-gutter-modified,
         .gutter-decoration.git-gutter-deleted {
-          border-radius: 2px;
+          border-radius: 0;
           pointer-events: none;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 0.8;
-          box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+          transition: all 0.15s ease-out;
+          opacity: 0.9;
         }
 
-        /* Git gutter specific colors */
+        /* Git gutter specific colors - improved contrast and consistency */
         .gutter-decoration.git-gutter-added {
-          background-color: #28a745;
-          border-left: 1px solid #1e7e34;
+          background-color: var(--git-gutter-added, #28a745);
+          border: none;
         }
 
         .gutter-decoration.git-gutter-modified {
-          background-color: #ffc107;
-          border-left: 1px solid #d39e00;
+          background-color: var(--git-gutter-modified, #fd7e14);
+          border: none;
         }
 
         .gutter-decoration.git-gutter-deleted {
-          background-color: #dc3545;
-          border-left: 1px solid #bd2130;
+          background-color: var(--git-gutter-deleted, #dc3545);
+          border: none;
         }
 
-        /* Enhanced hover effects for git gutter */
+        /* Subtle hover effects for git gutter */
         .editor-line-wrapper:hover .gutter-decoration.git-gutter-added {
-          background-color: #34ce57;
+          background-color: var(--git-gutter-added-hover, #32d74b);
           opacity: 1;
-          box-shadow: 0 0 6px rgba(40, 167, 69, 0.4);
-          transform: scaleX(1.2);
         }
 
         .editor-line-wrapper:hover .gutter-decoration.git-gutter-modified {
-          background-color: #ffce3a;
+          background-color: var(--git-gutter-modified-hover, #ff8c1a);
           opacity: 1;
-          box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
-          transform: scaleX(1.2);
         }
 
         .editor-line-wrapper:hover .gutter-decoration.git-gutter-deleted {
-          background-color: #e74c3c;
+          background-color: var(--git-gutter-deleted-hover, #e74c3c);
           opacity: 1;
-          box-shadow: 0 0 6px rgba(220, 53, 69, 0.4);
-          transform: scaleX(1.2);
         }
 
-        /* Dark theme adjustments */
+        /* Dark theme adjustments - improved visibility */
         @media (prefers-color-scheme: dark) {
-          .gutter-decoration.git-gutter-added {
-            background-color: #238636;
-            border-left-color: #1a6b2b;
+          :root {
+            --git-gutter-added: #238636;
+            --git-gutter-modified: #d29922;
+            --git-gutter-deleted: #f85149;
+            --git-gutter-added-hover: #2ea043;
+            --git-gutter-modified-hover: #e2a324;
+            --git-gutter-deleted-hover: #ff6b6b;
+            --git-gutter-deleted-text: #ffffff;
+            --git-gutter-deleted-bg: rgba(248, 81, 73, 0.15);
+            --git-gutter-deleted-border: rgba(248, 81, 73, 0.4);
           }
 
-          .gutter-decoration.git-gutter-modified {
-            background-color: #d29922;
-            border-left-color: #b8851c;
-          }
+        }
 
-          .gutter-decoration.git-gutter-deleted {
-            background-color: #da3633;
-            border-left-color: #c5302d;
-          }
-
-          .editor-line-wrapper:hover .gutter-decoration.git-gutter-added {
-            background-color: #2ea043;
-            box-shadow: 0 0 8px rgba(35, 134, 54, 0.5);
-          }
-
-          .editor-line-wrapper:hover .gutter-decoration.git-gutter-modified {
-            background-color: #e2a324;
-            box-shadow: 0 0 8px rgba(210, 153, 34, 0.5);
-          }
-
-          .editor-line-wrapper:hover .gutter-decoration.git-gutter-deleted {
-            background-color: #f85149;
-            box-shadow: 0 0 8px rgba(248, 81, 73, 0.5);
+        /* Light theme CSS custom properties */
+        @media (prefers-color-scheme: light) {
+          :root {
+            --git-gutter-added: #28a745;
+            --git-gutter-modified: #fd7e14;
+            --git-gutter-deleted: #dc3545;
+            --git-gutter-added-hover: #32d74b;
+            --git-gutter-modified-hover: #ff8c1a;
+            --git-gutter-deleted-hover: #e74c3c;
+            --git-gutter-deleted-text: #dc3545;
+            --git-gutter-deleted-bg: rgba(220, 53, 69, 0.1);
+            --git-gutter-deleted-border: rgba(220, 53, 69, 0.3);
           }
         }
 
@@ -270,45 +261,54 @@ export function EditorStylesheet() {
           position: relative;
         }
 
-        /* Git gutter animation keyframes */
+        /* Simple git gutter fade in animation */
         @keyframes gitGutterFadeIn {
           from {
             opacity: 0;
-            transform: scaleX(0);
           }
           to {
-            opacity: 0.8;
-            transform: scaleX(1);
+            opacity: 0.9;
           }
         }
 
         .gutter-decoration.git-gutter-added,
         .gutter-decoration.git-gutter-modified,
         .gutter-decoration.git-gutter-deleted {
-          animation: gitGutterFadeIn 0.3s ease-out;
+          animation: gitGutterFadeIn 0.15s ease-out;
         }
 
-        /* Tooltip styling for git gutter */
+        /* Clean tooltip styling for git gutter */
         .gutter-decoration[title]:hover::after {
           content: attr(title);
           position: absolute;
-          left: 10px;
+          left: 12px;
           top: 50%;
           transform: translateY(-50%);
-          background: rgba(0, 0, 0, 0.9);
-          color: white;
+          background: var(--tooltip-bg, rgba(0, 0, 0, 0.9));
+          color: var(--tooltip-text, white);
           padding: 4px 8px;
           border-radius: 4px;
           font-size: 11px;
+          font-weight: 400;
           white-space: nowrap;
           z-index: 1000;
           pointer-events: none;
+          border: 1px solid var(--tooltip-border, rgba(255, 255, 255, 0.1));
         }
 
         @media (prefers-color-scheme: dark) {
-          .gutter-decoration[title]:hover::after {
-            background: rgba(255, 255, 255, 0.9);
-            color: black;
+          :root {
+            --tooltip-bg: rgba(40, 44, 52, 0.95);
+            --tooltip-text: #ffffff;
+            --tooltip-border: rgba(255, 255, 255, 0.1);
+          }
+        }
+
+        @media (prefers-color-scheme: light) {
+          :root {
+            --tooltip-bg: rgba(0, 0, 0, 0.9);
+            --tooltip-text: #ffffff;
+            --tooltip-border: rgba(0, 0, 0, 0.1);
           }
         }
       `}

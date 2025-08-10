@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
+import { useFileSystemStore } from "@/file-system/controllers/store";
+import { gitDiffCache } from "@/utils/git-diff-cache";
 import { createSelectors } from "@/utils/zustand-selectors";
 import { writeFile } from "../file-system/controllers/platform";
 
@@ -79,6 +81,12 @@ export const useAppStore = createSelectors(
                   markPendingSave(activeBuffer.path);
                   await writeFile(activeBuffer.path, content);
                   markBufferDirty(activeBuffer.id, false);
+
+                  // Invalidate git diff cache for this file
+                  const rootFolderPath = useFileSystemStore.getState().rootFolderPath;
+                  if (rootFolderPath) {
+                    gitDiffCache.invalidate(rootFolderPath, activeBuffer.path);
+                  }
                 } catch (error) {
                   console.error("Error saving file:", error);
                   markBufferDirty(activeBuffer.id, true);
@@ -141,6 +149,12 @@ export const useAppStore = createSelectors(
               markPendingSave(activeBuffer.path);
               await writeFile(activeBuffer.path, activeBuffer.content);
               markBufferDirty(activeBuffer.id, false);
+
+              // Invalidate git diff cache for this file
+              const rootFolderPath = useFileSystemStore.getState().rootFolderPath;
+              if (rootFolderPath) {
+                gitDiffCache.invalidate(rootFolderPath, activeBuffer.path);
+              }
             } catch (error) {
               console.error("Error saving local file:", error);
               markBufferDirty(activeBuffer.id, true);
