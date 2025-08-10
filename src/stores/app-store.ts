@@ -86,6 +86,14 @@ export const useAppStore = createSelectors(
                   const rootFolderPath = useFileSystemStore.getState().rootFolderPath;
                   if (rootFolderPath) {
                     gitDiffCache.invalidate(rootFolderPath, activeBuffer.path);
+                    // Small delay to ensure git operations are complete before updating gutter
+                    setTimeout(() => {
+                      window.dispatchEvent(
+                        new CustomEvent("git-status-updated", {
+                          detail: { filePath: activeBuffer.path },
+                        }),
+                      );
+                    }, 50);
                   }
                 } catch (error) {
                   console.error("Error saving file:", error);
@@ -154,6 +162,14 @@ export const useAppStore = createSelectors(
               const rootFolderPath = useFileSystemStore.getState().rootFolderPath;
               if (rootFolderPath) {
                 gitDiffCache.invalidate(rootFolderPath, activeBuffer.path);
+                // Small delay to ensure git operations are complete before updating gutter
+                setTimeout(() => {
+                  window.dispatchEvent(
+                    new CustomEvent("git-status-updated", {
+                      detail: { filePath: activeBuffer.path },
+                    }),
+                  );
+                }, 50);
               }
             } catch (error) {
               console.error("Error saving local file:", error);

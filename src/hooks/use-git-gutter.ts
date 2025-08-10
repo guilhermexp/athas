@@ -137,10 +137,19 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
 
   // Update git gutter decorations
   const updateGitGutter = useCallback(async () => {
+    console.log(`[GitGutter] updateGitGutter called for ${filePath}`, {
+      enabled,
+      filePath,
+      rootFolderPath,
+      contentLength: content?.length || 0,
+    });
+
     if (!enabled || !filePath || !rootFolderPath) {
+      console.log(`[GitGutter] Skipping update - missing requirements`);
       return;
     }
     if (filePath.startsWith("diff://")) {
+      console.log(`[GitGutter] Skipping diff:// file`);
       return;
     }
 
@@ -152,10 +161,23 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
         if (relativePath.startsWith("/")) relativePath = relativePath.slice(1);
       }
 
+      console.log(`[GitGutter] Getting diff for ${relativePath}`);
+
+      // Force cache invalidation before getting fresh diff
+      const { gitDiffCache } = await import("@/utils/git-diff-cache");
+      gitDiffCache.invalidate(rootFolderPath, filePath);
+
       const diff = await getFileDiff(rootFolderPath, relativePath, false, content);
+      console.log(`[GitGutter] Got diff result:`, {
+        hasDiff: !!diff,
+        lineCount: diff?.lines?.length || 0,
+        isBinary: diff?.is_binary,
+        isImage: diff?.is_image,
+      });
 
       if (!diff || diff.is_binary || diff.is_image) {
         // Clear decorations for binary/image files
+        console.log(`[GitGutter] Clearing decorations - no diff or binary/image file`);
         const decorationsStore = useEditorDecorationsStore.getState();
         gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
         gitDecorationIdsRef.current = [];
@@ -166,14 +188,21 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
       lastDiffRef.current = diff;
 
       const changes = processGitDiff(diff);
+      console.log(`[GitGutter] Processed changes:`, {
+        added: changes.addedLines.size,
+        modified: changes.modifiedLines.size,
+        deleted: changes.deletedLines.size,
+      });
+
       applyGitDecorations(changes);
-    } catch (_error) {
+    } catch (error) {
+      console.error(`[GitGutter] Error updating git gutter:`, error);
       // Clear decorations on error
       const decorationsStore = useEditorDecorationsStore.getState();
       gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
       gitDecorationIdsRef.current = [];
     }
-  }, [enabled, filePath, rootFolderPath, processGitDiff, applyGitDecorations]);
+  }, [enabled, filePath, rootFolderPath, processGitDiff, applyGitDecorations, content]);
 
   // Debounced update function for content changes
   const debouncedUpdate = useCallback(() => {
@@ -220,18 +249,35 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
       }
     };
 
-    const handleGitStatusUpdate = () => {
-      // Git status changed, update git gutter
+    const handleGitStatusUpdate = (event?: CustomEvent) => {
+      console.log(`[GitGutter] handleGitStatusUpdate called`, {
+        filePath,
+        eventFilePath: event?.detail?.filePath,
+      });
+
+      // Git status changed, update git gutter immediately
+      // Check if the event is for this specific file (if specified)
+      if (event?.detail?.filePath) {
+        const eventFilePath = event.detail.filePath;
+        // Match both absolute and relative paths
+        if (eventFilePath !== filePath && !filePath.endsWith(eventFilePath)) {
+          console.log(`[GitGutter] Ignoring event - path mismatch`);
+          return; // Not for this file, ignore
+        }
+      }
+
+      console.log(`[GitGutter] Proceeding with git gutter update`);
+      // Update immediately for git status changes (no debouncing needed)
       updateGitGutter();
     };
 
     // Listen for file reloads and git status updates
     window.addEventListener("file-reloaded", handleFileReload as EventListener);
-    window.addEventListener("git-status-updated", handleGitStatusUpdate);
+    window.addEventListener("git-status-updated", handleGitStatusUpdate as EventListener);
 
     return () => {
       window.removeEventListener("file-reloaded", handleFileReload as EventListener);
-      window.removeEventListener("git-status-updated", handleGitStatusUpdate);
+      window.removeEventListener("git-status-updated", handleGitStatusUpdate as EventListener);
 
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
