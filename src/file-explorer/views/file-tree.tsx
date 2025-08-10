@@ -524,7 +524,12 @@ const FileTree = ({
 
   const renderFileTree = (items: FileEntry[], depth = 0) => {
     return items.map((file) => (
-      <div key={file.path} className="file-tree-item" data-depth={depth}>
+      <div
+        key={file.path}
+        className="file-tree-item w-full"
+        data-depth={depth}
+        style={{ width: "100%" }}
+      >
         {file.isEditing || file.isRenaming ? (
           <div
             className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
@@ -653,7 +658,11 @@ const FileTree = ({
             </span>
           </button>
         )}
-        {file.expanded && file.children && <div>{renderFileTree(file.children, depth + 1)}</div>}
+        {file.expanded && file.children && (
+          <div className="w-full" style={{ width: "100%" }}>
+            {renderFileTree(file.children, depth + 1)}
+          </div>
+        )}
       </div>
     ));
   };
@@ -733,7 +742,7 @@ const FileTree = ({
     <div
       className={cn(
         "file-tree-container flex flex-1 select-none",
-        "flex-col gap-0 overflow-auto",
+        "min-w-full flex-col gap-0 overflow-auto",
         dragState.dragOverPath === "__ROOT__" &&
           "!bg-accent !bg-opacity-10 !border-2 !border-accent !border-dashed",
       )}
@@ -768,7 +777,9 @@ const FileTree = ({
         updateActivePath?.("");
       }}
     >
-      {renderFileTree(filteredFiles)}
+      <div className="w-max min-w-full" style={{ minWidth: "100%", width: "max-content" }}>
+        {renderFileTree(filteredFiles)}
+      </div>
 
       {contextMenu &&
         createPortal(
