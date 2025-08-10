@@ -40,7 +40,7 @@ const TabBarItem = memo(function TabBarItem({
       <div
         ref={tabRef}
         className={cn(
-          "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-0.5",
+          "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-1",
           isActive ? "bg-primary-bg" : "bg-secondary-bg",
           buffer.isPinned ? "border-l-2 border-l-blue-500" : "",
           isDraggedTab ? "opacity-30" : "opacity-100",

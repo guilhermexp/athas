@@ -1,4 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
+import { gitDiffCache } from "./git-diff-cache";
 
 export interface GitFile {
   path: string;
@@ -172,9 +173,22 @@ export const getFileDiff = async (
   repoPath: string,
   filePath: string,
   staged: boolean = false,
+  content?: string,
 ): Promise<GitDiff | null> => {
   try {
+    // Check cache first
+    const cached = gitDiffCache.get(repoPath, filePath, staged, content);
+    if (cached) {
+      return cached;
+    }
+
     const diff = await tauriInvoke<GitDiff>("git_diff_file", { repoPath, filePath, staged });
+
+    // Cache the result
+    if (diff) {
+      gitDiffCache.set(repoPath, filePath, staged, diff, content);
+    }
+
     return diff;
   } catch (error) {
     console.error("Failed to get file diff:", error);

@@ -31,7 +31,7 @@ export const LineGutter = ({
   return (
     <div
       className={cn(
-        "editor-gutter relative mx-2",
+        "editor-gutter relative",
         isBreakpoint && "has-breakpoint",
         hasError && "has-error",
         hasWarning && "has-warning",
