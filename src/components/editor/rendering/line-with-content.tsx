@@ -15,8 +15,7 @@ interface LineWithContentProps {
 export const LineWithContent = memo<LineWithContentProps>(
   ({ lineNumber, showLineNumbers, gutterWidth, lineHeight, isSelected }) => {
     const content = useEditorViewStore((state) => state.lines[lineNumber]);
-    const tokens =
-      useEditorViewStore((state) => state.lineTokens.get(lineNumber)) ?? [];
+    const tokens = useEditorViewStore((state) => state.lineTokens.get(lineNumber)) ?? [];
     const decorations = useEditorDecorationsStore((state) =>
       state.getDecorationsForLine(lineNumber),
     );
@@ -37,7 +36,7 @@ export const LineWithContent = memo<LineWithContentProps>(
         <LineGutter
           lineNumber={lineNumber}
           showLineNumbers={showLineNumbers}
-          gutterWidth={gutterWidth}
+          gutterWidth={showLineNumbers ? gutterWidth : 16}
           decorations={decorations}
         />
         <div
