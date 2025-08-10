@@ -31,7 +31,8 @@ import "./file-tree.css";
 
 interface FileTreeProps {
   files: FileEntry[];
-  activeBufferPath?: string;
+  activePath?: string;
+  updateActivePath?: (path: string) => void;
   rootFolderPath?: string;
   onFileSelect: (path: string, isDir: boolean) => void;
   onCreateNewFileInDirectory: (directoryPath: string, fileName: string) => void;
@@ -51,7 +52,8 @@ interface FileTreeProps {
 
 const FileTree = ({
   files,
-  activeBufferPath,
+  activePath,
+  updateActivePath,
   rootFolderPath,
   onFileSelect,
   onCreateNewFileInDirectory,
@@ -493,8 +495,9 @@ const FileTree = ({
       e.preventDefault();
       e.stopPropagation();
       onFileSelect(path, isDir);
+      updateActivePath?.(path);
     },
-    [onFileSelect],
+    [onFileSelect, updateActivePath],
   );
 
   const handleKeyDown = useCallback(
@@ -613,7 +616,7 @@ const FileTree = ({
               "px-1.5 py-1 text-left font-mono text-text text-xs",
               "shadow-none outline-none transition-colors duration-150",
               "hover:bg-hover focus:outline-none",
-              activeBufferPath === file.path && "bg-selected",
+              activePath === file.path && "bg-selected",
               dragState.dragOverPath === file.path &&
                 "!bg-accent !bg-opacity-20 !border-2 !border-accent !border-dashed",
               dragState.isDragging && "cursor-move",
@@ -763,6 +766,11 @@ const FileTree = ({
         }
       }}
       onDrop={handleRootDrop}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        updateActivePath?.("");
+      }}
     >
       {renderFileTree(filteredFiles)}
 
