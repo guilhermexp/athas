@@ -1,4 +1,8 @@
 // Files and directories to ignore in the command bar
+// This should be kept in sync with the main file system filtering
+import { shouldIgnore } from "@/file-system/controllers/utils";
+
+// Legacy patterns - now we use the centralized shouldIgnore function
 export const IGNORED_PATTERNS = [
   // Dependencies
   "node_modules",
@@ -50,3 +54,11 @@ export const IGNORED_PATTERNS = [
   ".eslintcache",
   ".parcel-cache",
 ];
+
+/**
+ * Check if a file should be ignored in the command palette
+ * This uses the centralized filtering logic
+ */
+export const shouldIgnoreInCommandPalette = (fileName: string, isDir: boolean = false): boolean => {
+  return shouldIgnore(fileName, isDir);
+};

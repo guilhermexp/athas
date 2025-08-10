@@ -27,8 +27,6 @@ const IGNORE_PATTERNS = [
   "tmp",
   "temp",
   ".tmp",
-  ".DS_Store",
-  "Thumbs.db",
 
   // IDE/Editor files
   ".vscode",
@@ -41,10 +39,9 @@ const IGNORE_PATTERNS = [
   "logs",
   "*.log",
 
-  // OS generated files
-  ".Spotlight-V100",
-  ".Trashes",
-  "ehthumbs.db",
+  // Coverage reports
+  "coverage",
+  ".nyc_output",
 
   // Package manager locks (large files)
   "package-lock.json",
@@ -113,14 +110,49 @@ export const shouldIgnore = (name: string, isDir: boolean): boolean => {
     }
   }
 
-  // Skip hidden files/folders (starting with .) except important ones
-  if (
-    name.startsWith(".") &&
-    name !== ".env" &&
-    name !== ".gitignore" &&
-    name !== ".editorconfig"
-  ) {
-    return true;
+  // Only ignore specific OS-generated hidden files, not all hidden files
+  // This allows developers to see important dotfiles like .env, .gitignore, etc.
+  if (name.startsWith(".")) {
+    const osGeneratedFiles = [
+      // macOS system files
+      ".DS_Store",
+      ".DS_Store?",
+      "._*", // macOS resource forks (pattern)
+      ".Spotlight-V100",
+      ".Trashes",
+      ".fseventsd",
+      ".DocumentRevisions-V100",
+      ".VolumeIcon.icns",
+      ".com.apple.timemachine.donotpresent",
+      ".AppleDB",
+      ".AppleDesktop",
+      "Network Trash Folder",
+      ".TemporaryItems",
+      ".Temporary Items",
+
+      // Windows system files
+      "Thumbs.db",
+      "ehthumbs.db",
+      "Desktop.ini",
+      "$RECYCLE.BIN",
+      "System Volume Information",
+    ];
+
+    // Check if this is an OS-generated file that should be ignored
+    for (const pattern of osGeneratedFiles) {
+      if (pattern.includes("*")) {
+        // Handle glob patterns like ._*
+        const regexPattern = pattern.replace(/\./g, "\\.").replace(/\*/g, ".*");
+        if (new RegExp(`^${regexPattern}$`, "i").test(name)) {
+          return true;
+        }
+      } else if (name.toLowerCase() === pattern.toLowerCase()) {
+        return true;
+      }
+    }
+
+    // Don't ignore other hidden files - let developers see their dotfiles
+    return false;
   }
 
   return false;

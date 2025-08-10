@@ -1,6 +1,6 @@
 import { ClockIcon, File } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IGNORED_PATTERNS } from "@/components/command/constants/ignored-patterns";
+import { shouldIgnoreInCommandPalette } from "@/components/command/constants/ignored-patterns";
 import { useRecentFilesStore } from "@/file-system/controllers/recent-files-store";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { useBufferStore } from "@/stores/buffer-store";
@@ -14,24 +14,10 @@ import Command, {
 } from "../../ui/command";
 
 // Function to check if a file should be ignored
+// Now using centralized filtering logic
 const shouldIgnoreFile = (filePath: string): boolean => {
   const fileName = filePath.split("/").pop() || "";
-  const fullPath = filePath.toLowerCase();
-
-  return IGNORED_PATTERNS.some((pattern) => {
-    if (pattern.includes("*")) {
-      // Handle glob patterns like *.log
-      const regex = new RegExp(pattern.replace(/\*/g, ".*"));
-      return regex.test(fileName.toLowerCase()) || regex.test(fullPath);
-    } else {
-      // Handle exact matches
-      return (
-        fileName.toLowerCase() === pattern.toLowerCase() ||
-        fullPath.includes(`/${pattern.toLowerCase()}/`) ||
-        fullPath.endsWith(`/${pattern.toLowerCase()}`)
-      );
-    }
-  });
+  return shouldIgnoreInCommandPalette(fileName, false);
 };
 
 // Fuzzy search scoring function
@@ -193,6 +179,8 @@ const CommandBar = () => {
 
   // Memoize file filtering and sorting
   const { openBufferFiles, recentFilesInResults, otherFiles } = useMemo(() => {
+    // Files are already filtered by the file system store, but we apply additional
+    // command palette specific filtering for extra safety
     const allFiles = files.filter((entry) => !entry.isDir && !shouldIgnoreFile(entry.path));
 
     // Get open buffers (excluding active buffer)
