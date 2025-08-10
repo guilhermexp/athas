@@ -60,11 +60,13 @@ export const MainSidebar = () => {
   const handleFileMove = useFileSystemStore.use.handleFileMove?.();
   const handleRevealInFolder = useFileSystemStore.use.handleRevealInFolder?.();
   const handleDuplicatePath = useFileSystemStore.use.handleDuplicatePath?.();
+  const handleRenamePath = useFileSystemStore.use.handleRenamePath?.();
 
   // sidebar store
-  const activeBufferPath = useSidebarStore.use.activeBufferPath?.();
+  const activePath = useSidebarStore.use.activePath?.();
   const isRemoteWindow = useSidebarStore.use.isRemoteWindow();
   const remoteConnectionName = useSidebarStore.use.remoteConnectionName?.();
+  const updateActivePath = useSidebarStore.use.updateActivePath?.();
 
   // persistent settings store
   const { coreFeatures } = usePersistentSettingsStore();
@@ -200,7 +202,8 @@ export const MainSidebar = () => {
         ) : (
           <FileTree
             files={files}
-            activeBufferPath={activeBufferPath}
+            activePath={activePath}
+            updateActivePath={updateActivePath}
             rootFolderPath={rootFolderPath}
             onFileSelect={handleFileSelect}
             onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
@@ -208,6 +211,7 @@ export const MainSidebar = () => {
             onDeletePath={handleDeletePath}
             onUpdateFiles={setFiles}
             onRefreshDirectory={refreshDirectory}
+            onRenamePath={handleRenamePath}
             onRevealInFinder={handleRevealInFolder}
             onFileMove={handleFileMove}
             onDuplicatePath={handleDuplicatePath}

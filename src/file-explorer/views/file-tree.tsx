@@ -20,6 +20,7 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { findFileInTree } from "@/file-system/controllers/file-tree-utils";
 import { moveFile, readDirectory, readFile } from "@/file-system/controllers/platform";
 import type { ContextMenuState, FileEntry } from "@/file-system/models/app";
 import { cn } from "@/utils/cn";
@@ -30,7 +31,8 @@ import "./file-tree.css";
 
 interface FileTreeProps {
   files: FileEntry[];
-  activeBufferPath?: string;
+  activePath?: string;
+  updateActivePath?: (path: string) => void;
   rootFolderPath?: string;
   onFileSelect: (path: string, isDir: boolean) => void;
   onCreateNewFileInDirectory: (directoryPath: string, fileName: string) => void;
@@ -40,7 +42,7 @@ interface FileTreeProps {
   onUpdateFiles?: (files: FileEntry[]) => void;
   onCopyPath?: (path: string) => void;
   onCutPath?: (path: string) => void;
-  onRenamePath?: (path: string, newName: string) => void;
+  onRenamePath?: (path: string, newName?: string) => void;
   onDuplicatePath?: (path: string) => void;
   onRefreshDirectory?: (path: string) => void;
   onRevealInFinder?: (path: string) => void;
@@ -50,7 +52,8 @@ interface FileTreeProps {
 
 const FileTree = ({
   files,
-  activeBufferPath,
+  activePath,
+  updateActivePath,
   rootFolderPath,
   onFileSelect,
   onCreateNewFileInDirectory,
@@ -373,9 +376,19 @@ const FileTree = ({
         return;
       }
 
+      if (item.isRenaming) {
+        onRenamePath?.(item.path, newName.trim());
+        return;
+      }
+
       if (item.isDir) {
         onCreateNewFolderInDirectory?.(parentPath, newName.trim());
       } else {
+        const file = findFileInTree(files, `${parentPath}/${newName.trim()}`);
+        if (file) {
+          alert("File already exists");
+          return;
+        }
         onCreateNewFileInDirectory(parentPath, newName.trim());
       }
     }
@@ -395,8 +408,13 @@ const FileTree = ({
     setEditingValue("");
   };
 
-  const cancelInlineEditing = () => {
+  const cancelInlineEditing = (file: FileEntry) => {
     if (!onUpdateFiles) return;
+
+    if (file.isRenaming) {
+      onRenamePath?.(file.path);
+      return;
+    }
 
     // Remove the temporary item from the tree
     const removeNewItemFromTree = (items: FileEntry[]): FileEntry[] => {
@@ -477,14 +495,37 @@ const FileTree = ({
       e.preventDefault();
       e.stopPropagation();
       onFileSelect(path, isDir);
+      updateActivePath?.(path);
     },
-    [onFileSelect],
+    [onFileSelect, updateActivePath],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent, file: FileEntry) => {
+      if (e.key === "Enter") {
+        finishInlineEditing(file, editingValue);
+      } else if (e.key === "Escape") {
+        cancelInlineEditing(file);
+      }
+    },
+    [finishInlineEditing, cancelInlineEditing, editingValue],
+  );
+
+  const handleBlur = useCallback(
+    (file: FileEntry) => {
+      if (editingValue.trim()) {
+        finishInlineEditing(file, editingValue);
+      } else {
+        cancelInlineEditing(file);
+      }
+    },
+    [finishInlineEditing, cancelInlineEditing, editingValue],
   );
 
   const renderFileTree = (items: FileEntry[], depth = 0) => {
     return items.map((file) => (
       <div key={file.path} className="file-tree-item" data-depth={depth}>
-        {file.isEditing ? (
+        {file.isEditing || file.isRenaming ? (
           <div
             className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
             style={{ paddingLeft: `${12 + depth * 20}px`, paddingRight: "8px" }}
@@ -509,22 +550,19 @@ const FileTree = ({
                 }
               }}
               type="text"
+              autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
               value={editingValue}
+              onFocus={() => {
+                if (file.isRenaming) {
+                  setEditingValue(file.name);
+                }
+              }}
               onChange={(e) => setEditingValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  finishInlineEditing(file, editingValue);
-                } else if (e.key === "Escape") {
-                  cancelInlineEditing();
-                }
-              }}
-              onBlur={() => {
-                if (editingValue.trim()) {
-                  finishInlineEditing(file, editingValue);
-                } else {
-                  cancelInlineEditing();
-                }
-              }}
+              onKeyDown={(e) => handleKeyDown(e, file)}
+              onBlur={() => handleBlur(file)}
               className={cn(
                 "flex-1 border-text border-b border-none bg-transparent",
                 "font-mono text-text text-xs outline-none focus:border-text-lighter",
@@ -578,7 +616,7 @@ const FileTree = ({
               "px-1.5 py-1 text-left font-mono text-text text-xs",
               "shadow-none outline-none transition-colors duration-150",
               "hover:bg-hover focus:outline-none",
-              activeBufferPath === file.path && "bg-selected",
+              activePath === file.path && "bg-selected",
               dragState.dragOverPath === file.path &&
                 "!bg-accent !bg-opacity-20 !border-2 !border-accent !border-dashed",
               dragState.isDragging && "cursor-move",
@@ -728,6 +766,11 @@ const FileTree = ({
         }
       }}
       onDrop={handleRootDrop}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        updateActivePath?.("");
+      }}
     >
       {renderFileTree(filteredFiles)}
 
@@ -1039,13 +1082,7 @@ const FileTree = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const newName = prompt("Enter new name:", contextMenu.path.split("/").pop() || "");
-                if (newName?.trim()) {
-                  if (onRenamePath) {
-                    onRenamePath(contextMenu.path, newName.trim());
-                  } else {
-                  }
-                }
+                onRenamePath?.(contextMenu.path);
                 setContextMenu(null);
               }}
               className={cn(
