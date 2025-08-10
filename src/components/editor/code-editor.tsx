@@ -2,6 +2,7 @@ import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { useEditorScroll } from "@/hooks/use-editor-scroll";
+import { useGitGutter } from "@/hooks/use-git-gutter";
 import { useHover } from "@/hooks/use-hover";
 import { LspClient } from "@/lib/lsp/lsp-client";
 import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
@@ -48,6 +49,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
   const { searchQuery, searchMatches, currentMatchIndex, setSearchMatches, setCurrentMatchIndex } =
     useEditorSearchStore();
   const isFileTreeLoading = useFileSystemStore((state) => state.isFileTreeLoading);
+  const rootFolderPath = useFileSystemStore((state) => state.rootFolderPath);
   const { coreFeatures } = usePersistentSettingsStore();
 
   // Extract values from active buffer or use defaults
@@ -183,6 +185,13 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
 
   // Scroll management
   useEditorScroll(editorRef, null);
+
+  // Git gutter integration with optimized updates
+  useGitGutter({
+    filePath,
+    content: value,
+    enabled: !!filePath && !!rootFolderPath,
+  });
 
   // Search functionality
   useEffect(() => {
