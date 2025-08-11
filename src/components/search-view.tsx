@@ -207,7 +207,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
                       file: file.path,
                       line: lineIndex + 1,
                       column: match.index + 1,
-                      text: line.trim(),
+                      text: line,
                       match: match[0],
                     });
 
@@ -281,20 +281,17 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
     return filePath.replace(rootFolderPath, "").replace(/^\//, "");
   };
 
-  const highlightMatch = (text: string, match: string) => {
-    if (!match) return text;
+  const highlightMatch = ({ text, match, column }: SearchResult) => {
+    if (!match || !text) return text;
 
-    const regex = new RegExp(`(${match.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
-    const parts = text.split(regex);
-
-    return parts.map((part, index) =>
-      regex.test(part) ? (
-        <span key={index} className="rounded bg-yellow-200 px-0.5 text-yellow-900">
-          {part}
+    return (
+      <>
+        {text.slice(0, column - 1)}
+        <span className="rounded bg-yellow-200 px-0.5 text-yellow-900">
+          {text.slice(column - 1, column + match.length - 1)}
         </span>
-      ) : (
-        part
-      ),
+        {text.slice(column + match.length - 1)}
+      </>
     );
   };
 
@@ -506,7 +503,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
                             {result.line}
                           </span>
                           <span className="flex-1 truncate text-text text-xs">
-                            {highlightMatch(result.text, result.match)}
+                            {highlightMatch(result)}
                           </span>
                         </button>
                       );
