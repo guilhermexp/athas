@@ -4,7 +4,6 @@ import { sortFileEntries } from "./file-tree-utils";
 // Common directories and patterns to ignore for performance
 const IGNORE_PATTERNS = [
   // Dependencies
-  "node_modules",
   "vendor",
   ".pnpm",
   ".yarn",
@@ -163,7 +162,7 @@ export function updateDirectoryContents(
   files: FileEntry[],
   dirPath: string,
   newEntries: any[],
-  preserveStates: boolean = true,
+  preserveStates: boolean = true
 ): boolean {
   for (const item of files) {
     if (item.path === dirPath && item.isDir) {
@@ -186,7 +185,7 @@ export function updateDirectoryContents(
             expanded: existingChild?.expanded || false,
             children: existingChild?.children || undefined,
           };
-        }),
+        })
       );
 
       return true; // Directory was found and updated
