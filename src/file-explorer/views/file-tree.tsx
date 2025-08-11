@@ -382,6 +382,11 @@ const FileTree = ({
       }
 
       if (item.isDir) {
+        const folder = findFileInTree(files, `${parentPath}/${newName.trim()}`);
+        if (folder) {
+          alert("Folder already exists");
+          return;
+        }
         onCreateNewFolderInDirectory?.(parentPath, newName.trim());
       } else {
         const file = findFileInTree(files, `${parentPath}/${newName.trim()}`);
