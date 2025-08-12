@@ -42,9 +42,7 @@ export interface GitDiff {
   new_blob_base64?: string;
 }
 
-export const getGitStatus = async (
-  repoPath: string,
-): Promise<GitStatus | null> => {
+export const getGitStatus = async (repoPath: string): Promise<GitStatus | null> => {
   try {
     const status = await tauriInvoke<GitStatus>("git_status", { repoPath });
     return status;
@@ -54,10 +52,7 @@ export const getGitStatus = async (
   }
 };
 
-export const stageFile = async (
-  repoPath: string,
-  filePath: string,
-): Promise<boolean> => {
+export const stageFile = async (repoPath: string, filePath: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_add", { repoPath, filePath });
     return true;
@@ -67,10 +62,7 @@ export const stageFile = async (
   }
 };
 
-export const unstageFile = async (
-  repoPath: string,
-  filePath: string,
-): Promise<boolean> => {
+export const unstageFile = async (repoPath: string, filePath: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_reset", { repoPath, filePath });
     return true;
@@ -100,10 +92,7 @@ export const unstageAllFiles = async (repoPath: string): Promise<boolean> => {
   }
 };
 
-export const commitChanges = async (
-  repoPath: string,
-  message: string,
-): Promise<boolean> => {
+export const commitChanges = async (repoPath: string, message: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_commit", { repoPath, message });
     return true;
@@ -113,11 +102,7 @@ export const commitChanges = async (
   }
 };
 
-export const getGitLog = async (
-  repoPath: string,
-  limit = 50,
-  skip = 0,
-): Promise<GitCommit[]> => {
+export const getGitLog = async (repoPath: string, limit = 50, skip = 0): Promise<GitCommit[]> => {
   try {
     const commits = await tauriInvoke<GitCommit[]>("git_log", {
       repoPath,
@@ -185,10 +170,7 @@ export const createBranch = async (
   }
 };
 
-export const deleteBranch = async (
-  repoPath: string,
-  branchName: string,
-): Promise<boolean> => {
+export const deleteBranch = async (repoPath: string, branchName: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_delete_branch", { repoPath, branchName });
     return true;
@@ -305,10 +287,7 @@ export const pullChanges = async (
   }
 };
 
-export const fetchChanges = async (
-  repoPath: string,
-  remote?: string,
-): Promise<boolean> => {
+export const fetchChanges = async (repoPath: string, remote?: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_fetch", { repoPath, remote });
     return true;
@@ -328,10 +307,7 @@ export const discardAllChanges = async (repoPath: string): Promise<boolean> => {
   }
 };
 
-export const discardFileChanges = async (
-  repoPath: string,
-  filePath: string,
-): Promise<boolean> => {
+export const discardFileChanges = async (repoPath: string, filePath: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_discard_file_changes", { repoPath, filePath });
     return true;
@@ -368,11 +344,7 @@ export const getRemotes = async (repoPath: string): Promise<GitRemote[]> => {
   }
 };
 
-export const addRemote = async (
-  repoPath: string,
-  name: string,
-  url: string,
-): Promise<boolean> => {
+export const addRemote = async (repoPath: string, name: string, url: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_add_remote", { repoPath, name, url });
     return true;
@@ -382,10 +354,7 @@ export const addRemote = async (
   }
 };
 
-export const removeRemote = async (
-  repoPath: string,
-  name: string,
-): Promise<boolean> => {
+export const removeRemote = async (repoPath: string, name: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_remove_remote", { repoPath, name });
     return true;
@@ -431,10 +400,7 @@ export const createStash = async (
   }
 };
 
-export const applyStash = async (
-  repoPath: string,
-  stashIndex: number,
-): Promise<boolean> => {
+export const applyStash = async (repoPath: string, stashIndex: number): Promise<boolean> => {
   try {
     await tauriInvoke("git_apply_stash", { repoPath, stashIndex });
     return true;
@@ -444,10 +410,7 @@ export const applyStash = async (
   }
 };
 
-export const popStash = async (
-  repoPath: string,
-  stashIndex?: number,
-): Promise<boolean> => {
+export const popStash = async (repoPath: string, stashIndex?: number): Promise<boolean> => {
   try {
     await tauriInvoke("git_pop_stash", { repoPath, stashIndex });
     return true;
@@ -457,10 +420,7 @@ export const popStash = async (
   }
 };
 
-export const dropStash = async (
-  repoPath: string,
-  stashIndex: number,
-): Promise<boolean> => {
+export const dropStash = async (repoPath: string, stashIndex: number): Promise<boolean> => {
   try {
     await tauriInvoke("git_drop_stash", { repoPath, stashIndex });
     return true;
@@ -502,10 +462,7 @@ export const createTag = async (
   }
 };
 
-export const deleteTag = async (
-  repoPath: string,
-  name: string,
-): Promise<boolean> => {
+export const deleteTag = async (repoPath: string, name: string): Promise<boolean> => {
   try {
     await tauriInvoke("git_delete_tag", { repoPath, name });
     return true;
@@ -520,10 +477,7 @@ export interface GitHunk {
   lines: GitDiffLine[];
 }
 
-export const stageHunk = async (
-  repoPath: string,
-  hunk: GitHunk,
-): Promise<boolean> => {
+export const stageHunk = async (repoPath: string, hunk: GitHunk): Promise<boolean> => {
   try {
     await tauriInvoke("git_stage_hunk", { repoPath, hunk });
     return true;
@@ -533,10 +487,7 @@ export const stageHunk = async (
   }
 };
 
-export const unstageHunk = async (
-  repoPath: string,
-  hunk: GitHunk,
-): Promise<boolean> => {
+export const unstageHunk = async (repoPath: string, hunk: GitHunk): Promise<boolean> => {
   try {
     await tauriInvoke("git_unstage_hunk", { repoPath, hunk });
     return true;

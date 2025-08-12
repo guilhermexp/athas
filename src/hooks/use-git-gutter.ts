@@ -16,11 +16,7 @@ interface ProcessedGitChanges {
   deletedLines: Map<number, number>; // line number -> count
 }
 
-export function useGitGutter({
-  filePath,
-  content,
-  enabled = true,
-}: GitGutterHookOptions) {
+export function useGitGutter({ filePath, content, enabled = true }: GitGutterHookOptions) {
   const gitDecorationIdsRef = useRef<string[]>([]);
   const lastDiffRef = useRef<GitDiff | null>(null);
   const lastContentHashRef = useRef<string>("");
@@ -115,16 +111,10 @@ export function useGitGutter({
     const decorationsStore = useEditorDecorationsStore.getState();
 
     // Clear existing decorations
-    gitDecorationIdsRef.current.forEach((id) =>
-      decorationsStore.removeDecoration(id),
-    );
+    gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
     gitDecorationIdsRef.current = [];
 
-    const addMarker = (
-      lineNumber: number,
-      className: string,
-      content: string = " ",
-    ) => {
+    const addMarker = (lineNumber: number, className: string, content: string = " ") => {
       const id = decorationsStore.addDecoration({
         type: "gutter",
         className,
@@ -237,9 +227,7 @@ export function useGitGutter({
     return () => {
       // Clear decorations when component unmounts or file changes
       const decorationsStore = useEditorDecorationsStore.getState();
-      gitDecorationIdsRef.current.forEach((id) =>
-        decorationsStore.removeDecoration(id),
-      );
+      gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
       gitDecorationIdsRef.current = [];
     };
   }, [filePath, rootFolderPath]);
@@ -288,20 +276,11 @@ export function useGitGutter({
 
     // Listen for file reloads and git status updates
     window.addEventListener("file-reloaded", handleFileReload as EventListener);
-    window.addEventListener(
-      "git-status-updated",
-      handleGitStatusUpdate as EventListener,
-    );
+    window.addEventListener("git-status-updated", handleGitStatusUpdate as EventListener);
 
     return () => {
-      window.removeEventListener(
-        "file-reloaded",
-        handleFileReload as EventListener,
-      );
-      window.removeEventListener(
-        "git-status-updated",
-        handleGitStatusUpdate as EventListener,
-      );
+      window.removeEventListener("file-reloaded", handleFileReload as EventListener);
+      window.removeEventListener("git-status-updated", handleGitStatusUpdate as EventListener);
 
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -314,9 +293,7 @@ export function useGitGutter({
     updateGitGutter: useCallback(() => updateGitGutter(false), [updateGitGutter]),
     clearGitGutter: useCallback(() => {
       const decorationsStore = useEditorDecorationsStore.getState();
-      gitDecorationIdsRef.current.forEach((id) =>
-        decorationsStore.removeDecoration(id),
-      );
+      gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
       gitDecorationIdsRef.current = [];
     }, []),
   };
