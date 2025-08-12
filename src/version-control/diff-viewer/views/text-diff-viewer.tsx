@@ -1,11 +1,11 @@
 import { FileIcon } from "lucide-react";
 import { memo } from "react";
 import { cn } from "@/utils/cn";
+import { groupLinesIntoHunks } from "../controllers/diff-helpers";
+import { useDiffViewState } from "../controllers/useDiffViewState";
+import type { TextDiffViewerProps } from "../models/diff-types";
 import { DiffHunkHeader } from "./diff-hunk-header";
 import { DiffLine } from "./diff-line";
-import { useDiffViewState } from "./hooks/useDiffViewState";
-import { groupLinesIntoHunks } from "./utils/diff-helpers";
-import type { TextDiffViewerProps } from "./utils/types";
 
 export const TextDiffViewer = memo(function TextDiffViewer({
   diff,

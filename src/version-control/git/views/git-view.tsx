@@ -10,7 +10,7 @@ import {
   getGitStatus,
 } from "@/version-control/git/controllers/git";
 import { useGitStore } from "@/version-control/git/controllers/git-store";
-import type { MultiFileDiff } from "../../../components/diff-viewer/utils/types";
+import type { MultiFileDiff } from "../../diff-viewer/models/diff-types";
 
 // Import modular components
 import GitActionsMenu from "./git-actions-menu";

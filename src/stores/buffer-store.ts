@@ -1,11 +1,11 @@
 import isEqual from "fast-deep-equal";
 import { immer } from "zustand/middleware/immer";
 import { createWithEqualityFn } from "zustand/traditional";
+import { readFileContent } from "@/file-system/controllers/file-operations";
+import { useRecentFilesStore } from "@/file-system/controllers/recent-files-store";
 import { createSelectors } from "@/utils/zustand-selectors";
-import type { MultiFileDiff } from "../components/diff-viewer/utils/types";
-import { readFileContent } from "../file-system/controllers/file-operations";
-import { useRecentFilesStore } from "../file-system/controllers/recent-files-store";
-import type { GitDiff } from "../version-control/git/controllers/git";
+import type { MultiFileDiff } from "@/version-control/diff-viewer/models/diff-types";
+import type { GitDiff } from "@/version-control/git/controllers/git";
 
 interface Buffer {
   id: string;
