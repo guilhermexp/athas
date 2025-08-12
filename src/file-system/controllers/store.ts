@@ -10,13 +10,13 @@ import { useFileTreeStore } from "@/file-explorer/controllers/file-tree-store";
 // This is an acceptable Zustand pattern, though it creates coupling between stores.
 // See: https://github.com/pmndrs/zustand/discussions/1319
 import { useBufferStore } from "@/stores/buffer-store";
-import { useGitStore } from "@/stores/git-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { getGitStatus } from "@/utils/git";
 import { gitDiffCache } from "@/utils/git-diff-cache";
 import { isDiffFile, parseRawDiffContent } from "@/utils/git-diff-parser";
 import { createSelectors } from "@/utils/zustand-selectors";
+import { useGitStore } from "@/version-control/git/controllers/git-store";
 import type { FileEntry } from "../models/app";
 import type { FsActions, FsState } from "../models/interface";
 import {
