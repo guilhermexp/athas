@@ -2,7 +2,6 @@
 .xterm-container {
   position: relative;
   overflow: hidden;
-  padding-left: 16px; /* Only add left padding */
 }
 
 /* Ensure xterm doesn't overflow its container */

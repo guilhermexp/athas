@@ -101,7 +101,7 @@ const BottomPane = ({ diagnostics, onDiagnosticClick }: BottomPaneProps) => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1">
+      <div className="h-full">
         {/* Terminal Container - Always mounted to preserve terminal sessions */}
         {coreFeatures.terminal && (
           <TerminalContainer
