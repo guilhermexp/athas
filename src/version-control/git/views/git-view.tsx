@@ -11,7 +11,7 @@ import {
 } from "@/version-control/git/controllers/git";
 import { useGitStore } from "@/version-control/git/controllers/git-store";
 import type { MultiFileDiff } from "../../diff-viewer/models/diff-types";
-
+import type { GitFile } from "../models/git-types";
 // Import modular components
 import GitActionsMenu from "./git-actions-menu";
 import GitBranchManager from "./git-branch-manager";
@@ -220,7 +220,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
       }
 
       // Find the file in gitStatus to check its status
-      const file = gitStatus?.files.find((f) => f.path === actualFilePath);
+      const file = gitStatus?.files.find((f: GitFile) => f.path === actualFilePath);
 
       // For untracked files, open the file directly instead of trying to show a diff
       if (file && file.status === "untracked" && !staged) {

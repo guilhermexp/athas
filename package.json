@@ -15,7 +15,7 @@
     "check:fix": "biome check --write --unsafe",
     "clean": "concurrently --names \"node,rust\" --prefix-colors \"cyan,yellow\" \"rimraf dist build node_modules bun.lockb && bun install\" \"cargo clean && cargo build\"",
     "prepare": "simple-git-hooks",
-    "commitlint": "commitlint --edit",
+    "commitlint": "commitlint",
     "setup": "chmod +x scripts/linux/setup.sh && ./scripts/linux/setup.sh",
     "setup:linux": "chmod +x scripts/linux/setup.sh && ./scripts/linux/setup.sh",
     "setup-win": "./scripts/windows/setup.ps1",

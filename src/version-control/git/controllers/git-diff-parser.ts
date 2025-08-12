@@ -1,5 +1,5 @@
 import { getFilenameFromPath } from "../../../file-system/controllers/file-utils";
-import type { GitDiff, GitDiffLine } from "./git";
+import type { GitDiff, GitDiffLine } from "../models/git-types";
 
 export function parseRawDiffContent(content: string, filePath: string): GitDiff {
   const lines = content.split("\n");

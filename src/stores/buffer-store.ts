@@ -5,7 +5,7 @@ import { readFileContent } from "@/file-system/controllers/file-operations";
 import { useRecentFilesStore } from "@/file-system/controllers/recent-files-store";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { MultiFileDiff } from "@/version-control/diff-viewer/models/diff-types";
-import type { GitDiff } from "@/version-control/git/controllers/git";
+import type { GitDiff } from "@/version-control/git/models/git-types";
 
 interface Buffer {
   id: string;

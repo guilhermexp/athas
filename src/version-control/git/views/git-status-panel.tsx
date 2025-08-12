@@ -14,12 +14,12 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import {
   discardFileChanges,
-  type GitFile,
   stageAllFiles,
   stageFile,
   unstageAllFiles,
   unstageFile,
 } from "@/version-control/git/controllers/git";
+import type { GitFile } from "../models/git-types";
 
 interface GitStatusPanelProps {
   files: GitFile[];
