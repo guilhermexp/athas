@@ -55,6 +55,7 @@ export const MainSidebar = () => {
     useFileSystemStore.use.handleCreateNewFolderInDirectory?.();
   const handleFileSelect = useFileSystemStore.use.handleFileSelect?.();
   const handleCreateNewFileInDirectory = useFileSystemStore.use.handleCreateNewFileInDirectory?.();
+  const handleCreateNewFolder = useFileSystemStore.use.handleCreateNewFolder?.();
   const handleDeletePath = useFileSystemStore.use.handleDeletePath?.();
   const refreshDirectory = useFileSystemStore.use.refreshDirectory?.();
   const handleFileMove = useFileSystemStore.use.handleFileMove?.();
@@ -164,11 +165,7 @@ export const MainSidebar = () => {
               <FilePlus size={12} />
             </Button>
             <Button
-              onClick={() => {
-                if (rootFolderPath) {
-                  handleCreateNewFolderInDirectory(rootFolderPath);
-                }
-              }}
+              onClick={handleCreateNewFolder}
               variant="ghost"
               size="sm"
               className={cn(
