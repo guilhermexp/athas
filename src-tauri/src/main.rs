@@ -197,6 +197,7 @@ fn main() {
          git_reset_all,
          git_log,
          git_diff_file,
+         git_diff_file_with_content,
          git_commit_diff,
          git_branches,
          git_checkout,
