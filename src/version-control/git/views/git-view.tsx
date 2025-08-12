@@ -2,7 +2,13 @@ import { GitBranch, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useBufferStore } from "@/stores/buffer-store";
 import { cn } from "@/utils/cn";
-import { getBranches, getCommitDiff, getFileDiff, getGitLog, getGitStatus } from "@/utils/git";
+import {
+  getBranches,
+  getCommitDiff,
+  getFileDiff,
+  getGitLog,
+  getGitStatus,
+} from "@/version-control/git/controllers/git";
 import { useGitStore } from "@/version-control/git/controllers/git-store";
 import type { MultiFileDiff } from "../../../components/diff-viewer/utils/types";
 

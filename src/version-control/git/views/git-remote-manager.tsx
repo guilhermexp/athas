@@ -1,7 +1,12 @@
 import { Globe, Plus, Server, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
-import { addRemote, type GitRemote, getRemotes, removeRemote } from "@/utils/git";
+import {
+  addRemote,
+  type GitRemote,
+  getRemotes,
+  removeRemote,
+} from "@/version-control/git/controllers/git";
 
 interface GitRemoteManagerProps {
   isOpen: boolean;

@@ -8,7 +8,7 @@ import { useFileSystemStore } from "../file-system/controllers/store";
 import { usePersistentSettingsStore } from "../settings/stores/persistent-settings-store";
 import { useBufferStore } from "../stores/buffer-store";
 import { useUIState } from "../stores/ui-state-store";
-import { getGitStatus } from "../utils/git";
+import { getGitStatus } from "../version-control/git/controllers/git";
 import { useGitStore } from "../version-control/git/controllers/git-store";
 import GitBranchManager from "../version-control/git/views/git-branch-manager";
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import type { GitCommit, GitStatus } from "../../../utils/git";
-import { getGitLog } from "../../../utils/git";
+import type { GitCommit, GitStatus } from "./git";
+import { getGitLog } from "./git";
 
 interface GitState {
   // Data

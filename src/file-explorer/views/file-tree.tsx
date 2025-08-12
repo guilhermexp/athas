@@ -24,7 +24,7 @@ import { findFileInTree } from "@/file-system/controllers/file-tree-utils";
 import { moveFile, readDirectory, readFile } from "@/file-system/controllers/platform";
 import type { ContextMenuState, FileEntry } from "@/file-system/models/app";
 import { cn } from "@/utils/cn";
-import { type GitFile, type GitStatus, getGitStatus } from "@/utils/git";
+import { type GitFile, type GitStatus, getGitStatus } from "@/version-control/git/controllers/git";
 import FileIcon from "./file.icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
 import "./file-tree.css";

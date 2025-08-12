@@ -19,7 +19,7 @@ import {
   stageFile,
   unstageAllFiles,
   unstageFile,
-} from "@/utils/git";
+} from "@/version-control/git/controllers/git";
 
 interface GitStatusPanelProps {
   files: GitFile[];

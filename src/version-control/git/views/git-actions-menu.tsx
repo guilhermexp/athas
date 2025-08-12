@@ -17,7 +17,7 @@ import {
   initRepository,
   pullChanges,
   pushChanges,
-} from "@/utils/git";
+} from "@/version-control/git/controllers/git";
 import { useGitStore } from "@/version-control/git/controllers/git-store";
 
 interface GitActionsMenuProps {

@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, Clock, Hash, User } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getCommitDiff } from "@/utils/git";
+import { getCommitDiff } from "@/version-control/git/controllers/git";
 import { useGitStore } from "@/version-control/git/controllers/git-store";
 
 interface GitCommitHistoryProps {
