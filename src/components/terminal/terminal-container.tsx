@@ -2,6 +2,7 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTerminalTabs } from "@/hooks/use-terminal-tabs";
 import { useUIState } from "@/stores/ui-state-store";
+import { cn } from "@/utils/cn";
 import TerminalSession from "./terminal-session";
 import TerminalTabBar from "./terminal-tab-bar";
 
@@ -393,59 +394,47 @@ const TerminalContainer = ({
       />
 
       {/* Terminal Sessions */}
-      <div className="relative flex-1">
+      <div className="relative bg-primary-bg" style={{ height: "calc(100% - 28px)" }}>
         {(() => {
-          const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
-          const isSplitView = activeTerminal?.splitMode && activeTerminal?.splitWithId;
-
-          if (isSplitView && activeTerminal.splitWithId) {
-            // Split view: Show active terminal on left, companion terminal on right
-            return (
-              <div className="flex h-full">
-                {/* Left terminal - active terminal */}
-                <div className="w-1/2 border-border border-r">
-                  <TerminalSession
-                    terminal={activeTerminal}
-                    isActive={true}
-                    onDirectoryChange={handleDirectoryChange}
-                    onActivity={handleActivity}
-                    onRegisterRef={registerTerminalRef}
-                  />
-                </div>
-                {/* Right terminal - companion split terminal */}
-                <div className="w-1/2">
-                  <TerminalSession
-                    terminal={{
-                      ...activeTerminal,
-                      id: activeTerminal.splitWithId,
-                      name: `${activeTerminal.name} (split)`,
-                    }}
-                    isActive={true}
-                    onDirectoryChange={handleDirectoryChange}
-                    onActivity={handleActivity}
-                    onRegisterRef={registerTerminalRef}
-                  />
-                </div>
-              </div>
-            );
-          }
-
-          // Normal view: Show all terminals but only display the active one
           return (
             <div className="h-full">
               {terminals.map((terminal) => (
                 <div
                   key={terminal.id}
                   className="h-full"
-                  style={{ display: terminal.id === activeTerminalId ? "block" : "none" }}
+                  style={{ display: terminal.id === activeTerminalId ? "flex" : "none" }}
                 >
-                  <TerminalSession
-                    terminal={terminal}
-                    isActive={terminal.id === activeTerminalId}
-                    onDirectoryChange={handleDirectoryChange}
-                    onActivity={handleActivity}
-                    onRegisterRef={registerTerminalRef}
-                  />
+                  <div
+                    className={cn(
+                      "w-full pl-[16px]",
+                      terminal.splitMode && terminal.splitWithId && "w-1/2 border-border border-r",
+                    )}
+                  >
+                    <TerminalSession
+                      key={terminal.id}
+                      terminal={terminal}
+                      isActive={terminal.id === activeTerminalId}
+                      onDirectoryChange={handleDirectoryChange}
+                      onActivity={handleActivity}
+                      onRegisterRef={registerTerminalRef}
+                    />
+                  </div>
+                  {terminal.splitMode && terminal.splitWithId && (
+                    <div className="w-1/2 pl-[16px]">
+                      <TerminalSession
+                        key={terminal.splitWithId}
+                        terminal={{
+                          ...terminal,
+                          id: terminal.splitWithId,
+                          name: `${terminal.name} (split)`,
+                        }}
+                        isActive={terminal.id === activeTerminalId}
+                        onDirectoryChange={handleDirectoryChange}
+                        onActivity={handleActivity}
+                        onRegisterRef={registerTerminalRef}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
