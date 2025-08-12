@@ -2,20 +2,21 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { ask } from "@tauri-apps/plugin-dialog";
 import { open } from "@tauri-apps/plugin-shell";
+import { ClipboardAddon } from "@xterm/addon-clipboard";
+import { FitAddon } from "@xterm/addon-fit";
+import { SearchAddon } from "@xterm/addon-search";
+import { SerializeAddon } from "@xterm/addon-serialize";
+import { Unicode11Addon } from "@xterm/addon-unicode11";
+import { WebLinksAddon } from "@xterm/addon-web-links";
+import { Terminal } from "@xterm/xterm";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Terminal } from "xterm";
-import { FitAddon } from "xterm-addon-fit";
-import { SearchAddon } from "xterm-addon-search";
-import { SerializeAddon } from "xterm-addon-serialize";
-import { Unicode11Addon } from "xterm-addon-unicode11";
-import { WebLinksAddon } from "xterm-addon-web-links";
 import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useTerminalStore } from "@/stores/terminal-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { cn } from "@/utils/cn";
 import { TerminalSearch } from "./terminal-search";
-import "xterm/css/xterm.css";
+import "@xterm/xterm/css/xterm.css";
 import "./terminal.css";
 
 interface XtermTerminalProps {
@@ -168,11 +169,13 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
       });
       const serializeAddon = new SerializeAddon();
       const unicode11Addon = new Unicode11Addon();
+      const clipboardAddon = new ClipboardAddon();
 
       terminal.loadAddon(fitAddon);
       terminal.loadAddon(searchAddon);
       terminal.loadAddon(serializeAddon);
       terminal.loadAddon(unicode11Addon);
+      terminal.loadAddon(clipboardAddon);
 
       // Open terminal in DOM
       terminal.open(terminalRef.current);
@@ -697,10 +700,13 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
       <div
         ref={terminalRef}
         id={`terminal-${sessionId}`}
-        className={cn("xterm-container", "w-full", "text-text", !isActive && "opacity-60")}
-        style={{
-          height: "calc(100% - 1px)", // Subtract footer height to prevent content going below
-        }}
+        className={cn(
+          "xterm-container",
+          "w-full",
+          "h-full",
+          "text-text",
+          !isActive && "opacity-60",
+        )}
       />
     </div>
   );

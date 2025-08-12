@@ -41,21 +41,21 @@ export const LineGutter = ({
         height: "100%",
         display: "flex",
         alignItems: "center",
-        justifyContent: showLineNumbers ? "flex-end" : "center",
+        justifyContent: showLineNumbers ? "space-between" : "center",
         position: "relative",
-        paddingLeft: "2px",
-        paddingRight: "8px",
+        paddingLeft: "8px", // Space for git indicators
+        paddingRight: "8px", // Space after line numbers
       }}
       data-line-number={lineNumber}
     >
-      {/* Git gutter indicators positioned absolutely on the left edge */}
+      {/* Git gutter indicators positioned with proper spacing from left edge */}
       {gitDecorations.map((decoration, index) => (
         <div
           key={`git-decoration-${index}`}
           className={cn("gutter-decoration", decoration.className)}
           style={{
             position: "absolute",
-            left: "2px",
+            left: "2px", // Small gap from left edge
             top: decoration.className?.includes("git-gutter-deleted") ? "0px" : "50%",
             transform: decoration.className?.includes("git-gutter-deleted")
               ? "none"
@@ -79,7 +79,7 @@ export const LineGutter = ({
             <span
               style={{
                 position: "absolute",
-                left: "6px",
+                left: "8px", // Increased gap for deleted line indicators
                 top: "-1px",
                 fontSize: "9px",
                 color: "#dc3545",
@@ -110,8 +110,8 @@ export const LineGutter = ({
             fontFamily: "inherit",
             userSelect: "none",
             textAlign: "right",
-            minWidth: `${gutterWidth - 18}px`,
-            paddingRight: "0px",
+            minWidth: `${gutterWidth - 24}px`, // Account for git indicator space and padding
+            paddingLeft: "12px", // Space from git indicators
           }}
         >
           {lineNumber + 1}
@@ -127,7 +127,7 @@ export const LineGutter = ({
             className={cn("gutter-decoration", decoration.className)}
             style={{
               position: "absolute",
-              right: "4px",
+              right: "2px", // Consistent spacing from right edge
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 3,

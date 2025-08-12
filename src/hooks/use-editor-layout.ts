@@ -16,9 +16,10 @@ export function useEditorLayout() {
       ? Math.max(
           EDITOR_CONSTANTS.MIN_GUTTER_WIDTH,
           String(lineCount).length * EDITOR_CONSTANTS.GUTTER_CHAR_WIDTH +
-            EDITOR_CONSTANTS.GUTTER_PADDING,
+            EDITOR_CONSTANTS.GUTTER_PADDING +
+            EDITOR_CONSTANTS.GIT_INDICATOR_WIDTH,
         )
-      : 0;
+      : EDITOR_CONSTANTS.GIT_INDICATOR_WIDTH + 16; // Always reserve space for git indicators even without line numbers
 
     return {
       lineHeight,
