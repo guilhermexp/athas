@@ -237,12 +237,7 @@ export const getFileDiffAgainstContent = async (
 ): Promise<GitDiff | null> => {
   try {
     // Check cache first using a unique key for content-based diffs
-    const cached = gitDiffCache.get(
-      repoPath,
-      filePath,
-      base === "index",
-      content,
-    );
+    const cached = gitDiffCache.get(repoPath, filePath, base === "index", content);
     if (cached) {
       return cached;
     }

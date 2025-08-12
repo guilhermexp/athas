@@ -170,20 +170,14 @@ export function useGitGutter({
         let relativePath = filePath;
         if (relativePath.startsWith(rootFolderPath)) {
           relativePath = relativePath.slice(rootFolderPath.length);
-          if (relativePath.startsWith("/"))
-            relativePath = relativePath.slice(1);
+          if (relativePath.startsWith("/")) relativePath = relativePath.slice(1);
         }
 
         console.log(`[GitGutter] Getting diff for ${relativePath}`);
 
         // Use content-based diff for live typing, regular diff for file system events
         const diff = useContentDiff
-          ? await getFileDiffAgainstContent(
-              rootFolderPath,
-              relativePath,
-              content,
-              "head",
-            )
+          ? await getFileDiffAgainstContent(rootFolderPath, relativePath, content, "head")
           : await getFileDiff(rootFolderPath, relativePath, false, content);
         console.log(`[GitGutter] Got diff result:`, {
           hasDiff: !!diff,
@@ -194,13 +188,9 @@ export function useGitGutter({
 
         if (!diff || diff.is_binary || diff.is_image) {
           // Clear decorations for binary/image files
-          console.log(
-            `[GitGutter] Clearing decorations - no diff or binary/image file`,
-          );
+          console.log(`[GitGutter] Clearing decorations - no diff or binary/image file`);
           const decorationsStore = useEditorDecorationsStore.getState();
-          gitDecorationIdsRef.current.forEach((id) =>
-            decorationsStore.removeDecoration(id),
-          );
+          gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
           gitDecorationIdsRef.current = [];
           return;
         }
@@ -220,20 +210,11 @@ export function useGitGutter({
         console.error(`[GitGutter] Error updating git gutter:`, error);
         // Clear decorations on error
         const decorationsStore = useEditorDecorationsStore.getState();
-        gitDecorationIdsRef.current.forEach((id) =>
-          decorationsStore.removeDecoration(id),
-        );
+        gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
         gitDecorationIdsRef.current = [];
       }
     },
-    [
-      enabled,
-      filePath,
-      rootFolderPath,
-      processGitDiff,
-      applyGitDecorations,
-      content,
-    ],
+    [enabled, filePath, rootFolderPath, processGitDiff, applyGitDecorations, content],
   );
 
   // Debounced update function for content changes
@@ -330,10 +311,7 @@ export function useGitGutter({
 
   // Return current git changes for external use if needed
   return {
-    updateGitGutter: useCallback(
-      () => updateGitGutter(false),
-      [updateGitGutter],
-    ),
+    updateGitGutter: useCallback(() => updateGitGutter(false), [updateGitGutter]),
     clearGitGutter: useCallback(() => {
       const decorationsStore = useEditorDecorationsStore.getState();
       gitDecorationIdsRef.current.forEach((id) =>
