@@ -2,7 +2,7 @@ import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { useEditorScroll } from "@/hooks/use-editor-scroll";
-import { useGitGutter } from "@/hooks/use-git-gutter";
+import { useGitGutter } from "@/version-control/git/controllers/use-git-gutter";
 import { useHover } from "@/hooks/use-hover";
 import { LspClient } from "@/lib/lsp/lsp-client";
 import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
