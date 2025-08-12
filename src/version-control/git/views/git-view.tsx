@@ -4,7 +4,7 @@ import { useBufferStore } from "@/stores/buffer-store";
 import { useGitStore } from "@/stores/git-store";
 import { cn } from "@/utils/cn";
 import { getBranches, getCommitDiff, getFileDiff, getGitLog, getGitStatus } from "@/utils/git";
-import type { MultiFileDiff } from "../diff-viewer/utils/types";
+import type { MultiFileDiff } from "../../../components/diff-viewer/utils/types";
 
 // Import modular components
 import GitActionsMenu from "./git-actions-menu";
