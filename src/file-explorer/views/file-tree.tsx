@@ -382,6 +382,11 @@ const FileTree = ({
       }
 
       if (item.isDir) {
+        const folder = findFileInTree(files, `${parentPath}/${newName.trim()}`);
+        if (folder) {
+          alert("Folder already exists");
+          return;
+        }
         onCreateNewFolderInDirectory?.(parentPath, newName.trim());
       } else {
         const file = findFileInTree(files, `${parentPath}/${newName.trim()}`);
@@ -533,7 +538,7 @@ const FileTree = ({
         {file.isEditing || file.isRenaming ? (
           <div
             className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
-            style={{ paddingLeft: `${12 + depth * 20}px`, paddingRight: "8px" }}
+            style={{ paddingLeft: `${14 + depth * 20}px`, paddingRight: "8px" }}
           >
             <FileIcon
               fileName={file.isDir ? "folder" : "file"}

@@ -14,7 +14,8 @@ export const EDITOR_CONSTANTS = {
   // Gutter
   MIN_GUTTER_WIDTH: 40,
   GUTTER_CHAR_WIDTH: 8,
-  GUTTER_PADDING: 16,
+  GUTTER_PADDING: 24, // Increased to account for git indicators (8px left + 8px right + 8px spacing)
+  GIT_INDICATOR_WIDTH: 8, // Space reserved for git gutter indicators on the left
 
   // Z-index layers
   Z_INDEX: {

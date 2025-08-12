@@ -325,6 +325,44 @@ export const useFileSystemStore = createSelectors(
         return get().createFile(dirPath, fileName);
       },
 
+      handleCreateNewFolder: async () => {
+        const { rootFolderPath } = get();
+        const { activePath } = useSidebarStore.getState();
+
+        if (!rootFolderPath) {
+          alert("Please open a folder first");
+          return;
+        }
+
+        let effectiveRootPath = activePath || rootFolderPath;
+
+        // Active path maybe is a file
+        if (activePath) {
+          try {
+            await extname(activePath);
+            effectiveRootPath = await dirname(activePath);
+          } catch {}
+        }
+
+        if (!effectiveRootPath) {
+          alert("Unable to determine root folder path");
+          return;
+        }
+
+        const newFolder: FileEntry = {
+          name: "",
+          path: `${effectiveRootPath}/`,
+          isDir: true,
+          isEditing: true,
+          isNewItem: true,
+        };
+
+        set((state) => {
+          state.files = addFileToTree(state.files, effectiveRootPath, newFolder);
+          state.filesVersion++;
+        });
+      },
+
       handleCreateNewFolderInDirectory: async (dirPath: string, folderName?: string) => {
         if (!folderName) {
           folderName = prompt("Enter the name for the new folder:") ?? undefined;

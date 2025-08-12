@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { useEditorDecorationsStore } from "@/stores/editor-decorations-store";
 import type { GitDiff } from "@/utils/git";
-import { getFileDiff } from "@/utils/git";
+import { getFileDiff, getFileDiffAgainstContent } from "@/utils/git";
 
 interface GitGutterHookOptions {
   filePath: string;
@@ -26,7 +26,9 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
 
   // Memoized content hash for efficient change detection
   const contentHash = useMemo(() => {
-    return content ? btoa(content).slice(0, 32) : "";
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(content);
+    return content ? btoa(String.fromCharCode(...bytes)).slice(0, 32) : "";
   }, [content]);
 
   // Process git diff lines into line change information
@@ -136,73 +138,76 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
   }, []);
 
   // Update git gutter decorations
-  const updateGitGutter = useCallback(async () => {
-    console.log(`[GitGutter] updateGitGutter called for ${filePath}`, {
-      enabled,
-      filePath,
-      rootFolderPath,
-      contentLength: content?.length || 0,
-    });
-
-    if (!enabled || !filePath || !rootFolderPath) {
-      console.log(`[GitGutter] Skipping update - missing requirements`);
-      return;
-    }
-    if (filePath.startsWith("diff://")) {
-      console.log(`[GitGutter] Skipping diff:// file`);
-      return;
-    }
-
-    try {
-      // Convert to relative path
-      let relativePath = filePath;
-      if (relativePath.startsWith(rootFolderPath)) {
-        relativePath = relativePath.slice(rootFolderPath.length);
-        if (relativePath.startsWith("/")) relativePath = relativePath.slice(1);
-      }
-
-      console.log(`[GitGutter] Getting diff for ${relativePath}`);
-
-      // Force cache invalidation before getting fresh diff
-      const { gitDiffCache } = await import("@/utils/git-diff-cache");
-      gitDiffCache.invalidate(rootFolderPath, filePath);
-
-      const diff = await getFileDiff(rootFolderPath, relativePath, false, content);
-      console.log(`[GitGutter] Got diff result:`, {
-        hasDiff: !!diff,
-        lineCount: diff?.lines?.length || 0,
-        isBinary: diff?.is_binary,
-        isImage: diff?.is_image,
+  const updateGitGutter = useCallback(
+    async (useContentDiff: boolean = false) => {
+      console.log(`[GitGutter] updateGitGutter called for ${filePath}`, {
+        enabled,
+        filePath,
+        rootFolderPath,
+        contentLength: content?.length || 0,
+        useContentDiff,
       });
 
-      if (!diff || diff.is_binary || diff.is_image) {
-        // Clear decorations for binary/image files
-        console.log(`[GitGutter] Clearing decorations - no diff or binary/image file`);
-        const decorationsStore = useEditorDecorationsStore.getState();
-        gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
-        gitDecorationIdsRef.current = [];
+      if (!enabled || !filePath || !rootFolderPath) {
+        console.log(`[GitGutter] Skipping update - missing requirements`);
+        return;
+      }
+      if (filePath.startsWith("diff://")) {
+        console.log(`[GitGutter] Skipping diff:// file`);
         return;
       }
 
-      // Cache the diff for comparison
-      lastDiffRef.current = diff;
+      try {
+        // Convert to relative path
+        let relativePath = filePath;
+        if (relativePath.startsWith(rootFolderPath)) {
+          relativePath = relativePath.slice(rootFolderPath.length);
+          if (relativePath.startsWith("/")) relativePath = relativePath.slice(1);
+        }
 
-      const changes = processGitDiff(diff);
-      console.log(`[GitGutter] Processed changes:`, {
-        added: changes.addedLines.size,
-        modified: changes.modifiedLines.size,
-        deleted: changes.deletedLines.size,
-      });
+        console.log(`[GitGutter] Getting diff for ${relativePath}`);
 
-      applyGitDecorations(changes);
-    } catch (error) {
-      console.error(`[GitGutter] Error updating git gutter:`, error);
-      // Clear decorations on error
-      const decorationsStore = useEditorDecorationsStore.getState();
-      gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
-      gitDecorationIdsRef.current = [];
-    }
-  }, [enabled, filePath, rootFolderPath, processGitDiff, applyGitDecorations, content]);
+        // Use content-based diff for live typing, regular diff for file system events
+        const diff = useContentDiff
+          ? await getFileDiffAgainstContent(rootFolderPath, relativePath, content, "head")
+          : await getFileDiff(rootFolderPath, relativePath, false, content);
+        console.log(`[GitGutter] Got diff result:`, {
+          hasDiff: !!diff,
+          lineCount: diff?.lines?.length || 0,
+          isBinary: diff?.is_binary,
+          isImage: diff?.is_image,
+        });
+
+        if (!diff || diff.is_binary || diff.is_image) {
+          // Clear decorations for binary/image files
+          console.log(`[GitGutter] Clearing decorations - no diff or binary/image file`);
+          const decorationsStore = useEditorDecorationsStore.getState();
+          gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
+          gitDecorationIdsRef.current = [];
+          return;
+        }
+
+        // Cache the diff for comparison
+        lastDiffRef.current = diff;
+
+        const changes = processGitDiff(diff);
+        console.log(`[GitGutter] Processed changes:`, {
+          added: changes.addedLines.size,
+          modified: changes.modifiedLines.size,
+          deleted: changes.deletedLines.size,
+        });
+
+        applyGitDecorations(changes);
+      } catch (error) {
+        console.error(`[GitGutter] Error updating git gutter:`, error);
+        // Clear decorations on error
+        const decorationsStore = useEditorDecorationsStore.getState();
+        gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));
+        gitDecorationIdsRef.current = [];
+      }
+    },
+    [enabled, filePath, rootFolderPath, processGitDiff, applyGitDecorations, content],
+  );
 
   // Debounced update function for content changes
   const debouncedUpdate = useCallback(() => {
@@ -211,14 +216,14 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      updateGitGutter();
+      updateGitGutter(true); // Use content-based diff for live typing
     }, 500) as NodeJS.Timeout; // 500ms debounce for content changes
   }, [updateGitGutter]);
 
   // Initial update when file path changes
   useEffect(() => {
     if (filePath && rootFolderPath) {
-      updateGitGutter();
+      updateGitGutter(false); // Use regular diff for initial load
     }
 
     return () => {
@@ -245,7 +250,7 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
       const { path } = event.detail;
       if (path === filePath) {
         // File was reloaded from disk, update git gutter immediately
-        updateGitGutter();
+        updateGitGutter(false); // Use regular diff for file system changes
       }
     };
 
@@ -268,7 +273,7 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
 
       console.log(`[GitGutter] Proceeding with git gutter update`);
       // Update immediately for git status changes (no debouncing needed)
-      updateGitGutter();
+      updateGitGutter(false); // Use regular diff for git status changes
     };
 
     // Listen for file reloads and git status updates
@@ -287,7 +292,7 @@ export function useGitGutter({ filePath, content, enabled = true }: GitGutterHoo
 
   // Return current git changes for external use if needed
   return {
-    updateGitGutter: useCallback(() => updateGitGutter(), [updateGitGutter]),
+    updateGitGutter: useCallback(() => updateGitGutter(false), [updateGitGutter]),
     clearGitGutter: useCallback(() => {
       const decorationsStore = useEditorDecorationsStore.getState();
       gitDecorationIdsRef.current.forEach((id) => decorationsStore.removeDecoration(id));

@@ -38,6 +38,7 @@ export interface FsActions {
     dirPath: string,
     fileName?: string,
   ) => Promise<string | undefined>;
+  handleCreateNewFolder: () => Promise<void>;
   handleCreateNewFolderInDirectory: (
     dirPath: string,
     folderName?: string,

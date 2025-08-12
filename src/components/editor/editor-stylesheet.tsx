@@ -177,7 +177,6 @@ export function EditorStylesheet() {
         .gutter-decoration.git-gutter-added,
         .gutter-decoration.git-gutter-modified,
         .gutter-decoration.git-gutter-deleted {
-          border-radius: 0;
           pointer-events: none;
           transition: all 0.15s ease-out;
           opacity: 0.9;
@@ -271,13 +270,19 @@ export function EditorStylesheet() {
           }
         }
 
+        /* Git gutter spacing and animation */
         .gutter-decoration.git-gutter-added,
         .gutter-decoration.git-gutter-modified,
         .gutter-decoration.git-gutter-deleted {
           animation: gitGutterFadeIn 0.15s ease-out;
         }
 
-        /* Clean tooltip styling for git gutter */
+        /* Ensure proper spacing between git indicators and content */
+        .editor-gutter {
+          box-sizing: border-box;
+        }
+
+        /* Tooltip styling for git gutter */
         .gutter-decoration[title]:hover::after {
           content: attr(title);
           position: absolute;
