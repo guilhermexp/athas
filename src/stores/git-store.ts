@@ -37,7 +37,11 @@ const initialState: GitState = {
 export const useGitStore = create(
   combine(initialState, (set, get) => ({
     actions: {
-      setGitStatus: (gitStatus: GitStatus | null) => set({ gitStatus }),
+      setGitStatus: (gitStatus: GitStatus | null) => {
+        set({ gitStatus });
+        // Dispatch event for git gutter updates
+        window.dispatchEvent(new CustomEvent("git-status-updated", { detail: { gitStatus } }));
+      },
       setIsLoadingGitData: (isLoadingGitData: boolean) => set({ isLoadingGitData }),
       setIsRefreshing: (isRefreshing: boolean) => set({ isRefreshing }),
       updateGitData: (data: {
@@ -88,6 +92,10 @@ export const useGitStore = create(
             hasMoreCommits: true,
             currentRepoPath: data.repoPath,
           });
+          // Dispatch event for git gutter updates
+          window.dispatchEvent(
+            new CustomEvent("git-status-updated", { detail: { gitStatus: data.gitStatus } }),
+          );
           return;
         }
 
@@ -132,12 +140,20 @@ export const useGitStore = create(
               branches: data.branches,
               commits: updatedCommits,
             });
+            // Dispatch event for git gutter updates
+            window.dispatchEvent(
+              new CustomEvent("git-status-updated", { detail: { gitStatus: data.gitStatus } }),
+            );
           } else {
             // No new commits, just update status and branches
             set({
               gitStatus: data.gitStatus,
               branches: data.branches,
             });
+            // Dispatch event for git gutter updates
+            window.dispatchEvent(
+              new CustomEvent("git-status-updated", { detail: { gitStatus: data.gitStatus } }),
+            );
           }
         } catch (error) {
           console.error("Failed to refresh git data:", error);
@@ -146,6 +162,10 @@ export const useGitStore = create(
             gitStatus: data.gitStatus,
             branches: data.branches,
           });
+          // Dispatch event for git gutter updates
+          window.dispatchEvent(
+            new CustomEvent("git-status-updated", { detail: { gitStatus: data.gitStatus } }),
+          );
         }
       },
 

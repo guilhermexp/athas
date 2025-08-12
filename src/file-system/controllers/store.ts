@@ -1,4 +1,4 @@
-import { basename, dirname, extname } from "@tauri-apps/api/path";
+import { basename, dirname, extname, join } from "@tauri-apps/api/path";
 import { confirm } from "@tauri-apps/plugin-dialog";
 import { copyFile } from "@tauri-apps/plugin-fs";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -12,7 +12,9 @@ import { useFileTreeStore } from "@/file-explorer/controllers/file-tree-store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useGitStore } from "@/stores/git-store";
 import { useProjectStore } from "@/stores/project-store";
+import { useSidebarStore } from "@/stores/sidebar-store";
 import { getGitStatus } from "@/utils/git";
+import { gitDiffCache } from "@/utils/git-diff-cache";
 import { isDiffFile, parseRawDiffContent } from "@/utils/git-diff-parser";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { FileEntry } from "../models/app";
@@ -32,9 +34,9 @@ import {
   sortFileEntries,
   updateFileInTree,
 } from "./file-tree-utils";
-import { getFilenameFromPath, getRootPath, isImageFile, isSQLiteFile } from "./file-utils";
+import { getFilenameFromPath, isImageFile, isSQLiteFile } from "./file-utils";
 import { useFileWatcherStore } from "./file-watcher-store";
-import { openFolder, readDirectory } from "./platform";
+import { openFolder, readDirectory, renameFile } from "./platform";
 import { useRecentFoldersStore } from "./recent-folders-store";
 import { shouldIgnore, updateDirectoryContents } from "./utils";
 
@@ -87,6 +89,9 @@ export const useFileSystemStore = createSelectors(
         const gitStatus = await getGitStatus(selected);
         useGitStore.getState().actions.setGitStatus(gitStatus);
 
+        // Clear git diff cache for new project
+        gitDiffCache.clear();
+
         set((state) => {
           state.isFileTreeLoading = false;
           state.files = fileTree;
@@ -123,6 +128,9 @@ export const useFileSystemStore = createSelectors(
         // Initialize git status
         const gitStatus = await getGitStatus(path);
         useGitStore.getState().actions.setGitStatus(gitStatus);
+
+        // Clear git diff cache for new project
+        gitDiffCache.clear();
 
         set((state) => {
           state.isFileTreeLoading = false;
@@ -269,15 +277,23 @@ export const useFileSystemStore = createSelectors(
       },
 
       handleCreateNewFile: async () => {
-        const { rootFolderPath, files } = get();
+        const { rootFolderPath } = get();
+        const { activePath } = useSidebarStore.getState();
 
         if (!rootFolderPath) {
           alert("Please open a folder first");
           return;
         }
 
-        const rootPath = getRootPath(files);
-        const effectiveRootPath = rootPath || rootFolderPath;
+        let effectiveRootPath = activePath || rootFolderPath;
+
+        // Active path maybe is a file
+        if (activePath) {
+          try {
+            await extname(activePath);
+            effectiveRootPath = await dirname(activePath);
+          } catch {}
+        }
 
         if (!effectiveRootPath) {
           alert("Unable to determine root folder path");
@@ -295,7 +311,8 @@ export const useFileSystemStore = createSelectors(
 
         // Add the new item to the root level of the file tree
         set((state) => {
-          state.files = [...state.files, newItem];
+          state.files = addFileToTree(state.files, effectiveRootPath, newItem);
+          state.filesVersion++;
         });
       },
 
@@ -306,6 +323,44 @@ export const useFileSystemStore = createSelectors(
         }
 
         return get().createFile(dirPath, fileName);
+      },
+
+      handleCreateNewFolder: async () => {
+        const { rootFolderPath } = get();
+        const { activePath } = useSidebarStore.getState();
+
+        if (!rootFolderPath) {
+          alert("Please open a folder first");
+          return;
+        }
+
+        let effectiveRootPath = activePath || rootFolderPath;
+
+        // Active path maybe is a file
+        if (activePath) {
+          try {
+            await extname(activePath);
+            effectiveRootPath = await dirname(activePath);
+          } catch {}
+        }
+
+        if (!effectiveRootPath) {
+          alert("Unable to determine root folder path");
+          return;
+        }
+
+        const newFolder: FileEntry = {
+          name: "",
+          path: `${effectiveRootPath}/`,
+          isDir: true,
+          isEditing: true,
+          isNewItem: true,
+        };
+
+        set((state) => {
+          state.files = addFileToTree(state.files, effectiveRootPath, newFolder);
+          state.filesVersion++;
+        });
       },
 
       handleCreateNewFolderInDirectory: async (dirPath: string, folderName?: string) => {
@@ -417,6 +472,13 @@ export const useFileSystemStore = createSelectors(
             path: newPath,
             name: fileName,
           });
+        }
+
+        // Invalidate git diff cache for moved files
+        const { rootFolderPath } = get();
+        if (rootFolderPath) {
+          gitDiffCache.invalidate(rootFolderPath, oldPath);
+          gitDiffCache.invalidate(rootFolderPath, newPath);
         }
       },
 
@@ -542,6 +604,12 @@ export const useFileSystemStore = createSelectors(
           .filter((buffer) => buffer.path === path)
           .forEach((buffer) => actions.closeBuffer(buffer.id));
 
+        // Invalidate git diff cache for deleted file
+        const { rootFolderPath } = get();
+        if (rootFolderPath) {
+          gitDiffCache.invalidate(rootFolderPath, path);
+        }
+
         set((state) => {
           state.files = removeFileFromTree(state.files, path);
           state.filesVersion++;
@@ -591,6 +659,54 @@ export const useFileSystemStore = createSelectors(
           state.files = addFileToTree(state.files, dir, newFile);
           state.filesVersion++;
         });
+      },
+
+      handleRenamePath: async (path: string, newName?: string) => {
+        if (newName) {
+          const dir = await dirname(path);
+
+          try {
+            const targetPath = await join(dir, newName);
+            await renameFile(path, targetPath);
+
+            set((state) => {
+              state.files = updateFileInTree(state.files, path, (item) => ({
+                ...item,
+                name: newName,
+                path: targetPath,
+                isRenaming: false,
+              }));
+              state.filesVersion++;
+            });
+
+            const { buffers, actions } = useBufferStore.getState();
+            const buffer = buffers.find((b) => b.path === path);
+            if (buffer) {
+              actions.updateBuffer({
+                ...buffer,
+                path: targetPath,
+                name: newName,
+              });
+            }
+          } catch (error) {
+            console.error("Failed to rename file:", error);
+            set((state) => {
+              state.files = updateFileInTree(state.files, path, (item) => ({
+                ...item,
+                isRenaming: false,
+              }));
+              state.filesVersion++;
+            });
+          }
+        } else {
+          set((state) => {
+            state.files = updateFileInTree(state.files, path, (item) => ({
+              ...item,
+              isRenaming: !item.isRenaming,
+            }));
+            state.filesVersion++;
+          });
+        }
       },
 
       // Setter methods

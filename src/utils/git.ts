@@ -1,4 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
+import { gitDiffCache } from "./git-diff-cache";
 
 export interface GitFile {
   path: string;
@@ -103,7 +104,11 @@ export const commitChanges = async (repoPath: string, message: string): Promise<
 
 export const getGitLog = async (repoPath: string, limit = 50, skip = 0): Promise<GitCommit[]> => {
   try {
-    const commits = await tauriInvoke<GitCommit[]>("git_log", { repoPath, limit, skip });
+    const commits = await tauriInvoke<GitCommit[]>("git_log", {
+      repoPath,
+      limit,
+      skip,
+    });
     return commits;
   } catch (error) {
     console.error("Failed to get git log:", error);
@@ -132,7 +137,10 @@ export const checkoutBranch = async (
   branchName: string,
 ): Promise<CheckoutResult> => {
   try {
-    const result = await tauriInvoke<CheckoutResult>("git_checkout", { repoPath, branchName });
+    const result = await tauriInvoke<CheckoutResult>("git_checkout", {
+      repoPath,
+      branchName,
+    });
     return result;
   } catch (error) {
     console.error("Failed to checkout branch:", error);
@@ -150,7 +158,11 @@ export const createBranch = async (
   fromBranch?: string,
 ): Promise<boolean> => {
   try {
-    await tauriInvoke("git_create_branch", { repoPath, branchName, fromBranch });
+    await tauriInvoke("git_create_branch", {
+      repoPath,
+      branchName,
+      fromBranch,
+    });
     return true;
   } catch (error) {
     console.error("Failed to create branch:", error);
@@ -172,12 +184,61 @@ export const getFileDiff = async (
   repoPath: string,
   filePath: string,
   staged: boolean = false,
+  content?: string,
 ): Promise<GitDiff | null> => {
   try {
-    const diff = await tauriInvoke<GitDiff>("git_diff_file", { repoPath, filePath, staged });
+    // Check cache first
+    const cached = gitDiffCache.get(repoPath, filePath, staged, content);
+    if (cached) {
+      return cached;
+    }
+
+    const diff = await tauriInvoke<GitDiff>("git_diff_file", {
+      repoPath,
+      filePath,
+      staged,
+    });
+
+    // Cache the result
+    if (diff) {
+      gitDiffCache.set(repoPath, filePath, staged, diff, content);
+    }
+
     return diff;
   } catch (error) {
     console.error("Failed to get file diff:", error);
+    return null;
+  }
+};
+
+export const getFileDiffAgainstContent = async (
+  repoPath: string,
+  filePath: string,
+  content: string,
+  base: "head" | "index" = "head",
+): Promise<GitDiff | null> => {
+  try {
+    // Check cache first using a unique key for content-based diffs
+    const cached = gitDiffCache.get(repoPath, filePath, base === "index", content);
+    if (cached) {
+      return cached;
+    }
+
+    const diff = await tauriInvoke<GitDiff>("git_diff_file_with_content", {
+      repoPath,
+      filePath,
+      content,
+      base,
+    });
+
+    // Cache the result
+    if (diff) {
+      gitDiffCache.set(repoPath, filePath, base === "index", diff, content);
+    }
+
+    return diff;
+  } catch (error) {
+    console.error("Failed to get file diff against content:", error);
     return null;
   }
 };
@@ -273,7 +334,9 @@ export interface GitRemote {
 
 export const getRemotes = async (repoPath: string): Promise<GitRemote[]> => {
   try {
-    const remotes = await tauriInvoke<GitRemote[]>("git_get_remotes", { repoPath });
+    const remotes = await tauriInvoke<GitRemote[]>("git_get_remotes", {
+      repoPath,
+    });
     return remotes;
   } catch (error) {
     console.error("Failed to get remotes:", error);
@@ -309,7 +372,9 @@ export interface GitStash {
 
 export const getStashes = async (repoPath: string): Promise<GitStash[]> => {
   try {
-    const stashes = await tauriInvoke<GitStash[]>("git_get_stashes", { repoPath });
+    const stashes = await tauriInvoke<GitStash[]>("git_get_stashes", {
+      repoPath,
+    });
     return stashes;
   } catch (error) {
     console.error("Failed to get stashes:", error);
@@ -323,7 +388,11 @@ export const createStash = async (
   includeUntracked: boolean = false,
 ): Promise<boolean> => {
   try {
-    await tauriInvoke("git_create_stash", { repoPath, message, includeUntracked });
+    await tauriInvoke("git_create_stash", {
+      repoPath,
+      message,
+      includeUntracked,
+    });
     return true;
   } catch (error) {
     console.error("Failed to create stash:", error);

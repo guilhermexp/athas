@@ -55,16 +55,19 @@ export const MainSidebar = () => {
     useFileSystemStore.use.handleCreateNewFolderInDirectory?.();
   const handleFileSelect = useFileSystemStore.use.handleFileSelect?.();
   const handleCreateNewFileInDirectory = useFileSystemStore.use.handleCreateNewFileInDirectory?.();
+  const handleCreateNewFolder = useFileSystemStore.use.handleCreateNewFolder?.();
   const handleDeletePath = useFileSystemStore.use.handleDeletePath?.();
   const refreshDirectory = useFileSystemStore.use.refreshDirectory?.();
   const handleFileMove = useFileSystemStore.use.handleFileMove?.();
   const handleRevealInFolder = useFileSystemStore.use.handleRevealInFolder?.();
   const handleDuplicatePath = useFileSystemStore.use.handleDuplicatePath?.();
+  const handleRenamePath = useFileSystemStore.use.handleRenamePath?.();
 
   // sidebar store
-  const activeBufferPath = useSidebarStore.use.activeBufferPath?.();
+  const activePath = useSidebarStore.use.activePath?.();
   const isRemoteWindow = useSidebarStore.use.isRemoteWindow();
   const remoteConnectionName = useSidebarStore.use.remoteConnectionName?.();
+  const updateActivePath = useSidebarStore.use.updateActivePath?.();
 
   // persistent settings store
   const { coreFeatures } = usePersistentSettingsStore();
@@ -162,11 +165,7 @@ export const MainSidebar = () => {
               <FilePlus size={12} />
             </Button>
             <Button
-              onClick={() => {
-                if (rootFolderPath) {
-                  handleCreateNewFolderInDirectory(rootFolderPath);
-                }
-              }}
+              onClick={handleCreateNewFolder}
               variant="ghost"
               size="sm"
               className={cn(
@@ -200,7 +199,8 @@ export const MainSidebar = () => {
         ) : (
           <FileTree
             files={files}
-            activeBufferPath={activeBufferPath}
+            activePath={activePath}
+            updateActivePath={updateActivePath}
             rootFolderPath={rootFolderPath}
             onFileSelect={handleFileSelect}
             onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
@@ -208,6 +208,7 @@ export const MainSidebar = () => {
             onDeletePath={handleDeletePath}
             onUpdateFiles={setFiles}
             onRefreshDirectory={refreshDirectory}
+            onRenamePath={handleRenamePath}
             onRevealInFinder={handleRevealInFolder}
             onFileMove={handleFileMove}
             onDuplicatePath={handleDuplicatePath}

@@ -153,6 +153,13 @@ export async function initializeFileWatcherListener() {
 
       // Dispatch custom event for file reload notification
       window.dispatchEvent(new CustomEvent("file-reloaded", { detail: { path } }));
+
+      // Also trigger git gutter update for external file changes
+      window.dispatchEvent(
+        new CustomEvent("git-status-updated", {
+          detail: { filePath: path },
+        }),
+      );
     }
   });
 }
