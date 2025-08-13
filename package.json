@@ -18,7 +18,7 @@
     "commitlint": "commitlint",
     "setup": "chmod +x scripts/linux/setup.sh && ./scripts/linux/setup.sh",
     "setup:linux": "chmod +x scripts/linux/setup.sh && ./scripts/linux/setup.sh",
-    "setup-win": "./scripts/windows/setup.ps1",
+    "setup-win": "powershell -ExecutionPolicy Bypass -File ./scripts/windows/setup.ps1",
     "dev": "bun run tauri dev"
   },
   "dependencies": {
