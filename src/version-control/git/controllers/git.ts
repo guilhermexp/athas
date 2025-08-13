@@ -1,46 +1,14 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
+import type {
+  GitCommit,
+  GitDiff,
+  GitHunk,
+  GitRemote,
+  GitStash,
+  GitStatus,
+  GitTag,
+} from "../models/git-types";
 import { gitDiffCache } from "./git-diff-cache";
-
-export interface GitFile {
-  path: string;
-  status: "modified" | "added" | "deleted" | "untracked" | "renamed";
-  staged: boolean;
-}
-
-export interface GitStatus {
-  branch: string;
-  ahead: number;
-  behind: number;
-  files: GitFile[];
-}
-
-export interface GitCommit {
-  hash: string;
-  message: string;
-  author: string;
-  date: string;
-}
-
-export interface GitDiffLine {
-  line_type: "added" | "removed" | "context" | "header";
-  content: string;
-  old_line_number?: number;
-  new_line_number?: number;
-}
-
-export interface GitDiff {
-  file_path: string;
-  old_path?: string;
-  new_path?: string;
-  is_new: boolean;
-  is_deleted: boolean;
-  is_renamed: boolean;
-  lines: GitDiffLine[];
-  is_binary?: boolean;
-  is_image?: boolean;
-  old_blob_base64?: string;
-  new_blob_base64?: string;
-}
 
 export const getGitStatus = async (repoPath: string): Promise<GitStatus | null> => {
   try {
@@ -327,11 +295,6 @@ export const initRepository = async (repoPath: string): Promise<boolean> => {
   }
 };
 
-export interface GitRemote {
-  name: string;
-  url: string;
-}
-
 export const getRemotes = async (repoPath: string): Promise<GitRemote[]> => {
   try {
     const remotes = await tauriInvoke<GitRemote[]>("git_get_remotes", {
@@ -363,12 +326,6 @@ export const removeRemote = async (repoPath: string, name: string): Promise<bool
     return false;
   }
 };
-
-export interface GitStash {
-  index: number;
-  message: string;
-  date: string;
-}
 
 export const getStashes = async (repoPath: string): Promise<GitStash[]> => {
   try {
@@ -430,13 +387,6 @@ export const dropStash = async (repoPath: string, stashIndex: number): Promise<b
   }
 };
 
-export interface GitTag {
-  name: string;
-  commit: string;
-  message?: string;
-  date: string;
-}
-
 export const getTags = async (repoPath: string): Promise<GitTag[]> => {
   try {
     const tags = await tauriInvoke<GitTag[]>("git_get_tags", { repoPath });
@@ -471,11 +421,6 @@ export const deleteTag = async (repoPath: string, name: string): Promise<boolean
     return false;
   }
 };
-
-export interface GitHunk {
-  file_path: string;
-  lines: GitDiffLine[];
-}
 
 export const stageHunk = async (repoPath: string, hunk: GitHunk): Promise<boolean> => {
   try {

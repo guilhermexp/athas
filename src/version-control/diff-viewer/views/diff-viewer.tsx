@@ -2,13 +2,13 @@ import { RefreshCw, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useBufferStore } from "@/stores/buffer-store";
 import { cn } from "@/utils/cn";
+import { useDiffData } from "../controllers/useDiffData";
+import { useDiffViewState } from "../controllers/useDiffViewState";
+import type { DiffViewerProps, MultiFileDiff } from "../models/diff-types";
 import { DiffHeader } from "./diff-header";
-import { useDiffData } from "./hooks/useDiffData";
-import { useDiffViewState } from "./hooks/useDiffViewState";
 import { ImageDiffViewer } from "./image-diff-viewer";
 import { MultiFileDiffViewer } from "./multi-file-diff-viewer";
 import { TextDiffViewer } from "./text-diff-viewer";
-import type { DiffViewerProps, MultiFileDiff } from "./utils/types";
 
 function DiffViewer({ onStageHunk, onUnstageHunk }: DiffViewerProps) {
   const buffers = useBufferStore.use.buffers();
