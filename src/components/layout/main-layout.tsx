@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SQLiteViewer from "@/database/sqlite-viewer";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { ProjectNameMenu } from "@/hooks/use-context-menus";
@@ -46,7 +46,7 @@ export function MainLayout() {
   const { rootFolderPath } = useFileSystemStore();
 
   const [diagnostics] = useState<Diagnostic[]>([]);
-  const sidebarPosition = "left" as "left" | "right";
+  const sidebarPosition = settings.sidebarPosition;
 
   // Handle theme change
   const handleThemeChange = (theme: string) => {
