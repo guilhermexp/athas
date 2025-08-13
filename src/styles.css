@@ -37,13 +37,14 @@
 
         /* Accent color */
         --tw-accent: #3b82f6;
-        
+
         /* Cursor color */
         --tw-cursor: #1a1a1a;
 
         /* Diagnostic colors */
         --tw-error: #c53030;
         --tw-warning: #d69e2e;
+        --tw-success: #10b981;
         --tw-info: #3182ce;
 
         /* Git status colors */
@@ -112,12 +113,13 @@
 
         /* Accent color - Dark */
         --tw-accent: #60a5fa;
-        
+
         /* Cursor color - Dark */
         --tw-cursor: #e5e5e5;
 
         /* Diagnostic colors */
         --tw-error: #f87171;
+        --tw-success: #10b981;
         --tw-warning: #fbbf24;
         --tw-info: #60a5fa;
 
@@ -189,12 +191,13 @@
 
     /* Accent color */
     --color-accent: var(--tw-accent);
-    
+
     /* Cursor color */
     --color-cursor: var(--tw-cursor);
 
     /* Diagnostic colors */
     --color-error: var(--tw-error);
+    --color-success: var(--tw-success);
     --color-warning: var(--tw-warning);
     --color-info: var(--tw-info);
 
@@ -309,7 +312,7 @@ button {
         /* Font defaults */
         --app-font-family: "JetBrains Mono", monospace;
         --editor-font-family: "JetBrains Mono", monospace;
-        
+
         /* Default light theme colors */
         --tw-primary-bg: #ffffff;
         --tw-secondary-bg: #f8f8f8;
@@ -337,12 +340,13 @@ button {
 
         /* Accent color */
         --tw-accent: #3b82f6;
-        
+
         /* Cursor color */
         --tw-cursor: #1a1a1a;
 
         /* Diagnostic colors */
         --tw-error: #c53030;
+        --tw-success: #10b981;
         --tw-warning: #d69e2e;
         --tw-info: #3182ce;
 
@@ -414,12 +418,13 @@ button {
 
             /* Accent color - Dark */
             --tw-accent: #60a5fa;
-            
+
             /* Cursor color - Dark */
             --tw-cursor: #e5e5e5;
 
             /* Diagnostic colors */
             --tw-error: #f87171;
+            --tw-success: #10b981;
             --tw-warning: #fbbf24;
             --tw-info: #60a5fa;
 
