@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.code.athas",
   "build": {
-    "beforeDevCommand": "vite",
+    "beforeDevCommand": "bun vite",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "tsc && vite build",
+    "beforeBuildCommand": "bun typecheck && bun vite build",
     "frontendDist": "../dist"
   },
   "app": {
