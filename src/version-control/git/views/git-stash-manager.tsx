@@ -1,14 +1,8 @@
 import { Archive, Clock, Download, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
-import {
-  applyStash,
-  createStash,
-  dropStash,
-  type GitStash,
-  getStashes,
-  popStash,
-} from "@/utils/git";
+import { applyStash, createStash, dropStash, getStashes, popStash } from "../controllers/git";
+import type { GitStash } from "../models/git-types";
 
 interface GitStashManagerProps {
   isOpen: boolean;

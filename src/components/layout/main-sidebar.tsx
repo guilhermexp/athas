@@ -10,7 +10,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useUIState } from "@/stores/ui-state-store";
 import { cn } from "@/utils/cn";
-import GitView from "../git/git-view";
+import GitView from "../../version-control/git/views/git-view";
 import RemoteConnectionView from "../remote/remote-connection-view";
 import SearchView from "../search-view";
 import Button from "../ui/button";

@@ -2,8 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { useFileSystemStore } from "@/file-system/controllers/store";
-import { gitDiffCache } from "@/utils/git-diff-cache";
 import { createSelectors } from "@/utils/zustand-selectors";
+import { gitDiffCache } from "@/version-control/git/controllers/git-diff-cache";
 import { writeFile } from "../file-system/controllers/platform";
 
 interface AppState {
