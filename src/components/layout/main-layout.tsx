@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SQLiteViewer from "@/database/sqlite-viewer";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { ProjectNameMenu } from "@/hooks/use-context-menus";
