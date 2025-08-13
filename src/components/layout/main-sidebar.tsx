@@ -194,7 +194,7 @@ export const MainSidebar = () => {
           <RemoteConnectionView onFileSelect={handleFileSelect} />
         ) : isFileTreeLoading ? (
           <div className="flex flex-1 items-center justify-center">
-            <div className="paper-text-secondary text-sm">Loading file tree...</div>
+            <div className="text-sm text-text">Loading file tree...</div>
           </div>
         ) : (
           <FileTree

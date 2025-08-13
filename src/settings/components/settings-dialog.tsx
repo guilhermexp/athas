@@ -77,7 +77,7 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
       <div
         className={cn(
           "-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-[9999] transform",
-          "h-[600px] max-h-[90vh] w-[800px] max-w-[90vw]",
+          "h-[600px] max-h-[90vh] w-[800px] max-w-[90vw] overflow-hidden",
           "rounded-lg border border-border bg-primary-bg shadow-xl",
           "flex flex-col",
         )}
