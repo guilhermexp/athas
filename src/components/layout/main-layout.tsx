@@ -46,7 +46,7 @@ export function MainLayout() {
   const { rootFolderPath } = useFileSystemStore();
 
   const [diagnostics] = useState<Diagnostic[]>([]);
-  const sidebarPosition = "left" as "left" | "right";
+  const sidebarPosition = settings.sidebarPosition;
 
   // Handle theme change
   const handleThemeChange = (theme: string) => {
