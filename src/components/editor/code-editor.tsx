@@ -2,7 +2,6 @@ import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { useEditorScroll } from "@/hooks/use-editor-scroll";
-import { useGitGutter } from "@/hooks/use-git-gutter";
 import { useHover } from "@/hooks/use-hover";
 import { LspClient } from "@/lib/lsp/lsp-client";
 import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
@@ -13,6 +12,7 @@ import { useEditorInstanceStore } from "@/stores/editor-instance-store";
 import { useEditorSearchStore } from "@/stores/editor-search-store";
 import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useLspStore } from "@/stores/lsp-store";
+import { useGitGutter } from "@/version-control/git/controllers/use-git-gutter";
 import FindBar from "../find-bar";
 import Breadcrumb from "./breadcrumb";
 import { TextEditor } from "./core/text-editor";
@@ -244,7 +244,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
 
   // Early return if no active buffer or file tree is loading - must be after all hooks
   if (!activeBuffer || isFileTreeLoading) {
-    return <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>;
+    return <div className="flex flex-1 items-center justify-center text-text"></div>;
   }
 
   return (

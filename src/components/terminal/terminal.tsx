@@ -18,6 +18,7 @@ import { cn } from "@/utils/cn";
 import { TerminalSearch } from "./terminal-search";
 import "@xterm/xterm/css/xterm.css";
 import "./terminal.css";
+import { themeRegistry } from "@/extensions/themes";
 
 interface XtermTerminalProps {
   sessionId: string;
@@ -444,10 +445,17 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
       }
     });
 
+    const unlistenThemeChange = themeRegistry.onThemeChange(() => {
+      if (xtermRef.current) {
+        xtermRef.current.options.theme = getTerminalTheme();
+      }
+    });
+
     return () => {
       unlistenOutput.then((fn) => fn());
       unlistenError.then((fn) => fn());
       unlistenClosed.then((fn) => fn());
+      unlistenThemeChange();
     };
   }, [sessionId, isInitialized, connectionId]);
 

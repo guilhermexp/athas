@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import Button from "@/components/ui/button";
 import { useUpdater } from "@/settings/hooks/use-updater";
 import { fetchRawAppVersion } from "@/utils/app-utils";
-import { cn } from "@/utils/cn";
+
+// ...existing code...
 
 interface RecentFolder {
   name: string;
@@ -54,28 +55,22 @@ const WelcomeScreen = ({
   return (
     <div
       data-tauri-drag-region
-      className={cn(
-        "paper-texture paper-noise",
-        "flex h-screen w-screen select-none flex-col items-center justify-center",
-      )}
+      className="paper-texture paper-noise flex h-screen w-screen select-none flex-col items-center justify-center"
     >
       {/* Logo Section */}
-      <div className={cn("mb-6 flex flex-col items-center")}>
-        <div className={cn("mb-1 flex justify-center")}>
-          <img src="/logo.svg" alt="athas industries" className={cn("h-12")} draggable="false" />
+      <div className="mb-6 flex flex-col items-center">
+        <div className="mb-1 flex justify-center">
+          <img src="/logo.svg" alt="athas industries" className="h-12" draggable="false" />
         </div>
-        <div className={cn("flex items-center gap-2")}>
-          <p className={cn("paper-text-light font-mono font-normal text-xs")}>v{appVersion}</p>
+        <div className="flex items-center gap-2 text-text-lighter">
+          <p className="font-mono font-normal text-xs">v{appVersion}</p>
           {checking && (
-            <div className={cn("paper-text-light text-xs")} title="Checking for updates...">
+            <div className="text-xs" title="Checking for updates...">
               ⟳
             </div>
           )}
           {available && (
-            <div
-              className={cn("paper-text-accent text-xs")}
-              title={`Update available: ${updateInfo?.version}`}
-            >
+            <div className="text-accent text-xs" title={`Update available: ${updateInfo?.version}`}>
               •
             </div>
           )}
@@ -83,27 +78,24 @@ const WelcomeScreen = ({
       </div>
 
       {/* Main Content */}
-      <div className={cn("flex w-full max-w-sm flex-col items-center px-4")}>
+      <div className="flex w-full max-w-sm flex-col items-center px-4">
         {/* Update Available Banner */}
         {available && (
-          <div className={cn("mb-4 w-full")}>
-            <div className={cn("paper-border rounded-md border p-3")}>
-              <div className={cn("mb-2 flex items-center gap-2")}>
-                <Download size={14} className={cn("paper-text-accent")} />
-                <span className={cn("paper-text-primary font-mono text-xs")}>Update Available</span>
+          <div className="mb-4 w-full">
+            <div className="rounded-md border border-border p-3 text-text">
+              <div className="mb-2 flex items-center gap-2">
+                <Download size={14} className="text-accent" />
+                <span className="font-mono text-xs">Update Available</span>
               </div>
-              <p className={cn("paper-text-secondary mb-3 font-mono text-xs")}>
+              <p className="mb-3 font-mono text-xs">
                 Version {updateInfo?.version} is ready to install
               </p>
-              <div className={cn("flex gap-2")}>
+              <div className="flex gap-2">
                 <Button
                   onClick={downloadAndInstall}
                   disabled={downloading || installing}
                   variant="ghost"
-                  className={cn(
-                    "paper-button flex-1 gap-2 py-1 text-xs",
-                    "transition-all duration-200",
-                  )}
+                  className="flex-1 gap-2 bg-secondary-bg py-1 text-xs transition-all duration-200"
                   size="sm"
                 >
                   {downloading ? (
@@ -120,10 +112,7 @@ const WelcomeScreen = ({
                 <Button
                   onClick={dismissUpdate}
                   variant="ghost"
-                  className={cn(
-                    "paper-button-secondary px-2 py-1 text-xs",
-                    "transition-all duration-200",
-                  )}
+                  className="bg-secondary-bg px-2 py-1 text-xs transition-all duration-200"
                   size="sm"
                 >
                   Later
@@ -135,48 +124,46 @@ const WelcomeScreen = ({
 
         {/* Error Banner */}
         {error && (
-          <div className={cn("mb-4 w-full")}>
-            <div className={cn("paper-border rounded-md border border-red-200 p-3")}>
-              <div className={cn("flex items-center gap-2")}>
-                <AlertCircle size={14} className={cn("text-red-500")} />
-                <span className={cn("paper-text-primary font-mono text-xs")}>Update Error</span>
+          <div className="mb-4 w-full">
+            <div className="rounded-md border border-error p-3">
+              <div className="flex items-center gap-2 ">
+                <AlertCircle size={14} className="text-error" />
+                <span className="font-mono text-text text-xs">Update Error</span>
               </div>
-              <p className={cn("paper-text-secondary mt-1 font-mono text-xs")}>{error}</p>
+              <p className="mt-1 font-mono text-text-light text-xs">{error}</p>
             </div>
           </div>
         )}
 
         {/* Open Folder Button */}
-        <div className={cn("mb-6 w-full")}>
+        <div className="mb-6 flex w-full justify-center">
           <Button
             onClick={onOpenFolder}
             variant="ghost"
-            className={cn("paper-button w-full gap-2 py-2 text-sm", "transition-all duration-200")}
+            className="flex gap-2 border border-border bg-secondary-bg p-4 text-sm transition-all duration-200"
             size="sm"
           >
-            <Folder size={14} />
+            <Folder size={16} />
             Open Folder
           </Button>
         </div>
 
         {/* Recent Folders */}
         {recentFolders.length > 0 && (
-          <div className={cn("w-full")}>
-            <h3 className={cn("paper-text-secondary", "mb-2 font-mono text-xs")}>Recent</h3>
-            <div className={cn("space-y-1.5")}>
+          <div className="w-full">
+            <h3 className="mb-2 font-mono text-text text-xs">Recent({recentFolders.length})</h3>
+            <div className="space-y-1.5">
               {recentFolders.map((folder, index) => (
                 <Button
                   key={index}
                   onClick={() => handleRecentFolderClick(folder.path)}
                   variant="ghost"
-                  className={cn(
-                    "paper-recent-item group h-auto w-full justify-start p-2",
-                    "transition-all duration-200",
-                  )}
+                  className="flex h-auto w-full flex-col justify-start gap-2 border border-border bg-secondary-bg p-2 transition-all duration-200"
                   size="sm"
                 >
-                  <div className={cn("paper-text-primary truncate font-mono text-xs")}>
-                    {folder.name}
+                  <div className="w-full truncate text-start font-mono text-sm">{folder.name}</div>
+                  <div className="w-full text-start">
+                    <p className="text-text-lighter">{folder.path}</p>
                   </div>
                 </Button>
               ))}

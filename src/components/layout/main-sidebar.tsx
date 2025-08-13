@@ -10,7 +10,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useUIState } from "@/stores/ui-state-store";
 import { cn } from "@/utils/cn";
-import GitView from "../git/git-view";
+import GitView from "../../version-control/git/views/git-view";
 import RemoteConnectionView from "../remote/remote-connection-view";
 import SearchView from "../search-view";
 import Button from "../ui/button";
@@ -194,7 +194,7 @@ export const MainSidebar = () => {
           <RemoteConnectionView onFileSelect={handleFileSelect} />
         ) : isFileTreeLoading ? (
           <div className="flex flex-1 items-center justify-center">
-            <div className="paper-text-secondary text-sm">Loading file tree...</div>
+            <div className="text-sm text-text">Loading file tree...</div>
           </div>
         ) : (
           <FileTree
