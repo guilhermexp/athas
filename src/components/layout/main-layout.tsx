@@ -121,9 +121,7 @@ export function MainLayout() {
             <TabBar />
             {(() => {
               if (!activeBuffer) {
-                return (
-                  <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>
-                );
+                return <div className="flex flex-1 items-center justify-center"></div>;
               }
               if (activeBuffer.isDiff) {
                 return (

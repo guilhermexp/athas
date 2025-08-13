@@ -244,7 +244,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
 
   // Early return if no active buffer or file tree is loading - must be after all hooks
   if (!activeBuffer || isFileTreeLoading) {
-    return <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>;
+    return <div className="flex flex-1 items-center justify-center text-text"></div>;
   }
 
   return (

@@ -22,22 +22,12 @@
 
         /* Paper colors */
         --tw-paper-bg: #ffffff;
-        --tw-paper-button-bg: #ffffff;
-        --tw-paper-button-border: rgb(180 180 180 / 0.4);
-        --tw-paper-button-hover-bg: #f8f8f8;
-        --tw-paper-button-hover-border: rgb(160 160 160 / 0.5);
-        --tw-paper-recent-bg: #ffffff;
-        --tw-paper-recent-border: rgb(220 220 220 / 0.3);
-        --tw-paper-recent-hover-bg: #f8f8f8;
-        --tw-paper-recent-hover-border: rgb(200 200 200 / 0.5);
-        --tw-paper-text-primary: #1a1a1a;
-        --tw-paper-text-secondary: #4a4a4a;
-        --tw-paper-text-light: #6a6a6a;
+
         --tw-paper-texture-overlay: rgb(200 200 200 / 0.01);
 
         /* Accent color */
         --tw-accent: #3b82f6;
-        
+
         /* Cursor color */
         --tw-cursor: #1a1a1a;
 
@@ -97,22 +87,12 @@
 
         /* Paper/Welcome screen specific colors - Dark */
         --tw-paper-bg: #1a1a1a;
-        --tw-paper-button-bg: #2a2a2a;
-        --tw-paper-button-border: rgb(80 80 80 / 0.6);
-        --tw-paper-button-hover-bg: #333333;
-        --tw-paper-button-hover-border: rgb(100 100 100 / 0.7);
-        --tw-paper-recent-bg: #2a2a2a;
-        --tw-paper-recent-border: rgb(60 60 60 / 0.5);
-        --tw-paper-recent-hover-bg: #333333;
-        --tw-paper-recent-hover-border: rgb(80 80 80 / 0.6);
-        --tw-paper-text-primary: #e5e5e5;
-        --tw-paper-text-secondary: #b3b3b3;
-        --tw-paper-text-light: #808080;
+
         --tw-paper-texture-overlay: rgb(100 100 100 / 0.02);
 
         /* Accent color - Dark */
         --tw-accent: #60a5fa;
-        
+
         /* Cursor color - Dark */
         --tw-cursor: #e5e5e5;
 
@@ -174,22 +154,11 @@
 
     /* Paper/Welcome screen specific colors */
     --color-paper-bg: var(--tw-paper-bg);
-    --color-paper-button-bg: var(--tw-paper-button-bg);
-    --color-paper-button-border: var(--tw-paper-button-border);
-    --color-paper-button-hover-bg: var(--tw-paper-button-hover-bg);
-    --color-paper-button-hover-border: var(--tw-paper-button-hover-border);
-    --color-paper-recent-bg: var(--tw-paper-recent-bg);
-    --color-paper-recent-border: var(--tw-paper-recent-border);
-    --color-paper-recent-hover-bg: var(--tw-paper-recent-hover-bg);
-    --color-paper-recent-hover-border: var(--tw-paper-recent-hover-border);
-    --color-paper-text-primary: var(--tw-paper-text-primary);
-    --color-paper-text-secondary: var(--tw-paper-text-secondary);
-    --color-paper-text-light: var(--tw-paper-text-light);
     --color-paper-texture-overlay: var(--tw-paper-texture-overlay);
 
     /* Accent color */
     --color-accent: var(--tw-accent);
-    
+
     /* Cursor color */
     --color-cursor: var(--tw-cursor);
 
@@ -309,7 +278,7 @@ button {
         /* Font defaults */
         --app-font-family: "JetBrains Mono", monospace;
         --editor-font-family: "JetBrains Mono", monospace;
-        
+
         /* Default light theme colors */
         --tw-primary-bg: #ffffff;
         --tw-secondary-bg: #f8f8f8;
@@ -322,22 +291,12 @@ button {
 
         /* Paper colors */
         --tw-paper-bg: #ffffff;
-        --tw-paper-button-bg: #ffffff;
-        --tw-paper-button-border: rgb(180 180 180 / 0.4);
-        --tw-paper-button-hover-bg: #f8f8f8;
-        --tw-paper-button-hover-border: rgb(160 160 160 / 0.5);
-        --tw-paper-recent-bg: #ffffff;
-        --tw-paper-recent-border: rgb(220 220 220 / 0.3);
-        --tw-paper-recent-hover-bg: #f8f8f8;
-        --tw-paper-recent-hover-border: rgb(200 200 200 / 0.5);
-        --tw-paper-text-primary: #1a1a1a;
-        --tw-paper-text-secondary: #4a4a4a;
-        --tw-paper-text-light: #6a6a6a;
+
         --tw-paper-texture-overlay: rgb(200 200 200 / 0.01);
 
         /* Accent color */
         --tw-accent: #3b82f6;
-        
+
         /* Cursor color */
         --tw-cursor: #1a1a1a;
 
@@ -399,22 +358,11 @@ button {
 
             /* Paper/Welcome screen specific colors - Dark */
             --tw-paper-bg: #1a1a1a;
-            --tw-paper-button-bg: #2a2a2a;
-            --tw-paper-button-border: rgb(80 80 80 / 0.6);
-            --tw-paper-button-hover-bg: #333333;
-            --tw-paper-button-hover-border: rgb(100 100 100 / 0.7);
-            --tw-paper-recent-bg: #2a2a2a;
-            --tw-paper-recent-border: rgb(60 60 60 / 0.5);
-            --tw-paper-recent-hover-bg: #333333;
-            --tw-paper-recent-hover-border: rgb(80 80 80 / 0.6);
-            --tw-paper-text-primary: #e5e5e5;
-            --tw-paper-text-secondary: #b3b3b3;
-            --tw-paper-text-light: #808080;
             --tw-paper-texture-overlay: rgb(100 100 100 / 0.02);
 
             /* Accent color - Dark */
             --tw-accent: #60a5fa;
-            
+
             /* Cursor color - Dark */
             --tw-cursor: #e5e5e5;
 
@@ -848,7 +796,7 @@ textarea::-webkit-scrollbar-thumb:hover {
 
 /* Paper texture and theme-aware colors for welcome screen */
 .paper-texture {
-    background: var(--color-paper-bg);
+    background: var(--color-primary-bg);
     position: relative;
 }
 
@@ -890,113 +838,6 @@ textarea::-webkit-scrollbar-thumb:hover {
         0 0,
         0 0;
     pointer-events: none;
-}
-
-.paper-content {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(220, 220, 220, 0.4);
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8),
-        inset 0 -1px 0 rgba(230, 230, 230, 0.3);
-    border-radius: 12px;
-    backdrop-filter: blur(8px);
-}
-
-.paper-button {
-    background: var(--color-paper-button-bg);
-    border: 1px solid var(--color-paper-button-border);
-    color: var(--color-paper-text-primary);
-    position: relative;
-    overflow: hidden;
-}
-
-.paper-button::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        linear-gradient(90deg,
-            transparent 0%,
-            var(--color-paper-texture-overlay) 45%,
-            calc(var(--color-paper-texture-overlay) * 2) 50%,
-            var(--color-paper-texture-overlay) 55%,
-            transparent 100%),
-        linear-gradient(0deg,
-            transparent 0%,
-            var(--color-paper-texture-overlay) 48%,
-            calc(var(--color-paper-texture-overlay) * 2) 50%,
-            var(--color-paper-texture-overlay) 52%,
-            transparent 100%);
-    background-size:
-        200px 1px,
-        1px 200px;
-    background-position:
-        0 0,
-        0 0;
-    pointer-events: none;
-}
-
-.paper-button:hover {
-    background: var(--color-paper-button-hover-bg);
-    border-color: var(--color-paper-button-hover-border);
-}
-
-.paper-recent-item {
-    background: var(--color-paper-recent-bg);
-    border: 1px solid var(--color-paper-recent-border);
-    color: var(--color-paper-text-primary);
-    position: relative;
-    overflow: hidden;
-}
-
-.paper-recent-item::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        linear-gradient(90deg,
-            transparent 0%,
-            var(--color-paper-texture-overlay) 45%,
-            calc(var(--color-paper-texture-overlay) * 2) 50%,
-            var(--color-paper-texture-overlay) 55%,
-            transparent 100%),
-        linear-gradient(0deg,
-            transparent 0%,
-            var(--color-paper-texture-overlay) 48%,
-            calc(var(--color-paper-texture-overlay) * 2) 50%,
-            var(--color-paper-texture-overlay) 52%,
-            transparent 100%);
-    background-size:
-        200px 1px,
-        1px 200px;
-    background-position:
-        0 0,
-        0 0;
-    pointer-events: none;
-}
-
-.paper-recent-item:hover {
-    background: var(--color-paper-recent-hover-bg);
-    border-color: var(--color-paper-recent-hover-border);
-}
-
-.paper-text-primary {
-    color: var(--color-paper-text-primary);
-}
-
-.paper-text-secondary {
-    color: var(--color-paper-text-secondary);
-}
-
-.paper-text-light {
-    color: var(--color-paper-text-light);
 }
 
 .logo-blue {
