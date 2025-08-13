@@ -46,7 +46,7 @@ export function MainLayout() {
   const { rootFolderPath } = useFileSystemStore();
 
   const [diagnostics] = useState<Diagnostic[]>([]);
-  const sidebarPosition = "left" as "left" | "right";
+  const sidebarPosition = settings.sidebarPosition;
 
   // Handle theme change
   const handleThemeChange = (theme: string) => {
@@ -121,9 +121,7 @@ export function MainLayout() {
             <TabBar />
             {(() => {
               if (!activeBuffer) {
-                return (
-                  <div className="paper-text-secondary flex flex-1 items-center justify-center"></div>
-                );
+                return <div className="flex flex-1 items-center justify-center"></div>;
               }
               if (activeBuffer.isDiff) {
                 return (
