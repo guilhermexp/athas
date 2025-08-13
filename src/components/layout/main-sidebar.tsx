@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import FileTree from "@/file-explorer/views/file-tree";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import type { FileEntry } from "@/file-system/models/app";
-import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
+import { useSettingsStore } from "@/settings/store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
@@ -69,8 +69,7 @@ export const MainSidebar = () => {
   const remoteConnectionName = useSidebarStore.use.remoteConnectionName?.();
   const updateActivePath = useSidebarStore.use.updateActivePath?.();
 
-  // persistent settings store
-  const { coreFeatures } = usePersistentSettingsStore();
+  const { settings } = useSettingsStore();
 
   const showFileTreeHeader =
     !isGitViewActive && !isSearchViewActive && !isRemoteViewActive && !isRemoteWindow;
@@ -108,7 +107,7 @@ export const MainSidebar = () => {
         isGitViewActive={isGitViewActive}
         isSearchViewActive={isSearchViewActive}
         isRemoteViewActive={isRemoteViewActive}
-        coreFeatures={coreFeatures}
+        coreFeatures={settings.coreFeatures}
         onViewChange={setActiveView}
         onOpenExtensions={onOpenExtensions}
       />
@@ -182,15 +181,15 @@ export const MainSidebar = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
-        {isGitViewActive && coreFeatures.git ? (
+        {isGitViewActive && settings.coreFeatures.git ? (
           <GitView repoPath={rootFolderPath} onFileSelect={handleFileSelect} />
-        ) : isSearchViewActive && coreFeatures.search ? (
+        ) : isSearchViewActive && settings.coreFeatures.search ? (
           <SearchView
             rootFolderPath={rootFolderPath}
             allProjectFiles={allProjectFiles}
             onFileSelect={(path, line, column) => handleFileSelect(path, false, line, column)}
           />
-        ) : isRemoteViewActive && coreFeatures.remote ? (
+        ) : isRemoteViewActive && settings.coreFeatures.remote ? (
           <RemoteConnectionView onFileSelect={handleFileSelect} />
         ) : isFileTreeLoading ? (
           <div className="flex flex-1 items-center justify-center">
