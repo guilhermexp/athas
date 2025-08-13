@@ -7,10 +7,10 @@ import {
 import { useFileSystemStore } from "../file-system/controllers/store";
 import { usePersistentSettingsStore } from "../settings/stores/persistent-settings-store";
 import { useBufferStore } from "../stores/buffer-store";
-import { useGitStore } from "../stores/git-store";
 import { useUIState } from "../stores/ui-state-store";
-import { getGitStatus } from "../utils/git";
-import GitBranchManager from "./git/git-branch-manager";
+import { getGitStatus } from "../version-control/git/controllers/git";
+import { useGitStore } from "../version-control/git/controllers/git-store";
+import GitBranchManager from "../version-control/git/views/git-branch-manager";
 
 const EditorFooter = () => {
   const buffers = useBufferStore.use.buffers();

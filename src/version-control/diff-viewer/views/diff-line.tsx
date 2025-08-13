@@ -1,8 +1,8 @@
 import { Copy } from "lucide-react";
 import { memo } from "react";
 import { cn } from "@/utils/cn";
-import { copyLineContent } from "./utils/diff-helpers";
-import type { DiffLineProps } from "./utils/types";
+import { copyLineContent } from "../controllers/diff-helpers";
+import type { DiffLineProps } from "../models/diff-types";
 
 export const DiffLine = memo(function DiffLine({
   line,
