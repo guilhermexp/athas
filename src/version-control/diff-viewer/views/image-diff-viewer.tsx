@@ -1,9 +1,9 @@
 import { FileIcon, FilePlus, FileX, Minus, Plus, RotateCcw, X } from "lucide-react";
 import { memo, useState } from "react";
+import Button from "@/components/ui/button";
 import { cn } from "@/utils/cn";
-import Button from "../ui/button";
-import { getImgSrc } from "./utils/diff-helpers";
-import type { ImageContainerProps, ImageDiffViewerProps } from "./utils/types";
+import { getImgSrc } from "../controllers/diff-helpers";
+import type { ImageContainerProps, ImageDiffViewerProps } from "../models/diff-types";
 
 function ImageContainer({ label, labelColor, base64, alt, zoom }: ImageContainerProps) {
   const containerBase = "flex flex-col items-center justify-center p-4";

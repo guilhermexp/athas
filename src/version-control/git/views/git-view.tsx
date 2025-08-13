@@ -1,11 +1,17 @@
 import { GitBranch, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useBufferStore } from "@/stores/buffer-store";
-import { useGitStore } from "@/stores/git-store";
 import { cn } from "@/utils/cn";
-import { getBranches, getCommitDiff, getFileDiff, getGitLog, getGitStatus } from "@/utils/git";
-import type { MultiFileDiff } from "../diff-viewer/utils/types";
-
+import {
+  getBranches,
+  getCommitDiff,
+  getFileDiff,
+  getGitLog,
+  getGitStatus,
+} from "@/version-control/git/controllers/git";
+import { useGitStore } from "@/version-control/git/controllers/git-store";
+import type { MultiFileDiff } from "../../diff-viewer/models/diff-types";
+import type { GitFile } from "../models/git-types";
 // Import modular components
 import GitActionsMenu from "./git-actions-menu";
 import GitBranchManager from "./git-branch-manager";
@@ -214,7 +220,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
       }
 
       // Find the file in gitStatus to check its status
-      const file = gitStatus?.files.find((f) => f.path === actualFilePath);
+      const file = gitStatus?.files.find((f: GitFile) => f.path === actualFilePath);
 
       // For untracked files, open the file directly instead of trying to show a diff
       if (file && file.status === "untracked" && !staged) {

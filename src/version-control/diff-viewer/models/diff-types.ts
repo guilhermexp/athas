@@ -1,4 +1,4 @@
-import type { GitDiff, GitDiffLine, GitHunk } from "@/utils/git";
+import type { GitDiff, GitDiffLine, GitHunk } from "@/version-control/git/models/git-types";
 
 export interface DiffViewerProps {
   onStageHunk?: (hunk: GitHunk) => void;
