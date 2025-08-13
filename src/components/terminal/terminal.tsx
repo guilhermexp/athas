@@ -448,12 +448,6 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
     const unlistenThemeChange = themeRegistry.onThemeChange(() => {
       if (xtermRef.current) {
         xtermRef.current.options.theme = getTerminalTheme();
-        setTimeout(() => {
-          if (xtermRef.current) {
-            xtermRef.current.refresh(0, xtermRef.current.rows - 1);
-            fitAddonRef.current?.fit();
-          }
-        }, 10);
       }
     });
 
