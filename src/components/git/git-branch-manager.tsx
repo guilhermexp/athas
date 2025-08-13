@@ -122,15 +122,6 @@ const GitBranchManager = ({
         setNewBranchName("");
         await loadBranches();
         onBranchChange?.();
-      } else {
-        showToast({
-          message: "An unknown error occurred",
-          type: "error",
-          action: {
-            label: "Yes",
-            onClick: () => handleBranchChange(newBranchName.trim()),
-          },
-        });
       }
     } finally {
       setIsLoading(false);
