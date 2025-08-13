@@ -61,16 +61,6 @@ export const EditorSettings = () => {
           />
         </SettingRow>
       </Section>
-
-      <Section title="Features">
-        <SettingRow label="AI Completion" description="Enable AI-powered code completion">
-          <Switch
-            checked={settings.aiCompletion}
-            onChange={(checked) => updateSetting("aiCompletion", checked)}
-            size="sm"
-          />
-        </SettingRow>
-      </Section>
     </div>
   );
 };
