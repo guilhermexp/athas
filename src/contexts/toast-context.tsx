@@ -6,6 +6,7 @@ interface Toast {
   message: string;
   type?: "info" | "success" | "warning" | "error";
   duration?: number;
+  isExiting?: boolean;
   action?: {
     label: string;
     onClick: () => void;
@@ -24,7 +25,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const dismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    setToasts((prev) =>
+      prev.map((toast) => (toast.id === id ? { ...toast, isExiting: true } : toast)),
+    );
+
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, 300);
   }, []);
 
   const showToast = useCallback(

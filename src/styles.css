@@ -34,6 +34,7 @@
         /* Diagnostic colors */
         --tw-error: #c53030;
         --tw-warning: #d69e2e;
+        --tw-success: #10b981;
         --tw-info: #3182ce;
 
         /* Git status colors */
@@ -98,6 +99,7 @@
 
         /* Diagnostic colors */
         --tw-error: #f87171;
+        --tw-success: #10b981;
         --tw-warning: #fbbf24;
         --tw-info: #60a5fa;
 
@@ -164,6 +166,7 @@
 
     /* Diagnostic colors */
     --color-error: var(--tw-error);
+    --color-success: var(--tw-success);
     --color-warning: var(--tw-warning);
     --color-info: var(--tw-info);
 
@@ -302,6 +305,7 @@ button {
 
         /* Diagnostic colors */
         --tw-error: #c53030;
+        --tw-success: #10b981;
         --tw-warning: #d69e2e;
         --tw-info: #3182ce;
 
@@ -368,6 +372,7 @@ button {
 
             /* Diagnostic colors */
             --tw-error: #f87171;
+            --tw-success: #10b981;
             --tw-warning: #fbbf24;
             --tw-info: #60a5fa;
 
