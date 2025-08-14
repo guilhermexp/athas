@@ -5,6 +5,7 @@ import { useEditorLayout } from "@/hooks/use-editor-layout";
 import { useEditorCompletionStore } from "@/stores/editor-completion-store";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
 import { useEditorLayoutStore } from "@/stores/editor-layout-store";
+import { cn } from "@/utils/cn";
 import { highlightMatches } from "@/utils/fuzzy-matcher";
 
 interface CompletionDropdownProps {
@@ -25,12 +26,11 @@ export const CompletionDropdown = memo(({ onApplyCompletion }: CompletionDropdow
 
   const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
 
-  const GUTTER_MARGIN = 8; // Same as cursor component
-
   if (!isLspCompletionVisible) return null;
 
   // Calculate position same as cursor but offset below the current line
-  const x = gutterWidth + GUTTER_MARGIN + cursorPosition.column * charWidth - scrollLeft;
+  const x =
+    gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN + cursorPosition.column * charWidth - scrollLeft;
   const y = (cursorPosition.line + 1) * lineHeight - scrollTop; // +1 to appear below current line
 
   const handleSelect = (item: CompletionItem) => {
@@ -59,9 +59,10 @@ export const CompletionDropdown = memo(({ onApplyCompletion }: CompletionDropdow
           return (
             <div
               key={index}
-              className={`cursor-pointer px-3 py-1.5 font-mono text-xs ${
-                isSelected ? "bg-blue-500 text-white" : "text-text hover:bg-hover"
-              }`}
+              className={cn(
+                "cursor-pointer px-3 py-1.5 font-mono text-xs",
+                isSelected ? "bg-blue-500 text-white" : "text-text hover:bg-hover",
+              )}
               onClick={() => handleSelect(item)}
             >
               <div className="flex items-center gap-2">
@@ -78,7 +79,10 @@ export const CompletionDropdown = memo(({ onApplyCompletion }: CompletionDropdow
               </div>
               {item.documentation && (
                 <div
-                  className={`mt-0.5 text-xs ${isSelected ? "text-blue-100" : "text-text-lighter"}`}
+                  className={cn(
+                    "mt-0.5 text-xs",
+                    isSelected ? "text-blue-100" : "text-text-lighter",
+                  )}
                 >
                   {typeof item.documentation === "string"
                     ? item.documentation

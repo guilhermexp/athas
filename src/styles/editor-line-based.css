@@ -1,5 +1,4 @@
 /* Line-based editor styles */
-
 .editor-viewport {
   font-family: "JetBrains Mono", monospace;
   background-color: var(--color-background);
@@ -11,8 +10,11 @@
 }
 
 .editor-line {
-  white-space: pre;
   position: relative;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  white-space: pre;
 }
 
 .editor-line.selected {
@@ -223,4 +225,13 @@
 .token-class {
   color: #267f99;
   font-weight: bold;
+}
+
+/* Hide native selected style */
+.selection-transparent::selection {
+  background: transparent;
+}
+
+.selection-transparent::-moz-selection {
+  background: transparent;
 }

@@ -1,5 +1,6 @@
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
 import { basicEditingExtension } from "@/extensions/basic-editing-extension";
 import { editorAPI } from "@/extensions/editor-api";
 import { extensionManager } from "@/extensions/extension-manager";
@@ -31,6 +32,7 @@ export function TextEditor() {
   const { onChange, disabled, filePath, editorRef } = useEditorInstanceStore();
   const { setViewportHeight } = useEditorLayoutStore.use.actions();
   const fontSize = useEditorSettingsStore.use.fontSize();
+  const fontFamily = useEditorSettingsStore.use.fontFamily();
 
   // Use the same layout calculations as the visual editor
   const { lineHeight, gutterWidth: layoutGutterWidth } = useEditorLayout();
@@ -261,6 +263,20 @@ export function TextEditor() {
       setSelection(undefined);
     }
   }, [lines, setCursorPosition, setSelection]);
+
+  useEffect(() => {
+    const handleDocumentSelectionChange = () => {
+      if (document.activeElement === textareaRef.current) {
+        handleSelectionChange();
+      }
+    };
+
+    document.addEventListener("selectionchange", handleDocumentSelectionChange);
+
+    return () => {
+      document.removeEventListener("selectionchange", handleDocumentSelectionChange);
+    };
+  });
 
   // Focus textarea on mount and setup extension system
   useEffect(() => {
@@ -764,7 +780,6 @@ export function TextEditor() {
 
   // Get layout values for proper textarea positioning - use the same values as visual editor
   const gutterWidth = layoutGutterWidth;
-  const GUTTER_MARGIN = 8; // mr-2 in Tailwind (0.5rem = 8px)
 
   // Line-based rendering
   return (
@@ -774,7 +789,7 @@ export function TextEditor() {
         <div
           className="pointer-events-auto absolute top-0 left-0 h-full select-none"
           style={{
-            width: `${gutterWidth + GUTTER_MARGIN}px`,
+            width: `${gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN}px`,
             zIndex: 2,
           }}
           onMouseDown={(e) => e.preventDefault()}
@@ -791,20 +806,22 @@ export function TextEditor() {
         onKeyDown={handleKeyDown}
         onSelect={handleSelectionChange}
         onKeyUp={handleSelectionChange}
+        onMouseDown={handleSelectionChange}
+        onMouseMove={handleSelectionChange}
         onMouseUp={handleSelectionChange}
         onContextMenu={handleContextMenu}
         onScroll={() => {
           /* Handled by useEffect */
         }}
         disabled={disabled}
-        className="absolute resize-none overflow-auto border-none bg-transparent text-transparent caret-transparent outline-none"
+        className="selection-transparent absolute resize-none overflow-auto border-none bg-transparent text-transparent caret-transparent outline-none"
         style={{
-          left: `${gutterWidth + GUTTER_MARGIN}px`,
+          left: `${gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN}px`,
           top: 0,
           right: 0,
           bottom: 0,
           fontSize: `${fontSize}px`,
-          fontFamily: "JetBrains Mono, monospace",
+          fontFamily: `${fontFamily}, JetBrains Mono, monospace`,
           lineHeight: `${lineHeight}px`,
           padding: 0,
           paddingBottom: `${20 * lineHeight}px`, // Add 20 lines worth of bottom padding
@@ -816,6 +833,7 @@ export function TextEditor() {
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
+        autoSave="off"
         spellCheck={false}
       />
 

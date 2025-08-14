@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
 import { useEditorLayout } from "@/hooks/use-editor-layout";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
 import { useEditorLayoutStore } from "@/stores/editor-layout-store";
@@ -25,10 +26,9 @@ export function Cursor({ visible = true }: CursorRendererProps) {
         if (!cursorRef.current) return;
 
         // Position cursor relative to the text content area
-        // Account for gutter width and conditional padding
-        const contentPadding = showLineNumbers ? 0 : 16;
         // Position cursor at the character position
-        const x = gutterWidth + contentPadding + position.column * charWidth - scrollLeft;
+        const x =
+          gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN + position.column * charWidth - scrollLeft;
         const y = position.line * lineHeight - scrollTop;
 
         // Add moving class to pause blinking
@@ -52,10 +52,9 @@ export function Cursor({ visible = true }: CursorRendererProps) {
 
     // Set initial position
     const position = useEditorCursorStore.getState().cursorPosition;
-    // Position cursor relative to the text content area
-    const contentPadding = showLineNumbers ? 0 : 16; // 16px padding when no line numbers
     // Position cursor at the character position
-    const x = gutterWidth + contentPadding + position.column * charWidth - scrollLeft;
+    const x =
+      gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN + position.column * charWidth - scrollLeft;
     const y = position.line * lineHeight - scrollTop;
     cursorRef.current.style.left = `${x}px`;
     cursorRef.current.style.top = `${y}px`;
