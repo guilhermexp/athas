@@ -11,8 +11,11 @@
 }
 
 .editor-line {
-  white-space: pre;
   position: relative;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  white-space: pre;
 }
 
 .editor-line.selected {

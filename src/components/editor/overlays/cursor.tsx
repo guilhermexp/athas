@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
 import { useEditorLayout } from "@/hooks/use-editor-layout";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
 import { useEditorLayoutStore } from "@/stores/editor-layout-store";
@@ -25,8 +26,8 @@ export function Cursor({ visible = true }: CursorRendererProps) {
         if (!cursorRef.current) return;
 
         // Position cursor relative to the text content area
-        // Account for gutter width and conditional padding
-        const contentPadding = showLineNumbers ? 0 : 16;
+        // Account for gutter width and the margin that matches content area
+        const contentPadding = EDITOR_CONSTANTS.GUTTER_MARGIN;
         // Position cursor at the character position
         const x = gutterWidth + contentPadding + position.column * charWidth - scrollLeft;
         const y = position.line * lineHeight - scrollTop;
@@ -53,7 +54,7 @@ export function Cursor({ visible = true }: CursorRendererProps) {
     // Set initial position
     const position = useEditorCursorStore.getState().cursorPosition;
     // Position cursor relative to the text content area
-    const contentPadding = showLineNumbers ? 0 : 16; // 16px padding when no line numbers
+    const contentPadding = EDITOR_CONSTANTS.GUTTER_MARGIN; // Match content area padding
     // Position cursor at the character position
     const x = gutterWidth + contentPadding + position.column * charWidth - scrollLeft;
     const y = position.line * lineHeight - scrollTop;

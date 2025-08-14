@@ -1,5 +1,6 @@
 import type React from "react";
 import type { Decoration, LineToken } from "@/types/editor-types";
+import { cn } from "@/utils/cn";
 
 interface LineRendererProps {
   lineNumber: number;
@@ -71,7 +72,7 @@ export const LineRenderer = ({
   };
 
   return (
-    <div className={`editor-line ${isSelected ? "selected" : ""}`} data-line-number={lineNumber}>
+    <div className={cn("editor-line", isSelected && "selected")} data-line-number={lineNumber}>
       <span className="editor-line-content">{applyDecorations(renderTokenizedContent())}</span>
     </div>
   );
