@@ -26,10 +26,9 @@ export function Cursor({ visible = true }: CursorRendererProps) {
         if (!cursorRef.current) return;
 
         // Position cursor relative to the text content area
-        // Account for gutter width and the margin that matches content area
-        const contentPadding = EDITOR_CONSTANTS.GUTTER_MARGIN;
         // Position cursor at the character position
-        const x = gutterWidth + contentPadding + position.column * charWidth - scrollLeft;
+        const x =
+          gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN + position.column * charWidth - scrollLeft;
         const y = position.line * lineHeight - scrollTop;
 
         // Add moving class to pause blinking
@@ -53,10 +52,9 @@ export function Cursor({ visible = true }: CursorRendererProps) {
 
     // Set initial position
     const position = useEditorCursorStore.getState().cursorPosition;
-    // Position cursor relative to the text content area
-    const contentPadding = EDITOR_CONSTANTS.GUTTER_MARGIN; // Match content area padding
     // Position cursor at the character position
-    const x = gutterWidth + contentPadding + position.column * charWidth - scrollLeft;
+    const x =
+      gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN + position.column * charWidth - scrollLeft;
     const y = position.line * lineHeight - scrollTop;
     cursorRef.current.style.left = `${x}px`;
     cursorRef.current.style.top = `${y}px`;

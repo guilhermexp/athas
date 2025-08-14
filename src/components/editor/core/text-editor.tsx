@@ -264,6 +264,20 @@ export function TextEditor() {
     }
   }, [lines, setCursorPosition, setSelection]);
 
+  useEffect(() => {
+    const handleDocumentSelectionChange = () => {
+      if (document.activeElement === textareaRef.current) {
+        handleSelectionChange();
+      }
+    };
+
+    document.addEventListener("selectionchange", handleDocumentSelectionChange);
+
+    return () => {
+      document.removeEventListener("selectionchange", handleDocumentSelectionChange);
+    };
+  });
+
   // Focus textarea on mount and setup extension system
   useEffect(() => {
     if (textareaRef.current && !disabled) {
@@ -792,13 +806,15 @@ export function TextEditor() {
         onKeyDown={handleKeyDown}
         onSelect={handleSelectionChange}
         onKeyUp={handleSelectionChange}
+        onMouseDown={handleSelectionChange}
+        onMouseMove={handleSelectionChange}
         onMouseUp={handleSelectionChange}
         onContextMenu={handleContextMenu}
         onScroll={() => {
           /* Handled by useEffect */
         }}
         disabled={disabled}
-        className="absolute resize-none overflow-auto border-none bg-transparent text-transparent caret-transparent outline-none"
+        className="selection-transparent absolute resize-none overflow-auto border-none bg-transparent text-transparent caret-transparent outline-none"
         style={{
           left: `${gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN}px`,
           top: 0,
@@ -817,6 +833,7 @@ export function TextEditor() {
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
+        autoSave="off"
         spellCheck={false}
       />
 

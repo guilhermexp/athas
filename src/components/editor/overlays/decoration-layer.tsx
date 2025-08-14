@@ -25,7 +25,7 @@ function isPositionBefore(a: Position, b: Position): boolean {
 
 export const DecorationLayer = () => {
   const storeDecorations = useEditorDecorationsStore(useShallow((state) => state.getDecorations()));
-  const selection = useEditorCursorStore.use.selection?.() ?? undefined;
+  const selection = useEditorCursorStore((state) => state.selection);
   const { scrollTop, scrollLeft } = useEditorLayoutStore();
   const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
 
