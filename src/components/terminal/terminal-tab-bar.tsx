@@ -366,6 +366,7 @@ const TerminalTabBar = ({
                 <Plus size={9} />
               </button>
             </Tooltip>
+            {/* Shell selecting menu */}
             <Tooltip content="Select a shell" side="top">
               <Dropdown
                 onChange={(val) => setShell(val)}
@@ -373,11 +374,11 @@ const TerminalTabBar = ({
                 options={[
                   // The options for unix shells will be dimmed (not supported on windows)
                   // They are hardcoded for now until we connect the rust xterm to Dropdown component
+                  { value: "powershell", label: "Windows Powershell" },
                   { value: "pwsh", label: "Powershell" },
                   { value: "nu", label: "Nushell" },
+                  { value: "cmd", label: "Command Prompt" },
                   { value: "bash", label: "Git Bash" },
-
-                  { value: "powershell", label: "Windows Powershell" },
 
                   // { value: "zsh", label: "Zsh" },
                   // { value: "fish", label: "Fish" },
@@ -533,29 +534,6 @@ const TerminalTabBar = ({
                 <Plus size={9} />
               </button>
             </Tooltip>
-            {/* Shell selecting menu */}
-            <Tooltip content="Select a shell" side="top">
-              <Dropdown
-                onChange={(val) => setShell(val)}
-                value={shell}
-                options={[
-                  // The options for unix shells will be dimmed (not supported on windows)
-                  // They are hardcoded for now until we connect the rust xterm to Dropdown component
-                  { value: "pwsh", label: "Powershell" },
-                  { value: "nu", label: "Nushell" },
-                  { value: "bash", label: "Git Bash" },
-
-                  { value: "powershell", label: "Windows Powershell" },
-
-                  // { value: "zsh", label: "Zsh" },
-                  // { value: "fish", label: "Fish" },
-                ]}
-                className={cn(
-                  "flex items-center gap-0.5 px-1.5 py-1",
-                  "text-text-lighter text-xs transition-colors hover:bg-hover",
-                )}
-              />
-            </Tooltip>
           </div>
           {/* Split View Button */}
           {onSplitView && (
@@ -607,7 +585,31 @@ const TerminalTabBar = ({
               </button>
             </Tooltip>
           )}
+          {/* Shell selecting menu */}
+          <Tooltip content="Select a shell" side="top">
+            <Dropdown
+              onChange={(val) => setShell(val)}
+              value={shell}
+              options={[
+                // The options for unix shells will be dimmed (not supported on windows)
+                // They are hardcoded for now until we connect the rust xterm to Dropdown component
+                { value: "powershell", label: "Windows Powershell" },
+                { value: "pwsh", label: "Powershell" },
+                { value: "nu", label: "Nushell" },
+                { value: "cmd", label: "Command Prompt" },
+                { value: "bash", label: "Git Bash" },
+
+                // { value: "zsh", label: "Zsh" },
+                // { value: "fish", label: "Fish" },
+              ]}
+              className={cn(
+                "flex items-center gap-0.5 px-1.5 py-1",
+                "text-text-lighter text-xs transition-colors hover:bg-hover",
+              )}
+            />
+          </Tooltip>
         </div>
+
         {/* Floating tab name while dragging */}
         {isDragging && draggedIndex !== null && dragCurrentPosition && (
           <div
