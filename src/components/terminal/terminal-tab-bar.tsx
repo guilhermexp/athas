@@ -13,6 +13,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import type { Terminal } from "@/types/terminal";
 import { cn } from "@/utils/cn";
+import Dropdown from "../ui/dropdown";
 import KeybindingBadge from "../ui/keybinding-badge";
 import Tooltip from "../ui/tooltip";
 
@@ -189,6 +190,7 @@ const TerminalTabBar = ({
   const [isDragging, setIsDragging] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const [shell, setShell] = useState("nu");
   const [dragStartPosition, setDragStartPosition] = useState<{
     x: number;
     y: number;
@@ -352,17 +354,41 @@ const TerminalTabBar = ({
           <span className="font-mono text-text-lighter text-xs">No terminals</span>
         </div>
         {onNewTerminal && (
-          <Tooltip content="New Terminal (Cmd+T)" side="bottom">
-            <button
-              onClick={onNewTerminal}
-              className={cn(
-                "flex items-center gap-0.5 px-1.5 py-1",
-                "text-text-lighter text-xs transition-colors hover:bg-hover",
-              )}
-            >
-              <Plus size={9} />
-            </button>
-          </Tooltip>
+          <div className="flex items-center gap-1">
+            <Tooltip content="New Terminal (Cmd+T)" side="bottom">
+              <button
+                onClick={onNewTerminal}
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-1",
+                  "text-text-lighter text-xs transition-colors hover:bg-hover",
+                )}
+              >
+                <Plus size={9} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Select a shell" side="top">
+              <Dropdown
+                onChange={(val) => setShell(val)}
+                value={shell}
+                options={[
+                  // The options for unix shells will be dimmed (not supported on windows)
+                  // They are hardcoded for now until we connect the rust xterm to Dropdown component
+                  { value: "pwsh", label: "Powershell" },
+                  { value: "nu", label: "Nushell" },
+                  { value: "bash", label: "Git Bash" },
+
+                  { value: "powershell", label: "Windows Powershell" },
+
+                  // { value: "zsh", label: "Zsh" },
+                  // { value: "fish", label: "Fish" },
+                ]}
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-1",
+                  "text-text-lighter text-xs transition-colors hover:bg-hover",
+                )}
+              />
+            </Tooltip>
+          </div>
         )}
       </div>
     );
