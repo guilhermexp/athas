@@ -521,20 +521,42 @@ const TerminalTabBar = ({
         {/* Right side - Action buttons */}
         <div className="flex items-center gap-0.5">
           {/* New Terminal Button */}
-          {onNewTerminal && (
+          <div className="flex items-center gap-1">
             <Tooltip content="New Terminal (Cmd+T)" side="bottom">
               <button
                 onClick={onNewTerminal}
                 className={cn(
-                  "flex flex-shrink-0 cursor-pointer items-center p-1",
-                  "text-text-lighter transition-colors hover:bg-hover",
+                  "flex items-center gap-0.5 px-1.5 py-1",
+                  "text-text-lighter text-xs transition-colors hover:bg-hover",
                 )}
               >
-                <Plus size={12} />
+                <Plus size={9} />
               </button>
             </Tooltip>
-          )}
+            {/* Shell selecting menu */}
+            <Tooltip content="Select a shell" side="top">
+              <Dropdown
+                onChange={(val) => setShell(val)}
+                value={shell}
+                options={[
+                  // The options for unix shells will be dimmed (not supported on windows)
+                  // They are hardcoded for now until we connect the rust xterm to Dropdown component
+                  { value: "pwsh", label: "Powershell" },
+                  { value: "nu", label: "Nushell" },
+                  { value: "bash", label: "Git Bash" },
 
+                  { value: "powershell", label: "Windows Powershell" },
+
+                  // { value: "zsh", label: "Zsh" },
+                  // { value: "fish", label: "Fish" },
+                ]}
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-1",
+                  "text-text-lighter text-xs transition-colors hover:bg-hover",
+                )}
+              />
+            </Tooltip>
+          </div>
           {/* Split View Button */}
           {onSplitView && (
             <Tooltip
@@ -554,7 +576,6 @@ const TerminalTabBar = ({
               </button>
             </Tooltip>
           )}
-
           {/* Full Screen Button */}
           {onFullScreen && (
             <Tooltip
@@ -572,7 +593,6 @@ const TerminalTabBar = ({
               </button>
             </Tooltip>
           )}
-
           {/* Close Panel Button */}
           {onClosePanel && (
             <Tooltip content="Close Terminal Panel" side="bottom">
