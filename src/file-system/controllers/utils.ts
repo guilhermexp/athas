@@ -2,99 +2,14 @@ import type { FileEntry } from "../models/app";
 import { sortFileEntries } from "./file-tree-utils";
 
 // Common directories and patterns to ignore for performance
-const IGNORE_PATTERNS = [
-  // Dependencies
-  "node_modules",
-  "vendor",
-  ".pnpm",
-  ".yarn",
-
-  // Version control
-  ".git",
-  ".svn",
-  ".hg",
-
-  // Build outputs
-  "dist",
-  "build",
-  "out",
-  "target",
-  ".next",
-  ".nuxt",
-
-  // Cache/temp directories
-  ".cache",
-  "tmp",
-  "temp",
-  ".tmp",
-  ".DS_Store",
-  "Thumbs.db",
-
-  // IDE/Editor files
-  ".vscode",
-  ".idea",
-  "*.swp",
-  "*.swo",
-  "*~",
-
-  // Logs
-  "logs",
-  "*.log",
-
-  // OS generated files
-  ".Spotlight-V100",
-  ".Trashes",
-  "ehthumbs.db",
-
-  // Package manager locks (large files)
-  "package-lock.json",
-  "yarn.lock",
-  "pnpm-lock.yaml",
-  "Cargo.lock",
-];
-
-const IGNORE_FILE_EXTENSIONS = [
-  // Binary files
-  ".exe",
-  ".dll",
-  ".so",
-  ".dylib",
-  ".bin",
-  ".obj",
-  ".o",
-  ".a",
-
-  // Large media files
-  ".mov",
-  ".mp4",
-  ".avi",
-  ".mkv",
-  ".wav",
-  ".mp3",
-  ".flac",
-  ".psd",
-  ".ai",
-  ".sketch",
-
-  // Archives
-  ".zip",
-  ".rar",
-  ".7z",
-  ".tar",
-  ".gz",
-
-  // Database files
-  ".db",
-  ".sqlite",
-  ".sqlite3",
-];
+export const IGNORE_PATTERNS: string[] = [];
+const IGNORE_FILE_EXTENSIONS: string[] = [];
 
 export const shouldIgnore = (name: string, isDir: boolean): boolean => {
   const lowerName = name.toLowerCase();
-
   // Check ignore patterns
-  for (const pattern of IGNORE_PATTERNS) {
-    if (pattern.includes("*")) {
+  for (const pattern of IGNORE_PATTERNS as string[]) {
+    if (pattern?.includes("*")) {
       // Simple glob pattern matching
       const regexPattern = pattern.replace(/\*/g, ".*");
       if (new RegExp(`^${regexPattern}$`).test(lowerName)) {
@@ -113,14 +28,49 @@ export const shouldIgnore = (name: string, isDir: boolean): boolean => {
     }
   }
 
-  // Skip hidden files/folders (starting with .) except important ones
-  if (
-    name.startsWith(".") &&
-    name !== ".env" &&
-    name !== ".gitignore" &&
-    name !== ".editorconfig"
-  ) {
-    return true;
+  // Only ignore specific OS-generated hidden files, not all hidden files
+  // This allows developers to see important dotfiles like .env, .gitignore, etc.
+  if (name.startsWith(".")) {
+    const osGeneratedFiles = [
+      // macOS system files
+      ".DS_Store",
+      ".DS_Store?",
+      "._*", // macOS resource forks (pattern)
+      ".Spotlight-V100",
+      ".Trashes",
+      ".fseventsd",
+      ".DocumentRevisions-V100",
+      ".VolumeIcon.icns",
+      ".com.apple.timemachine.donotpresent",
+      ".AppleDB",
+      ".AppleDesktop",
+      "Network Trash Folder",
+      ".TemporaryItems",
+      ".Temporary Items",
+
+      // Windows system files
+      "Thumbs.db",
+      "ehthumbs.db",
+      "Desktop.ini",
+      "$RECYCLE.BIN",
+      "System Volume Information",
+    ];
+
+    // Check if this is an OS-generated file that should be ignored
+    for (const pattern of osGeneratedFiles) {
+      if (pattern.includes("*")) {
+        // Handle glob patterns like ._*
+        const regexPattern = pattern.replace(/\./g, "\\.").replace(/\*/g, ".*");
+        if (new RegExp(`^${regexPattern}$`, "i").test(name)) {
+          return true;
+        }
+      } else if (name.toLowerCase() === pattern.toLowerCase()) {
+        return true;
+      }
+    }
+
+    // Don't ignore other hidden files - let developers see their dotfiles
+    return false;
   }
 
   return false;
