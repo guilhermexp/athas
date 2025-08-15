@@ -1,5 +1,5 @@
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
 import { basicEditingExtension } from "@/extensions/basic-editing-extension";
 import { editorAPI } from "@/extensions/editor-api";
@@ -12,11 +12,13 @@ import { useEditorLayout } from "@/hooks/use-editor-layout";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useEditorCompletionStore } from "@/stores/editor-completion-store";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
+import { useEditorDecorationsStore } from "@/stores/editor-decorations-store";
 import { useEditorInstanceStore } from "@/stores/editor-instance-store";
 import { useEditorLayoutStore } from "@/stores/editor-layout-store";
 import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useEditorViewStore } from "@/stores/editor-view-store";
 import { useLspStore } from "@/stores/lsp-store";
+import { useSearchResultsStore } from "@/stores/search-results-store";
 import type { Position } from "@/types/editor-types";
 import { calculateCursorPosition, calculateOffsetFromPosition } from "@/utils/editor-position";
 import { CompletionDropdown } from "../overlays/completion-dropdown";
@@ -33,6 +35,29 @@ export function TextEditor() {
   const { setViewportHeight } = useEditorLayoutStore.use.actions();
   const fontSize = useEditorSettingsStore.use.fontSize();
   const fontFamily = useEditorSettingsStore.use.fontFamily();
+  const { addDecoration, removeDecoration } = useEditorDecorationsStore();
+
+  const searchResults = useSearchResultsStore((state) => state.activePathsearchResults);
+  const searchDecorations = useMemo(() => {
+    return searchResults.map((result) => {
+      const startOffset = calculateOffsetFromPosition(result.line, result.column, lines);
+      const endColumn = result.column + result.match.length;
+      const endOffset = calculateOffsetFromPosition(result.line, endColumn, lines);
+
+      return {
+        range: {
+          start: { line: result.line, column: result.column, offset: startOffset },
+          end: { line: result.line, column: endColumn, offset: endOffset },
+        },
+        className: "search-highlight",
+        type: "inline" as const,
+        key: `search-${result.line}-${result.column}-${result.match}`,
+      };
+    });
+  }, [searchResults, lines]);
+
+  const searchDecorationIds = useRef<string[]>([]);
+  const previousSearchDecorationsRef = useRef<typeof searchDecorations>([]);
 
   // Use the same layout calculations as the visual editor
   const { lineHeight, gutterWidth: layoutGutterWidth } = useEditorLayout();
@@ -263,6 +288,36 @@ export function TextEditor() {
       setSelection(undefined);
     }
   }, [lines, setCursorPosition, setSelection]);
+
+  useEffect(() => {
+    const decorationsChanged =
+      searchDecorations.length !== previousSearchDecorationsRef.current.length ||
+      searchDecorations.some((decoration, index) => {
+        const prev = previousSearchDecorationsRef.current[index];
+        return !prev || decoration.key !== prev.key;
+      });
+
+    if (!decorationsChanged) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      searchDecorationIds.current.forEach((id) => removeDecoration(id));
+      searchDecorationIds.current = [];
+
+      searchDecorations.forEach((decoration) => {
+        const decorationId = addDecoration(decoration);
+        searchDecorationIds.current.push(decorationId);
+      });
+
+      previousSearchDecorationsRef.current = searchDecorations;
+    });
+
+    return () => {
+      searchDecorationIds.current.forEach((id) => removeDecoration(id));
+      searchDecorationIds.current = [];
+    };
+  }, [searchDecorations, addDecoration, removeDecoration]);
 
   useEffect(() => {
     const handleDocumentSelectionChange = () => {
@@ -814,7 +869,7 @@ export function TextEditor() {
           /* Handled by useEffect */
         }}
         disabled={disabled}
-        className="selection-transparent absolute resize-none overflow-auto border-none bg-transparent text-transparent caret-transparent outline-none"
+        className="editor-textarea selection-transparent absolute resize-none overflow-auto border-none bg-transparent text-transparent caret-transparent outline-none"
         style={{
           left: `${gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN}px`,
           top: 0,

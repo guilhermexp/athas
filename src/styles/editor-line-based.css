@@ -127,6 +127,11 @@
   background-color: var(--color-selection, rgba(100, 149, 237, 0.3));
 }
 
+.editor-decoration-inline.search-highlight {
+  background-color: rgba(100, 149, 237, 0.3);
+  border-bottom: 2px solid rgba(100, 149, 237, 0.8);
+}
+
 .editor-decoration-line {
   background-color: var(--color-line-highlight, rgba(128, 128, 128, 0.1));
 }

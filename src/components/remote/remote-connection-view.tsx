@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { safeLocalStorageSetItem } from "@/utils/storage";
 import ConnectionDialog from "./connection-dialog";
 import ConnectionList from "./connection-list";
@@ -196,4 +196,4 @@ const RemoteConnectionView = ({ onFileSelect }: RemoteConnectionViewProps) => {
   );
 };
 
-export default RemoteConnectionView;
+export default memo(RemoteConnectionView);

@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useShallow } from "zustand/react/shallow";
 import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
 import { extensionManager } from "@/extensions/extension-manager";
 import { useEditorLayout } from "@/hooks/use-editor-layout";
@@ -24,7 +23,7 @@ function isPositionBefore(a: Position, b: Position): boolean {
 }
 
 export const DecorationLayer = () => {
-  const storeDecorations = useEditorDecorationsStore(useShallow((state) => state.getDecorations()));
+  const storeDecorations = useEditorDecorationsStore((state) => state.getDecorations());
   const selection = useEditorCursorStore((state) => state.selection);
   const { scrollTop, scrollLeft } = useEditorLayoutStore();
   const { lineHeight, charWidth, gutterWidth } = useEditorLayout();

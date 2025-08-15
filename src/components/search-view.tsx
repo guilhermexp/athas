@@ -1,30 +1,17 @@
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { shouldIgnore } from "@/file-system/controllers/utils";
+import { useSearchResultsStore } from "@/stores/search-results-store";
+import { useSidebarStore } from "@/stores/sidebar-store";
+import type { SearchResult, SearchViewProps } from "@/types/search-results";
 import { cn } from "@/utils/cn";
 import FileIcon from "../file-explorer/views/file.icon";
 import { readFile } from "../file-system/controllers/platform";
-import type { FileEntry } from "../file-system/models/app";
 import Toggle from "./ui/toggle";
 import Tooltip from "./ui/tooltip";
 
-interface SearchResult {
-  file: string;
-  line: number;
-  column: number;
-  text: string;
-  match: string;
-}
-
-interface SearchViewProps {
-  rootFolderPath?: string;
-  allProjectFiles: FileEntry[];
-  onFileSelect: (path: string, line?: number, column?: number) => void;
-}
-
 const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchViewProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
@@ -32,11 +19,15 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
   const [wholeWord, setWholeWord] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const resultRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+  const { searchResults, setSearchResults, setActivePathSearchResults } = useSearchResultsStore();
+  const activePath = useSidebarStore((state) => state.activePath);
 
   // Focus method can be called directly on the component if needed in the future
 
@@ -74,6 +65,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
     async (query: string) => {
       if (!query.trim() || !rootFolderPath) {
         setSearchResults([]);
+        setActivePathSearchResults([]);
         setHasSearched(false);
         setSelectedIndex(-1);
         return;
@@ -211,8 +203,8 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
 
                     results.push({
                       file: file.path,
-                      line: lineIndex + 1,
-                      column: match.index + 1,
+                      line: lineIndex,
+                      column: match.index,
                       text: line,
                       match: match[0],
                     });
@@ -235,6 +227,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
 
         if (!signal.aborted) {
           setSearchResults(results);
+          setActivePathSearchResults(results.filter((r) => r.file === activePath));
           setHasSearched(true);
           // Auto-expand first file with results
           if (results.length > 0) {
@@ -252,7 +245,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
         }
       }
     },
-    [allProjectFiles, rootFolderPath, caseSensitive, wholeWord, useRegex],
+    [allProjectFiles, rootFolderPath, caseSensitive, wholeWord, useRegex, activePath],
   );
 
   // Debounced search
@@ -263,7 +256,6 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, performSearch]);
-
   const handleFileToggle = (filePath: string) => {
     const newExpanded = new Set(expandedFiles);
     if (newExpanded.has(filePath)) {
@@ -292,11 +284,11 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
 
     return (
       <>
-        {text.slice(0, column - 1)}
+        {text.slice(0, column)}
         <span className="rounded bg-yellow-200 px-0.5 text-yellow-900">
-          {text.slice(column - 1, column + match.length - 1)}
+          {text.slice(column, column + match.length)}
         </span>
-        {text.slice(column + match.length - 1)}
+        {text.slice(column + match.length)}
       </>
     );
   };
@@ -391,6 +383,10 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
               WebkitUserSelect: "text",
               MozUserSelect: "text",
             }}
+            autoCapitalize="off"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
           <div className="absolute right-0 flex items-center gap-0.5">
             <Tooltip content="Match Case" side="bottom">
@@ -506,7 +502,7 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
                           )}
                         >
                           <span className="min-w-[2rem] text-right text-text-lighter text-xs">
-                            {result.line}
+                            {result.line + 1}
                           </span>
                           <span className="flex-1 truncate text-text text-xs">
                             {highlightMatch(result)}
@@ -527,4 +523,4 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
 
 SearchView.displayName = "SearchView";
 
-export default SearchView;
+export default memo(SearchView);
