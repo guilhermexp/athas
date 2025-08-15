@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
 import { useEditorDecorationsStore } from "@/stores/editor-decorations-store";
 import { useEditorViewStore } from "@/stores/editor-view-store";
 import { LineGutter } from "./line-gutter";
@@ -43,7 +44,9 @@ export const LineWithContent = memo<LineWithContentProps>(
           className="editor-line-content-wrapper"
           style={{
             flex: 1,
-            paddingLeft: showLineNumbers ? 0 : `16px`,
+            paddingLeft: showLineNumbers
+              ? `${EDITOR_CONSTANTS.GUTTER_MARGIN}px`
+              : `${2 * EDITOR_CONSTANTS.GUTTER_MARGIN}px`,
             lineHeight: `${lineHeight}px`,
             height: `${lineHeight}px`,
             overflow: "hidden",

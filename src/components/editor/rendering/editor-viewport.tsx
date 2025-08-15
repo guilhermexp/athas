@@ -21,7 +21,7 @@ interface EditorViewportProps {
 export const EditorViewport = memo(
   forwardRef<HTMLDivElement, EditorViewportProps>(
     ({ onScroll, onClick, onMouseDown, onMouseMove, onMouseUp, onContextMenu }, ref) => {
-      const selection = useEditorCursorStore.use.selection?.() ?? undefined;
+      const selection = useEditorCursorStore((state) => state.selection);
       const lineCount = useEditorViewStore((state) => state.lines.length);
       const showLineNumbers = useEditorSettingsStore.use.lineNumbers();
       const scrollTop = useEditorLayoutStore.use.scrollTop();
