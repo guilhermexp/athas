@@ -8,6 +8,9 @@ const initialState = {
   aiModelId: "gpt-4o-mini",
   aiChatWidth: 400,
   isAIChatVisible: false,
+  // File Tree Settings
+  hiddenFilePatterns: [] as string[],
+  hiddenDirectoryPatterns: [] as string[],
   // Extensions Settings
   extensionsActiveTab: "all" as "all" | "core" | "language-server" | "theme",
   // Tab Settings
@@ -32,6 +35,8 @@ const storeCreator = combine(initialState, (set) => ({
     set({ aiProviderId: providerId, aiModelId: modelId }),
   setAIChatWidth: (width: number) => set({ aiChatWidth: width }),
   setIsAIChatVisible: (visible: boolean) => set({ isAIChatVisible: visible }),
+  setHiddenFilePatterns: (patterns: string[]) => set({ hiddenFilePatterns: patterns }),
+  setHiddenDirectoryPatterns: (patterns: string[]) => set({ hiddenDirectoryPatterns: patterns }),
   setExtensionsActiveTab: (tab: "all" | "core" | "language-server" | "theme") =>
     set({ extensionsActiveTab: tab }),
   setCoreFeatures: (features: CoreFeaturesState) => set({ coreFeatures: features }),

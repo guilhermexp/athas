@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { shouldIgnore } from "@/file-system/controllers/utils";
 import { cn } from "@/utils/cn";
 import FileIcon from "../file-explorer/views/file.icon";
 import { readFile } from "../file-system/controllers/platform";
@@ -153,6 +154,11 @@ const SearchView = ({ rootFolderPath, allProjectFiles, onFileSelect }: SearchVie
 
         const textFiles = allProjectFiles.filter((file) => {
           if (file.isDir) return false;
+
+          // Filter out ignored files using our centralized logic
+          if (shouldIgnore(file.name, file.isDir)) {
+            return false;
+          }
 
           const extension = file.name.split(".").pop()?.toLowerCase();
           return extension && textFileExtensions.has(extension);

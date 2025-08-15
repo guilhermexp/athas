@@ -23,6 +23,7 @@ import { createPortal } from "react-dom";
 import { findFileInTree } from "@/file-system/controllers/file-tree-utils";
 import { moveFile, readDirectory, readFile } from "@/file-system/controllers/platform";
 import type { ContextMenuState, FileEntry } from "@/file-system/models/app";
+import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
 import { cn } from "@/utils/cn";
 import { getGitStatus } from "@/version-control/git/controllers/git";
 import type { GitFile, GitStatus } from "@/version-control/git/models/git-types";
@@ -77,6 +78,41 @@ const FileTree = ({
   const [gitIgnore, setGitIgnore] = useState<ReturnType<typeof ignore> | null>(null);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [deepestStickyFolder, setDeepestStickyFolder] = useState<string | null>(null);
+
+  const { hiddenFilePatterns, hiddenDirectoryPatterns } = usePersistentSettingsStore();
+
+  const userIgnore = useMemo(() => {
+    const ig = ignore();
+    if (hiddenFilePatterns.length > 0) {
+      ig.add(hiddenFilePatterns);
+    }
+    if (hiddenDirectoryPatterns.length > 0) {
+      ig.add(hiddenDirectoryPatterns.map((p) => (p.endsWith("/") ? p : `${p}/`)));
+    }
+    return ig;
+  }, [hiddenFilePatterns, hiddenDirectoryPatterns]);
+
+  const isUserHidden = useCallback(
+    (fullPath: string, isDir: boolean): boolean => {
+      let relative = fullPath.replace(/\\/g, "/");
+
+      if (rootFolderPath) {
+        const normRoot = rootFolderPath.replace(/\\/g, "/");
+        if (relative.startsWith(normRoot)) {
+          relative = relative.slice(normRoot.length);
+        }
+      }
+
+      if (relative.startsWith("/")) relative = relative.slice(1);
+
+      if (!relative || relative.trim() === "") return false;
+
+      if (isDir && !relative.endsWith("/")) relative += "/";
+
+      return userIgnore.ignores(relative);
+    },
+    [userIgnore, rootFolderPath],
+  );
 
   // Track scroll for deepest sticky folder detection
   useEffect(() => {
@@ -177,6 +213,11 @@ const FileTree = ({
       if (!relative || relative.trim() === "") return false;
 
       if (isDir && !relative.endsWith("/")) relative += "/";
+
+      // Explicitly do not ignore the .git directory
+      if (relative === ".git/" || relative === ".git") {
+        return false;
+      }
 
       return gitIgnore.ignores(relative);
     },
@@ -287,17 +328,19 @@ const FileTree = ({
   // ─────────────────────────────────────────────────────────────────
   const filteredFiles = useMemo(() => {
     const process = (items: FileEntry[]): FileEntry[] =>
-      items.map((item) => {
-        const ignored = isGitIgnored(item.path, item.isDir);
-        return {
-          ...item,
-          ignored,
-          children: item.children ? process(item.children) : undefined,
-        };
-      });
+      items
+        .filter((item) => !isUserHidden(item.path, item.isDir))
+        .map((item) => {
+          const ignored = isGitIgnored(item.path, item.isDir);
+          return {
+            ...item,
+            ignored,
+            children: item.children ? process(item.children) : undefined,
+          };
+        });
 
     return process(files);
-  }, [files, isGitIgnored]);
+  }, [files, isGitIgnored, isUserHidden]);
 
   // Use custom drag and drop
   const { dragState, startCustomDrag } = useCustomDragDrop(

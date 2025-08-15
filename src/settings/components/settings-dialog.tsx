@@ -6,6 +6,7 @@ import { AdvancedSettings } from "./tabs/advanced-settings";
 import { AISettings } from "./tabs/ai-settings";
 import { EditorSettings } from "./tabs/editor-settings";
 import { FeaturesSettings } from "./tabs/features-settings";
+import { FileTreeSettings } from "./tabs/file-tree-settings";
 import { GeneralSettings } from "./tabs/general-settings";
 import { KeyboardSettings } from "./tabs/keyboard-settings";
 import { LanguageSettings } from "./tabs/language-settings";
@@ -24,7 +25,8 @@ export type SettingsTab =
   | "keyboard"
   | "language"
   | "features"
-  | "advanced";
+  | "advanced"
+  | "fileTree";
 
 const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
@@ -61,6 +63,8 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
         return <FeaturesSettings />;
       case "advanced":
         return <AdvancedSettings />;
+      case "fileTree":
+        return <FileTreeSettings />;
       default:
         return <GeneralSettings />;
     }
