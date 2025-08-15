@@ -10,7 +10,9 @@ export const FileTreeSettings = () => {
     setHiddenDirectoryPatterns,
   } = usePersistentSettingsStore();
 
-  const [filePatternsInput, setFilePatternsInput] = useState(hiddenFilePatterns.join(", "));
+  const [filePatternsInput, setFilePatternsInput] = useState(
+    hiddenFilePatterns.join(", "),
+  );
   const [directoryPatternsInput, setDirectoryPatternsInput] = useState(
     hiddenDirectoryPatterns.join(", "),
   );
@@ -23,11 +25,15 @@ export const FileTreeSettings = () => {
     setDirectoryPatternsInput(hiddenDirectoryPatterns.join(", "));
   }, [hiddenDirectoryPatterns]);
 
-  const handleFilePatternsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleFilePatternsChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     setFilePatternsInput(e.target.value);
   };
 
-  const handleDirectoryPatternsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDirectoryPatternsChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     setDirectoryPatternsInput(e.target.value);
   };
 
@@ -49,10 +55,13 @@ export const FileTreeSettings = () => {
 
   return (
     <div className="space-y-6">
-      <h3 className="font-medium text-lg">File Tree Settings</h3>
+      <h3 className="font-medium text-lg text-text">File Tree Settings</h3>
 
       <div>
-        <label htmlFor="hiddenFilePatterns" className="mb-1 block font-medium text-sm text-text">
+        <label
+          htmlFor="hiddenFilePatterns"
+          className="mb-1 block font-medium text-sm text-text"
+        >
           Hidden File Patterns (comma-separated glob patterns)
         </label>
         <textarea
@@ -86,7 +95,8 @@ export const FileTreeSettings = () => {
           placeholder="e.g., node_modules, .git, build/"
         />
         <p className="mt-1 text-text-lighter text-xs">
-          Directories matching these glob patterns will be hidden from the file tree.
+          Directories matching these glob patterns will be hidden from the file
+          tree.
         </p>
       </div>
     </div>
