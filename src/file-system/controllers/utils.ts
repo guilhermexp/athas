@@ -2,95 +2,14 @@ import type { FileEntry } from "../models/app";
 import { sortFileEntries } from "./file-tree-utils";
 
 // Common directories and patterns to ignore for performance
-const IGNORE_PATTERNS = [
-  // Dependencies
-  "vendor",
-  ".pnpm",
-  ".yarn",
-
-  // Version control
-  ".git",
-  ".svn",
-  ".hg",
-
-  // Build outputs
-  "dist",
-  "build",
-  "out",
-  "target",
-  ".next",
-  ".nuxt",
-
-  // Cache/temp directories
-  ".cache",
-  "tmp",
-  "temp",
-  ".tmp",
-
-  // IDE/Editor files
-  ".vscode",
-  ".idea",
-  "*.swp",
-  "*.swo",
-  "*~",
-
-  // Logs
-  "logs",
-  "*.log",
-
-  // Coverage reports
-  "coverage",
-  ".nyc_output",
-
-  // Package manager locks (large files)
-  "package-lock.json",
-  "yarn.lock",
-  "pnpm-lock.yaml",
-  "Cargo.lock",
-];
-
-const IGNORE_FILE_EXTENSIONS = [
-  // Binary files
-  ".exe",
-  ".dll",
-  ".so",
-  ".dylib",
-  ".bin",
-  ".obj",
-  ".o",
-  ".a",
-
-  // Large media files
-  ".mov",
-  ".mp4",
-  ".avi",
-  ".mkv",
-  ".wav",
-  ".mp3",
-  ".flac",
-  ".psd",
-  ".ai",
-  ".sketch",
-
-  // Archives
-  ".zip",
-  ".rar",
-  ".7z",
-  ".tar",
-  ".gz",
-
-  // Database files
-  ".db",
-  ".sqlite",
-  ".sqlite3",
-];
+export const IGNORE_PATTERNS: string[] = [];
+const IGNORE_FILE_EXTENSIONS: string[] = [];
 
 export const shouldIgnore = (name: string, isDir: boolean): boolean => {
   const lowerName = name.toLowerCase();
-
   // Check ignore patterns
-  for (const pattern of IGNORE_PATTERNS) {
-    if (pattern.includes("*")) {
+  for (const pattern of IGNORE_PATTERNS as string[]) {
+    if (pattern?.includes("*")) {
       // Simple glob pattern matching
       const regexPattern = pattern.replace(/\*/g, ".*");
       if (new RegExp(`^${regexPattern}$`).test(lowerName)) {
@@ -162,7 +81,7 @@ export function updateDirectoryContents(
   files: FileEntry[],
   dirPath: string,
   newEntries: any[],
-  preserveStates: boolean = true
+  preserveStates: boolean = true,
 ): boolean {
   for (const item of files) {
     if (item.path === dirPath && item.isDir) {
@@ -185,7 +104,7 @@ export function updateDirectoryContents(
             expanded: existingChild?.expanded || false,
             children: existingChild?.children || undefined,
           };
-        })
+        }),
       );
 
       return true; // Directory was found and updated

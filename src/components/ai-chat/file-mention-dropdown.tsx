@@ -8,7 +8,7 @@ import type { FileEntry } from "@/file-system/models/app";
 import { useAIChatStore } from "@/stores/ai-chat/store";
 import { useProjectStore } from "@/stores/project-store";
 import { cn } from "@/utils/cn";
-import { IGNORED_PATTERNS } from "../command/constants/ignored-patterns";
+import { IGNORE_PATTERNS as IGNORED_PATTERNS } from "../../file-system/controllers/utils";
 
 interface FileMentionDropdownProps {
   onSelect: (file: FileEntry) => void;
