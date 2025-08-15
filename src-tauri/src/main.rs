@@ -18,6 +18,7 @@ mod file_watcher;
 mod logger;
 mod lsp;
 mod menu;
+mod shell;
 mod ssh;
 mod terminal;
 mod xterm_terminal;
