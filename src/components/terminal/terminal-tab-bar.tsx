@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import {
   Copy,
   Maximize2,
@@ -11,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import type { Terminal } from "@/types/terminal";
+import type { Shell, Terminal } from "@/types/terminal";
 import { cn } from "@/utils/cn";
 import Dropdown from "../ui/dropdown";
 import KeybindingBadge from "../ui/keybinding-badge";
@@ -190,7 +191,8 @@ const TerminalTabBar = ({
   const [isDragging, setIsDragging] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
-  const [shell, setShell] = useState("nu");
+  const [shells, setShells] = useState<Shell[]>([]);
+  const [selectedShell, setSelectedShell] = useState<string>("");
   const [dragStartPosition, setDragStartPosition] = useState<{
     x: number;
     y: number;
@@ -220,12 +222,14 @@ const TerminalTabBar = ({
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (draggedIndex === null || !dragStartPosition || !tabBarRef.current) return;
+    if (draggedIndex === null || !dragStartPosition || !tabBarRef.current)
+      return;
 
     setDragCurrentPosition({ x: e.clientX, y: e.clientY });
 
     const distance = Math.sqrt(
-      (e.clientX - dragStartPosition.x) ** 2 + (e.clientY - dragStartPosition.y) ** 2,
+      (e.clientX - dragStartPosition.x) ** 2 +
+        (e.clientY - dragStartPosition.y) ** 2,
     );
 
     if (distance > 5 && !isDragging) {
@@ -238,14 +242,19 @@ const TerminalTabBar = ({
       const y = e.clientY - rect.top;
 
       // Check if dragged outside the tab bar
-      const isOutside = x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
+      const isOutside =
+        x < 0 || x > rect.width || y < -50 || y > rect.height + 50;
       setIsDraggedOutside(isOutside);
 
       if (!isOutside) {
         // Handle internal reordering
-        const tabContainer = tabBarRef.current.querySelector("[data-tab-container]");
+        const tabContainer = tabBarRef.current.querySelector(
+          "[data-tab-container]",
+        );
         if (tabContainer) {
-          const tabElements = Array.from(tabContainer.children) as HTMLElement[];
+          const tabElements = Array.from(
+            tabContainer.children,
+          ) as HTMLElement[];
 
           let newDropTarget: number | null = null;
           for (let i = 0; i < tabElements.length; i++) {
@@ -267,7 +276,10 @@ const TerminalTabBar = ({
 
           // Clamp drop target to valid range
           if (newDropTarget !== null) {
-            newDropTarget = Math.max(0, Math.min(tabElements.length, newDropTarget));
+            newDropTarget = Math.max(
+              0,
+              Math.min(tabElements.length, newDropTarget),
+            );
           }
 
           if (newDropTarget !== dropTarget) {
@@ -282,7 +294,12 @@ const TerminalTabBar = ({
 
   const handleMouseUp = () => {
     if (draggedIndex !== null) {
-      if (!isDraggedOutside && dropTarget !== null && dropTarget !== draggedIndex && onTabReorder) {
+      if (
+        !isDraggedOutside &&
+        dropTarget !== null &&
+        dropTarget !== draggedIndex &&
+        onTabReorder
+      ) {
         // Adjust dropTarget if moving right (forward)
         let adjustedDropTarget = dropTarget;
         if (draggedIndex < dropTarget) {
@@ -327,6 +344,31 @@ const TerminalTabBar = ({
   });
 
   useEffect(() => {
+    async function fetchShells() {
+      try {
+        // invoke it from the rust source
+        const res: Shell[] = await invoke("get_shells");
+        setShells(res);
+      } catch (err) {
+        console.error(`Failed to load available shells ${err}`);
+      }
+    }
+
+    fetchShells();
+    // TODO: Change placeholder code
+    // async function fetchShellExecutable(){
+    // same as fetchShell, but will search for it's respectable executable found in PATH
+    // try {
+    //   // invoke it from the rust source
+    //   const res: Shell[] = await invoke("get_executable");
+    //   setShells(res);
+    // } catch (err) {
+    //   console.error(`Failed to load executable for shell ${err}`);
+    // }
+    // }
+  }, []);
+
+  useEffect(() => {
     if (draggedIndex === null) return;
 
     const move = (e: MouseEvent) => handleMouseMove(e);
@@ -351,7 +393,9 @@ const TerminalTabBar = ({
       >
         <div className="flex items-center gap-1.5">
           <TerminalIcon size={10} className="text-text-lighter" />
-          <span className="font-mono text-text-lighter text-xs">No terminals</span>
+          <span className="font-mono text-text-lighter text-xs">
+            No terminals
+          </span>
         </div>
         {onNewTerminal && (
           <div className="flex items-center gap-1">
@@ -369,25 +413,17 @@ const TerminalTabBar = ({
             {/* Shell selecting menu */}
             <Tooltip content="Select a shell" side="top">
               <Dropdown
-                onChange={(val) => setShell(val)}
-                value={shell}
-                options={[
-                  // The options for unix shells will be dimmed (not supported on windows)
-                  // They are hardcoded for now until we connect the rust xterm to Dropdown component
-                  { value: "powershell", label: "Windows Powershell" },
-                  { value: "pwsh", label: "Powershell" },
-                  { value: "nu", label: "Nushell" },
-                  { value: "cmd", label: "Command Prompt" },
-                  { value: "bash", label: "Git Bash" },
-
-                  // { value: "zsh", label: "Zsh" },
-                  // { value: "fish", label: "Fish" },
-                ]}
+                value={selectedShell}
+                options={shells.map((shell) => ({
+                  value: shell.id,
+                  label: shell.name,
+                }))}
+                onChange={setSelectedShell}
                 className={cn(
                   "flex items-center gap-0.5 px-1.5 py-1",
                   "text-text-lighter text-xs transition-colors hover:bg-hover",
                 )}
-              />
+              ></Dropdown>
             </Tooltip>
           </div>
         )}
@@ -432,7 +468,9 @@ const TerminalTabBar = ({
             const isActive = terminal.id === activeTerminalId;
             // Drop indicator should be shown before the tab at dropTarget
             const showDropIndicator =
-              dropTarget === index && draggedIndex !== null && !isDraggedOutside;
+              dropTarget === index &&
+              draggedIndex !== null &&
+              !isDraggedOutside;
 
             return (
               <React.Fragment key={terminal.id}>
@@ -478,7 +516,9 @@ const TerminalTabBar = ({
                     </div>
 
                     {/* Pin indicator */}
-                    {terminal.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
+                    {terminal.isPinned && (
+                      <Pin size={8} className="flex-shrink-0 text-blue-500" />
+                    )}
 
                     {/* Terminal Name */}
                     <span
@@ -509,14 +549,16 @@ const TerminalTabBar = ({
             );
           })}
           {/* Drop indicator after the last tab */}
-          {dropTarget === sortedTerminals.length && draggedIndex !== null && !isDraggedOutside && (
-            <div className="relative flex items-center">
-              <div
-                className="absolute top-0 bottom-0 z-10 w-0.5 bg-accent"
-                style={{ height: "100%" }}
-              />
-            </div>
-          )}
+          {dropTarget === sortedTerminals.length &&
+            draggedIndex !== null &&
+            !isDraggedOutside && (
+              <div className="relative flex items-center">
+                <div
+                  className="absolute top-0 bottom-0 z-10 w-0.5 bg-accent"
+                  style={{ height: "100%" }}
+                />
+              </div>
+            )}
         </div>
 
         {/* Right side - Action buttons */}
@@ -538,7 +580,9 @@ const TerminalTabBar = ({
           {/* Split View Button */}
           {onSplitView && (
             <Tooltip
-              content={isSplitView ? "Exit Split View" : "Split Terminal View (Cmd+D)"}
+              content={
+                isSplitView ? "Exit Split View" : "Split Terminal View (Cmd+D)"
+              }
               side="bottom"
             >
               <button
@@ -557,7 +601,9 @@ const TerminalTabBar = ({
           {/* Full Screen Button */}
           {onFullScreen && (
             <Tooltip
-              content={isFullScreen ? "Exit Full Screen" : "Full Screen Terminal"}
+              content={
+                isFullScreen ? "Exit Full Screen" : "Full Screen Terminal"
+              }
               side="bottom"
             >
               <button
@@ -567,7 +613,11 @@ const TerminalTabBar = ({
                   "text-text-lighter transition-colors hover:bg-hover",
                 )}
               >
-                {isFullScreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                {isFullScreen ? (
+                  <Minimize2 size={12} />
+                ) : (
+                  <Maximize2 size={12} />
+                )}
               </button>
             </Tooltip>
           )}
@@ -588,6 +638,21 @@ const TerminalTabBar = ({
           {/* Shell selecting menu */}
           <Tooltip content="Select a shell" side="top">
             <Dropdown
+              value={selectedShell}
+              options={shells.map((shell) => ({
+                value: shell.id,
+                label: shell.name,
+              }))}
+              onChange={setSelectedShell}
+              className={cn(
+                "flex items-center gap-0.5 px-1.5 py-1",
+                "text-text-lighter text-xs transition-colors hover:bg-hover",
+              )}
+            ></Dropdown>
+          </Tooltip>
+
+          {/*<Tooltip content="Select a shell" side="top">
+            <Dropdown
               onChange={(val) => setShell(val)}
               value={shell}
               options={[
@@ -607,7 +672,7 @@ const TerminalTabBar = ({
                 "text-text-lighter text-xs transition-colors hover:bg-hover",
               )}
             />
-          </Tooltip>
+          </Tooltip>*/}
         </div>
 
         {/* Floating tab name while dragging */}
@@ -638,7 +703,9 @@ const TerminalTabBar = ({
             {sortedTerminals[draggedIndex].isPinned && (
               <Pin size={8} className="flex-shrink-0 text-blue-500" />
             )}
-            <span className="truncate">{sortedTerminals[draggedIndex].name}</span>
+            <span className="truncate">
+              {sortedTerminals[draggedIndex].name}
+            </span>
           </div>
         )}
       </div>

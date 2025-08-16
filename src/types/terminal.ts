@@ -15,12 +15,11 @@ export interface Terminal {
   splitWithId?: string; // ID of the terminal to split with
 }
 
-export interface ShellProps {
-  shell_list?: string[]; // list of available shells (os dependent)
-  id: string; // will be used in useState when switchin from one shell to another
-  executable_windows: string; // look for executable matching *.exe
-  executable_linux: string; // look for executable matching *.sh or without any extension
-  executable_macos: string; // same as linux
+export interface Shell {
+  id: string;
+  name: string;
+  exec_unix?: string; // search for common paths like /bin/shell_name
+  exec_win?: string; // search for paths in %PATH% matching *.exe
 }
 
 export interface TerminalState {

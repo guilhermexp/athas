@@ -19,19 +19,26 @@ impl Shell {
             Shell {
                id: "cmd".into(),
                name: "Command Prompt".into(),
-               exec_win: Some("cmd.exe".into()),
+               exec_win: Some(r"cmd.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "powershell".into(),
                name: "Windows PowerShell".into(),
-               exec_win: Some("powershell.exe".into()),
+               exec_win: Some(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "pwsh".into(),
                name: "PowerShell Core".into(),
                exec_win: Some("pwsh.exe".into()),
+               exec_unix: None,
+            },
+            Shell {
+               id: "nu".into(),
+               name: "Nushell".into(),
+               // need to find a way to not hardcode the path
+               exec_win: Some(r"C:\Users\emcho\AppData\Local\Programs\nu\bin\nu.exe".into()),
                exec_unix: None,
             },
             Shell {
