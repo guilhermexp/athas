@@ -163,7 +163,11 @@ const WelcomeScreen = ({
                 >
                   <div className="w-full truncate text-start font-mono text-sm">{folder.name}</div>
                   <div className="w-full text-start">
-                    <p className="text-text-lighter">{folder.path}</p>
+                    <p className="font-mono text-text-lighter text-xs">
+                      {folder.path.startsWith("/Users/")
+                        ? `~${folder.path.substring(folder.path.indexOf("/", 7))}`
+                        : folder.path}
+                    </p>
                   </div>
                 </Button>
               ))}

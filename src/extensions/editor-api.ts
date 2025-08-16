@@ -22,6 +22,7 @@ class EditorAPIImpl implements EditorAPI {
       "cursorChange",
       "settingsChange",
       "decorationChange",
+      "keydown",
     ];
 
     events.forEach((event) => {
@@ -75,7 +76,23 @@ class EditorAPIImpl implements EditorAPI {
     const content = this.getContent();
     const before = content.substring(0, range.start.offset);
     const after = content.substring(range.end.offset);
-    this.setContent(before + after);
+    const newContent = before + after;
+
+    // Calculate new cursor position
+    const newOffset = range.start.offset;
+
+    // Update textarea directly for better responsiveness
+    if (this.textareaRef) {
+      this.textareaRef.value = newContent;
+      this.textareaRef.selectionStart = this.textareaRef.selectionEnd = newOffset;
+
+      // Trigger change event
+      const event = new Event("input", { bubbles: true });
+      this.textareaRef.dispatchEvent(event);
+    } else {
+      this.setContent(newContent);
+      this.setCursorPosition(this.offsetToPosition(newOffset));
+    }
   }
 
   replaceRange(range: Range, text: string): void {
@@ -273,9 +290,17 @@ class EditorAPIImpl implements EditorAPI {
     this.textareaRef = ref;
   }
 
+  getTextareaRef(): HTMLTextAreaElement | null {
+    return this.textareaRef;
+  }
+
   // Set the viewport ref for direct scroll manipulation
   setViewportRef(ref: HTMLDivElement | null): void {
     this.viewportRef = ref;
+  }
+
+  getViewportRef(): HTMLDivElement | null {
+    return this.viewportRef;
   }
 
   private offsetToPosition(offset: number): Position {

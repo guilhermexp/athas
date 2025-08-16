@@ -15,7 +15,6 @@ export function Cursor({ visible = true }: CursorRendererProps) {
   const { scrollTop, scrollLeft } = useEditorLayoutStore();
   const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
   const showLineNumbers = useEditorSettingsStore.use.lineNumbers();
-
   // Update position without re-rendering
   useEffect(() => {
     if (!cursorRef.current || !visible) return;

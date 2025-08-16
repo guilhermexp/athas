@@ -1,5 +1,5 @@
 import { GitBranch, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { useBufferStore } from "@/stores/buffer-store";
 import { cn } from "@/utils/cn";
 import {
@@ -520,4 +520,4 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
   );
 };
 
-export default GitView;
+export default memo(GitView);
