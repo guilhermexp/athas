@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
 import { useBufferStore } from "@/stores/buffer-store";
+import { useSidebarStore } from "@/stores/sidebar-store";
 import type { Buffer } from "@/types/buffer";
-
 import TabBarItem from "./tab-bar-item";
 import TabContextMenu from "./tab-context-menu";
 import TabDragPreview from "./tab-drag-preview";
@@ -35,6 +35,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
     reorderBuffers,
   } = useBufferStore.use.actions();
   const { maxOpenTabs } = usePersistentSettingsStore();
+  const { updateActivePath } = useSidebarStore();
 
   // Drag state
   const [dragState, setDragState] = useState<{
@@ -262,6 +263,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
         return;
       }
       handleTabClick(sortedBuffers[index].id);
+      updateActivePath(sortedBuffers[index].path);
       e.preventDefault();
       setDragState({
         isDragging: false,
