@@ -1,8 +1,9 @@
-// Shell functionality - currently experimental
+// Shell functionality - currently half-implemented
 // This module exists to maintain the module structure but contains no active code
-#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use tauri::command;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shell {
    pub id: String,
@@ -91,4 +92,10 @@ impl Shell {
          })
          .collect()
    }
+}
+
+// helper command to get available shells in PATH
+#[command]
+pub fn get_shells() -> Vec<Shell> {
+   Shell::get_available_shells()
 }

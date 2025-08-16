@@ -6,7 +6,6 @@ use commands::*;
 use file_watcher::FileWatcher;
 use log::{debug, info};
 use lsp::LspManager;
-use shell::Shell;
 use ssh::{ssh_connect, ssh_disconnect, ssh_write_file};
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
@@ -18,16 +17,10 @@ mod file_watcher;
 mod logger;
 mod lsp;
 mod menu;
-mod shell;
+use crate::shell::get_shells;
 mod ssh;
 mod terminal;
 mod xterm_terminal;
-
-// refactoring later
-#[tauri::command]
-fn get_shells() -> Vec<Shell> {
-   Shell::get_available_shells()
-}
 
 fn main() {
    tauri::Builder::default()
@@ -244,6 +237,8 @@ fn main() {
          terminal_write,
          terminal_resize,
          close_xterm_terminal,
+         // Other commands for terminal (switching shells)
+         get_shells,
          // SSH commands
          ssh_connect,
          ssh_disconnect,
@@ -283,8 +278,6 @@ fn main() {
          // Fuzzy matching commands
          fuzzy_match,
          filter_completions,
-         // Other commands for terminal (switching shells)
-         get_shells,
       ])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");
