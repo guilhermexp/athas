@@ -273,9 +273,17 @@ class EditorAPIImpl implements EditorAPI {
     this.textareaRef = ref;
   }
 
+  getTextareaRef(): HTMLTextAreaElement | null {
+    return this.textareaRef;
+  }
+
   // Set the viewport ref for direct scroll manipulation
   setViewportRef(ref: HTMLDivElement | null): void {
     this.viewportRef = ref;
+  }
+
+  getViewportRef(): HTMLDivElement | null {
+    return this.viewportRef;
   }
 
   private offsetToPosition(offset: number): Position {

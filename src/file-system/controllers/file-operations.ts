@@ -6,6 +6,7 @@ import {
   readFile as platformReadFile,
   writeFile as platformWriteFile,
 } from "./platform";
+import { shouldIgnore } from "./utils";
 
 export async function readFileContent(path: string): Promise<string> {
   try {
@@ -57,13 +58,20 @@ export async function deleteFileOrDirectory(path: string): Promise<void> {
 export async function readDirectoryContents(path: string): Promise<FileEntry[]> {
   try {
     const entries = await platformReadDirectory(path);
-    return (entries as any[]).map((entry: any) => ({
-      name: entry.name || "Unknown",
-      path: entry.path || `${path}/${entry.name}`,
-      isDir: entry.is_dir || false,
-      expanded: false,
-      children: undefined,
-    }));
+
+    return (entries as any[])
+      .filter((entry: any) => {
+        const name = entry.name || "Unknown";
+        const isDir = entry.is_dir || false;
+        return !shouldIgnore(name, isDir);
+      })
+      .map((entry: any) => ({
+        name: entry.name || "Unknown",
+        path: entry.path || `${path}/${entry.name}`,
+        isDir: entry.is_dir || false,
+        expanded: false,
+        children: undefined,
+      }));
   } catch (error) {
     throw new Error(`Failed to read directory ${path}: ${error}`);
   }

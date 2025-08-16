@@ -1,6 +1,7 @@
 import { FilePlus, FolderOpen, FolderPlus, Server } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
+import RemoteConnectionView from "@/components/remote/remote-connection-view";
 import FileTree from "@/file-explorer/views/file-tree";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import type { FileEntry } from "@/file-system/models/app";
@@ -10,8 +11,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useUIState } from "@/stores/ui-state-store";
 import { cn } from "@/utils/cn";
-import GitView from "../../version-control/git/views/git-view";
-import RemoteConnectionView from "../remote/remote-connection-view";
+import GitView from "@/version-control/git/views/git-view";
 import SearchView from "../search-view";
 import Button from "../ui/button";
 import { SidebarPaneSelector } from "./sidebar-pane-selector";
@@ -179,40 +179,58 @@ export const MainSidebar = () => {
         </div>
       )}
 
-      {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
-        {isGitViewActive && settings.coreFeatures.git ? (
-          <GitView repoPath={rootFolderPath} onFileSelect={handleFileSelect} />
-        ) : isSearchViewActive && settings.coreFeatures.search ? (
-          <SearchView
-            rootFolderPath={rootFolderPath}
-            allProjectFiles={allProjectFiles}
-            onFileSelect={(path, line, column) => handleFileSelect(path, false, line, column)}
-          />
-        ) : isRemoteViewActive && settings.coreFeatures.remote ? (
-          <RemoteConnectionView onFileSelect={handleFileSelect} />
-        ) : isFileTreeLoading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <div className="text-sm text-text">Loading file tree...</div>
+        {settings.coreFeatures.git && (
+          <div className={cn("h-full", !isGitViewActive && "hidden")}>
+            <GitView repoPath={rootFolderPath} onFileSelect={handleFileSelect} />
           </div>
-        ) : (
-          <FileTree
-            files={files}
-            activePath={activePath}
-            updateActivePath={updateActivePath}
-            rootFolderPath={rootFolderPath}
-            onFileSelect={handleFileSelect}
-            onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
-            onCreateNewFolderInDirectory={handleCreateNewFolderInDirectory}
-            onDeletePath={handleDeletePath}
-            onUpdateFiles={setFiles}
-            onRefreshDirectory={refreshDirectory}
-            onRenamePath={handleRenamePath}
-            onRevealInFinder={handleRevealInFolder}
-            onFileMove={handleFileMove}
-            onDuplicatePath={handleDuplicatePath}
-          />
         )}
+
+        {settings.coreFeatures.search && (
+          <div className={cn("h-full", !isSearchViewActive && "hidden")}>
+            <SearchView
+              rootFolderPath={rootFolderPath}
+              allProjectFiles={allProjectFiles}
+              onFileSelect={(path, line, column) => handleFileSelect(path, false, line, column)}
+            />
+          </div>
+        )}
+
+        {settings.coreFeatures.remote && (
+          <div className={cn("h-full", !isRemoteViewActive && "hidden")}>
+            <RemoteConnectionView onFileSelect={handleFileSelect} />
+          </div>
+        )}
+
+        <div
+          className={cn(
+            "h-full",
+            (isGitViewActive || isSearchViewActive || isRemoteViewActive) && "hidden",
+          )}
+        >
+          {isFileTreeLoading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-sm text-text">Loading file tree...</div>
+            </div>
+          ) : (
+            <FileTree
+              files={files}
+              activePath={activePath}
+              updateActivePath={updateActivePath}
+              rootFolderPath={rootFolderPath}
+              onFileSelect={handleFileSelect}
+              onCreateNewFileInDirectory={handleCreateNewFileInDirectory}
+              onCreateNewFolderInDirectory={handleCreateNewFolderInDirectory}
+              onDeletePath={handleDeletePath}
+              onUpdateFiles={setFiles}
+              onRefreshDirectory={refreshDirectory}
+              onRenamePath={handleRenamePath}
+              onRevealInFinder={handleRevealInFolder}
+              onFileMove={handleFileMove}
+              onDuplicatePath={handleDuplicatePath}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ import {
   Upload,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { findFileInTree } from "@/file-system/controllers/file-tree-utils";
 import { moveFile, readDirectory, readFile } from "@/file-system/controllers/platform";
@@ -29,6 +29,7 @@ import type { GitFile, GitStatus } from "@/version-control/git/models/git-types"
 import FileIcon from "./file.icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
 import "./file-tree.css";
+import { useSettingsStore } from "@/settings/store";
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -77,6 +78,41 @@ const FileTree = ({
   const [gitIgnore, setGitIgnore] = useState<ReturnType<typeof ignore> | null>(null);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [deepestStickyFolder, setDeepestStickyFolder] = useState<string | null>(null);
+
+  const { settings } = useSettingsStore();
+
+  const userIgnore = useMemo(() => {
+    const ig = ignore();
+    if (settings.hiddenFilePatterns.length > 0) {
+      ig.add(settings.hiddenFilePatterns);
+    }
+    if (settings.hiddenDirectoryPatterns.length > 0) {
+      ig.add(settings.hiddenDirectoryPatterns.map((p) => (p.endsWith("/") ? p : `${p}/`)));
+    }
+    return ig;
+  }, [settings.hiddenFilePatterns, settings.hiddenDirectoryPatterns]);
+
+  const isUserHidden = useCallback(
+    (fullPath: string, isDir: boolean): boolean => {
+      let relative = fullPath.replace(/\\/g, "/");
+
+      if (rootFolderPath) {
+        const normRoot = rootFolderPath.replace(/\\/g, "/");
+        if (relative.startsWith(normRoot)) {
+          relative = relative.slice(normRoot.length);
+        }
+      }
+
+      if (relative.startsWith("/")) relative = relative.slice(1);
+
+      if (!relative || relative.trim() === "") return false;
+
+      if (isDir && !relative.endsWith("/")) relative += "/";
+
+      return userIgnore.ignores(relative);
+    },
+    [userIgnore, rootFolderPath],
+  );
 
   // Track scroll for deepest sticky folder detection
   useEffect(() => {
@@ -177,6 +213,11 @@ const FileTree = ({
       if (!relative || relative.trim() === "") return false;
 
       if (isDir && !relative.endsWith("/")) relative += "/";
+
+      // Explicitly do not ignore the .git directory
+      if (relative === ".git/" || relative === ".git") {
+        return false;
+      }
 
       return gitIgnore.ignores(relative);
     },
@@ -287,17 +328,19 @@ const FileTree = ({
   // ─────────────────────────────────────────────────────────────────
   const filteredFiles = useMemo(() => {
     const process = (items: FileEntry[]): FileEntry[] =>
-      items.map((item) => {
-        const ignored = isGitIgnored(item.path, item.isDir);
-        return {
-          ...item,
-          ignored,
-          children: item.children ? process(item.children) : undefined,
-        };
-      });
+      items
+        .filter((item) => !isUserHidden(item.path, item.isDir))
+        .map((item) => {
+          const ignored = isGitIgnored(item.path, item.isDir);
+          return {
+            ...item,
+            ignored,
+            children: item.children ? process(item.children) : undefined,
+          };
+        });
 
     return process(files);
-  }, [files, isGitIgnored]);
+  }, [files, isGitIgnored, isUserHidden]);
 
   // Use custom drag and drop
   const { dragState, startCustomDrag } = useCustomDragDrop(
@@ -1162,4 +1205,4 @@ const FileTree = ({
   );
 };
 
-export default FileTree;
+export default memo(FileTree);

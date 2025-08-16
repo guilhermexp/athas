@@ -5,11 +5,14 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import type { CodeEditorRef } from "@/components/editor/code-editor";
+import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
+import { editorAPI } from "@/extensions/editor-api";
 import { useFileTreeStore } from "@/file-explorer/controllers/file-tree-store";
 // Store imports - Note: Direct store communication via getState() is used here.
 // This is an acceptable Zustand pattern, though it creates coupling between stores.
 // See: https://github.com/pmndrs/zustand/discussions/1319
 import { useBufferStore } from "@/stores/buffer-store";
+import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { createSelectors } from "@/utils/zustand-selectors";
@@ -150,11 +153,14 @@ export const useFileSystemStore = createSelectors(
         column?: number,
         codeEditorRef?: React.RefObject<CodeEditorRef | null>,
       ) => {
+        const { updateActivePath } = useSidebarStore.getState();
+
         if (isDir) {
           await get().toggleFolder(path);
           return;
         }
 
+        updateActivePath(path);
         const fileName = getFilenameFromPath(path);
         const { openBuffer } = useBufferStore.getState().actions;
 
@@ -229,6 +235,23 @@ export const useFileSystemStore = createSelectors(
                 textarea.scrollTop = scrollTop;
               }
             });
+          }
+        }
+
+        // Scroll to line if specified
+        if (line) {
+          const textarea = document.querySelector(
+            "textarea.editor-textarea",
+          ) as HTMLTextAreaElement;
+          if (textarea) {
+            const { fontSize } = useEditorSettingsStore.getState();
+            const lineHeight = Math.ceil(fontSize * EDITOR_CONSTANTS.LINE_HEIGHT_MULTIPLIER);
+            const targetScrollTop = Math.max(0, (line - 1) * lineHeight);
+
+            const viewport = editorAPI.getViewportRef();
+            if (viewport) {
+              viewport.scrollTop = targetScrollTop;
+            }
           }
         }
       },

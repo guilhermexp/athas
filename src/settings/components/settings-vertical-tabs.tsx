@@ -1,4 +1,5 @@
 import {
+  Folder,
   Keyboard,
   Languages,
   Monitor,
@@ -32,6 +33,11 @@ const tabs: TabItem[] = [
     id: "editor",
     label: "Editor",
     icon: PenTool,
+  },
+  {
+    id: "fileTree",
+    label: "File Tree",
+    icon: Folder,
   },
   {
     id: "theme",

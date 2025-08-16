@@ -39,6 +39,9 @@ interface Settings {
   // Other
   extensionsActiveTab: "all" | "core" | "language-server" | "theme";
   maxOpenTabs: number;
+  //// File tree
+  hiddenFilePatterns: string[];
+  hiddenDirectoryPatterns: string[];
 }
 
 const defaultSettings: Settings = {
@@ -81,6 +84,9 @@ const defaultSettings: Settings = {
   // Other
   extensionsActiveTab: "all",
   maxOpenTabs: 10,
+  //// File tree
+  hiddenFilePatterns: [],
+  hiddenDirectoryPatterns: [],
 };
 
 // Theme class constants
@@ -247,22 +253,6 @@ export const useSettingsStore = create(
 
           await saveSettingsToStore({ [key]: value });
         },
-
-        // The functions below aren't used?
-
-        // Get settings as formatted JSON string
-        // getSettingsJSON: () => {
-        //   return JSON.stringify(get().settings, null, 2);
-        // },
-
-        // // Save settings
-        // saveSettings: (newSettings: Settings) => {
-        //   set((state) => {
-        //     state.settings = newSettings;
-        //   });
-
-        //   saveSettingsToStore(newSettings);
-        // },
       }),
     ),
   ),
