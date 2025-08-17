@@ -1,7 +1,7 @@
 // Shell functionality - currently half-implemented
 // This module exists to maintain the module structure but contains no active code
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{env, path::Path};
 use tauri::command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,6 +12,21 @@ pub struct Shell {
    pub exec_unix: Option<String>,
 }
 
+// helper function to find appropriate executable for specific os
+// needs improvement
+fn find_exe_in_path(exe: &str) -> Option<String> {
+   env::var("PATH").ok().and_then(|paths| {
+      env::split_paths(&paths).find_map(|p| {
+         let full_path = p.join(exe);
+         if full_path.exists() {
+            Some(full_path.to_string_lossy().into_owned())
+         } else {
+            None
+         }
+      })
+   })
+}
+
 impl Shell {
    // returns a list of shells and paths for each shell and respective OS exe type
    pub fn get_shell_list() -> Vec<Shell> {
@@ -20,38 +35,37 @@ impl Shell {
             Shell {
                id: "cmd".into(),
                name: "Command Prompt".into(),
-               exec_win: Some(r"cmd.exe".into()),
+               exec_win: find_exe_in_path("cmd.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "powershell".into(),
                name: "Windows PowerShell".into(),
-               exec_win: Some(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe".into()),
+               exec_win: find_exe_in_path("powershell.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "pwsh".into(),
                name: "PowerShell Core".into(),
-               exec_win: Some("pwsh.exe".into()),
+               exec_win: find_exe_in_path("pwsh.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "nu".into(),
                name: "Nushell".into(),
-               // need to find a way to not hardcode the path
-               exec_win: Some(r"C:\Users\emcho\AppData\Local\Programs\nu\bin\nu.exe".into()),
+               exec_win: find_exe_in_path("nu.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "wsl".into(),
                name: "Windows Subsystem for Linux".into(),
-               exec_win: Some("wsl.exe".into()),
+               exec_win: find_exe_in_path("wsl.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "bash".into(),
                name: "Git Bash".into(),
-               exec_win: Some(r"C:\Program Files\Git\bin\bash.exe".into()),
+               exec_win: find_exe_in_path("bash.exe".into()),
                exec_unix: None,
             },
          ]
@@ -61,19 +75,25 @@ impl Shell {
                id: "bash".into(),
                name: "Bash".into(),
                exec_win: None,
-               exec_unix: Some("bin/bash".into()),
+               exec_unix: find_exe_in_path("bash".into()),
+            },
+            Shell {
+               id: "nu".into(),
+               name: "Nushell".into(),
+               exec_win: None,
+               exec_unix: find_exe_in_path("nu".into()),
             },
             Shell {
                id: "zsh".into(),
                name: "Zsh".into(),
                exec_win: None,
-               exec_unix: Some("bin/zsh".into()),
+               exec_unix: find_exe_in_path("zsh".into()),
             },
             Shell {
                id: "fish".into(),
                name: "Fish".into(),
                exec_win: None,
-               exec_unix: Some("bin/fish".into()),
+               exec_unix: find_exe_in_path("fish".into()),
             },
          ]
       }
