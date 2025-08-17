@@ -14,7 +14,7 @@ pub struct Shell {
 
 // helper function to find appropriate executable for specific os
 // needs improvement
-fn find_exe_in_path(exe: &str) -> Option<String> {
+fn shell_exe_in_path(exe: &str) -> Option<String> {
    env::var("PATH").ok().and_then(|paths| {
       env::split_paths(&paths).find_map(|p| {
          let full_path = p.join(exe);
@@ -35,37 +35,37 @@ impl Shell {
             Shell {
                id: "cmd".into(),
                name: "Command Prompt".into(),
-               exec_win: find_exe_in_path("cmd.exe".into()),
+               exec_win: shell_exe_in_path("cmd.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "powershell".into(),
                name: "Windows PowerShell".into(),
-               exec_win: find_exe_in_path("powershell.exe".into()),
+               exec_win: shell_exe_in_path("powershell.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "pwsh".into(),
                name: "PowerShell Core".into(),
-               exec_win: find_exe_in_path("pwsh.exe".into()),
+               exec_win: shell_exe_in_path("pwsh.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "nu".into(),
                name: "Nushell".into(),
-               exec_win: find_exe_in_path("nu.exe".into()),
+               exec_win: shell_exe_in_path("nu.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "wsl".into(),
                name: "Windows Subsystem for Linux".into(),
-               exec_win: find_exe_in_path("wsl.exe".into()),
+               exec_win: shell_exe_in_path("wsl.exe".into()),
                exec_unix: None,
             },
             Shell {
                id: "bash".into(),
                name: "Git Bash".into(),
-               exec_win: find_exe_in_path("bash.exe".into()),
+               exec_win: shell_exe_in_path("bash.exe".into()),
                exec_unix: None,
             },
          ]
@@ -75,25 +75,25 @@ impl Shell {
                id: "bash".into(),
                name: "Bash".into(),
                exec_win: None,
-               exec_unix: find_exe_in_path("bash".into()),
+               exec_unix: shell_exe_in_path("bash".into()),
             },
             Shell {
                id: "nu".into(),
                name: "Nushell".into(),
                exec_win: None,
-               exec_unix: find_exe_in_path("nu".into()),
+               exec_unix: shell_exe_in_path("nu".into()),
             },
             Shell {
                id: "zsh".into(),
                name: "Zsh".into(),
                exec_win: None,
-               exec_unix: find_exe_in_path("zsh".into()),
+               exec_unix: shell_exe_in_path("zsh".into()),
             },
             Shell {
                id: "fish".into(),
                name: "Fish".into(),
                exec_win: None,
-               exec_unix: find_exe_in_path("fish".into()),
+               exec_unix: shell_exe_in_path("fish".into()),
             },
          ]
       }
@@ -119,3 +119,28 @@ impl Shell {
 pub fn get_shells() -> Vec<Shell> {
    Shell::get_available_shells()
 }
+
+// need to find a way to make it open in a new tab
+// #[command]
+// pub fn execute_shell(shell_id: &str) -> Result<String, String> {
+//    let shell_list = Shell::get_available_shells();
+
+//    let shell = shell_list
+//       .into_iter()
+//       .find(|s| s.id == shell_id)
+//       .ok_or_else(|| format!("Shell {shell_id} not found in PATH"))?;
+
+//    let exe = if cfg!(windows) {
+//       shell
+//          .exec_win
+//          .ok_or("No Windows executable for the shell")?
+//    } else {
+//       shell.exec_unix.ok_or("No Unix executable for the shell")?
+//    };
+
+//    Command::new(exe)
+//       .output()
+//       .map_err(|e| format!("Failed to execute shell: {}", e))?;
+
+//    Ok(format!("Shell {} started", shell.name))
+// }

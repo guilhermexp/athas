@@ -329,28 +329,29 @@ const TerminalTabBar = ({
   });
 
   useEffect(() => {
+    // shell functions that will run in the terminal bar
     async function fetchShells() {
       try {
-        // invoke it from the rust source
         const res: Shell[] = await invoke("get_shells");
         setShells(res);
       } catch (err) {
         console.error(`Failed to load available shells ${err}`);
       }
     }
+    // idk what to fix?
+    // async function executeShell(shellId: string) {
+    //   try {
+    //     const res: Shell[] = await invoke("execute_shell", {
+    //       shell_id: shellId,
+    //     });
+    //     setShells(res);
+    //   } catch (err) {
+    //     console.error(`Failed to load executable for shell ${err}`);
+    //   }
+    // }
 
+    // executeShell("nu");
     fetchShells();
-    // TODO: Change placeholder code
-    // async function fetchShellExecutable(){
-    // same as fetchShell, but will search for it's respectable executable found in PATH
-    // try {
-    //   // invoke it from the rust source
-    //   const res: Shell[] = await invoke("get_executable");
-    //   setShells(res);
-    // } catch (err) {
-    //   console.error(`Failed to load executable for shell ${err}`);
-    // }
-    // }
   }, []);
 
   useEffect(() => {
@@ -393,7 +394,7 @@ const TerminalTabBar = ({
                 <Plus size={9} />
               </button>
             </Tooltip>
-            {/* Shell selecting menu */}
+
             <Tooltip content="Select a shell" side="top">
               <Dropdown
                 value={selectedShell}
@@ -401,7 +402,9 @@ const TerminalTabBar = ({
                   value: shell.id,
                   label: shell.name,
                 }))}
-                onChange={setSelectedShell}
+                onChange={(val) => {
+                  setSelectedShell(val);
+                }}
                 className={cn(
                   "flex items-center gap-0.5 px-1.5 py-1",
                   "text-text-lighter text-xs transition-colors hover:bg-hover",
@@ -612,36 +615,15 @@ const TerminalTabBar = ({
                 value: shell.id,
                 label: shell.name,
               }))}
-              onChange={setSelectedShell}
+              onChange={(val) => {
+                setSelectedShell(val);
+              }}
               className={cn(
                 "flex items-center gap-0.5 px-1.5 py-1",
                 "text-text-lighter text-xs transition-colors hover:bg-hover",
               )}
             ></Dropdown>
           </Tooltip>
-
-          {/*<Tooltip content="Select a shell" side="top">
-            <Dropdown
-              onChange={(val) => setShell(val)}
-              value={shell}
-              options={[
-                // The options for unix shells will be dimmed (not supported on windows)
-                // They are hardcoded for now until we connect the rust xterm to Dropdown component
-                { value: "powershell", label: "Windows Powershell" },
-                { value: "pwsh", label: "Powershell" },
-                { value: "nu", label: "Nushell" },
-                { value: "cmd", label: "Command Prompt" },
-                { value: "bash", label: "Git Bash" },
-
-                // { value: "zsh", label: "Zsh" },
-                // { value: "fish", label: "Fish" },
-              ]}
-              className={cn(
-                "flex items-center gap-0.5 px-1.5 py-1",
-                "text-text-lighter text-xs transition-colors hover:bg-hover",
-              )}
-            />
-          </Tooltip>*/}
         </div>
 
         {/* Floating tab name while dragging */}

@@ -239,6 +239,7 @@ fn main() {
          close_xterm_terminal,
          // Other commands for terminal (switching shells)
          get_shells,
+         // execute_shell,
          // SSH commands
          ssh_connect,
          ssh_disconnect,
