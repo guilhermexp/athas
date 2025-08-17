@@ -27,13 +27,13 @@ const GIT_STATUS_DEBOUNCE_MS = 500;
 import { findFileInTree } from "@/file-system/controllers/file-tree-utils";
 import { moveFile, readDirectory, readFile } from "@/file-system/controllers/platform";
 import type { ContextMenuState, FileEntry } from "@/file-system/models/app";
-import { usePersistentSettingsStore } from "@/settings/stores/persistent-settings-store";
 import { cn } from "@/utils/cn";
 import { getGitStatus } from "@/version-control/git/controllers/git";
 import type { GitFile, GitStatus } from "@/version-control/git/models/git-types";
 import FileIcon from "./file.icon";
 import { useCustomDragDrop } from "./file-tree-custom-dnd";
 import "./file-tree.css";
+import { useSettingsStore } from "@/settings/store";
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -83,18 +83,18 @@ const FileTree = ({
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [deepestStickyFolder, setDeepestStickyFolder] = useState<string | null>(null);
 
-  const { hiddenFilePatterns, hiddenDirectoryPatterns } = usePersistentSettingsStore();
+  const { settings } = useSettingsStore();
 
   const userIgnore = useMemo(() => {
     const ig = ignore();
-    if (hiddenFilePatterns.length > 0) {
-      ig.add(hiddenFilePatterns);
+    if (settings.hiddenFilePatterns.length > 0) {
+      ig.add(settings.hiddenFilePatterns);
     }
-    if (hiddenDirectoryPatterns.length > 0) {
-      ig.add(hiddenDirectoryPatterns.map((p) => (p.endsWith("/") ? p : `${p}/`)));
+    if (settings.hiddenDirectoryPatterns.length > 0) {
+      ig.add(settings.hiddenDirectoryPatterns.map((p) => (p.endsWith("/") ? p : `${p}/`)));
     }
     return ig;
-  }, [hiddenFilePatterns, hiddenDirectoryPatterns]);
+  }, [settings.hiddenFilePatterns, settings.hiddenDirectoryPatterns]);
 
   const isUserHidden = useCallback(
     (fullPath: string, isDir: boolean): boolean => {
