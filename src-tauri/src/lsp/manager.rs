@@ -53,7 +53,7 @@ impl LspManager {
          let local_path = std::env::current_dir()
             .context("Failed to get current directory")?
             .join("node_modules/.bin/typescript-language-server");
-         
+
          if local_path.exists() {
             log::info!("Using local TypeScript server: {:?}", local_path);
             return Ok(local_path);
@@ -73,7 +73,11 @@ impl LspManager {
          log::info!("Using bundled language server: {:?}", bundled_path);
          Ok(bundled_path)
       } else {
-         bail!("Language server '{}' not found. Please install it globally using: bun add -g typescript-language-server", server_name)
+         bail!(
+            "Language server '{}' not found. Please install it globally using: bun add -g \
+             typescript-language-server",
+            server_name
+         )
       }
    }
 
@@ -144,7 +148,7 @@ impl LspManager {
       character: u32,
    ) -> Result<Vec<CompletionItem>> {
       let start_time = Instant::now();
-      
+
       let client = self
          .get_client_for_file(file_path)
          .context("No LSP client for this file")?;
@@ -313,7 +317,7 @@ impl LspManager {
 
       match extension {
          "ts" => "typescript",
-         "tsx" => "typescriptreact", 
+         "tsx" => "typescriptreact",
          "js" | "mjs" | "cjs" => "javascript",
          "jsx" => "javascriptreact",
          "json" => "json",
