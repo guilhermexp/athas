@@ -858,14 +858,42 @@ export function TextEditor() {
   }, [content, onChange, updateBufferContent, activeBufferId]);
 
   const handleMoveLineUp = useCallback(() => {
-    // Move current line up - not implemented yet
-    console.log("Move line up - not implemented yet");
-  }, []);
+    const cursorPos = useEditorCursorStore.getState().cursorPosition;
+    const line = cursorPos.line;
+    const lines = content.split("\n");
+
+    const temp = lines[line] || "";
+    if (line === 0) return;
+    // Move current line up
+    lines[line] = lines[line - 1];
+    lines[line - 1] = temp;
+
+    const newContent = lines.join("\n");
+
+    onChange?.(newContent);
+    if (activeBufferId) {
+      updateBufferContent(activeBufferId, newContent);
+    }
+  }, [useEditorCursorStore, content, onChange, updateBufferContent, activeBufferId]);
 
   const handleMoveLineDown = useCallback(() => {
-    // Move current line down - not implemented yet
-    console.log("Move line down - not implemented yet");
-  }, []);
+    const cursorPos = useEditorCursorStore.getState().cursorPosition;
+    const line = cursorPos.line;
+    const lines = content.split("\n");
+
+    const temp = lines[line + 1] || "";
+    if (line + 1 >= lines.length) return;
+    // Move current line down
+    lines[line + 1] = lines[line];
+    lines[line] = temp;
+
+    const newContent = lines.join("\n");
+
+    onChange?.(newContent);
+    if (activeBufferId) {
+      updateBufferContent(activeBufferId, newContent);
+    }
+  }, [useEditorCursorStore, content, onChange, updateBufferContent, activeBufferId]);
 
   const handleInsertLine = useCallback(() => {
     if (textareaRef.current) {
