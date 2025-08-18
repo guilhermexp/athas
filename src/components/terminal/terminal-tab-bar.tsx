@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import {
   Copy,
   Maximize2,
@@ -11,8 +12,9 @@ import {
   X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import type { Terminal } from "@/types/terminal";
+import type { Shell, Terminal } from "@/types/terminal";
 import { cn } from "@/utils/cn";
+import Dropdown from "../ui/dropdown";
 import KeybindingBadge from "../ui/keybinding-badge";
 import Tooltip from "../ui/tooltip";
 
@@ -189,6 +191,8 @@ const TerminalTabBar = ({
   const [isDragging, setIsDragging] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const [shells, setShells] = useState<Shell[]>([]);
+  const [selectedShell, setSelectedShell] = useState<string>("");
   const [dragStartPosition, setDragStartPosition] = useState<{
     x: number;
     y: number;
@@ -325,6 +329,32 @@ const TerminalTabBar = ({
   });
 
   useEffect(() => {
+    // shell functions that will run in the terminal bar
+    async function fetchShells() {
+      try {
+        const res: Shell[] = await invoke("get_shells");
+        setShells(res);
+      } catch (err) {
+        console.error(`Failed to load available shells ${err}`);
+      }
+    }
+    // idk what to fix?
+    // async function executeShell(shellId: string) {
+    //   try {
+    //     const res: Shell[] = await invoke("execute_shell", {
+    //       shell_id: shellId,
+    //     });
+    //     setShells(res);
+    //   } catch (err) {
+    //     console.error(`Failed to load executable for shell ${err}`);
+    //   }
+    // }
+
+    // executeShell("nu");
+    fetchShells();
+  }, []);
+
+  useEffect(() => {
     if (draggedIndex === null) return;
 
     const move = (e: MouseEvent) => handleMouseMove(e);
@@ -352,17 +382,36 @@ const TerminalTabBar = ({
           <span className="font-mono text-text-lighter text-xs">No terminals</span>
         </div>
         {onNewTerminal && (
-          <Tooltip content="New Terminal (Cmd+T)" side="bottom">
-            <button
-              onClick={onNewTerminal}
-              className={cn(
-                "flex items-center gap-0.5 px-1.5 py-1",
-                "text-text-lighter text-xs transition-colors hover:bg-hover",
-              )}
-            >
-              <Plus size={9} />
-            </button>
-          </Tooltip>
+          <div className="flex items-center gap-1">
+            <Tooltip content="New Terminal (Cmd+T)" side="bottom">
+              <button
+                onClick={onNewTerminal}
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-1",
+                  "text-text-lighter text-xs transition-colors hover:bg-hover",
+                )}
+              >
+                <Plus size={9} />
+              </button>
+            </Tooltip>
+
+            <Tooltip content="Select a shell" side="top">
+              <Dropdown
+                value={selectedShell}
+                options={shells.map((shell) => ({
+                  value: shell.id,
+                  label: shell.name,
+                }))}
+                onChange={(val) => {
+                  setSelectedShell(val);
+                }}
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-1",
+                  "text-text-lighter text-xs transition-colors hover:bg-hover",
+                )}
+              ></Dropdown>
+            </Tooltip>
+          </div>
         )}
       </div>
     );
@@ -495,20 +544,19 @@ const TerminalTabBar = ({
         {/* Right side - Action buttons */}
         <div className="flex items-center gap-0.5">
           {/* New Terminal Button */}
-          {onNewTerminal && (
+          <div className="flex items-center gap-1">
             <Tooltip content="New Terminal (Cmd+T)" side="bottom">
               <button
                 onClick={onNewTerminal}
                 className={cn(
-                  "flex flex-shrink-0 cursor-pointer items-center p-1",
-                  "text-text-lighter transition-colors hover:bg-hover",
+                  "flex items-center gap-0.5 px-1.5 py-1",
+                  "text-text-lighter text-xs transition-colors hover:bg-hover",
                 )}
               >
-                <Plus size={12} />
+                <Plus size={9} />
               </button>
             </Tooltip>
-          )}
-
+          </div>
           {/* Split View Button */}
           {onSplitView && (
             <Tooltip
@@ -528,7 +576,6 @@ const TerminalTabBar = ({
               </button>
             </Tooltip>
           )}
-
           {/* Full Screen Button */}
           {onFullScreen && (
             <Tooltip
@@ -546,7 +593,6 @@ const TerminalTabBar = ({
               </button>
             </Tooltip>
           )}
-
           {/* Close Panel Button */}
           {onClosePanel && (
             <Tooltip content="Close Terminal Panel" side="bottom">
@@ -561,7 +607,25 @@ const TerminalTabBar = ({
               </button>
             </Tooltip>
           )}
+          {/* Shell selecting menu */}
+          <Tooltip content="Select a shell" side="top">
+            <Dropdown
+              value={selectedShell}
+              options={shells.map((shell) => ({
+                value: shell.id,
+                label: shell.name,
+              }))}
+              onChange={(val) => {
+                setSelectedShell(val);
+              }}
+              className={cn(
+                "flex items-center gap-0.5 px-1.5 py-1",
+                "text-text-lighter text-xs transition-colors hover:bg-hover",
+              )}
+            ></Dropdown>
+          </Tooltip>
         </div>
+
         {/* Floating tab name while dragging */}
         {isDragging && draggedIndex !== null && dragCurrentPosition && (
           <div

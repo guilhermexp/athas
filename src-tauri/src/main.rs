@@ -11,13 +11,13 @@ use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
 use xterm_terminal::XtermManager;
-
 mod claude_bridge;
 mod commands;
 mod file_watcher;
 mod logger;
 mod lsp;
 mod menu;
+use crate::shell::get_shells;
 mod ssh;
 mod terminal;
 mod xterm_terminal;
@@ -238,6 +238,9 @@ fn main() {
          terminal_write,
          terminal_resize,
          close_xterm_terminal,
+         // Other commands for terminal (switching shells)
+         get_shells,
+         // execute_shell,
          // SSH commands
          ssh_connect,
          ssh_disconnect,
