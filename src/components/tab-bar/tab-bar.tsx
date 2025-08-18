@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSettingsStore } from "@/settings/store";
 import { useBufferStore } from "@/stores/buffer-store";
+import { useEditorCursorStore } from "@/stores/editor-cursor-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import type { Buffer } from "@/types/buffer";
 import TabBarItem from "./tab-bar-item";
@@ -67,6 +68,7 @@ const TabBar = ({ paneId }: TabBarProps) => {
   const tabBarRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragStateRef = useRef(dragState);
+  const { clearPositionCache } = useEditorCursorStore.getState().actions;
 
   useEffect(() => {
     dragStateRef.current = dragState;
@@ -423,7 +425,11 @@ const TabBar = ({ paneId }: TabBarProps) => {
                 onContextMenu={(e) => handleContextMenu(e, buffer)}
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
-                handleTabClose={handleTabClose}
+                handleTabClose={(id) => {
+                  handleTabClose(id);
+                  // Clear cached position for this buffer
+                  clearPositionCache(id);
+                }}
               />
             );
           })}
