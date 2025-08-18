@@ -67,11 +67,7 @@ impl LspRegistry {
 
    fn is_javascript_or_typescript_project(&self, workspace: &Path) -> bool {
       // Check for TypeScript/JavaScript project indicators
-      let config_indicators = [
-         "tsconfig.json",
-         "package.json", 
-         "jsconfig.json",
-      ];
+      let config_indicators = ["tsconfig.json", "package.json", "jsconfig.json"];
 
       let file_extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
@@ -83,9 +79,22 @@ impl LspRegistry {
       }
 
       // Check for source files in common directories and root
-      let source_dirs = ["src", "lib", "app", "pages", "components", "javascript", "js", "."];
+      let source_dirs = [
+         "src",
+         "lib",
+         "app",
+         "pages",
+         "components",
+         "javascript",
+         "js",
+         ".",
+      ];
       for dir in &source_dirs {
-         let dir_path = if *dir == "." { workspace.to_path_buf() } else { workspace.join(dir) };
+         let dir_path = if *dir == "." {
+            workspace.to_path_buf()
+         } else {
+            workspace.join(dir)
+         };
          if dir_path.exists() && dir_path.is_dir() {
             // Walk through the directory looking for TS/JS files
             if let Ok(entries) = std::fs::read_dir(&dir_path) {
