@@ -26,6 +26,9 @@ interface EditorCompletionState {
   hoverInfo: HoverInfo | null;
   isHovering: boolean;
 
+  // Completion application state
+  isApplyingCompletion: boolean;
+
   // AI Completion State
   aiCompletion: boolean;
 
@@ -42,6 +45,7 @@ interface EditorCompletionActions {
   setCompletionPosition: (position: CompletionPosition) => void;
   setHoverInfo: (info: HoverInfo | null) => void;
   setIsHovering: (hovering: boolean) => void;
+  setIsApplyingCompletion: (applying: boolean) => void;
   setAiCompletion: (enabled: boolean) => void;
 }
 
@@ -57,6 +61,9 @@ export const useEditorCompletionStore = createSelectors(
     hoverInfo: null,
     isHovering: false,
 
+    // Completion application state
+    isApplyingCompletion: false,
+
     // AI Completion State
     aiCompletion: false,
     actions: {
@@ -70,6 +77,7 @@ export const useEditorCompletionStore = createSelectors(
         set({ completionPosition: position }),
       setHoverInfo: (info: HoverInfo | null) => set({ hoverInfo: info }),
       setIsHovering: (hovering: boolean) => set({ isHovering: hovering }),
+      setIsApplyingCompletion: (applying: boolean) => set({ isApplyingCompletion: applying }),
       setAiCompletion: (enabled: boolean) => set({ aiCompletion: enabled }),
     },
   })),

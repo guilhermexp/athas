@@ -7,6 +7,7 @@ import { LspClient } from "@/lib/lsp/lsp-client";
 import { useSettingsStore } from "@/settings/store";
 import { useAppStore } from "@/stores/app-store";
 import { useBufferStore } from "@/stores/buffer-store";
+import { useEditorCompletionStore } from "@/stores/editor-completion-store";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
 import { useEditorInstanceStore } from "@/stores/editor-instance-store";
 import { useEditorSearchStore } from "@/stores/editor-search-store";
@@ -149,10 +150,15 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
   // Track typing speed for dynamic debouncing
   const lastTypeTimeRef = useRef<number>(Date.now());
   const typingSpeedRef = useRef<number>(500);
+  const isApplyingCompletion = useEditorCompletionStore.use.isApplyingCompletion();
+  const timer = useRef<NodeJS.Timeout>(undefined);
 
   // Trigger LSP completion on cursor position change
   useEffect(() => {
-    if (!filePath || !editorRef.current) return;
+    if (!filePath || !editorRef.current || isApplyingCompletion) {
+      timer.current && clearTimeout(timer.current);
+      return;
+    }
 
     // Calculate typing speed
     const now = Date.now();
@@ -169,7 +175,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
     }
 
     // Debounce completion trigger with dynamic delay
-    const timer = setTimeout(() => {
+    timer.current = setTimeout(() => {
       lspActions.requestCompletion({
         filePath,
         cursorPos: cursorPosition.offset,
@@ -178,8 +184,8 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
       });
     }, typingSpeedRef.current);
 
-    return () => clearTimeout(timer);
-  }, [cursorPosition, filePath, value, lspActions]);
+    return () => clearTimeout(timer.current);
+  }, [cursorPosition, filePath, value, lspActions, isApplyingCompletion]);
 
   // Scroll management
   useEditorScroll(editorRef, null);
