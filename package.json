@@ -73,19 +73,20 @@
     "@vitejs/plugin-react": "^4.7.0",
     "code-inspector-plugin": "^1.0.4",
     "concurrently": "^9.2.0",
+    "lint-staged": "^16.1.5",
     "simple-git-hooks": "^2.13.0",
     "typescript": "^5.8.3",
     "typescript-language-server": "^4.3.4",
     "vite": "^7.0.5"
   },
   "simple-git-hooks": {
-    "pre-commit": "bun check:all",
+    "pre-commit": "npx lint-staged",
+    "pre-push": "bun check:all",
     "commit-msg": "bun commitlint --edit $1"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json}": [
-      "biome check --no-errors-on-unmatched"
-    ]
+    "*.{ts,tsx,js,jsx,json}": "biome check --no-errors-on-unmatched",
+    "*.rs": "cargo fmt --all -- --check"
   },
   "engines": {
     "node": ">=22.0.0"

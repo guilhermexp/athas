@@ -188,6 +188,8 @@ export const useLspStore = createSelectors(
           return;
         }
 
+        completionActions.setIsApplyingCompletion(false);
+
         // Extract the current prefix being typed
         const prefix = extractPrefix(value, cursorPos);
         completionActions.setCurrentPrefix(prefix);
@@ -313,6 +315,8 @@ export const useLspStore = createSelectors(
 
       applyCompletion: ({ completion, value, cursorPos }) => {
         const { actions: completionActions } = useEditorCompletionStore.getState();
+
+        completionActions.setIsApplyingCompletion(true);
 
         const before = value.substring(0, cursorPos);
         const after = value.substring(cursorPos);
