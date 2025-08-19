@@ -73,10 +73,21 @@ function App() {
 
   if (shouldShowWelcome) {
     return (
-      <div>
+      <div className="zoom-wrapper">
         <FontPreloader />
         <FontStyleInjector />
-        <div style={{ zoom: zoomLevel }}>
+        <div
+          className="zoom-container h-full w-full"
+          style={
+            {
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: "top left",
+              width: `${100 / zoomLevel + 0.1}%`,
+              height: `${100 / zoomLevel + 0.1}%`,
+              "--zoom-level": zoomLevel,
+            } as React.CSSProperties
+          }
+        >
           <WelcomeScreen
             onOpenFolder={handleOpenFolder}
             recentFolders={recentFolders}
@@ -90,12 +101,22 @@ function App() {
   }
 
   return (
-    <div className={cn("flex h-screen w-screen flex-col overflow-hidden bg-transparent")}>
+    <div className={cn("zoom-wrapper h-screen w-screen overflow-hidden bg-transparent")}>
       <FontPreloader />
       <FontStyleInjector />
       <div
-        className={cn("window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg")}
-        style={{ zoom: zoomLevel }}
+        className={cn(
+          "zoom-container window-container flex h-full w-full flex-col overflow-hidden bg-primary-bg",
+        )}
+        style={
+          {
+            transform: `scale(${zoomLevel})`,
+            transformOrigin: "top left",
+            width: `${100 / zoomLevel}%`,
+            height: `${100 / zoomLevel}%`,
+            "--zoom-level": zoomLevel,
+          } as React.CSSProperties
+        }
       >
         <MainLayout />
       </div>
