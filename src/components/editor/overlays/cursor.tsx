@@ -5,16 +5,14 @@ import { useEditorCursorStore } from "@/stores/editor-cursor-store";
 import { useEditorLayoutStore } from "@/stores/editor-layout-store";
 import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 
-interface CursorRendererProps {
-  visible?: boolean;
-}
-
-export function Cursor({ visible = true }: CursorRendererProps) {
+export function Cursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { scrollTop, scrollLeft } = useEditorLayoutStore();
   const { lineHeight, charWidth, gutterWidth } = useEditorLayout();
   const showLineNumbers = useEditorSettingsStore.use.lineNumbers();
+  const visible = useEditorCursorStore((state) => state.cursorVisible);
+
   // Update position without re-rendering
   useEffect(() => {
     if (!cursorRef.current || !visible) return;
