@@ -1,8 +1,21 @@
 import Dropdown from "@/components/ui/dropdown";
 import Section, { SettingRow } from "@/components/ui/section";
 import Switch from "@/components/ui/switch";
+import { useSettingsStore } from "@/settings/store";
 
 export const LanguageSettings = () => {
+  const settings = useSettingsStore((state) => state.settings);
+  const updateSetting = useSettingsStore((state) => state.updateSetting);
+  // Extract individual settings for easier use
+  const {
+    defaultLanguage,
+    autoDetectLanguage,
+    formatOnSave,
+    formatter,
+    autoCompletion,
+    parameterHints,
+  } = settings;
+
   const languageOptions = [
     { value: "auto", label: "Auto Detect" },
     { value: "javascript", label: "JavaScript" },
@@ -34,9 +47,9 @@ export const LanguageSettings = () => {
           description="Default syntax highlighting for new files"
         >
           <Dropdown
-            value="auto"
+            value={defaultLanguage}
             options={languageOptions}
-            onChange={() => {}}
+            onChange={(value) => updateSetting("defaultLanguage", value)}
             className="w-28"
             size="xs"
           />
@@ -46,20 +59,28 @@ export const LanguageSettings = () => {
           label="Auto-detect Language"
           description="Automatically detect file language from extension"
         >
-          <Switch checked={true} onChange={() => {}} size="sm" />
+          <Switch
+            checked={autoDetectLanguage}
+            onChange={(checked) => updateSetting("autoDetectLanguage", checked)}
+            size="sm"
+          />
         </SettingRow>
       </Section>
 
       <Section title="Code Formatting">
         <SettingRow label="Format on Save" description="Automatically format code when saving">
-          <Switch checked={false} onChange={() => {}} size="sm" />
+          <Switch
+            checked={formatOnSave}
+            onChange={(checked) => updateSetting("formatOnSave", checked)}
+            size="sm"
+          />
         </SettingRow>
 
         <SettingRow label="Default Formatter" description="Choose default code formatter">
           <Dropdown
-            value="prettier"
+            value={formatter}
             options={formatOptions}
-            onChange={() => {}}
+            onChange={(value) => updateSetting("formatter", value)}
             className="w-24"
             size="xs"
           />
@@ -68,11 +89,19 @@ export const LanguageSettings = () => {
 
       <Section title="IntelliSense">
         <SettingRow label="Auto Completion" description="Show completion suggestions while typing">
-          <Switch checked={true} onChange={() => {}} size="sm" />
+          <Switch
+            checked={autoCompletion}
+            onChange={(checked) => updateSetting("autoCompletion", checked)}
+            size="sm"
+          />
         </SettingRow>
 
         <SettingRow label="Parameter Hints" description="Show function parameter hints">
-          <Switch checked={true} onChange={() => {}} size="sm" />
+          <Switch
+            checked={parameterHints}
+            onChange={(checked) => updateSetting("parameterHints", checked)}
+            size="sm"
+          />
         </SettingRow>
       </Section>
     </div>

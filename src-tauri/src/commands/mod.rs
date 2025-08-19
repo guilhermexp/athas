@@ -1,5 +1,6 @@
 pub mod claude;
 pub mod font;
+pub mod format;
 pub mod fs;
 pub mod fuzzy;
 pub mod git;
@@ -16,6 +17,7 @@ pub mod xterm;
 
 pub use claude::*;
 pub use font::*;
+pub use format::*;
 pub use fs::*;
 pub use fuzzy::*;
 pub use git::*;
