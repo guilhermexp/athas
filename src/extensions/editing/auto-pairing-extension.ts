@@ -148,7 +148,8 @@ export class AutoPairingExtension implements EditorExtension {
     const currentLine = lines[position.line] || "";
 
     // Check if the character after cursor matches the key
-    if (currentLine[position.column] === key) {
+    // @ts-expect-error - https://docs.rs/lsp-positions/latest/lsp_positions/struct.Position.html
+    if (currentLine[position.character] === key) {
       return {
         skipChar: key,
         newCursorOffset: 1,
