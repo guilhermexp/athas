@@ -37,6 +37,7 @@ export function TextEditor() {
   const lines = useEditorViewStore.use.lines();
   const { getContent } = useEditorViewStore.use.actions();
   const { updateBufferContent } = useBufferStore.use.actions();
+  const { setCursorVisibility, restorePositionForFile } = useEditorCursorStore.use.actions();
   const activeBufferId = useBufferStore.use.activeBufferId();
   const { onChange, disabled, filePath, editorRef } = useEditorInstanceStore();
   const { setViewportHeight } = useEditorLayoutStore.use.actions();
@@ -326,6 +327,17 @@ export function TextEditor() {
     }
   }, [lines, setCursorPosition, setSelection]);
 
+  // Handle textarea blur event
+  const handleTextareaBlur = useCallback(() => {
+    setContextMenu({ isOpen: false, position: { x: 0, y: 0 } });
+    setCursorVisibility(false);
+  }, [setContextMenu, setCursorVisibility]);
+
+  // Handle textarea focus event
+  const handleTextareaFocus = useCallback(() => {
+    setCursorVisibility(true);
+  }, [setCursorVisibility]);
+
   useEffect(() => {
     const decorationsChanged =
       searchDecorations.length !== previousSearchDecorationsRef.current.length ||
@@ -368,22 +380,10 @@ export function TextEditor() {
     return () => {
       document.removeEventListener("selectionchange", handleDocumentSelectionChange);
     };
-  });
+  }, [handleSelectionChange]);
 
   // Focus textarea on mount and setup extension system
   useEffect(() => {
-    if (textareaRef.current && !disabled) {
-      textareaRef.current.focus();
-      // Delay setting selection to ensure content is loaded
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = 0;
-          textareaRef.current.selectionEnd = 0;
-          handleSelectionChange();
-        }
-      }, 0);
-    }
-
     // Set textarea ref in editor API
     editorAPI.setTextareaRef(textareaRef.current);
 
@@ -451,15 +451,32 @@ export function TextEditor() {
     }
   }, [filePath]);
 
-  // Reset cursor position when switching to a new file
-  useEffect(() => {
-    // Only reset cursor when activeBufferId changes (switching files)
-    if (textareaRef.current && content !== "") {
-      textareaRef.current.selectionStart = 0;
-      textareaRef.current.selectionEnd = 0;
+  const restoreCursorPosition = useCallback(
+    (bufferId: string) => {
+      if (!textareaRef.current) return;
+
+      const restored = restorePositionForFile(bufferId);
+
+      if (restored) {
+        const cursorPosition = useEditorCursorStore.getState().cursorPosition;
+        textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
+          cursorPosition.offset;
+      } else {
+        textareaRef.current.selectionStart = 0;
+        textareaRef.current.selectionEnd = 0;
+      }
+
       handleSelectionChange();
+    },
+    [content, handleSelectionChange],
+  );
+
+  // Restore cursor position when switching to a new file
+  useEffect(() => {
+    if (activeBufferId) {
+      restoreCursorPosition(activeBufferId);
     }
-  }, [activeBufferId]); // Only depend on activeBufferId, not content
+  }, [activeBufferId, restoreCursorPosition]);
 
   // Update editor API by subscribing to cursor store changes
   useEffect(() => {
@@ -472,16 +489,12 @@ export function TextEditor() {
     return unsubscribe;
   }, []);
 
-  // Update textarea ref in editor API when it changes
   useEffect(() => {
+    // Update textarea ref in editor API when it changes
     editorAPI.setTextareaRef(textareaRef.current);
-  }, []);
 
-  // Update viewport ref in editor API when it changes
-  useEffect(() => {
-    if (viewportRef.current) {
-      editorAPI.setViewportRef(viewportRef.current);
-    }
+    // Update viewport ref in editor API when it changes
+    viewportRef.current && editorAPI.setViewportRef(viewportRef.current);
   }, []);
 
   // Update viewport height when container size changes
@@ -975,11 +988,12 @@ export function TextEditor() {
         value={content}
         onChange={handleTextareaChange}
         onInput={handleTextareaChange}
+        onBlur={handleTextareaBlur}
+        onFocus={handleTextareaFocus}
         onKeyDown={handleKeyDown}
         onSelect={handleSelectionChange}
         onKeyUp={handleSelectionChange}
         onMouseDown={handleSelectionChange}
-        onMouseMove={handleSelectionChange}
         onMouseUp={handleSelectionChange}
         onContextMenu={handleContextMenu}
         onScroll={() => {
