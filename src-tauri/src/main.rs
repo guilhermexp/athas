@@ -280,6 +280,8 @@ fn main() {
          // Fuzzy matching commands
          fuzzy_match,
          filter_completions,
+         // Format commands
+         format_code,
       ])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");

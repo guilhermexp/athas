@@ -3,6 +3,7 @@ import { immer } from "zustand/middleware/immer";
 import { createWithEqualityFn } from "zustand/traditional";
 import { readFileContent } from "@/file-system/controllers/file-operations";
 import { useRecentFilesStore } from "@/file-system/controllers/recent-files-store";
+import { detectLanguageFromFileName } from "@/utils/language-detection";
 import { createSelectors } from "@/utils/zustand-selectors";
 import type { MultiFileDiff } from "@/version-control/diff-viewer/models/diff-types";
 import type { GitDiff } from "@/version-control/git/models/git-types";
@@ -19,6 +20,7 @@ interface Buffer {
   isSQLite: boolean;
   isDiff: boolean;
   isActive: boolean;
+  language?: string; // File language for syntax highlighting and formatting
   // For diff buffers, store the parsed diff data (single or multi-file)
   diffData?: GitDiff | MultiFileDiff;
   // Cached syntax highlighting tokens
@@ -137,6 +139,7 @@ export const useBufferStore = createSelectors(
             isSQLite,
             isDiff,
             isActive: true,
+            language: detectLanguageFromFileName(name),
             diffData,
             tokens: [],
           };

@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EDITOR_CONSTANTS } from "@/constants/editor-constants";
@@ -14,6 +15,7 @@ import {
   usePerformanceMonitor,
   useRAFCallback,
 } from "@/hooks/use-performance";
+import { useSettingsStore } from "@/settings/store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useEditorCompletionStore } from "@/stores/editor-completion-store";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
@@ -845,10 +847,39 @@ export function TextEditor() {
     console.log("Toggle comment - not implemented yet");
   }, []);
 
-  const handleFormat = useCallback(() => {
-    // Format document - would integrate with LSP or prettier
-    console.log("Format document - not implemented yet");
-  }, []);
+  const handleFormat = useCallback(async () => {
+    if (!content.trim()) return;
+
+    try {
+      const { formatter } = useSettingsStore.getState().settings;
+      // Determine language from active buffer
+      const activeBuffer = useBufferStore.getState().buffers.find((b) => b.id === activeBufferId);
+      const language = activeBuffer?.language || "javascript";
+
+      const { success, formatted_content, error } = await invoke<{
+        success: boolean;
+        formatted_content: string;
+        error?: string;
+      }>("format_code", {
+        request: {
+          content,
+          language,
+          formatter,
+        },
+      });
+
+      if (success && formatted_content !== content) {
+        onChange?.(formatted_content);
+        if (activeBufferId) {
+          updateBufferContent(activeBufferId, formatted_content);
+        }
+      } else if (error) {
+        console.warn("Format error:", error);
+      }
+    } catch (error) {
+      console.error("Failed to format document:", error);
+    }
+  }, [content, onChange, updateBufferContent, activeBufferId]);
 
   const handleToggleCase = useCallback(() => {
     const selection = useEditorCursorStore.getState().selection;

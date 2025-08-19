@@ -31,7 +31,12 @@ interface Settings {
   // Keyboard
   //  > nothing here, yet
   // Language
-  //  > nothing here, yet
+  defaultLanguage: string;
+  autoDetectLanguage: boolean;
+  formatOnSave: boolean;
+  formatter: string;
+  autoCompletion: boolean;
+  parameterHints: boolean;
   // Features
   coreFeatures: CoreFeaturesState;
   // Advanced
@@ -68,7 +73,12 @@ const defaultSettings: Settings = {
   // Keyboard
   //  > nothing here, yet
   // Language
-  //  > nothing here, yet
+  defaultLanguage: "auto",
+  autoDetectLanguage: true,
+  formatOnSave: false,
+  formatter: "prettier",
+  autoCompletion: true,
+  parameterHints: true,
   // Features
   coreFeatures: {
     git: true,
@@ -209,19 +219,27 @@ const getInitialSettings = async (): Promise<Settings> => {
   return loadedSettings;
 };
 
-// Load settings and apply theme
-const initialSettings = defaultSettings;
+const initializeSettings = async () => {
+  if (typeof window !== "undefined") {
+    try {
+      const loadedSettings = await getInitialSettings();
+      applyTheme(loadedSettings.theme);
 
-if (typeof window !== "undefined") {
-  const initialSettings = await getInitialSettings();
-  applyTheme(initialSettings.theme);
-}
+      const store = useSettingsStore.getState();
+      store.initializeSettings(loadedSettings);
+    } catch (error) {
+      console.error("Failed to initialize settings:", error);
+    }
+  }
+};
+
+initializeSettings();
 
 export const useSettingsStore = create(
   immer(
     combine(
       {
-        settings: initialSettings,
+        settings: defaultSettings,
       },
       (set) => ({
         // Update settings from JSON string
@@ -240,6 +258,12 @@ export const useSettingsStore = create(
             console.error("Error parsing settings JSON:", error);
             return false;
           }
+        },
+
+        initializeSettings: (loadedSettings: Settings) => {
+          set((state) => {
+            state.settings = loadedSettings;
+          });
         },
 
         // Update individual setting
