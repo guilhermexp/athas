@@ -45,6 +45,10 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Add additional Rust targets
+        if: matrix.target != ''
+        run: rustup target add ${{ matrix.target }}
+
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
@@ -74,6 +78,8 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: 'Athas v__VERSION__'
