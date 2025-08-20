@@ -4,6 +4,13 @@ export interface Position {
   offset: number;
 }
 
+// https://docs.rs/lsp-positions/latest/lsp_positions/struct.Position.html
+export interface LSPPosition {
+  line: number;
+  character: number;
+  offset: number;
+}
+
 export interface Range {
   start: Position;
   end: Position;
