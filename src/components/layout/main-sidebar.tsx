@@ -41,6 +41,7 @@ export const MainSidebar = () => {
     isRemoteViewActive,
     setActiveView,
     setProjectNameMenu,
+    isExtensionsViewActive,
   } = useUIState();
   const { getProjectName } = useProjectStore();
 
@@ -107,6 +108,7 @@ export const MainSidebar = () => {
         isGitViewActive={isGitViewActive}
         isSearchViewActive={isSearchViewActive}
         isRemoteViewActive={isRemoteViewActive}
+        isExtensionsViewActive={isExtensionsViewActive}
         coreFeatures={settings.coreFeatures}
         onViewChange={setActiveView}
         onOpenExtensions={onOpenExtensions}
