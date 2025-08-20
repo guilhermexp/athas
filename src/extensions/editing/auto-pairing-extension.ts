@@ -1,5 +1,5 @@
 import { useBufferStore } from "@/stores/buffer-store";
-import type { Position } from "@/types/editor-types";
+import type { LSPPosition, Position } from "@/types/editor-types";
 import type { EditorAPI, EditorExtension } from "../extension-types";
 
 interface AutoPair {
@@ -12,7 +12,7 @@ interface PairContext {
   beforeCursor: string;
   afterCursor: string;
   lineContent: string;
-  position: Position;
+  position: LSPPosition;
   filePath?: string;
 }
 
@@ -56,6 +56,7 @@ export class AutoPairingExtension implements EditorExtension {
   ];
 
   private readonly skipChars = new Set(['"', "'", "`", ")", "]", "}", ">"]);
+  private readonly quoteChars = new Set(['"', "'", "`"]);
 
   async initialize(editor: EditorAPI): Promise<void> {
     this.editor = editor;
@@ -65,11 +66,15 @@ export class AutoPairingExtension implements EditorExtension {
     // No manual cleanup needed - handled by extension manager
   }
 
-  onKeyDown = (data: { event: KeyboardEvent; content: string; position: Position }) => {
+  onKeyDown = (data: { event: KeyboardEvent; content: string; position: LSPPosition }) => {
     this.handleKeyDown(data);
   };
 
-  private handleKeyDown = (data: { event: KeyboardEvent; content: string; position: Position }) => {
+  private handleKeyDown = (data: {
+    event: KeyboardEvent;
+    content: string;
+    position: LSPPosition;
+  }) => {
     const { event, content, position } = data;
 
     // Don't interfere with modifiers
@@ -85,18 +90,22 @@ export class AutoPairingExtension implements EditorExtension {
       if (result) {
         event.preventDefault();
         this.applyAutoPair(result);
+        return;
       }
     }
+
     // Handle skip-over for closing characters
-    else if (this.skipChars.has(key)) {
+    if (this.skipChars.has(key)) {
       const result = this.handleSkipOver(key, content, position);
       if (result) {
         event.preventDefault();
         this.applySkipOver(result);
+        return;
       }
     }
+
     // Handle backspace for pair deletion
-    else if (key === "Backspace") {
+    if (key === "Backspace") {
       const result = this.handleBackspace(content, position);
       if (result) {
         event.preventDefault();
@@ -109,7 +118,7 @@ export class AutoPairingExtension implements EditorExtension {
     return this.autoPairs.some((pair) => pair.open === key);
   }
 
-  private handleAutoPair(key: string, content: string, position: Position) {
+  private handleAutoPair(key: string, content: string, position: LSPPosition) {
     const pair = this.autoPairs.find((p) => p.open === key);
     if (!pair) return null;
 
@@ -117,8 +126,13 @@ export class AutoPairingExtension implements EditorExtension {
     const currentLineIndex = position.line;
     const currentLine = lines[currentLineIndex] || "";
 
-    const beforeCursor = currentLine.substring(0, position.column);
-    const afterCursor = currentLine.substring(position.column);
+    // Early exit for quotes that shouldn't be auto-paired
+    if (this.isQuote(key) && this.shouldSkipAutoPairQuote(key, currentLine, position)) {
+      return null;
+    }
+
+    const beforeCursor = currentLine.substring(0, position.character);
+    const afterCursor = currentLine.substring(position.character);
 
     const context: PairContext = {
       beforeCursor,
@@ -143,13 +157,20 @@ export class AutoPairingExtension implements EditorExtension {
     };
   }
 
-  private handleSkipOver(key: string, content: string, position: Position) {
+  private handleSkipOver(key: string, content: string, position: LSPPosition) {
     const lines = content.split("\n");
     const currentLine = lines[position.line] || "";
 
-    // Check if the character after cursor matches the key
-    // @ts-expect-error - https://docs.rs/lsp-positions/latest/lsp_positions/struct.Position.html
     if (currentLine[position.character] === key) {
+      if (this.isQuote(key)) {
+        return this.shouldSkipQuote(key, currentLine, position)
+          ? {
+              skipChar: key,
+              newCursorOffset: 1,
+            }
+          : null;
+      }
+
       return {
         skipChar: key,
         newCursorOffset: 1,
@@ -159,14 +180,17 @@ export class AutoPairingExtension implements EditorExtension {
     return null;
   }
 
-  private handleBackspace(content: string, position: Position) {
+  private handleBackspace(content: string, position: LSPPosition) {
     const lines = content.split("\n");
     const currentLine = lines[position.line] || "";
 
-    if (position.column === 0) return null;
+    // Boundary checks
+    if (position.character === 0 || position.character > currentLine.length) {
+      return null;
+    }
 
-    const beforeChar = currentLine[position.column - 1];
-    const afterChar = currentLine[position.column];
+    const beforeChar = currentLine[position.character - 1];
+    const afterChar = currentLine[position.character];
 
     // Check if we're deleting a pair
     const pair = this.autoPairs.find((p) => p.open === beforeChar && p.close === afterChar);
@@ -174,8 +198,16 @@ export class AutoPairingExtension implements EditorExtension {
     if (pair) {
       return {
         deleteRange: {
-          start: { line: position.line, column: position.column - 1, offset: position.offset - 1 },
-          end: { line: position.line, column: position.column + 1, offset: position.offset + 1 },
+          start: {
+            line: position.line,
+            column: position.character - 1,
+            offset: position.offset - 1,
+          },
+          end: {
+            line: position.line,
+            column: position.character + 1,
+            offset: position.offset + 1,
+          },
         },
       };
     }
@@ -260,6 +292,41 @@ export class AutoPairingExtension implements EditorExtension {
 
   private isReactFile(filePath: string): boolean {
     return /\.(jsx|tsx)$/.test(filePath);
+  }
+
+  private isQuote(char: string): boolean {
+    return this.quoteChars.has(char);
+  }
+
+  private getCharContext(line: string, position: LSPPosition) {
+    if (position.character === 0) {
+      return { prevChar: "", prevPrevChar: "", isAtStart: true };
+    }
+
+    const prevChar = line.charAt(position.character - 1);
+    const prevPrevChar = position.character >= 2 ? line.charAt(position.character - 2) : "";
+
+    return { prevChar, prevPrevChar, isAtStart: false };
+  }
+
+  private shouldSkipQuote(quote: string, line: string, position: LSPPosition): boolean {
+    const { prevChar, prevPrevChar, isAtStart } = this.getCharContext(line, position);
+
+    if (isAtStart) {
+      return false;
+    }
+
+    return prevChar === quote && prevPrevChar !== quote;
+  }
+
+  private shouldSkipAutoPairQuote(quote: string, line: string, position: LSPPosition): boolean {
+    const { prevChar, prevPrevChar, isAtStart } = this.getCharContext(line, position);
+
+    if (isAtStart) {
+      return false;
+    }
+
+    return prevChar === quote && prevPrevChar === quote;
   }
 
   private getFilePath(): string | undefined {

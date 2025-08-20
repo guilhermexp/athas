@@ -1,4 +1,4 @@
-import type { Change, Decoration, Position, Range } from "../types/editor-types";
+import type { Change, Decoration, LSPPosition, Position, Range } from "../types/editor-types";
 
 export interface Command {
   id: string;
@@ -88,7 +88,7 @@ export interface EditorExtension {
   onSelectionChange?: (selection: Range | null) => void;
   onCursorChange?: (position: Position) => void;
   onSettingsChange?: (settings: Partial<EditorSettings>) => void;
-  onKeyDown?: (data: { event: KeyboardEvent; content: string; position: Position }) => void;
+  onKeyDown?: (data: { event: KeyboardEvent; content: string; position: LSPPosition }) => void;
 }
 
 export interface Extension {
