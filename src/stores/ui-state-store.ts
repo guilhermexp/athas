@@ -13,6 +13,7 @@ const initialState = {
   isGitViewActive: false,
   isSearchViewActive: false,
   isRemoteViewActive: false,
+  isExtensionsViewActive: false,
   isGitHubCopilotSettingsVisible: false,
 
   // Dialog States
@@ -61,11 +62,12 @@ export const useUIState = create(
 
     setProjectNameMenu: (v: { x: number; y: number } | null) => set({ projectNameMenu: v }),
 
-    setActiveView: (view: "files" | "git" | "search" | "remote") => {
+    setActiveView: (view: "files" | "git" | "search" | "remote" | "extensions") => {
       set({
         isGitViewActive: view === "git",
         isSearchViewActive: view === "search",
         isRemoteViewActive: view === "remote",
+        isExtensionsViewActive: view === "extensions",
       });
     },
 
