@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef } from "react";
+import { useEditorDecorationsStore } from "../stores/editor-decorations-store";
 import { useEditorSearchStore } from "../stores/editor-search-store";
 import { useUIState } from "../stores/ui-state-store";
 import { cn } from "../utils/cn";
@@ -15,10 +16,16 @@ const FindBar = () => {
     currentMatchIndex,
     searchNext,
     searchPrevious,
+    clearSearch,
   } = useEditorSearchStore();
+  const { clearDecorations } = useEditorDecorationsStore();
 
   const isVisible = isFindVisible;
-  const onClose = () => setIsFindVisible(false);
+  const onClose = () => {
+    setIsFindVisible(false);
+    clearSearch();
+    clearDecorations();
+  };
   const onSearchQueryChange = setSearchQuery;
   const currentMatch = currentMatchIndex + 1;
   const totalMatches = searchMatches.length;
@@ -30,6 +37,7 @@ const FindBar = () => {
     }
   };
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Focus input when find bar becomes visible
   useEffect(() => {
@@ -38,6 +46,27 @@ const FindBar = () => {
       inputRef.current.select();
     }
   }, [isVisible]);
+
+  // Ensure input stays focused when search query changes (prevent focus loss)
+  useEffect(() => {
+    if (isVisible && inputRef.current && document.activeElement !== inputRef.current) {
+      // Restore focus if it was lost
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 0);
+    }
+  }, [searchQuery, isVisible]);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Global Cmd+F handler to toggle find bar even when input is focused
   useEffect(() => {
@@ -57,6 +86,9 @@ const FindBar = () => {
   }, [isVisible, onClose]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Stop all events from bubbling to prevent leaking to editor
+    e.stopPropagation();
+
     if (e.key === "Enter") {
       e.preventDefault();
       if (e.shiftKey) {
@@ -71,10 +103,22 @@ const FindBar = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Stop event from bubbling to prevent leaking to editor
+    e.stopPropagation();
+
     const value = e.target.value;
     onSearchQueryChange(value);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounced search to prevent focus loss
     if (value.trim()) {
-      onSearch("next");
+      searchTimeoutRef.current = setTimeout(() => {
+        onSearch("next");
+      }, 150);
     }
   };
 
@@ -83,7 +127,11 @@ const FindBar = () => {
   }
 
   return (
-    <div className="find-bar flex items-center gap-2 border-border border-b bg-secondary-bg px-2 py-1.5">
+    <div
+      className="find-bar relative z-50 flex items-center gap-2 border-border border-b bg-secondary-bg px-2 py-1.5"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
       <div className="flex flex-1 items-center gap-2">
         <Search size={12} className="text-text-lighter" />
         <input

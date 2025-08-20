@@ -26,6 +26,7 @@ import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useEditorViewStore } from "@/stores/editor-view-store";
 import { useLspStore } from "@/stores/lsp-store";
 import { useSearchResultsStore } from "@/stores/search-results-store";
+import { useUIState } from "@/stores/ui-state-store";
 import type { Position } from "@/types/editor-types";
 import { calculateCursorPosition, calculateOffsetFromPosition } from "@/utils/editor-position";
 import { CompletionDropdown } from "../overlays/completion-dropdown";
@@ -44,6 +45,7 @@ export function TextEditor() {
   const fontSize = useEditorSettingsStore.use.fontSize();
   const fontFamily = useEditorSettingsStore.use.fontFamily();
   const { addDecoration, removeDecoration } = useEditorDecorationsStore();
+  const { isFindVisible } = useUIState();
 
   // Performance monitoring
   const { start: startRender, end: endRender } = usePerformanceMonitor("TextEditor render");
@@ -174,6 +176,24 @@ export function TextEditor() {
 
   // Handle keyboard events
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Prevent editor input when find bar is visible (except for allowed navigation keys)
+    if (isFindVisible) {
+      const allowedKeys = [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "Home",
+        "End",
+        "PageUp",
+        "PageDown",
+      ];
+      if (!allowedKeys.includes(e.key) && !((e.ctrlKey || e.metaKey) && e.key === "f")) {
+        e.preventDefault();
+        return;
+      }
+    }
+
     const textarea = e.currentTarget;
     const { selectionStart } = textarea;
     const currentPosition = calculateCursorPosition(selectionStart, lines);

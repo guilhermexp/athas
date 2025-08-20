@@ -9,10 +9,12 @@ import { useAppStore } from "@/stores/app-store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useEditorCompletionStore } from "@/stores/editor-completion-store";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
+import { useEditorDecorationsStore } from "@/stores/editor-decorations-store";
 import { useEditorInstanceStore } from "@/stores/editor-instance-store";
 import { useEditorSearchStore } from "@/stores/editor-search-store";
 import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useLspStore } from "@/stores/lsp-store";
+import { useUIState } from "@/stores/ui-state-store";
 import { useGitGutter } from "@/version-control/git/controllers/use-git-gutter";
 import FindBar from "../find-bar";
 import Breadcrumb from "./breadcrumb";
@@ -47,6 +49,8 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
   const { handleContentChange } = useAppStore.use.actions();
   const { searchQuery, searchMatches, currentMatchIndex, setSearchMatches, setCurrentMatchIndex } =
     useEditorSearchStore();
+  const { addDecoration, removeDecoration } = useEditorDecorationsStore();
+  const { isFindVisible } = useUIState();
   const isFileTreeLoading = useFileSystemStore((state) => state.isFileTreeLoading);
   const rootFolderPath = useFileSystemStore((state) => state.rootFolderPath);
   const { settings } = useSettingsStore();
@@ -226,23 +230,109 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
     setCurrentMatchIndex(matches.length > 0 ? 0 : -1);
   }, [searchQuery, value, setSearchMatches, setCurrentMatchIndex]);
 
-  // Effect to handle search navigation
+  // Convert search matches to decorations - optimized for performance
+  const searchDecorationIds = useRef<string[]>([]);
+
   useEffect(() => {
-    if (searchMatches.length > 0 && currentMatchIndex >= 0) {
+    // Clear existing search decorations
+    searchDecorationIds.current.forEach((id) => removeDecoration(id));
+    searchDecorationIds.current = [];
+
+    if (!searchMatches.length || !value) {
+      return;
+    }
+
+    // Convert offset-based matches to line/column based decorations
+    const lines = value.split("\n");
+
+    searchMatches.forEach((match, index) => {
+      // Find which line this match is on
+      let lineNumber = 0;
+      let lineStartOffset = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const lineEndOffset = lineStartOffset + lines[i].length;
+        if (match.start >= lineStartOffset && match.start <= lineEndOffset) {
+          lineNumber = i;
+          break;
+        }
+        lineStartOffset = lineEndOffset + 1; // +1 for newline character
+      }
+
+      const startColumn = match.start - lineStartOffset;
+      const endColumn = match.end - lineStartOffset;
+
+      // Create decoration with appropriate class based on current match
+      const decoration = {
+        range: {
+          start: { line: lineNumber, column: startColumn, offset: match.start },
+          end: { line: lineNumber, column: endColumn, offset: match.end },
+        },
+        className: index === currentMatchIndex ? "search-highlight-current" : "search-highlight",
+        type: "inline" as const,
+      };
+
+      const decorationId = addDecoration(decoration);
+      searchDecorationIds.current.push(decorationId);
+    });
+
+    return () => {
+      searchDecorationIds.current.forEach((id) => removeDecoration(id));
+      searchDecorationIds.current = [];
+    };
+  }, [searchMatches, currentMatchIndex, value, addDecoration, removeDecoration]);
+
+  // Effect to handle search navigation and scrolling - optimized
+  useEffect(() => {
+    if (
+      searchMatches.length > 0 &&
+      currentMatchIndex >= 0 &&
+      currentMatchIndex < searchMatches.length &&
+      editorRef.current
+    ) {
       const match = searchMatches[currentMatchIndex];
-      if (match) {
-        // Scroll to position
-        if (editorRef.current) {
-          const editor = editorRef.current;
-          const textarea = editor.querySelector('[contenteditable="true"]') as HTMLDivElement;
-          if (textarea) {
-            textarea.focus();
-            // Implement scroll to cursor position
-          }
+      if (!match) return;
+
+      // Convert offset to line/column for scrolling - only for current match
+      const lines = value.split("\n");
+      let lineNumber = 0;
+      let lineStartOffset = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const lineEndOffset = lineStartOffset + lines[i].length;
+        if (match.start >= lineStartOffset && match.start <= lineEndOffset) {
+          lineNumber = i;
+          break;
+        }
+        lineStartOffset = lineEndOffset + 1; // +1 for newline character
+      }
+
+      // Scroll to the line containing the match - use instant scroll for better performance
+      const lineElement = editorRef.current.querySelector(`[data-line-number="${lineNumber}"]`);
+      if (lineElement) {
+        lineElement.scrollIntoView({
+          behavior: "instant",
+          block: "center",
+        });
+      }
+
+      // Only focus the editor if find bar is not visible
+      if (!isFindVisible) {
+        const textarea = editorRef.current.querySelector("textarea");
+        if (textarea) {
+          textarea.focus();
         }
       }
     }
-  }, [currentMatchIndex, searchMatches]);
+  }, [currentMatchIndex, searchMatches, editorRef]);
+  // Clear search decorations when find bar is closed
+  useEffect(() => {
+    if (!isFindVisible) {
+      // Clear search decorations
+      searchDecorationIds.current.forEach((id) => removeDecoration(id));
+      searchDecorationIds.current = [];
+    }
+  }, [isFindVisible, removeDecoration]);
 
   // Cleanup effect removed - mountedRef was not being used
 

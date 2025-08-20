@@ -68,9 +68,75 @@ const LineRendererInternal = ({
       return baseContent;
     }
 
-    // TODO: Apply decorations and search highlights
-    // For now, just return the base content
-    return baseContent;
+    // Convert React elements back to string for processing
+    const textContent = content;
+    if (!textContent) return baseContent;
+
+    // Collect all highlights to apply
+    const highlights: Array<{ start: number; end: number; className: string }> = [];
+
+    // Add decoration highlights
+    inlineDecorations.forEach((decoration) => {
+      highlights.push({
+        start: decoration.range.start.column,
+        end: decoration.range.end.column,
+        className: decoration.className || "",
+      });
+    });
+
+    // Add search highlights
+    searchHighlight.forEach((highlight) => {
+      highlights.push({
+        start: highlight.start,
+        end: highlight.end,
+        className: "search-highlight",
+      });
+    });
+
+    // If no highlights, return original content
+    if (highlights.length === 0) {
+      return baseContent;
+    }
+
+    // Sort highlights by start position
+    highlights.sort((a, b) => a.start - b.start);
+
+    // Apply highlights to text
+    const elements: React.ReactNode[] = [];
+    let lastEnd = 0;
+
+    highlights.forEach((highlight, index) => {
+      const start = Math.max(0, highlight.start);
+      const end = Math.min(textContent.length, highlight.end);
+
+      // Add text before highlight
+      if (start > lastEnd) {
+        elements.push(<span key={`text-${index}`}>{textContent.slice(lastEnd, start)}</span>);
+      }
+
+      // Add highlighted text
+      if (end > start) {
+        elements.push(
+          <span key={`highlight-${index}`} className={highlight.className}>
+            {textContent.slice(start, end)}
+          </span>,
+        );
+      }
+
+      lastEnd = Math.max(lastEnd, end);
+    });
+
+    // Add remaining text
+    if (lastEnd < textContent.length) {
+      elements.push(<span key="text-end">{textContent.slice(lastEnd)}</span>);
+    }
+
+    // If no elements were created, return original content
+    if (elements.length === 0) {
+      return baseContent;
+    }
+
+    return <>{elements}</>;
   };
 
   return (

@@ -121,14 +121,19 @@ export function EditorStylesheet() {
           -moz-user-select: none;
         }
 
-        /* Search highlighting */
+        /* Search highlighting - minimal and clean */
         .search-highlight {
-          background-color: rgba(255, 255, 0, 0.3);
+          background-color: rgba(255, 235, 59, 0.4);
+          border-radius: 2px;
+          padding: 0 1px;
         }
 
         .search-highlight-current {
-          background-color: rgba(255, 165, 0, 0.5);
-          outline: 1px solid rgba(255, 165, 0, 0.8);
+          background-color: rgba(255, 152, 0, 0.6);
+          border-radius: 2px;
+          padding: 0 1px;
+          outline: 1px solid rgba(255, 152, 0, 0.8);
+          outline-offset: -1px;
         }
 
         /* Remove focus rings on all inputs in find bar */
@@ -149,10 +154,14 @@ export function EditorStylesheet() {
         /* Remove border radius from find bar */
         .find-bar {
           border-radius: 0 !important;
+          position: relative !important;
+          z-index: 100 !important;
         }
 
         .find-bar input {
           border-radius: 0 !important;
+          color: var(--color-text) !important;
+          background: transparent !important;
         }
 
         .find-bar button {
