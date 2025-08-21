@@ -30,6 +30,7 @@ import type { Position } from "@/types/editor-types";
 import { calculateCursorPosition, calculateOffsetFromPosition } from "@/utils/editor-position";
 import { CompletionDropdown } from "../overlays/completion-dropdown";
 import EditorContextMenu from "../overlays/editor-context-menu";
+import { handleKeyboardShortcuts } from "./keyboard-shortcuts";
 import { LineBasedEditor } from "./line-based-editor";
 
 export function TextEditor() {
@@ -205,6 +206,24 @@ export function TextEditor() {
     if (command && (!command.when || command.when())) {
       e.preventDefault();
       command.execute({ editor: editorAPI });
+      return;
+    }
+
+    // Handle keyboard shortcuts
+    const shortcutHandled = handleKeyboardShortcuts({
+      e,
+      content,
+      lines,
+      selectionStart,
+      textareaRef,
+      onChange,
+      updateBufferContent,
+      activeBufferId,
+      handleSelectionChange,
+      handleCut,
+    });
+
+    if (shortcutHandled) {
       return;
     }
 
