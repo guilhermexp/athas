@@ -2,8 +2,138 @@ import type { FileEntry } from "../models/app";
 import { sortFileEntries } from "./file-tree-utils";
 
 // Common directories and patterns to ignore for performance
-export const IGNORE_PATTERNS: string[] = [];
-const IGNORE_FILE_EXTENSIONS: string[] = [];
+export const IGNORE_PATTERNS: string[] = [
+  // Version control
+  ".git",
+  ".svn",
+  ".hg",
+  ".bzr",
+
+  // Dependencies and build artifacts
+  "node_modules",
+  "dist",
+  "build",
+  "out",
+  "target",
+  "bin",
+  "obj",
+  ".next",
+  ".nuxt",
+  ".vuepress",
+  ".cache",
+  ".temp",
+  ".tmp",
+  "coverage",
+  ".nyc_output",
+
+  // Package managers
+  ".yarn",
+  ".pnpm",
+  "pnpm-lock.yaml",
+  "yarn.lock",
+  "package-lock.json",
+  ".npm",
+
+  // IDE and editor directories
+  ".vscode",
+  ".idea",
+  ".vs",
+  "*.swp",
+  "*.swo",
+  "*~",
+
+  // OS generated files
+  ".DS_Store",
+  "Thumbs.db",
+
+  // Language specific
+  "__pycache__",
+  "*.pyc",
+  ".pytest_cache",
+  ".mypy_cache",
+  "venv",
+  "env",
+  ".env.*",
+  ".venv",
+
+  // Rust
+  "Cargo.lock",
+
+  // Go
+  "vendor",
+
+  // Java
+  "*.class",
+  ".gradle",
+  ".mvn",
+
+  // Logs
+  "*.log",
+  "logs",
+
+  // Temporary files
+  "*.tmp",
+  "*.temp",
+  "*.bak",
+  "*.swp",
+  "*.swo",
+
+  // Large media files that shouldn't be in command palette
+  "*.mov",
+  "*.mp4",
+  "*.avi",
+  "*.mkv",
+  "*.webm",
+  "*.flv",
+];
+
+const IGNORE_FILE_EXTENSIONS: string[] = [
+  // Binary files
+  ".exe",
+  ".dll",
+  ".so",
+  ".dylib",
+  ".bin",
+  ".obj",
+  ".o",
+  ".a",
+  ".lib",
+
+  // Archive files
+  ".zip",
+  ".tar",
+  ".gz",
+  ".bz2",
+  ".7z",
+  ".rar",
+
+  // Image files (large ones)
+  ".psd",
+  ".ai",
+  ".sketch",
+
+  // Video files
+  ".mov",
+  ".mp4",
+  ".avi",
+  ".mkv",
+  ".webm",
+  ".flv",
+
+  // Audio files
+  ".mp3",
+  ".wav",
+  ".flac",
+  ".aac",
+
+  // Database files
+  ".db",
+  ".sqlite",
+  ".sqlite3",
+
+  // Lock files
+  ".lock",
+];
 
 export const shouldIgnore = (name: string, isDir: boolean): boolean => {
   const lowerName = name.toLowerCase();

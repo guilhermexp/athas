@@ -509,77 +509,105 @@ export const useFileSystemStore = createSelectors(
         const { rootFolderPath, projectFilesCache } = get();
         if (!rootFolderPath) return [];
 
-        // Check cache first (cache for 30 seconds)
+        // Check cache first (cache for 5 minutes for better UX)
         const now = Date.now();
         if (
           projectFilesCache &&
           projectFilesCache.path === rootFolderPath &&
-          now - projectFilesCache.timestamp < 30000
+          now - projectFilesCache.timestamp < 300000 // 5 minutes
         ) {
           return projectFilesCache.files;
         }
 
-        const allFiles: FileEntry[] = [];
+        // Return cached files immediately if available, then update in background
+        const cachedFiles = projectFilesCache?.files || [];
 
-        const scanDirectory = async (directoryPath: string, depth: number = 0): Promise<void> => {
-          // Prevent infinite recursion and very deep scanning
-          if (depth > 10) {
-            return;
-          }
+        // Background update - don't await this
+        setTimeout(async () => {
+          try {
+            const allFiles: FileEntry[] = [];
+            let processedFiles = 0;
+            const MAX_FILES = 5000; // Limit total files processed for performance
 
-          const entries = await readDirectory(directoryPath);
+            const scanDirectory = async (
+              directoryPath: string,
+              depth: number = 0,
+            ): Promise<boolean> => {
+              // Prevent infinite recursion and very deep scanning
+              if (depth > 8 || processedFiles > MAX_FILES) {
+                return false; // Signal to stop scanning
+              }
 
-          for (const entry of entries as any[]) {
-            const name = entry.name || "Unknown";
-            const isDir = entry.is_dir || false;
+              try {
+                const entries = await readDirectory(directoryPath);
 
-            // Skip ignored files/directories
-            if (shouldIgnore(name, isDir)) {
-              continue;
-            }
+                for (const entry of entries as any[]) {
+                  if (processedFiles > MAX_FILES) break;
 
-            const fileEntry: FileEntry = {
-              name,
-              path: entry.path,
-              isDir,
-              expanded: false,
-              children: undefined,
+                  const name = entry.name || "Unknown";
+                  const isDir = entry.is_dir || false;
+
+                  // Skip ignored files/directories early
+                  if (shouldIgnore(name, isDir)) {
+                    continue;
+                  }
+
+                  processedFiles++;
+
+                  const fileEntry: FileEntry = {
+                    name,
+                    path: entry.path,
+                    isDir,
+                    expanded: false,
+                    children: undefined,
+                  };
+
+                  if (!fileEntry.isDir) {
+                    // Only add non-directory files to the list
+                    allFiles.push(fileEntry);
+                  } else {
+                    // Recursively scan subdirectories
+                    const shouldContinue = await scanDirectory(fileEntry.path, depth + 1);
+                    if (!shouldContinue) break;
+                  }
+
+                  // Yield control more frequently for better UI responsiveness
+                  if (processedFiles % 100 === 0) {
+                    await new Promise((resolve) => {
+                      if ("requestIdleCallback" in window) {
+                        requestIdleCallback(resolve, { timeout: 4 });
+                      } else {
+                        setTimeout(resolve, 1);
+                      }
+                    });
+                  }
+                }
+              } catch (error) {
+                console.warn(`Failed to scan directory ${directoryPath}:`, error);
+                return false;
+              }
+
+              return true;
             };
 
-            if (!fileEntry.isDir) {
-              // Only add non-directory files to the list
-              allFiles.push(fileEntry);
-            } else {
-              // Recursively scan subdirectories
-              await scanDirectory(fileEntry.path, depth + 1);
-            }
+            await scanDirectory(rootFolderPath);
 
-            // Yield control much less frequently to improve performance
-            if (allFiles.length % 500 === 0) {
-              // Use requestIdleCallback for better performance when available
-              await new Promise((resolve) => {
-                if ("requestIdleCallback" in window) {
-                  requestIdleCallback(resolve, { timeout: 16 });
-                } else {
-                  requestAnimationFrame(resolve);
-                }
-              });
-            }
+            // Update cache with new results
+            set((state) => {
+              state.projectFilesCache = {
+                path: rootFolderPath,
+                files: allFiles,
+                timestamp: now,
+              };
+            });
+
+            console.log(`Indexed ${allFiles.length} files for command palette`);
+          } catch (error) {
+            console.error("Failed to index project files:", error);
           }
-        };
+        }, 0);
 
-        await scanDirectory(rootFolderPath);
-
-        // Cache the results
-        set((state) => {
-          state.projectFilesCache = {
-            path: rootFolderPath,
-            files: allFiles,
-            timestamp: now,
-          };
-        });
-
-        return allFiles;
+        return cachedFiles;
       },
 
       createFile: async (directoryPath: string, fileName: string) => {

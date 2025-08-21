@@ -15,9 +15,19 @@ import Command, {
 } from "../../ui/command";
 
 // Function to check if a file should be ignored
-// Now using centralized filtering logic
+// Now using centralized filtering logic with improved path handling
 const shouldIgnoreFile = (filePath: string): boolean => {
   const fileName = filePath.split("/").pop() || "";
+
+  // Check if any directory in the path should be ignored
+  const pathParts = filePath.split("/");
+  for (const part of pathParts) {
+    if (shouldIgnoreInCommandPalette(part, true)) {
+      return true;
+    }
+  }
+
+  // Check the filename itself
   return shouldIgnoreInCommandPalette(fileName, false);
 };
 
@@ -77,11 +87,12 @@ const CommandBar = () => {
   const isVisible = isCommandBarVisible;
   const onClose = () => setIsCommandBarVisible(false);
   const [query, setQuery] = useState("");
-  const [debouncedQuery] = useDebounce(query, 150); // Debounce search for better performance
+  const [debouncedQuery] = useDebounce(query, 100); // Reduced debounce for faster response
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<Array<{ name: string; path: string; isDir: boolean }>>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
 
   // Get data from stores
   const { buffers, activeBufferId } = useBufferStore();
@@ -89,21 +100,43 @@ const CommandBar = () => {
   const { addOrUpdateRecentFile, getRecentFilesOrderedByFrecency } = useRecentFilesStore();
   const recentFiles = getRecentFilesOrderedByFrecency();
 
-  // Load all project files when component mounts or becomes visible
-  useEffect(() => {
-    if (!isVisible) return; // Only load when actually needed
-
-    getAllProjectFiles().then((allFiles) => {
-      const formattedFiles = allFiles
+  // Memoize filtered files to avoid recomputation with performance limits
+  const filteredProjectFiles = useMemo(() => {
+    return (allFiles: Array<{ name: string; path: string; isDir: boolean }>) => {
+      const maxFilesToProcess = 2000; // Limit for UI performance
+      return allFiles
+        .slice(0, maxFilesToProcess) // Limit files processed upfront
         .filter((file) => !file.isDir && !shouldIgnoreFile(file.path)) // Pre-filter here
         .map((file) => ({
           name: file.name,
           path: file.path,
           isDir: file.isDir,
         }));
-      setFiles(formattedFiles);
-    });
-  }, [getAllProjectFiles, isVisible]); // Only reload when visible
+    };
+  }, []);
+
+  // Load all project files when component mounts or becomes visible
+  useEffect(() => {
+    if (!isVisible) return; // Only load when actually needed
+
+    // Start with immediate response, then update when files are available
+    const loadFiles = async () => {
+      try {
+        setIsLoadingFiles(files.length === 0); // Only show loading if no cached files
+        const allFiles = await getAllProjectFiles();
+        const formattedFiles = filteredProjectFiles(allFiles);
+        setFiles(formattedFiles);
+      } catch (error) {
+        console.error("Failed to load project files:", error);
+        // Don't fail completely, just use empty array
+        setFiles([]);
+      } finally {
+        setIsLoadingFiles(false);
+      }
+    };
+
+    loadFiles();
+  }, [getAllProjectFiles, isVisible, filteredProjectFiles]); // Only reload when visible
 
   // Update local state when command bar becomes visible
   useEffect(() => {
@@ -219,6 +252,7 @@ const CommandBar = () => {
             !openBufferPaths.includes(file.path) &&
             (!activeBuffer || file.path !== activeBuffer.path),
         )
+        .slice(0, 200) // Limit others to prevent UI freeze
         .sort((a, b) => a.name.localeCompare(b.name));
 
       return {
@@ -228,8 +262,10 @@ const CommandBar = () => {
       };
     }
 
-    // With search query - use fuzzy search
+    // With search query - use fuzzy search with aggressive performance optimizations
+    const maxSearchFiles = Math.min(500, allFiles.length); // Even more aggressive limit
     const scoredFiles = allFiles
+      .slice(0, maxSearchFiles) // Limit initial processing for performance
       .map((file) => {
         // Score both filename and full path, take the higher score
         const nameScore = fuzzyScore(file.name, debouncedQuery);
@@ -382,11 +418,15 @@ const CommandBar = () => {
         otherFiles.length === 0 ? (
           <CommandEmpty>
             <div className="font-mono">
-              {debouncedQuery
-                ? "No matching files found"
-                : query
-                  ? "Searching..."
-                  : "No files available"}
+              {isLoadingFiles
+                ? "Loading files..."
+                : debouncedQuery
+                  ? "No matching files found"
+                  : query
+                    ? "Searching..."
+                    : files.length === 0
+                      ? "No files indexed yet"
+                      : "No files available"}
             </div>
           </CommandEmpty>
         ) : (
