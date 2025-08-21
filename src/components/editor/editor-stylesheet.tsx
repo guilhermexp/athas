@@ -99,6 +99,39 @@ export function EditorStylesheet() {
           display: none;
         }
 
+        /* Hide scrollbars on editor container */
+        .editor-container {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .editor-container::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Hide scrollbars on editor textarea */
+        .editor-textarea {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .editor-textarea::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Hide scrollbars on viewport and content elements */
+        .editor-content-new,
+        .virtual-editor-container,
+        [data-editor-viewport],
+        .editor-viewport {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .editor-content-new::-webkit-scrollbar,
+        .virtual-editor-container::-webkit-scrollbar,
+        [data-editor-viewport]::-webkit-scrollbar,
+        .editor-viewport::-webkit-scrollbar {
+          display: none;
+        }
+
         /* Ensure line numbers use tabular figures for consistent width */
         .line-numbers-container {
           font-variant-numeric: tabular-nums;

@@ -269,6 +269,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
         <div
           ref={editorRef}
           className={`editor-container relative flex-1 overflow-hidden ${className || ""}`}
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {/* Hover Tooltip */}
           <HoverTooltip />
