@@ -347,17 +347,6 @@ export function TextEditor() {
     }
   }, [lines, setCursorPosition, setSelection]);
 
-  // Handle textarea blur event
-  const handleTextareaBlur = useCallback(() => {
-    setContextMenu({ isOpen: false, position: { x: 0, y: 0 } });
-    setCursorVisibility(false);
-  }, [setContextMenu, setCursorVisibility]);
-
-  // Handle textarea focus event
-  const handleTextareaFocus = useCallback(() => {
-    setCursorVisibility(true);
-  }, [setCursorVisibility]);
-
   useEffect(() => {
     const decorationsChanged =
       searchDecorations.length !== previousSearchDecorationsRef.current.length ||
@@ -1018,8 +1007,8 @@ export function TextEditor() {
         value={content}
         onChange={handleTextareaChange}
         onInput={handleTextareaChange}
-        onBlur={handleTextareaBlur}
-        onFocus={handleTextareaFocus}
+        onBlur={() => setCursorVisibility(false)}
+        onFocus={() => setCursorVisibility(true)}
         onKeyDown={handleKeyDown}
         onSelect={handleSelectionChange}
         onKeyUp={handleSelectionChange}
