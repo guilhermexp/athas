@@ -35,11 +35,11 @@ export const DecorationLayer = () => {
     const extensionDecorations = extensionManager.getAllDecorations();
     allDecorations.push(...extensionDecorations);
 
-    // Add selection decoration
+    // Add selection decoration - use line type for full-width highlighting
     if (selection) {
       allDecorations.push({
         range: selection,
-        type: "inline" as const,
+        type: "line" as const,
         className: "selection",
       });
     }
@@ -129,17 +129,16 @@ export const DecorationLayer = () => {
           });
         }
       } else if (type === "line") {
-        // Line decorations highlight entire lines
+        // Line decorations highlight entire lines, excluding gutter
         for (let line = start.line; line <= end.line; line++) {
-          const x = 0;
+          const x = gutterWidth + EDITOR_CONSTANTS.GUTTER_MARGIN;
           const y = line * lineHeight - scrollTop;
-          // width will be set via CSS
 
           rendered.push({
             key: `line-${index}-${line}`,
             x,
             y,
-            width: 0, // Will use CSS width: 100%
+            width: 0, // Will use CSS calc() to span remaining width
             height: lineHeight,
             className,
             type,
@@ -161,7 +160,12 @@ export const DecorationLayer = () => {
             position: "absolute",
             left: `${decoration.x}px`,
             top: `${decoration.y}px`,
-            width: decoration.type === "line" ? "100%" : `${decoration.width}px`,
+            width:
+              decoration.type === "line" && decoration.x > 0
+                ? `calc(100% - ${decoration.x}px)`
+                : decoration.type === "line"
+                  ? "100%"
+                  : `${decoration.width}px`,
             height: `${decoration.height}px`,
             pointerEvents: "none",
           }}
