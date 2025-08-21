@@ -2,8 +2,27 @@ import type { FileEntry } from "../models/app";
 import { sortFileEntries } from "./file-tree-utils";
 
 // Common directories and patterns to ignore for performance
-export const IGNORE_PATTERNS: string[] = [];
-const IGNORE_FILE_EXTENSIONS: string[] = [];
+export const IGNORE_PATTERNS: string[] = [
+  "node_modules",
+  ".git",
+  ".next",
+  ".nuxt",
+  "dist",
+  "build",
+  "coverage",
+  ".nyc_output",
+  ".cache",
+  ".vscode",
+  ".idea",
+  "*.log",
+  ".tmp",
+  ".temp",
+  "target", // Rust/Java
+  "bin", // Common binary directories
+  "obj", // .NET
+  ".vs", // Visual Studio
+];
+const IGNORE_FILE_EXTENSIONS: string[] = [".log", ".tmp", ".temp", ".cache", ".lock"];
 
 export const shouldIgnore = (name: string, isDir: boolean): boolean => {
   const lowerName = name.toLowerCase();

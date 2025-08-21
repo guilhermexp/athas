@@ -15,13 +15,36 @@ import Command, {
 } from "../../ui/command";
 
 // Function to check if a file should be ignored
-// Now using centralized filtering logic
+// Now using centralized filtering logic plus additional path checks
 const shouldIgnoreFile = (filePath: string): boolean => {
   const fileName = filePath.split("/").pop() || "";
+
+  // Check if path contains ignored directories
+  const pathSegments = filePath.split("/");
+  const ignoredDirs = [
+    "node_modules",
+    ".git",
+    ".next",
+    ".nuxt",
+    "dist",
+    "build",
+    "coverage",
+    ".cache",
+    "target",
+    "bin",
+    "obj",
+  ];
+
+  for (const segment of pathSegments) {
+    if (ignoredDirs.includes(segment)) {
+      return true;
+    }
+  }
+
   return shouldIgnoreInCommandPalette(fileName, false);
 };
 
-// Fuzzy search scoring function
+// Optimized fuzzy search scoring function
 const fuzzyScore = (text: string, query: string): number => {
   if (!query) return 0;
 
@@ -37,7 +60,7 @@ const fuzzyScore = (text: string, query: string): number => {
   // Contains query as substring gets medium score
   if (textLower.includes(queryLower)) return 600;
 
-  // Fuzzy matching - check if all query characters exist in order
+  // Quick fuzzy matching - optimized for performance
   let textIndex = 0;
   let queryIndex = 0;
   let score = 0;
@@ -45,11 +68,11 @@ const fuzzyScore = (text: string, query: string): number => {
 
   while (textIndex < textLower.length && queryIndex < queryLower.length) {
     if (textLower[textIndex] === queryLower[queryIndex]) {
+      // Simplified scoring for better performance
       score += 10;
       consecutiveMatches++;
-      // Bonus for consecutive matches
       if (consecutiveMatches > 1) {
-        score += consecutiveMatches * 2;
+        score += 5; // Reduced bonus calculation
       }
       queryIndex++;
     } else {
@@ -58,14 +81,14 @@ const fuzzyScore = (text: string, query: string): number => {
     textIndex++;
   }
 
-  // If we matched all query characters, it's a valid fuzzy match
+  // Only return score if all query characters were matched
   if (queryIndex === queryLower.length) {
-    // Bonus for shorter text (more precise match)
-    score += Math.max(0, 100 - textLower.length);
-    return score;
+    // Simple length bonus
+    score += Math.max(0, 20 - textLower.length * 0.2);
+    return score > 10 ? score : 0; // Minimum threshold
   }
 
-  return 0; // No match
+  return 0;
 };
 
 const CommandBar = () => {
@@ -77,11 +100,12 @@ const CommandBar = () => {
   const isVisible = isCommandBarVisible;
   const onClose = () => setIsCommandBarVisible(false);
   const [query, setQuery] = useState("");
-  const [debouncedQuery] = useDebounce(query, 150); // Debounce search for better performance
+  const [debouncedQuery] = useDebounce(query, 100); // Balanced debounce for performance and responsiveness
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<Array<{ name: string; path: string; isDir: boolean }>>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
 
   // Get data from stores
   const { buffers, activeBufferId } = useBufferStore();
@@ -93,16 +117,22 @@ const CommandBar = () => {
   useEffect(() => {
     if (!isVisible) return; // Only load when actually needed
 
-    getAllProjectFiles().then((allFiles) => {
-      const formattedFiles = allFiles
-        .filter((file) => !file.isDir && !shouldIgnoreFile(file.path)) // Pre-filter here
-        .map((file) => ({
-          name: file.name,
-          path: file.path,
-          isDir: file.isDir,
-        }));
-      setFiles(formattedFiles);
-    });
+    setIsLoadingFiles(true);
+    getAllProjectFiles()
+      .then((allFiles) => {
+        const formattedFiles = allFiles
+          .filter((file) => !file.isDir && !shouldIgnoreFile(file.path)) // Pre-filter here
+          .map((file) => ({
+            name: file.name,
+            path: file.path,
+            isDir: file.isDir,
+          }));
+        setFiles(formattedFiles);
+        setIsLoadingFiles(false);
+      })
+      .catch(() => {
+        setIsLoadingFiles(false);
+      });
   }, [getAllProjectFiles, isVisible]); // Only reload when visible
 
   // Update local state when command bar becomes visible
@@ -110,12 +140,13 @@ const CommandBar = () => {
     if (isVisible) {
       setQuery("");
       setSelectedIndex(0);
+      setIsLoadingFiles(files.length === 0); // Only show loading if no files cached
       // Focus the input field immediately
       if (inputRef.current) {
         inputRef.current.focus();
       }
     }
-  }, [isVisible]);
+  }, [isVisible, files.length]);
 
   // Handle escape key and click outside
   useEffect(() => {
@@ -183,7 +214,7 @@ const CommandBar = () => {
     [getRelativePath],
   );
 
-  // Memoize file filtering and sorting
+  // Memoize file filtering and sorting with performance optimizations
   const { openBufferFiles, recentFilesInResults, otherFiles } = useMemo(() => {
     // Files are already pre-filtered in the useEffect
     const allFiles = files;
@@ -223,59 +254,67 @@ const CommandBar = () => {
 
       return {
         openBufferFiles: openBufferFilesData,
-        recentFilesInResults: recent.slice(0, 10),
-        otherFiles: others.slice(0, 20 - openBufferFilesData.length - recent.length),
+        recentFilesInResults: recent.slice(0, 15),
+        otherFiles: others.slice(0, 25 - openBufferFilesData.length - recent.length),
       };
     }
 
-    // With search query - use fuzzy search
-    const scoredFiles = allFiles
-      .map((file) => {
-        // Score both filename and full path, take the higher score
-        const nameScore = fuzzyScore(file.name, debouncedQuery);
-        const pathScore = fuzzyScore(file.path, debouncedQuery);
-        const score = Math.max(nameScore, pathScore);
+    // With search query - use optimized fuzzy search with early termination
+    const maxResults = 50; // Limit total results for performance
+    const scoredFiles = [];
 
-        return { file, score };
-      })
-      .filter(({ score }) => score > 0) // Only include files with positive scores
-      .sort((a, b) => {
-        // First sort by score (highest first)
-        if (b.score !== a.score) return b.score - a.score;
+    for (let i = 0; i < allFiles.length && scoredFiles.length < maxResults * 2; i++) {
+      const file = allFiles[i];
+      // Score both filename and full path, take the higher score
+      const nameScore = fuzzyScore(file.name, debouncedQuery);
+      const pathScore = fuzzyScore(file.path, debouncedQuery);
+      const score = Math.max(nameScore, pathScore);
 
-        // Then prioritize open buffers
-        const aIsOpen = openBufferPaths.includes(a.file.path);
-        const bIsOpen = openBufferPaths.includes(b.file.path);
-        if (aIsOpen && !bIsOpen) return -1;
-        if (!aIsOpen && bIsOpen) return 1;
+      if (score > 0) {
+        scoredFiles.push({ file, score });
+      }
+    }
 
-        // Then prioritize recent files by frecency
-        const aIsRecent = recentFilePaths.includes(a.file.path);
-        const bIsRecent = recentFilePaths.includes(b.file.path);
-        if (aIsRecent && !bIsRecent) return -1;
-        if (!aIsRecent && bIsRecent) return 1;
+    // Sort and limit results
+    scoredFiles.sort((a, b) => {
+      // First sort by score (highest first)
+      if (b.score !== a.score) return b.score - a.score;
 
-        if (aIsRecent && bIsRecent) {
-          const aIndex = recentFiles.findIndex((rf) => rf.path === a.file.path);
-          const bIndex = recentFiles.findIndex((rf) => rf.path === b.file.path);
-          return aIndex - bIndex;
-        }
+      // Then prioritize open buffers
+      const aIsOpen = openBufferPaths.includes(a.file.path);
+      const bIsOpen = openBufferPaths.includes(b.file.path);
+      if (aIsOpen && !bIsOpen) return -1;
+      if (!aIsOpen && bIsOpen) return 1;
 
-        // Finally sort alphabetically
-        return a.file.name.localeCompare(b.file.name);
-      });
+      // Then prioritize recent files by frecency
+      const aIsRecent = recentFilePaths.includes(a.file.path);
+      const bIsRecent = recentFilePaths.includes(b.file.path);
+      if (aIsRecent && !bIsRecent) return -1;
+      if (!aIsRecent && bIsRecent) return 1;
 
-    const openBuffers = scoredFiles
+      if (aIsRecent && bIsRecent) {
+        const aIndex = recentFiles.findIndex((rf) => rf.path === a.file.path);
+        const bIndex = recentFiles.findIndex((rf) => rf.path === b.file.path);
+        return aIndex - bIndex;
+      }
+
+      // Finally sort alphabetically
+      return a.file.name.localeCompare(b.file.name);
+    });
+
+    const limitedResults = scoredFiles.slice(0, maxResults);
+
+    const openBuffers = limitedResults
       .filter(({ file }) => openBufferPaths.includes(file.path))
       .map(({ file }) => file);
 
-    const recent = scoredFiles
+    const recent = limitedResults
       .filter(
         ({ file }) => recentFilePaths.includes(file.path) && !openBufferPaths.includes(file.path),
       )
       .map(({ file }) => file);
 
-    const others = scoredFiles
+    const others = limitedResults
       .filter(
         ({ file }) =>
           !recentFilePaths.includes(file.path) &&
@@ -289,7 +328,7 @@ const CommandBar = () => {
       recentFilesInResults: recent.slice(0, 20 - openBuffers.length),
       otherFiles: others.slice(0, 20 - openBuffers.length - recent.length),
     };
-  }, [files, debouncedQuery, buffers, activeBufferId]); // Use debounced query for better performance
+  }, [files, debouncedQuery, buffers, activeBufferId, recentFiles, activeBuffer]); // Use debounced query for better performance
 
   const handleItemSelect = useCallback(
     (path: string) => {
@@ -382,11 +421,13 @@ const CommandBar = () => {
         otherFiles.length === 0 ? (
           <CommandEmpty>
             <div className="font-mono">
-              {debouncedQuery
-                ? "No matching files found"
-                : query
-                  ? "Searching..."
-                  : "No files available"}
+              {isLoadingFiles
+                ? "Loading files..."
+                : debouncedQuery
+                  ? "No matching files found"
+                  : query
+                    ? "Searching..."
+                    : "No files available"}
             </div>
           </CommandEmpty>
         ) : (
