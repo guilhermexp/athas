@@ -6,8 +6,9 @@ interface SidebarPaneSelectorProps {
   isGitViewActive: boolean;
   isSearchViewActive: boolean;
   isRemoteViewActive: boolean;
+  isExtensionsViewActive: boolean;
   coreFeatures: CoreFeaturesState;
-  onViewChange: (view: "files" | "git" | "search" | "remote") => void;
+  onViewChange: (view: "files" | "git" | "search" | "remote" | "extensions") => void;
   onOpenExtensions: () => void;
 }
 
@@ -15,11 +16,13 @@ export const SidebarPaneSelector = ({
   isGitViewActive,
   isSearchViewActive,
   isRemoteViewActive,
+  isExtensionsViewActive,
   coreFeatures,
   onViewChange,
   onOpenExtensions,
 }: SidebarPaneSelectorProps) => {
-  const isFilesActive = !isGitViewActive && !isSearchViewActive && !isRemoteViewActive;
+  const isFilesActive =
+    !isGitViewActive && !isSearchViewActive && !isRemoteViewActive && !isExtensionsViewActive;
 
   return (
     <div className="flex gap-0.5 border-border border-b bg-secondary-bg p-1.5">
@@ -90,10 +93,18 @@ export const SidebarPaneSelector = ({
       )}
 
       <Button
-        onClick={onOpenExtensions}
+        onClick={() => {
+          onViewChange("extensions");
+          onOpenExtensions();
+        }}
         variant="ghost"
         size="sm"
-        className="flex h-6 w-6 items-center justify-center rounded p-0 text-text-lighter text-xs hover:bg-hover hover:text-text"
+        data-active={isExtensionsViewActive}
+        className={`flex h-6 w-6 items-center justify-center rounded p-0 text-xs ${
+          isExtensionsViewActive
+            ? "bg-selected text-text"
+            : "text-text-lighter hover:bg-hover hover:text-text"
+        }`}
         title="Extensions"
       >
         <Package size={14} />
