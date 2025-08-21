@@ -18,6 +18,7 @@ interface Settings {
   tabSize: number;
   wordWrap: boolean;
   lineNumbers: boolean;
+  ignoreCommonDirectories: boolean;
   // Theme
   theme: Theme;
   autoThemeLight: Theme;
@@ -60,6 +61,7 @@ const defaultSettings: Settings = {
   tabSize: 2,
   wordWrap: true,
   lineNumbers: true,
+  ignoreCommonDirectories: true,
   // Theme
   theme: "athas-dark", // Changed from "auto" since we don't support continuous monitoring
   autoThemeLight: "athas-light",

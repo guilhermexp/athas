@@ -61,6 +61,19 @@ export const EditorSettings = () => {
           />
         </SettingRow>
       </Section>
+
+      <Section title="File Navigation">
+        <SettingRow
+          label="Ignore Common Directories"
+          description="Hide common build/dependency directories in command bar (node_modules, .git, dist, etc.)"
+        >
+          <Switch
+            checked={settings.ignoreCommonDirectories}
+            onChange={(checked) => updateSetting("ignoreCommonDirectories", checked)}
+            size="sm"
+          />
+        </SettingRow>
+      </Section>
     </div>
   );
 };

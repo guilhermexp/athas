@@ -1,9 +1,10 @@
 import { ClockIcon, File } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebounce } from "use-debounce";
-import { shouldIgnoreInCommandPalette } from "@/components/command/constants/ignored-patterns";
 import { useRecentFilesStore } from "@/file-system/controllers/recent-files-store";
 import { useFileSystemStore } from "@/file-system/controllers/store";
+import { shouldIgnoreInCommandBar } from "@/file-system/controllers/utils";
+import { useSettingsStore } from "@/settings/store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useUIState } from "@/stores/ui-state-store";
 import Command, {
@@ -13,36 +14,6 @@ import Command, {
   CommandItem,
   CommandList,
 } from "../../ui/command";
-
-// Function to check if a file should be ignored
-// Now using centralized filtering logic plus additional path checks
-const shouldIgnoreFile = (filePath: string): boolean => {
-  const fileName = filePath.split("/").pop() || "";
-
-  // Check if path contains ignored directories
-  const pathSegments = filePath.split("/");
-  const ignoredDirs = [
-    "node_modules",
-    ".git",
-    ".next",
-    ".nuxt",
-    "dist",
-    "build",
-    "coverage",
-    ".cache",
-    "target",
-    "bin",
-    "obj",
-  ];
-
-  for (const segment of pathSegments) {
-    if (ignoredDirs.includes(segment)) {
-      return true;
-    }
-  }
-
-  return shouldIgnoreInCommandPalette(fileName, false);
-};
 
 // Optimized fuzzy search scoring function
 const fuzzyScore = (text: string, query: string): number => {
@@ -92,36 +63,37 @@ const fuzzyScore = (text: string, query: string): number => {
 };
 
 const CommandBar = () => {
-  // Get data from stores
   const { isCommandBarVisible, setIsCommandBarVisible } = useUIState();
   const { getAllProjectFiles, rootFolderPath } = useFileSystemStore();
   const handleFileSelect = useFileSystemStore((state) => state.handleFileSelect);
+  const { settings } = useSettingsStore();
 
   const isVisible = isCommandBarVisible;
   const onClose = () => setIsCommandBarVisible(false);
   const [query, setQuery] = useState("");
-  const [debouncedQuery] = useDebounce(query, 100); // Balanced debounce for performance and responsiveness
+  const [debouncedQuery] = useDebounce(query, 100);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<Array<{ name: string; path: string; isDir: boolean }>>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
 
-  // Get data from stores
   const { buffers, activeBufferId } = useBufferStore();
   const activeBuffer = buffers.find((b) => b.id === activeBufferId);
   const { addOrUpdateRecentFile, getRecentFilesOrderedByFrecency } = useRecentFilesStore();
   const recentFiles = getRecentFilesOrderedByFrecency();
 
-  // Load all project files when component mounts or becomes visible
   useEffect(() => {
-    if (!isVisible) return; // Only load when actually needed
+    if (!isVisible) return;
 
     setIsLoadingFiles(true);
     getAllProjectFiles()
       .then((allFiles) => {
         const formattedFiles = allFiles
-          .filter((file) => !file.isDir && !shouldIgnoreFile(file.path)) // Pre-filter here
+          .filter(
+            (file) =>
+              !file.isDir && !shouldIgnoreInCommandBar(file.path, settings.ignoreCommonDirectories),
+          )
           .map((file) => ({
             name: file.name,
             path: file.path,
@@ -133,15 +105,13 @@ const CommandBar = () => {
       .catch(() => {
         setIsLoadingFiles(false);
       });
-  }, [getAllProjectFiles, isVisible]); // Only reload when visible
+  }, [getAllProjectFiles, isVisible, settings.ignoreCommonDirectories]);
 
-  // Update local state when command bar becomes visible
   useEffect(() => {
     if (isVisible) {
       setQuery("");
       setSelectedIndex(0);
-      setIsLoadingFiles(files.length === 0); // Only show loading if no files cached
-      // Focus the input field immediately
+      setIsLoadingFiles(files.length === 0);
       if (inputRef.current) {
         inputRef.current.focus();
       }
@@ -181,12 +151,10 @@ const CommandBar = () => {
     };
   }, [isVisible, onClose]);
 
-  // Reset selected index when query changes
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
 
-  // Memoize relative path function
   const getRelativePath = useCallback(
     (fullPath: string): string => {
       if (!rootFolderPath) return fullPath;
@@ -204,7 +172,6 @@ const CommandBar = () => {
     [rootFolderPath],
   );
 
-  // Helper function to get directory path without filename
   const getDirectoryPath = useCallback(
     (fullPath: string): string => {
       const relativePath = getRelativePath(fullPath);
@@ -214,25 +181,20 @@ const CommandBar = () => {
     [getRelativePath],
   );
 
-  // Memoize file filtering and sorting with performance optimizations
   const { openBufferFiles, recentFilesInResults, otherFiles } = useMemo(() => {
-    // Files are already pre-filtered in the useEffect
     const allFiles = files;
 
-    // Get open buffers (excluding active buffer)
     const openBufferPaths = buffers
       .filter((buffer) => buffer.id !== activeBufferId && !buffer.isVirtual)
       .map((buffer) => buffer.path);
 
     const openBufferFilesData = allFiles.filter((file) => openBufferPaths.includes(file.path));
 
-    // Get recent file paths (excluding active buffer)
     const recentFilePaths = recentFiles
       .filter((rf) => !activeBuffer || rf.path !== activeBuffer.path)
       .map((rf) => rf.path);
 
     if (!debouncedQuery.trim()) {
-      // No search query - show open buffers, then recent files by frecency, then alphabetical
       const recent = allFiles
         .filter(
           (file) => recentFilePaths.includes(file.path) && !openBufferPaths.includes(file.path),
@@ -240,7 +202,7 @@ const CommandBar = () => {
         .sort((a, b) => {
           const aIndex = recentFiles.findIndex((rf) => rf.path === a.path);
           const bIndex = recentFiles.findIndex((rf) => rf.path === b.path);
-          return aIndex - bIndex; // Already sorted by frecency
+          return aIndex - bIndex;
         });
 
       const others = allFiles
@@ -259,13 +221,11 @@ const CommandBar = () => {
       };
     }
 
-    // With search query - use optimized fuzzy search with early termination
-    const maxResults = 50; // Limit total results for performance
+    const maxResults = 50;
     const scoredFiles = [];
 
     for (let i = 0; i < allFiles.length && scoredFiles.length < maxResults * 2; i++) {
       const file = allFiles[i];
-      // Score both filename and full path, take the higher score
       const nameScore = fuzzyScore(file.name, debouncedQuery);
       const pathScore = fuzzyScore(file.path, debouncedQuery);
       const score = Math.max(nameScore, pathScore);
@@ -275,18 +235,14 @@ const CommandBar = () => {
       }
     }
 
-    // Sort and limit results
     scoredFiles.sort((a, b) => {
-      // First sort by score (highest first)
       if (b.score !== a.score) return b.score - a.score;
 
-      // Then prioritize open buffers
       const aIsOpen = openBufferPaths.includes(a.file.path);
       const bIsOpen = openBufferPaths.includes(b.file.path);
       if (aIsOpen && !bIsOpen) return -1;
       if (!aIsOpen && bIsOpen) return 1;
 
-      // Then prioritize recent files by frecency
       const aIsRecent = recentFilePaths.includes(a.file.path);
       const bIsRecent = recentFilePaths.includes(b.file.path);
       if (aIsRecent && !bIsRecent) return -1;
@@ -298,7 +254,6 @@ const CommandBar = () => {
         return aIndex - bIndex;
       }
 
-      // Finally sort alphabetically
       return a.file.name.localeCompare(b.file.name);
     });
 
@@ -328,23 +283,18 @@ const CommandBar = () => {
       recentFilesInResults: recent.slice(0, 20 - openBuffers.length),
       otherFiles: others.slice(0, 20 - openBuffers.length - recent.length),
     };
-  }, [files, debouncedQuery, buffers, activeBufferId, recentFiles, activeBuffer]); // Use debounced query for better performance
+  }, [files, debouncedQuery, buffers, activeBufferId, recentFiles, activeBuffer]);
 
   const handleItemSelect = useCallback(
     (path: string) => {
-      // Extract filename from path
       const fileName = path.split("/").pop() || path;
-
-      // Update recent files store with frecency
       addOrUpdateRecentFile(path, fileName);
-
       handleFileSelect(path, false);
       onClose();
     },
     [handleFileSelect, onClose, addOrUpdateRecentFile],
   );
 
-  // Auto-scroll selected item into view
   useEffect(() => {
     if (!isVisible || !scrollContainerRef.current) return;
 
@@ -360,12 +310,10 @@ const CommandBar = () => {
     }
   }, [selectedIndex, isVisible, openBufferFiles, recentFilesInResults, otherFiles]);
 
-  // Handle arrow key navigation - separate effect after files are defined
   useEffect(() => {
     if (!isVisible) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle arrow key navigation
       const allResults = [...openBufferFiles, ...recentFilesInResults, ...otherFiles];
       const totalItems = allResults.length;
 
@@ -373,10 +321,10 @@ const CommandBar = () => {
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % totalItems); // Circular navigation
+        setSelectedIndex((prev) => (prev + 1) % totalItems);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + totalItems) % totalItems); // Circular navigation
+        setSelectedIndex((prev) => (prev - 1 + totalItems) % totalItems);
       } else if (e.key === "Enter") {
         e.preventDefault();
         if (allResults[selectedIndex]) {

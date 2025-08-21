@@ -85,6 +85,36 @@ const FindBar = () => {
     }
   }, [isVisible, onClose]);
 
+  // Handle keyboard input blocking for editor when find bar is visible
+  useEffect(() => {
+    const handleEditorKeyDown = (e: KeyboardEvent) => {
+      // Only block if the find bar is visible and the event target is not within the find bar
+      if (isVisible && !(e.target as Element)?.closest(".find-bar")) {
+        const allowedKeys = [
+          "ArrowUp",
+          "ArrowDown",
+          "ArrowLeft",
+          "ArrowRight",
+          "Home",
+          "End",
+          "PageUp",
+          "PageDown",
+        ];
+        if (!allowedKeys.includes(e.key) && !((e.ctrlKey || e.metaKey) && e.key === "f")) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+
+    if (isVisible) {
+      document.addEventListener("keydown", handleEditorKeyDown, true);
+      return () => {
+        document.removeEventListener("keydown", handleEditorKeyDown, true);
+      };
+    }
+  }, [isVisible]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Stop all events from bubbling to prevent leaking to editor
     e.stopPropagation();

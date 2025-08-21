@@ -1,8 +1,8 @@
 import type { FileEntry } from "../models/app";
 import { sortFileEntries } from "./file-tree-utils";
 
-// Common directories and patterns to ignore for performance
-export const IGNORE_PATTERNS: string[] = [
+// Common directories to ignore in command bar/search (when enabled)
+export const COMMON_IGNORE_DIRECTORIES: string[] = [
   "node_modules",
   ".git",
   ".next",
@@ -12,21 +12,21 @@ export const IGNORE_PATTERNS: string[] = [
   "coverage",
   ".nyc_output",
   ".cache",
-  ".vscode",
-  ".idea",
-  "*.log",
-  ".tmp",
-  ".temp",
   "target", // Rust/Java
   "bin", // Common binary directories
   "obj", // .NET
   ".vs", // Visual Studio
 ];
-const IGNORE_FILE_EXTENSIONS: string[] = [".log", ".tmp", ".temp", ".cache", ".lock"];
+
+// File patterns that should always be ignored (for performance and UI cleanliness)
+export const IGNORE_PATTERNS: string[] = [];
+
+const IGNORE_FILE_EXTENSIONS: string[] = [];
 
 export const shouldIgnore = (name: string, isDir: boolean): boolean => {
   const lowerName = name.toLowerCase();
-  // Check ignore patterns
+
+  // Check ignore patterns (but not common directories - those should be visible in file tree)
   for (const pattern of IGNORE_PATTERNS as string[]) {
     if (pattern?.includes("*")) {
       // Simple glob pattern matching
@@ -90,6 +90,32 @@ export const shouldIgnore = (name: string, isDir: boolean): boolean => {
 
     // Don't ignore other hidden files - let developers see their dotfiles
     return false;
+  }
+
+  return false;
+};
+
+// Command bar specific filtering function
+export const shouldIgnoreInCommandBar = (
+  filePath: string,
+  ignoreCommonDirectories: boolean,
+): boolean => {
+  const fileName = filePath.split("/").pop() || "";
+
+  // Always apply basic ignore patterns (OS files, temp files, etc.)
+  if (shouldIgnore(fileName, false)) {
+    return true;
+  }
+
+  // Only check for common directories if the setting is enabled
+  if (ignoreCommonDirectories) {
+    const pathSegments = filePath.split("/");
+
+    for (const segment of pathSegments) {
+      if (COMMON_IGNORE_DIRECTORIES.includes(segment)) {
+        return true;
+      }
+    }
   }
 
   return false;
