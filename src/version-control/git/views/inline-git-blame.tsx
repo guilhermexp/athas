@@ -191,7 +191,7 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
               </div>
               <div className="flex items-center gap-1">
                 <Hash size={12} />
-                <span className="font-mono">{blameLine.commit_hash.substring(0, 8)}</span>
+                <span className="font-mono">{blameLine.commit_hash.substring(0, 7)}</span>
                 <button
                   className="transition-colors hover:text-text"
                   onClick={() => copyToClipboard(blameLine.commit_hash)}
