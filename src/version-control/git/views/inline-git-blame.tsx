@@ -1,7 +1,8 @@
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { Clock, Copy, GitBranch, Hash } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { copyToClipboard } from "@/utils/clipboard";
+import { useEventListener } from "usehooks-ts";
 import { cn } from "@/utils/cn";
 import { formatDate, formatRelativeTime } from "@/utils/date";
 import type { GitBlameLine } from "../models/git-types";
@@ -14,12 +15,12 @@ interface InlineGitBlameProps {
 export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) => {
   const [showCard, setShowCard] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const documentRef = useRef(document);
 
   const POPOVER_MARGIN = 8;
-  const HIDE_DELAY = 100; // Small delay to prevent flickering
 
   const clearHideTimeout = useCallback(() => {
     if (hideTimeoutRef.current) {
@@ -32,7 +33,7 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
     clearHideTimeout();
     hideTimeoutRef.current = setTimeout(() => {
       setShowCard(false);
-    }, HIDE_DELAY);
+    }, 0);
   }, [clearHideTimeout]);
 
   const updatePosition = useCallback(() => {
@@ -76,6 +77,54 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
   const hidePopover = useCallback(() => {
     scheduleHide();
   }, [scheduleHide]);
+
+  const handleCopyCommitHash = useCallback(async () => {
+    await writeText(blameLine.commit_hash);
+  }, [blameLine.commit_hash]);
+
+  useEventListener(
+    "mousemove",
+    (e: MouseEvent) => {
+      if (!triggerRef.current) return;
+
+      const { clientX, clientY } = e;
+
+      const {
+        left: triggerLeft,
+        top: triggerTop,
+        width: triggerWidth,
+        height: triggerHeight,
+      } = triggerRef.current.getBoundingClientRect();
+
+      const isOverTrigger =
+        clientX >= triggerLeft &&
+        clientX <= triggerLeft + triggerWidth &&
+        clientY >= triggerTop &&
+        clientY <= triggerTop + triggerHeight;
+
+      let isOverPopover = false;
+      if (popoverRef.current) {
+        const {
+          left: popoverLeft,
+          top: popoverTop,
+          width: popoverWidth,
+          height: popoverHeight,
+        } = popoverRef.current.getBoundingClientRect();
+        isOverPopover =
+          clientX >= popoverLeft &&
+          clientX <= popoverLeft + popoverWidth &&
+          clientY >= popoverTop &&
+          clientY <= popoverTop + popoverHeight;
+      }
+
+      if (isOverTrigger || isOverPopover) {
+        showPopover();
+      } else {
+        hidePopover();
+      }
+    },
+    documentRef,
+  );
 
   // Adjust position after popover is rendered with actual dimensions
   useEffect(() => {
@@ -134,16 +183,13 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
   }, [clearHideTimeout]);
 
   return (
-    <div className="relative inline-flex">
+    <div ref={triggerRef} className="relative inline-flex">
       <button
-        ref={triggerRef}
         className={cn(
           "ml-2 inline-flex items-center gap-1 text-xs",
           "cursor-pointer text-text-lighter transition-colors hover:text-text",
           className,
         )}
-        onMouseEnter={showPopover}
-        onMouseLeave={hidePopover}
         onFocus={showPopover}
         onBlur={hidePopover}
       >
@@ -153,7 +199,6 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
       </button>
 
       {showCard &&
-        typeof document !== "undefined" &&
         createPortal(
           <div
             ref={popoverRef}
@@ -162,28 +207,23 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
               left: `${position.x}px`,
               top: `${position.y}px`,
             }}
-            onMouseEnter={showPopover}
-            onMouseLeave={hidePopover}
           >
-            {/* Author info with avatar */}
             <div className="mb-2 flex items-start gap-3">
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-500 font-medium text-sm text-white">
                 {blameLine.author.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1">
                 <div className="font-medium text-sm text-text">{blameLine.author}</div>
-                <div className="break-all text-text-lighter text-xs">&lt;{blameLine.email}&gt;</div>
+                <div className="break-all text-text-lighter text-xs">{blameLine.email}</div>
               </div>
             </div>
 
-            {/* Commit message */}
             <div className="mb-3">
               <div className="mb-1 font-medium text-sm text-text">
                 {blameLine.commit || "No commit message"}
               </div>
             </div>
 
-            {/* Footer with date and commit hash */}
             <div className="flex items-center justify-between border-border border-t pt-3 text-text-lighter text-xs">
               <div className="flex items-center gap-1">
                 <Clock size={12} />
@@ -194,7 +234,7 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
                 <span className="font-mono">{blameLine.commit_hash.substring(0, 7)}</span>
                 <button
                   className="transition-colors hover:text-text"
-                  onClick={() => copyToClipboard(blameLine.commit_hash)}
+                  onClick={handleCopyCommitHash}
                   title="Copy full commit hash"
                 >
                   <Copy size={12} />

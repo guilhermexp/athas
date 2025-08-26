@@ -443,10 +443,10 @@ export const unstageHunk = async (repoPath: string, hunk: GitHunk): Promise<bool
   }
 };
 
-export const getGitBlame = async (repoPath: string, filePath: string): Promise<GitBlame | null> => {
+export const getGitBlame = async (rootPath: string, filePath: string): Promise<GitBlame | null> => {
   try {
     const blame = await tauriInvoke<GitBlame>("git_blame_file", {
-      repoPath,
+      rootPath,
       filePath,
     });
     return blame;
