@@ -46,8 +46,9 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
     const viewportHeight = window.innerHeight;
 
     // Estimate popover dimensions (will be adjusted after render)
-    const popoverWidth = 384; // w-96 = 384px
-    const popoverHeight = 200; // estimated height
+    const popoverRect = popoverRef.current?.getBoundingClientRect();
+    const popoverWidth = popoverRect?.width ?? 384;
+    const popoverHeight = popoverRect?.height ?? 200;
 
     let x = rect.left;
     let y = rect.bottom + POPOVER_MARGIN;
@@ -66,7 +67,7 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
     }
 
     setPosition({ x, y });
-  }, []);
+  }, [triggerRef, popoverRef]);
 
   const showPopover = useCallback(() => {
     clearHideTimeout();
@@ -81,7 +82,7 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
   }, [scheduleHide]);
 
   const handleCopyCommitHash = useCallback(async () => {
-    await writeText(blameLine.commit_hash);
+    await writeText(blameLine.commit_hash.substring(0, 7));
   }, [blameLine.commit_hash]);
 
   const throttleCallback = useThrottledCallback((e: MouseEvent) => {
@@ -116,8 +117,6 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
         clientY >= popoverTop &&
         clientY <= popoverTop + popoverHeight;
     }
-
-    console.log("mousemove", isOverPopover, isOverTrigger);
 
     const textarea = editorAPI.getTextareaRef();
     if (isOverTrigger || isOverPopover) {
@@ -210,6 +209,10 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
               left: `${position.x}px`,
               top: `${position.y}px`,
             }}
+            // TODO: Fix this
+            onClick={(e) => e.stopPropagation()}
+            onSelect={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 p-3">
               <div className="flex size-8 items-center justify-center rounded-full bg-blue-500 text-white">
