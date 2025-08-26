@@ -75,10 +75,7 @@ export const LineWithContent = memo<LineWithContentProps>(
             isSelected={isSelected}
           />
           {isSelectedLine && blameLine && (
-            <InlineGitBlame
-              blameLine={blameLine}
-              className="mr-4 ml-auto opacity-60 transition-opacity hover:opacity-100"
-            />
+            <InlineGitBlame blameLine={blameLine} className="mr-4 ml-auto opacity-60" />
           )}
         </div>
       </div>
