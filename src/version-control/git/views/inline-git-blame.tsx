@@ -1,10 +1,11 @@
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { Clock, Copy, GitBranch, GitCommit } from "lucide-react";
+import { Check, Clock, Copy, GitBranch, GitCommit } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useEventListener } from "usehooks-ts";
 import { editorAPI } from "@/extensions/editor-api";
 import { useThrottledCallback } from "@/hooks/use-performance";
+import { useSettingsStore } from "@/settings/store";
 import { cn } from "@/utils/cn";
 import { formatDate, formatRelativeTime } from "@/utils/date";
 import type { GitBlameLine } from "../models/git-types";
@@ -21,6 +22,8 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
   const popoverRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const documentRef = useRef(document);
+  const { settings } = useSettingsStore();
+  const [isCopied, setIsCopied] = useState(false);
 
   const POPOVER_MARGIN = 8;
 
@@ -83,6 +86,8 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
 
   const handleCopyCommitHash = useCallback(async () => {
     await writeText(blameLine.commit_hash.substring(0, 7));
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 1500);
   }, [blameLine.commit_hash]);
 
   const throttleCallback = useThrottledCallback((e: MouseEvent) => {
@@ -189,15 +194,12 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
   return (
     <div ref={triggerRef} className="relative inline-flex">
       <div
-        className={cn(
-          "ml-2 inline-flex items-center gap-1 ",
-          "text-text-lighter text-xs",
-          className,
-        )}
+        className={cn("ml-2 inline-flex items-center gap-1 ", "text-text-lighter", className)}
+        style={{ fontSize: `${settings.fontSize}px` }}
       >
         <GitBranch size={9} />
-        <span className="text-xs">{blameLine.author},</span>
-        <span className="text-xs">{formatRelativeTime(blameLine.time)}</span>
+        <span>{blameLine.author},</span>
+        <span>{formatRelativeTime(blameLine.time)}</span>
       </div>
 
       {showCard &&
@@ -243,7 +245,7 @@ export const InlineGitBlame = ({ blameLine, className }: InlineGitBlameProps) =>
                   onClick={handleCopyCommitHash}
                   title="Copy full commit hash"
                 >
-                  <Copy size={12} />
+                  {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                 </button>
               </div>
             </div>
