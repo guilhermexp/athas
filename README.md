@@ -7,8 +7,6 @@ Designed for developers who want a fast and customizable development environment
 
 Download the latest version of Athas from our [releases page](https://github.com/athasdev/athas/releases).
 
----
-
 ## Developing Athas
 
 Choose your platform for detailed setup instructions:

@@ -1,6 +1,6 @@
 import { FilePlus, FolderOpen, FolderPlus, Server } from "lucide-react";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import RemoteConnectionView from "@/components/remote/remote-connection-view";
 import FileTree from "@/file-explorer/views/file-tree";
 import { useFileSystemStore } from "@/file-system/controllers/store";
@@ -8,11 +8,12 @@ import type { FileEntry } from "@/file-system/models/app";
 import { useSettingsStore } from "@/settings/store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useProjectStore } from "@/stores/project-store";
+import { useSearchViewStore } from "@/stores/search-view-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useUIState } from "@/stores/ui-state-store";
 import { cn } from "@/utils/cn";
 import GitView from "@/version-control/git/views/git-view";
-import SearchView from "../search-view";
+import SearchView, { type SearchViewRef } from "../search-view";
 import Button from "../ui/button";
 import { SidebarPaneSelector } from "./sidebar-pane-selector";
 
@@ -45,6 +46,10 @@ export const MainSidebar = () => {
   } = useUIState();
   const { getProjectName } = useProjectStore();
   const [projectName, setProjectName] = useState<string>("Explorer");
+
+  // Ref for SearchView to enable focus functionality
+  const searchViewRef = useRef<SearchViewRef>(null);
+  const { setSearchViewRef } = useSearchViewStore();
 
   // file system store
   const rootFolderPath = useFileSystemStore.use.rootFolderPath?.();
@@ -92,6 +97,24 @@ export const MainSidebar = () => {
 
     loadProjectName();
   }, [getProjectName, isRemoteWindow]);
+
+  // Register search view ref with store when it becomes available
+  useEffect(() => {
+    if (searchViewRef.current) {
+      setSearchViewRef(searchViewRef.current);
+    }
+
+    return () => {
+      setSearchViewRef(null);
+    };
+  }, [setSearchViewRef]);
+
+  // Additional effect to ensure ref is registered when search becomes active
+  useEffect(() => {
+    if (isSearchViewActive && searchViewRef.current) {
+      setSearchViewRef(searchViewRef.current);
+    }
+  }, [isSearchViewActive, setSearchViewRef]);
 
   // Handlers
   const onOpenExtensions = () => {
@@ -208,6 +231,7 @@ export const MainSidebar = () => {
         {settings.coreFeatures.search && (
           <div className={cn("h-full", !isSearchViewActive && "hidden")}>
             <SearchView
+              ref={searchViewRef}
               rootFolderPath={rootFolderPath}
               allProjectFiles={allProjectFiles}
               onFileSelect={(path, line, column) => handleFileSelect(path, false, line, column)}

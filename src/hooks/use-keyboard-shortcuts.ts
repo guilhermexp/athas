@@ -135,23 +135,45 @@ export const useKeyboardShortcuts = ({
       const isMacOS = isMac();
       const correctModifier = isMacOS ? e.metaKey : e.ctrlKey;
 
-      if (correctModifier && e.shiftKey && e.key === "F" && coreFeatures.search) {
+      if (
+        correctModifier &&
+        e.shiftKey &&
+        (e.key === "F" || e.key === "f") &&
+        coreFeatures.search
+      ) {
         e.preventDefault();
         e.stopPropagation();
         setIsSidebarVisible(true);
         setIsSearchViewActive(true);
         // Focus the search input after a short delay to ensure the view is rendered
         setTimeout(() => {
+          // Try the ref-based approach first
           focusSearchInput();
+
+          // Fallback: direct DOM query for reliability
+          setTimeout(() => {
+            const searchInput = document.querySelector(
+              'input[placeholder="Search"]',
+            ) as HTMLInputElement;
+            if (searchInput) {
+              searchInput.focus();
+              searchInput.select();
+            }
+          }, 50);
         }, 100);
         return;
       }
 
       // Also handle if Mac users are somehow sending ctrlKey instead of metaKey
-      if (isMacOS && e.ctrlKey && e.shiftKey && e.key === "F" && coreFeatures.search) {
+      if (
+        isMacOS &&
+        e.ctrlKey &&
+        e.shiftKey &&
+        (e.key === "F" || e.key === "f") &&
+        coreFeatures.search
+      ) {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Mac detected but using ctrlKey - this is unusual");
         setIsSidebarVisible(true);
         setIsSearchViewActive(true);
         setTimeout(() => {
@@ -162,7 +184,12 @@ export const useKeyboardShortcuts = ({
 
       // Alternative shortcut: Cmd+Shift+H (Mac) or Ctrl+Shift+H (Windows/Linux) to open project search
       // This is a backup in case Cmd+Shift+F is captured by the browser/system
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "H" && coreFeatures.search) {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.shiftKey &&
+        (e.key === "H" || e.key === "h") &&
+        coreFeatures.search
+      ) {
         e.preventDefault();
         e.stopPropagation();
         setIsSidebarVisible(true);
