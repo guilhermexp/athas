@@ -95,7 +95,18 @@ export const useGitBlameStore = create<GitBlameState>((set, get) => ({
 
     // Find the blame line that matches the line number
     // Note: Git blame line numbers are 1-based, editor line numbers might be 0-based
-    const blameLine = blame.lines.find((line) => line.line_number === lineNumber + 1);
+    const currentLine = lineNumber + 1;
+    const blameLine = blame.lines.find((line) => {
+      if (currentLine === line.line_number) {
+        return true;
+      }
+
+      if (currentLine > line.line_number && currentLine <= line.total_lines) {
+        return true;
+      }
+
+      return false;
+    });
     return blameLine || null;
   },
 

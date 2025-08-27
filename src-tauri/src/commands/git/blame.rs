@@ -4,9 +4,9 @@ use std::path::Path;
 use tauri::command;
 
 #[command]
-pub fn git_blame_file(repo_path: &str, file_path: &str) -> Result<GitBlame, String> {
+pub fn git_blame_file(root_path: &str, file_path: &str) -> Result<GitBlame, String> {
    let repo =
-      Repository::open(repo_path).map_err(|e| format!("Failed to open repository: {}", e))?;
+      Repository::open(root_path).map_err(|e| format!("Failed to open repository: {}", e))?;
 
    // Get the blame information
    let blame = repo

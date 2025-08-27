@@ -74,12 +74,8 @@ export const LineWithContent = memo<LineWithContentProps>(
             decorations={decorations}
             isSelected={isSelected}
           />
-          {/* Show git blame if enabled and data is available */}
-          {isSelectedLine && blameLine && content.trim() && (
-            <InlineGitBlame
-              blameLine={blameLine}
-              className="mr-4·ml-auto·opacity-60·transition-opacity·hover:opacity-100"
-            />
+          {isSelectedLine && blameLine && (
+            <InlineGitBlame blameLine={blameLine} className="mr-4 ml-auto opacity-60" />
           )}
         </div>
       </div>
