@@ -4,7 +4,6 @@ import { useFileSystemStore } from "@/file-system/controllers/store";
 import { ProjectNameMenu } from "@/hooks/use-context-menus";
 import { useKeyboardShortcutsWrapper } from "@/hooks/use-keyboard-shortcuts-wrapper";
 import { useMenuEventsWrapper } from "@/hooks/use-menu-events-wrapper";
-import SettingsDialog from "@/settings/components/settings-dialog";
 import { useSettingsStore } from "@/settings/store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useUIState } from "@/stores/ui-state-store";
@@ -37,13 +36,7 @@ export function MainLayout() {
   const activeBufferId = useBufferStore.use.activeBufferId();
   const activeBuffer = buffers.find((b) => b.id === activeBufferId) || null;
 
-  const {
-    isSidebarVisible,
-    isSettingsDialogVisible,
-    isThemeSelectorVisible,
-    setIsSettingsDialogVisible,
-    setIsThemeSelectorVisible,
-  } = useUIState();
+  const { isSidebarVisible, isThemeSelectorVisible, setIsThemeSelectorVisible } = useUIState();
   const { settings, updateSetting } = useSettingsStore();
   const { rootFolderPath } = useFileSystemStore();
 
@@ -103,7 +96,7 @@ export function MainLayout() {
       <CustomTitleBarWithSettings />
       <div className="h-px flex-shrink-0 bg-border" />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="z-10 flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-row overflow-hidden">
           {/* Left sidebar or AI chat based on settings */}
           {sidebarPosition === "right" ? (
@@ -191,10 +184,6 @@ export function MainLayout() {
       <FileReloadToast />
 
       {/* Dialog components */}
-      <SettingsDialog
-        isOpen={isSettingsDialogVisible}
-        onClose={() => setIsSettingsDialogVisible(false)}
-      />
       <ThemeSelector
         isVisible={isThemeSelectorVisible}
         onClose={() => setIsThemeSelectorVisible(false)}
