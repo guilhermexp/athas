@@ -26,16 +26,21 @@ const AIChatInputBar = memo(function AIChatInputBar({
   const { settings } = useSettingsStore();
   const { openSettingsDialog } = useUIState();
 
-  // Optimize store selectors to prevent unnecessary re-renders
-  const input = useAIChatStore((state) => state.input);
-  const isTyping = useAIChatStore((state) => state.isTyping);
-  const streamingMessageId = useAIChatStore((state) => state.streamingMessageId);
-  const selectedBufferIds = useAIChatStore((state) => state.selectedBufferIds);
-  const selectedFilesPaths = useAIChatStore((state) => state.selectedFilesPaths);
-  const isContextDropdownOpen = useAIChatStore((state) => state.isContextDropdownOpen);
-  const isSendAnimating = useAIChatStore((state) => state.isSendAnimating);
+  // Get active agent session data
+  const activeAgentSession = useAIChatStore((state) => state.getActiveAgentSession());
   const hasApiKey = useAIChatStore((state) => state.hasApiKey);
   const mentionState = useAIChatStore((state) => state.mentionState);
+
+  // Get active session data or fallback to defaults
+  const input = activeAgentSession?.input || "";
+  const isTyping = activeAgentSession?.isTyping || false;
+  const streamingMessageId = activeAgentSession?.streamingMessageId || null;
+  const selectedBufferIds = activeAgentSession?.selectedBufferIds || new Set<string>();
+  const selectedFilesPaths = activeAgentSession?.selectedFilesPaths || new Set<string>();
+  const isContextDropdownOpen = activeAgentSession?.isContextDropdownOpen || false;
+  const isSendAnimating = activeAgentSession?.isSendAnimating || false;
+  const messageQueue = activeAgentSession?.messageQueue || [];
+  const queueCount = messageQueue.length;
 
   // Memoize action selectors
   const setInput = useAIChatStore((state) => state.setInput);
@@ -399,7 +404,7 @@ const AIChatInputBar = memo(function AIChatInputBar({
           </div>
           <div
             ref={inputRef}
-            contentEditable={!isTyping && hasApiKey}
+            contentEditable={hasApiKey}
             onInput={handleInputChange}
             onKeyDown={handleKeyDown}
             data-placeholder={
@@ -411,7 +416,7 @@ const AIChatInputBar = memo(function AIChatInputBar({
               "max-h-[120px] min-h-[60px] w-full resize-none overflow-y-auto border-none bg-transparent",
               "p-1 text-text text-xs",
               "focus:outline-none",
-              !hasApiKey || isTyping ? "cursor-not-allowed opacity-50" : "cursor-text",
+              !hasApiKey ? "cursor-not-allowed opacity-50" : "cursor-text",
               // Custom styles for contentEditable placeholder
               "empty:before:pointer-events-none empty:before:text-text-lighter empty:before:content-[attr(data-placeholder)]",
             )}
@@ -426,12 +431,20 @@ const AIChatInputBar = memo(function AIChatInputBar({
             role="textbox"
             aria-multiline="true"
             aria-label="Message input"
-            tabIndex={hasApiKey && !isTyping ? 0 : -1}
+            tabIndex={hasApiKey ? 0 : -1}
           />
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">{/* Spacer for responsive layout */}</div>
           <div className="flex select-none items-center gap-1">
+            {/* Queue indicator */}
+            {queueCount > 0 && (
+              <div className="flex items-center gap-1 rounded bg-blue-500/10 px-2 py-1 text-blue-400 text-xs">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />
+                <span>{queueCount} queued</span>
+              </div>
+            )}
+
             {/* Model selector button */}
             <button
               onClick={() => openSettingsDialog("ai")}
@@ -447,22 +460,23 @@ const AIChatInputBar = memo(function AIChatInputBar({
             </button>
             <Button
               type="submit"
-              disabled={(!input.trim() && !isTyping) || !hasApiKey}
+              disabled={!input.trim() || !hasApiKey}
               onClick={isTyping && streamingMessageId ? onStopStreaming : handleSendMessage}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded p-0 text-text-lighter hover:bg-hover hover:text-text",
                 "send-button-hover button-transition focus:outline-none focus:ring-2 focus:ring-accent/50",
                 isTyping && streamingMessageId && !isSendAnimating && "button-morphing",
                 input.trim() &&
-                  !isTyping &&
                   hasApiKey &&
                   "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500/50",
-                (!input.trim() && !isTyping) || !hasApiKey
-                  ? "cursor-not-allowed opacity-50"
-                  : "cursor-pointer",
+                !input.trim() || !hasApiKey ? "cursor-not-allowed opacity-50" : "cursor-pointer",
               )}
               title={
-                isTyping && streamingMessageId ? "Stop generation (Escape)" : "Send message (Enter)"
+                isTyping && streamingMessageId
+                  ? "Stop generation (Escape)"
+                  : queueCount > 0
+                    ? "Add to queue (Enter)"
+                    : "Send message (Enter)"
               }
               aria-label={isTyping && streamingMessageId ? "Stop generation" : "Send message"}
               tabIndex={0}

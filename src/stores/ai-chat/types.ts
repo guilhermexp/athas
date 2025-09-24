@@ -1,8 +1,19 @@
 import type { Chat, Message } from "@/components/ai-chat/types";
 import type { FileEntry } from "@/file-system/models/app";
 
-export interface AIChatState {
-  // Input state
+export type AgentStatus = "idle" | "typing" | "thinking" | "responding" | "finished";
+
+export interface QueuedMessage {
+  id: string;
+  content: string;
+  timestamp: Date;
+}
+
+export interface AgentSession {
+  id: string;
+  name: string;
+  chats: Chat[];
+  currentChatId: string | null;
   input: string;
   isTyping: boolean;
   streamingMessageId: string | null;
@@ -10,11 +21,20 @@ export interface AIChatState {
   selectedFilesPaths: Set<string>;
   isContextDropdownOpen: boolean;
   isSendAnimating: boolean;
-  hasApiKey: boolean;
+  createdAt: Date;
+  status: AgentStatus;
+  lastActivity: Date;
+  messageQueue: QueuedMessage[];
+  isProcessingQueue: boolean;
+}
 
-  // Chat state
-  chats: Chat[];
-  currentChatId: string | null;
+export interface AIChatState {
+  // Multi-agent state
+  agentSessions: AgentSession[];
+  activeAgentSessionId: string | null;
+
+  // Global state
+  hasApiKey: boolean;
   isChatHistoryVisible: boolean;
 
   // Provider API keys state
@@ -32,7 +52,21 @@ export interface AIChatState {
 }
 
 export interface AIChatActions {
-  // Input actions
+  // Agent session actions
+  createAgentSession: (name?: string) => string;
+  switchToAgentSession: (sessionId: string) => void;
+  deleteAgentSession: (sessionId: string) => void;
+  renameAgentSession: (sessionId: string, name: string) => void;
+  getActiveAgentSession: () => AgentSession | undefined;
+  updateAgentStatus: (sessionId: string, status: AgentStatus) => void;
+  updateAgentActivity: (sessionId: string) => void;
+
+  // Message queue actions
+  addMessageToQueue: (sessionId: string, message: string) => void;
+  processNextMessage: (sessionId: string) => QueuedMessage | null;
+  clearMessageQueue: (sessionId: string) => void;
+
+  // Input actions (for active session)
   setInput: (input: string) => void;
   setIsTyping: (isTyping: boolean) => void;
   setStreamingMessageId: (streamingMessageId: string | null) => void;
@@ -47,7 +81,7 @@ export interface AIChatActions {
   setSelectedFilesPaths: (selectedFilesPaths: Set<string>) => void;
   autoSelectBuffer: (bufferId: string) => void;
 
-  // Chat actions
+  // Chat actions (for active session)
   createNewChat: () => string;
   switchToChat: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
@@ -79,7 +113,7 @@ export interface AIChatActions {
   setSelectedIndex: (index: number) => void;
   getFilteredFiles: (allFiles: FileEntry[]) => FileEntry[];
 
-  // Helper getters
+  // Helper getters (for active session)
   getCurrentChat: () => Chat | undefined;
   getCurrentMessages: () => Message[];
 }

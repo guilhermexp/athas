@@ -128,8 +128,8 @@ const IGNORE_FILE_EXTENSIONS: string[] = [
 
   // Database files
   ".db",
-  ".sqlite",
-  ".sqlite3",
+  // ".sqlite",
+  // ".sqlite3",
 
   // Lock files
   ".lock",
