@@ -1,7 +1,6 @@
 import { Plus, X } from "lucide-react";
 import type React from "react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { useSettingsStore } from "@/settings/store";
 import { useAIChatStore } from "@/stores/ai-chat/store";
 import type { AgentStatus } from "@/stores/ai-chat/types";
 import { cn } from "@/utils/cn";
@@ -14,6 +13,8 @@ const StatusIndicator = memo(({ status }: { status: AgentStatus }) => {
         return "bg-blue-500 animate-pulse";
       case "thinking":
         return "bg-yellow-500 animate-pulse";
+      case "planning":
+        return "bg-orange-500 animate-pulse";
       case "finished":
         return "bg-green-500";
       case "typing":
@@ -29,6 +30,8 @@ const StatusIndicator = memo(({ status }: { status: AgentStatus }) => {
         return "Responding...";
       case "thinking":
         return "Thinking...";
+      case "planning":
+        return "Planning...";
       case "finished":
         return "Finished";
       case "typing":
@@ -97,10 +100,10 @@ const AgentTab = memo(
       <div
         onClick={() => onSwitch(session.id)}
         className={cn(
-          "group relative flex h-8 w-8 cursor-pointer items-center justify-center rounded text-xs font-medium transition-all duration-200",
+          "group relative flex h-8 w-8 cursor-pointer items-center justify-center rounded font-medium text-xs transition-all duration-200",
           isActive
             ? "bg-primary-bg text-text shadow-sm ring-1 ring-border"
-            : "bg-transparent text-text-lighter hover:bg-hover hover:text-text hover:scale-105",
+            : "bg-transparent text-text-lighter hover:scale-105 hover:bg-hover hover:text-text",
         )}
         title={`Agent ${shortcutNumber} (${isMac ? "⌘" : "Ctrl"}+${shortcutNumber})`}
       >
@@ -125,7 +128,7 @@ const AgentTab = memo(
         )}
 
         {/* Status indicator - positioned at bottom right */}
-        <div className="absolute -bottom-0.5 -right-0.5">
+        <div className="-bottom-0.5 -right-0.5 absolute">
           <StatusIndicator status={session.status} />
         </div>
 
@@ -133,7 +136,7 @@ const AgentTab = memo(
         {editingSessionId !== session.id && canDelete && (
           <button
             onClick={(e) => onDelete(session.id, e)}
-            className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 opacity-0 transition-opacity hover:bg-red-500 group-hover:opacity-100"
+            className="-right-1 -top-1 absolute flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 opacity-0 transition-opacity hover:bg-red-500 group-hover:opacity-100"
             title="Close agent"
           >
             <X size={8} className="text-white" />
@@ -259,7 +262,7 @@ export const AgentTabs: React.FC = memo(() => {
       {/* Add agent button */}
       <button
         onClick={handleAddAgent}
-        className="flex h-8 w-8 items-center justify-center rounded border border-dashed border-border text-text-lighter transition-all duration-200 hover:border-solid hover:bg-hover hover:text-text hover:scale-105"
+        className="flex h-8 w-8 items-center justify-center rounded border border-border border-dashed text-text-lighter transition-all duration-200 hover:scale-105 hover:border-solid hover:bg-hover hover:text-text"
         title={`New agent (${isMac ? "⌘" : "Ctrl"}+N)`}
       >
         <Plus size={12} />

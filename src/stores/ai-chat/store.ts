@@ -30,6 +30,9 @@ const createDefaultAgentSession = (name: string): AgentSession => ({
   lastActivity: new Date(),
   messageQueue: [],
   isProcessingQueue: false,
+  // Claude Code specific features
+  mode: "chat",
+  outputStyle: "default",
 });
 
 export const useAIChatStore = create<AIChatState & AIChatActions>()(
@@ -122,6 +125,25 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
             set((state) => {
               const session = state.agentSessions.find((s) => s.id === sessionId);
               if (session) {
+                session.lastActivity = new Date();
+              }
+            }),
+
+          // Claude Code specific actions
+          setAgentMode: (sessionId, mode) =>
+            set((state) => {
+              const session = state.agentSessions.find((s) => s.id === sessionId);
+              if (session) {
+                session.mode = mode;
+                session.lastActivity = new Date();
+              }
+            }),
+
+          setAgentOutputStyle: (sessionId, outputStyle) =>
+            set((state) => {
+              const session = state.agentSessions.find((s) => s.id === sessionId);
+              if (session) {
+                session.outputStyle = outputStyle;
                 session.lastActivity = new Date();
               }
             }),
@@ -746,6 +768,13 @@ export const useAIChatStore = create<AIChatState & AIChatActions>()(
                 }
                 if (session.isProcessingQueue === undefined) {
                   session.isProcessingQueue = false;
+                }
+                // Ensure Claude Code features exist (for backward compatibility)
+                if (!session.mode) {
+                  session.mode = "chat";
+                }
+                if (!session.outputStyle) {
+                  session.outputStyle = "default";
                 }
                 // Restore Sets from arrays
                 session.selectedBufferIds = new Set(session.selectedBufferIds);

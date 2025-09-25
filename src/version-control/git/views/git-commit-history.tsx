@@ -49,10 +49,6 @@ const CommitItem = memo(
       [commit.hash, onToggleExpansion],
     );
 
-    const _handleCopyClick = useCallback(() => {
-      onCopyHash(commit.hash);
-    }, [commit.hash, onCopyHash]);
-
     const formattedDate = useMemo(() => {
       try {
         const date = new Date(commit.date);

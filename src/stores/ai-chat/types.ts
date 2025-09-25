@@ -1,7 +1,10 @@
 import type { Chat, Message } from "@/components/ai-chat/types";
 import type { FileEntry } from "@/file-system/models/app";
 
-export type AgentStatus = "idle" | "typing" | "thinking" | "responding" | "finished";
+export type AgentStatus = "idle" | "typing" | "thinking" | "planning" | "responding" | "finished";
+
+export type OutputStyle = "default" | "explanatory" | "learning" | "custom";
+export type ChatMode = "chat" | "plan";
 
 export interface QueuedMessage {
   id: string;
@@ -26,6 +29,9 @@ export interface AgentSession {
   lastActivity: Date;
   messageQueue: QueuedMessage[];
   isProcessingQueue: boolean;
+  // Claude Code specific features
+  mode: ChatMode;
+  outputStyle: OutputStyle;
 }
 
 export interface AIChatState {
@@ -60,6 +66,10 @@ export interface AIChatActions {
   getActiveAgentSession: () => AgentSession | undefined;
   updateAgentStatus: (sessionId: string, status: AgentStatus) => void;
   updateAgentActivity: (sessionId: string) => void;
+
+  // Claude Code specific actions
+  setAgentMode: (sessionId: string, mode: ChatMode) => void;
+  setAgentOutputStyle: (sessionId: string, outputStyle: OutputStyle) => void;
 
   // Message queue actions
   addMessageToQueue: (sessionId: string, message: string) => void;

@@ -1,3 +1,4 @@
+import type { ChatMode, OutputStyle } from "@/stores/ai-chat/types";
 import type { AIMessage } from "@/types/ai-chat";
 import { getModelById, getProviderById } from "../types/ai-provider";
 import { ClaudeCodeStreamHandler } from "./claude-code-handler";
@@ -28,6 +29,8 @@ export const getChatCompletionStream = async (
   onNewMessage?: () => void,
   onToolUse?: (toolName: string, toolInput?: any) => void,
   onToolComplete?: (toolName: string) => void,
+  mode: ChatMode = "chat",
+  outputStyle: OutputStyle = "default",
 ): Promise<void> => {
   try {
     const provider = getProviderById(providerId);
@@ -57,7 +60,7 @@ export const getChatCompletionStream = async (
     }
 
     const contextPrompt = buildContextPrompt(context);
-    const systemPrompt = buildSystemPrompt(contextPrompt);
+    const systemPrompt = buildSystemPrompt(contextPrompt, mode, outputStyle);
 
     // Build messages array with conversation history
     const messages: AIMessage[] = [

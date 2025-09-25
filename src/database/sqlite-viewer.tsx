@@ -1,25 +1,39 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Code, Copy, Database, Download, RefreshCw, Search, Table, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Calendar,
+  Code,
+  Copy,
+  Database,
+  Download,
+  FileText,
+  Filter,
+  Hash,
+  Info,
+  Key,
+  PlusIcon,
+  RefreshCw,
+  Search,
+  Settings,
+  Table,
+  Type,
+  X,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import Button from "../components/ui/button";
-
-interface SQLiteViewerProps {
-  databasePath: string;
-}
-
-interface TableInfo {
-  name: string;
-}
-
-interface QueryResult {
-  columns: string[];
-  rows: any[][];
-}
-
-interface ColumnInfo {
-  name: string;
-  type: string;
-}
+import Dropdown from "../components/ui/dropdown";
+import { useUIState } from "../stores/ui-state-store";
+import { SqliteRowMenu, SqliteTableMenu } from "./components/context-menus";
+import { CreateRowModal, CreateTableModal, EditRowModal } from "./components/crud-modals";
+import DataViewComponent from "./components/data-view";
+import type {
+  ColumnFilter,
+  ColumnInfo,
+  DatabaseInfo,
+  QueryResult,
+  SQLiteViewerProps,
+  TableInfo,
+  ViewMode,
+} from "./types";
 
 const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
   const [tables, setTables] = useState<TableInfo[]>([]);
@@ -35,32 +49,82 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isCustomQuery, setIsCustomQuery] = useState<boolean>(false);
   const [sqlHistory, setSqlHistory] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>("data");
+  const [columnFilters, setColumnFilters] = useState<ColumnFilter[]>([]);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [dbInfo, setDbInfo] = useState<DatabaseInfo | null>(null);
+  const [showColumnTypes, setShowColumnTypes] = useState<boolean>(true);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+
+  // Modal states
+  const [createRowModal, setCreateRowModal] = useState<{ isOpen: boolean; tableName: string }>({
+    isOpen: false,
+    tableName: "",
+  });
+  const [editRowModal, setEditRowModal] = useState<{
+    isOpen: boolean;
+    tableName: string;
+    rowData: Record<string, any>;
+  }>({ isOpen: false, tableName: "", rowData: {} });
+  const [createTableModal, setCreateTableModal] = useState<boolean>(false);
+
+  // Refresh trigger for data updates
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+
+  // UI state for context menus
+  const { setSqliteTableMenu } = useUIState();
 
   // Database file info
   const fileName = databasePath.split("/").pop() || databasePath.split("\\").pop() || "Database";
 
-  // Load table list when component mounts
+  // Load table list and database info when component mounts
   useEffect(() => {
-    const loadTables = async () => {
+    const loadDatabase = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const result = await invoke("get_sqlite_tables", {
+
+        // Load tables
+        const tablesResult = await invoke("get_sqlite_tables", {
           path: databasePath,
         });
-        setTables(result as TableInfo[]);
-        if ((result as TableInfo[]).length > 0) {
-          setSelectedTable((result as TableInfo[])[0].name);
+        setTables(tablesResult as TableInfo[]);
+        if ((tablesResult as TableInfo[]).length > 0) {
+          setSelectedTable((tablesResult as TableInfo[])[0].name);
+        }
+
+        // Load database info
+        try {
+          const versionResult = (await invoke("query_sqlite", {
+            path: databasePath,
+            query: "PRAGMA user_version;",
+          })) as QueryResult;
+
+          const indexResult = (await invoke("query_sqlite", {
+            path: databasePath,
+            query:
+              "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%';",
+          })) as QueryResult;
+
+          setDbInfo({
+            version: versionResult.rows[0]?.[0]?.toString() || "0",
+            size: 0, // We'll get this from file system if needed
+            tables: (tablesResult as TableInfo[]).length,
+            indexes: Number(indexResult.rows[0]?.[0]) || 0,
+          });
+        } catch (infoErr) {
+          console.warn("Could not load database info:", infoErr);
         }
       } catch (err) {
-        console.error("Error loading SQLite tables:", err);
-        setError(`Failed to load database tables: ${err}`);
+        console.error("Error loading SQLite database:", err);
+        setError(`Failed to load database: ${err}`);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadTables();
+    loadDatabase();
   }, [databasePath]);
 
   // Get table structure when a table is selected
@@ -78,6 +142,9 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
         const columns: ColumnInfo[] = result.rows.map((row) => ({
           name: row[1] as string,
           type: row[2] as string,
+          notnull: Boolean(row[3]),
+          default_value: row[4] as string | null,
+          primary_key: Boolean(row[5]),
         }));
 
         setTableMeta(columns);
@@ -91,9 +158,79 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
     loadTableStructure();
   }, [databasePath, selectedTable]);
 
-  // Load table data when a table is selected or page changes
+  // Build filtered and sorted query
+  const buildDataQuery = useMemo(() => {
+    if (!selectedTable || viewMode !== "data") return null;
+
+    const whereConditions: string[] = [];
+    const _params: Record<string, any> = {};
+
+    // Add search term filter
+    if (searchTerm.trim() && tableMeta.length > 0) {
+      const searchableColumns = tableMeta.map((col) => `"${col.name}"`).join(' || " " || ');
+      whereConditions.push(`(${searchableColumns}) LIKE "%${searchTerm}%"`);
+    }
+
+    // Add column filters
+    columnFilters.forEach((filter, index) => {
+      const _paramKey = `filter_${index}`;
+      switch (filter.operator) {
+        case "equals":
+          whereConditions.push(`"${filter.column}" = "${filter.value}"`);
+          break;
+        case "contains":
+          whereConditions.push(`"${filter.column}" LIKE "%${filter.value}%"`);
+          break;
+        case "startsWith":
+          whereConditions.push(`"${filter.column}" LIKE "${filter.value}%"`);
+          break;
+        case "endsWith":
+          whereConditions.push(`"${filter.column}" LIKE "%${filter.value}"`);
+          break;
+        case "gt":
+          whereConditions.push(`"${filter.column}" > "${filter.value}"`);
+          break;
+        case "lt":
+          whereConditions.push(`"${filter.column}" < "${filter.value}"`);
+          break;
+        case "between":
+          if (filter.value2) {
+            whereConditions.push(
+              `"${filter.column}" BETWEEN "${filter.value}" AND "${filter.value2}"`,
+            );
+          }
+          break;
+      }
+    });
+
+    // Build WHERE clause
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+
+    // Build ORDER BY clause
+    const orderClause = sortColumn ? `ORDER BY "${sortColumn}" ${sortDirection.toUpperCase()}` : "";
+
+    // Select columns
+    const columns =
+      selectedColumns.length > 0 ? selectedColumns.map((col) => `"${col}"`).join(", ") : "*";
+
+    return {
+      countQuery: `SELECT COUNT(*) FROM "${selectedTable}" ${whereClause}`,
+      dataQuery: `SELECT ${columns} FROM "${selectedTable}" ${whereClause} ${orderClause}`,
+    };
+  }, [
+    selectedTable,
+    viewMode,
+    searchTerm,
+    columnFilters,
+    sortColumn,
+    sortDirection,
+    selectedColumns,
+    tableMeta,
+  ]);
+
+  // Load table data when a table is selected or filters change
   useEffect(() => {
-    if (!selectedTable || isCustomQuery) return;
+    if (!selectedTable || isCustomQuery || viewMode !== "data" || !buildDataQuery) return;
 
     const loadTableData = async () => {
       try {
@@ -103,7 +240,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
         // Get total rows for pagination
         const countResult = (await invoke("query_sqlite", {
           path: databasePath,
-          query: `SELECT COUNT(*) FROM "${selectedTable}"`,
+          query: buildDataQuery.countQuery,
         })) as QueryResult;
 
         const totalRows = Number(countResult.rows[0][0]);
@@ -111,18 +248,11 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
 
         // Get paginated data
         const offset = (currentPage - 1) * pageSize;
-        let query = `SELECT * FROM "${selectedTable}" LIMIT ${pageSize} OFFSET ${offset}`;
-
-        // Apply search if present
-        if (searchTerm.trim()) {
-          // Search across all columns
-          const searchableColumns = tableMeta.map((col) => col.name).join(' || " " || ');
-          query = `SELECT * FROM "${selectedTable}" WHERE (${searchableColumns}) LIKE "%${searchTerm}%" LIMIT ${pageSize} OFFSET ${offset}`;
-        }
+        const paginatedQuery = `${buildDataQuery.dataQuery} LIMIT ${pageSize} OFFSET ${offset}`;
 
         const result = await invoke("query_sqlite", {
           path: databasePath,
-          query,
+          query: paginatedQuery,
         });
         setQueryResult(result as QueryResult);
       } catch (err) {
@@ -135,7 +265,15 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
     };
 
     loadTableData();
-  }, [databasePath, selectedTable, currentPage, pageSize, searchTerm, isCustomQuery, tableMeta]);
+  }, [
+    databasePath,
+    selectedTable,
+    currentPage,
+    pageSize,
+    isCustomQuery,
+    buildDataQuery,
+    refreshTrigger,
+  ]);
 
   // Execute custom query
   const executeCustomQuery = async () => {
@@ -171,10 +309,276 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
     setCurrentPage(1);
     setSearchTerm("");
     setIsCustomQuery(false);
+    setColumnFilters([]);
+    setSortColumn(null);
+    setSelectedColumns([]);
+    setViewMode("data");
+  };
+
+  // Add column filter
+  const addColumnFilter = (column: string) => {
+    const newFilter: ColumnFilter = {
+      column,
+      operator: "contains",
+      value: "",
+    };
+    setColumnFilters([...columnFilters, newFilter]);
+  };
+
+  // Update column filter
+  const updateColumnFilter = (index: number, updates: Partial<ColumnFilter>) => {
+    const newFilters = [...columnFilters];
+    newFilters[index] = { ...newFilters[index], ...updates };
+    setColumnFilters(newFilters);
+    setCurrentPage(1);
+  };
+
+  // Remove column filter
+  const removeColumnFilter = (index: number) => {
+    setColumnFilters(columnFilters.filter((_, i) => i !== index));
+    setCurrentPage(1);
+  };
+
+  // Handle column sorting
+  const handleColumnSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1);
+  };
+
+  // Get column type icon
+  const getColumnIcon = (type: string, isPrimaryKey: boolean) => {
+    if (isPrimaryKey) return <Key size={12} className="text-amber-500" />;
+    const lowerType = type.toLowerCase();
+    if (lowerType.includes("int") || lowerType.includes("num"))
+      return <Hash size={12} className="text-blue-500" />;
+    if (lowerType.includes("text") || lowerType.includes("varchar") || lowerType.includes("char"))
+      return <Type size={12} className="text-green-500" />;
+    if (lowerType.includes("date") || lowerType.includes("time"))
+      return <Calendar size={12} className="text-purple-500" />;
+    if (lowerType.includes("blob") || lowerType.includes("binary"))
+      return <FileText size={12} className="text-red-500" />;
+    return <Type size={12} className="text-gray-500" />;
+  };
+
+  // CRUD handlers
+  const handleCreateRow = (tableName: string) => {
+    setCreateRowModal({ isOpen: true, tableName });
+  };
+
+  const handleEditRow = (tableName: string, rowData: Record<string, any>) => {
+    setEditRowModal({ isOpen: true, tableName, rowData });
+  };
+
+  const handleDeleteRow = async (tableName: string, rowData: Record<string, any>) => {
+    try {
+      // Find primary key column
+      const primaryKeyColumn = tableMeta.find((col) => col.primary_key);
+      if (!primaryKeyColumn) {
+        setError("Cannot delete row: no primary key found");
+        return;
+      }
+
+      const primaryKeyValue = rowData[primaryKeyColumn.name];
+      if (primaryKeyValue === undefined || primaryKeyValue === null) {
+        setError("Cannot delete row: primary key value is missing");
+        return;
+      }
+
+      await invoke("delete_sqlite_row", {
+        path: databasePath,
+        table: tableName,
+        whereColumn: primaryKeyColumn.name,
+        whereValue: primaryKeyValue,
+      });
+
+      // Refresh data by triggering useEffect
+      setRefreshTrigger((prev) => prev + 1);
+      setError(null);
+    } catch (err) {
+      setError(`Delete failed: ${err}`);
+    }
+  };
+
+  const handleCreateTable = () => {
+    setCreateTableModal(true);
+  };
+
+  const handleDeleteTable = async (tableName: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete table "${tableName}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await invoke("execute_sqlite", {
+        path: databasePath,
+        statement: `DROP TABLE "${tableName}"`,
+      });
+
+      // Refresh tables list
+      const tablesResult = await invoke("get_sqlite_tables", {
+        path: databasePath,
+      });
+      setTables(tablesResult as TableInfo[]);
+
+      // Select first table if current table was deleted
+      if (selectedTable === tableName) {
+        const newTables = tablesResult as TableInfo[];
+        setSelectedTable(newTables.length > 0 ? newTables[0].name : null);
+      }
+
+      setError(null);
+    } catch (err) {
+      setError(`Delete table failed: ${err}`);
+    }
+  };
+
+  const handleTableContextMenu = (event: React.MouseEvent, tableName: string) => {
+    event.preventDefault();
+    setSqliteTableMenu({
+      x: event.clientX,
+      y: event.clientY,
+      tableName,
+    });
+  };
+
+  const handleSubmitCreateRow = async (values: Record<string, any>) => {
+    try {
+      const columns = Object.keys(values);
+      const vals = Object.values(values);
+
+      await invoke("insert_sqlite_row", {
+        path: databasePath,
+        table: createRowModal.tableName,
+        columns,
+        values: vals,
+      });
+
+      // Refresh data by triggering useEffect
+      setRefreshTrigger((prev) => prev + 1);
+      setError(null);
+    } catch (err) {
+      setError(`Insert failed: ${err}`);
+    }
+  };
+
+  const handleSubmitEditRow = async (values: Record<string, any>) => {
+    try {
+      // Find primary key column
+      const primaryKeyColumn = tableMeta.find((col) => col.primary_key);
+      if (!primaryKeyColumn) {
+        setError("Cannot update row: no primary key found");
+        return;
+      }
+
+      const primaryKeyValue = editRowModal.rowData[primaryKeyColumn.name];
+      if (primaryKeyValue === undefined || primaryKeyValue === null) {
+        setError("Cannot update row: primary key value is missing");
+        return;
+      }
+
+      // Remove primary key from values to update
+      const { [primaryKeyColumn.name]: _, ...updateValues } = values;
+      const columns = Object.keys(updateValues);
+      const vals = Object.values(updateValues);
+
+      await invoke("update_sqlite_row", {
+        path: databasePath,
+        table: editRowModal.tableName,
+        setColumns: columns,
+        setValues: vals,
+        whereColumn: primaryKeyColumn.name,
+        whereValue: primaryKeyValue,
+      });
+
+      // Refresh data by triggering useEffect
+      setRefreshTrigger((prev) => prev + 1);
+      setError(null);
+    } catch (err) {
+      setError(`Update failed: ${err}`);
+    }
+  };
+
+  const handleSubmitCreateTable = async (
+    tableName: string,
+    columns: { name: string; type: string; notnull: boolean }[],
+  ) => {
+    try {
+      const columnDefs = columns
+        .map((col) => `"${col.name}" ${col.type}${col.notnull ? " NOT NULL" : ""}`)
+        .join(", ");
+
+      const createTableSql = `CREATE TABLE "${tableName}" (${columnDefs})`;
+
+      await invoke("execute_sqlite", {
+        path: databasePath,
+        statement: createTableSql,
+      });
+
+      // Refresh tables list
+      const tablesResult = await invoke("get_sqlite_tables", {
+        path: databasePath,
+      });
+      setTables(tablesResult as TableInfo[]);
+      setSelectedTable(tableName);
+
+      setError(null);
+    } catch (err) {
+      setError(`Create table failed: ${err}`);
+    }
+  };
+
+  const handleCellEdit = async (rowIndex: number, columnName: string, newValue: any) => {
+    if (!selectedTable || !queryResult) return;
+
+    try {
+      // Find primary key column
+      const primaryKeyColumn = tableMeta.find((col) => col.primary_key);
+      if (!primaryKeyColumn) {
+        setError("Cannot update cell: no primary key found");
+        return;
+      }
+
+      // Get the row data
+      const row = queryResult.rows[rowIndex];
+      const rowData: Record<string, any> = {};
+      queryResult.columns.forEach((column, i) => {
+        rowData[column] = row[i];
+      });
+
+      const primaryKeyValue = rowData[primaryKeyColumn.name];
+      if (primaryKeyValue === undefined || primaryKeyValue === null) {
+        setError("Cannot update cell: primary key value is missing");
+        return;
+      }
+
+      await invoke("update_sqlite_row", {
+        path: databasePath,
+        table: selectedTable,
+        setColumns: [columnName],
+        setValues: [newValue],
+        whereColumn: primaryKeyColumn.name,
+        whereValue: primaryKeyValue,
+      });
+
+      // Refresh data by triggering useEffect
+      setRefreshTrigger((prev) => prev + 1);
+      setError(null);
+    } catch (err) {
+      setError(`Cell update failed: ${err}`);
+    }
   };
 
   // Reset to table view
-  const resetToTableView = () => {
+  const _resetToTableView = () => {
     setIsCustomQuery(false);
     setCurrentPage(1);
     setSearchTerm("");
@@ -184,15 +588,14 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
   const exportAsCSV = () => {
     if (!queryResult) return;
 
-    const headers = queryResult.columns.join(",");
+    const headers = queryResult.columns.map((col) => `"${col}"`).join(",");
     const rows = queryResult.rows
       .map((row) =>
         row
           .map((cell) => {
-            if (cell === null) return "";
-            return typeof cell === "object"
-              ? JSON.stringify(cell).replace(/"/g, '""')
-              : String(cell).replace(/"/g, '""');
+            if (cell === null) return '""';
+            if (typeof cell === "object") return `"${JSON.stringify(cell).replace(/"/g, '""')}"`;
+            return `"${String(cell).replace(/"/g, '""')}"`;
           })
           .join(","),
       )
@@ -205,14 +608,18 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `${selectedTable || "query_result"}_export.csv`);
+    link.setAttribute(
+      "download",
+      `${selectedTable || "query_result"}_${new Date().toISOString().split("T")[0]}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Copy results as JSON
-  const copyAsJSON = () => {
+  const copyAsJSON = async () => {
     if (!queryResult) return;
 
     const jsonData = queryResult.rows.map((row) => {
@@ -223,59 +630,128 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
       return obj;
     });
 
-    navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+      // Could add toast notification here if available
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+    }
   };
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-primary-bg text-text">
-      {/* Header with DB file info */}
-      <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-4 py-2">
-        <div className="flex items-center gap-2">
-          <Database size={16} className="text-text-lighter" />
-          <span className="font-medium font-mono text-sm">{fileName}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={resetToTableView}
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            disabled={!isCustomQuery}
-          >
-            <Table size={14} className="mr-1" />
-            Table View
-          </Button>
-          <Button
-            onClick={exportAsCSV}
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            disabled={!queryResult}
-          >
-            <Download size={14} className="mr-1" />
-            Export CSV
-          </Button>
-          <Button
-            onClick={copyAsJSON}
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            disabled={!queryResult}
-          >
-            <Copy size={14} className="mr-1" />
-            Copy JSON
-          </Button>
+      {/* Header */}
+      <div className="border-border border-b bg-secondary-bg px-3 py-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <Database size={14} className="text-text-lighter" />
+              <span className="font-mono text-sm">{fileName}</span>
+              {dbInfo && (
+                <span className="font-mono text-text-lighter text-xs">
+                  {dbInfo.tables}t {dbInfo.indexes}i
+                </span>
+              )}
+            </div>
+
+            {/* View tabs */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setViewMode("data")}
+                className={`flex items-center gap-1 px-2 py-1 font-mono text-xs transition-colors ${
+                  viewMode === "data" ? "text-text" : "text-text-lighter hover:text-text"
+                }`}
+                title="Data view"
+              >
+                <Table size={12} />
+                Data
+              </button>
+              <button
+                onClick={() => setViewMode("schema")}
+                className={`flex items-center gap-1 px-2 py-1 font-mono text-xs transition-colors ${
+                  viewMode === "schema" ? "text-text" : "text-text-lighter hover:text-text"
+                }`}
+                title="Schema view"
+              >
+                <Settings size={12} />
+                Schema
+              </button>
+              <button
+                onClick={() => setViewMode("info")}
+                className={`flex items-center gap-1 px-2 py-1 font-mono text-xs transition-colors ${
+                  viewMode === "info" ? "text-text" : "text-text-lighter hover:text-text"
+                }`}
+                title="Database info"
+              >
+                <Info size={12} />
+                Info
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {viewMode === "data" && !isCustomQuery && (
+              <button
+                onClick={() => setShowColumnTypes(!showColumnTypes)}
+                className="flex items-center gap-1 px-2 py-1 font-mono text-text-lighter text-xs transition-colors hover:text-text"
+                title="Toggle column types"
+              >
+                <Type size={12} />
+                Types
+              </button>
+            )}
+            {viewMode === "data" && (
+              <button
+                onClick={() => setIsCustomQuery(true)}
+                className="flex items-center gap-1 px-2 py-1 font-mono text-text-lighter text-xs transition-colors hover:text-text"
+                disabled={isCustomQuery}
+                title="Custom SQL query"
+              >
+                <Code size={12} />
+                SQL
+              </button>
+            )}
+            {queryResult && (
+              <>
+                <button
+                  onClick={exportAsCSV}
+                  className="flex items-center gap-1 px-2 py-1 font-mono text-text-lighter text-xs transition-colors hover:text-text"
+                  title="Export as CSV"
+                >
+                  <Download size={12} />
+                  Export
+                </button>
+                <button
+                  onClick={copyAsJSON}
+                  className="flex items-center gap-1 px-2 py-1 font-mono text-text-lighter text-xs transition-colors hover:text-text"
+                  title="Copy as JSON"
+                >
+                  <Copy size={12} />
+                  JSON
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="flex min-h-0 flex-1">
         {/* Sidebar with tables */}
         <div className="flex w-64 flex-col border-border border-r bg-secondary-bg">
-          <div className="border-border border-b p-3">
-            <h3 className="flex items-center gap-2 font-mono font-semibold text-sm text-text">
-              <Database size={16} />
-              Tables ({tables.length})
-            </h3>
+          <div className="group p-3 pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-mono text-text-lighter text-xs">
+                <Database size={12} />
+                Tables ({tables.length})
+              </div>
+              <button
+                onClick={handleCreateTable}
+                className="rounded px-1 py-0.5 opacity-0 transition-opacity hover:bg-hover hover:opacity-100 group-hover:opacity-100"
+                title="Create new table"
+              >
+                <PlusIcon size={10} className="text-text-lighter hover:text-text" />
+              </button>
+            </div>
           </div>
 
           <div className="custom-scrollbar flex-1 overflow-y-auto p-2">
@@ -283,6 +759,7 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
               <button
                 key={table.name}
                 onClick={() => handleTableChange(table.name)}
+                onContextMenu={(e) => handleTableContextMenu(e, table.name)}
                 className={`flex w-full items-center gap-1.5 px-3 py-1.5 text-left font-mono text-xs hover:bg-hover ${
                   selectedTable === table.name ? "bg-selected" : ""
                 }`}
@@ -397,6 +874,80 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
             )}
           </div>
 
+          {/* Column Filters */}
+          {viewMode === "data" && columnFilters.length > 0 && (
+            <div className="border-border border-b bg-secondary-bg px-3 py-2">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="font-mono text-text-lighter text-xs">
+                  {columnFilters.length} filters
+                </span>
+                <button
+                  onClick={() => setColumnFilters([])}
+                  className="font-mono text-text-lighter text-xs hover:text-text"
+                >
+                  clear
+                </button>
+              </div>
+              <div className="space-y-1">
+                {columnFilters.map((filter, index) => (
+                  <div key={index} className="flex items-center gap-2 text-xs">
+                    <Dropdown
+                      value={filter.column}
+                      options={tableMeta.map((col) => ({ value: col.name, label: col.name }))}
+                      onChange={(value) => updateColumnFilter(index, { column: value })}
+                      size="xs"
+                      className="min-w-20"
+                    />
+
+                    <Dropdown
+                      value={filter.operator}
+                      options={[
+                        { value: "equals", label: "=" },
+                        { value: "contains", label: "∋" },
+                        { value: "startsWith", label: "^" },
+                        { value: "endsWith", label: "$" },
+                        { value: "gt", label: ">" },
+                        { value: "lt", label: "<" },
+                        { value: "between", label: "⇋" },
+                      ]}
+                      onChange={(value) =>
+                        updateColumnFilter(index, { operator: value as ColumnFilter["operator"] })
+                      }
+                      size="xs"
+                      className="min-w-12"
+                    />
+
+                    <input
+                      type="text"
+                      value={filter.value}
+                      onChange={(e) => updateColumnFilter(index, { value: e.target.value })}
+                      placeholder="value"
+                      className="flex-1 border border-border bg-primary-bg px-1 py-0.5 font-mono text-xs"
+                    />
+
+                    {filter.operator === "between" && (
+                      <input
+                        type="text"
+                        value={filter.value2 || ""}
+                        onChange={(e) => updateColumnFilter(index, { value2: e.target.value })}
+                        placeholder="value2"
+                        className="flex-1 border border-border bg-primary-bg px-1 py-0.5 font-mono text-xs"
+                      />
+                    )}
+
+                    <button
+                      onClick={() => removeColumnFilter(index)}
+                      className="text-text-lighter transition-colors hover:text-red-500"
+                      title="Remove filter"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Error message */}
           {error && (
             <div className="m-2 rounded-md border border-red-200 bg-red-50 p-2 text-red-600 text-xs">
@@ -414,137 +965,230 @@ const SQLiteViewer = ({ databasePath }: SQLiteViewerProps) => {
             </div>
           )}
 
-          {/* Results table */}
-          {!isLoading && queryResult && (
-            <div className="custom-scrollbar flex-1 overflow-auto p-0">
-              {queryResult.rows.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <div className="font-mono text-sm text-text-lighter italic">No data returned</div>
+          {/* Data View */}
+          {!isLoading && viewMode === "data" && queryResult && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              {/* Data View Header */}
+              <div className="group flex items-center justify-between border-border border-b bg-secondary-bg px-3 py-2">
+                <div className="font-mono text-text-lighter text-xs">
+                  {queryResult.rows.length} rows
                 </div>
-              ) : (
-                <table className="w-full border-collapse font-mono text-xs">
-                  <thead className="sticky top-0 z-10">
-                    <tr className="bg-secondary-bg">
-                      {/* Row number column */}
-                      <th className="w-10 border border-border bg-secondary-bg px-2 py-1.5 text-left">
-                        #
-                      </th>
-                      {queryResult.columns.map((column, i) => (
-                        <th
-                          key={i}
-                          className="whitespace-nowrap border border-border bg-secondary-bg px-2 py-1.5 text-left"
-                          title={tableMeta.find((c) => c.name === column)?.type || ""}
+                {selectedTable && (
+                  <button
+                    onClick={() => handleCreateRow(selectedTable)}
+                    className="rounded px-1 py-0.5 opacity-0 transition-opacity hover:bg-hover hover:opacity-100 group-hover:opacity-100"
+                    title="Add new row"
+                  >
+                    <PlusIcon size={10} className="text-text-lighter hover:text-text" />
+                  </button>
+                )}
+              </div>
+              <div className="custom-scrollbar flex-1 overflow-auto p-0">
+                <DataViewComponent
+                  queryResult={queryResult}
+                  tableMeta={tableMeta}
+                  tableName={selectedTable || ""}
+                  currentPage={currentPage}
+                  pageSize={pageSize}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  showColumnTypes={showColumnTypes}
+                  onColumnSort={handleColumnSort}
+                  onAddColumnFilter={addColumnFilter}
+                  getColumnIcon={getColumnIcon}
+                  onCellEdit={handleCellEdit}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Schema View */}
+          {!isLoading && viewMode === "schema" && selectedTable && tableMeta.length > 0 && (
+            <div className="flex-1 overflow-auto">
+              <div className="border-border border-b bg-secondary-bg p-3">
+                <div className="font-mono text-sm">{selectedTable}</div>
+                <div className="font-mono text-text-lighter text-xs">
+                  {tableMeta.length} columns
+                </div>
+              </div>
+
+              <div className="divide-y divide-border">
+                {tableMeta.map((column) => (
+                  <div
+                    key={column.name}
+                    className="flex items-center justify-between px-3 py-2 hover:bg-hover"
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      {getColumnIcon(column.type, column.primary_key)}
+                      <div className="truncate font-mono text-sm">{column.name}</div>
+                      <div className="font-mono text-text-lighter text-xs">{column.type}</div>
+                      {column.primary_key && (
+                        <div className="font-mono text-text-lighter text-xs">PK</div>
+                      )}
+                      {column.notnull && (
+                        <div className="font-mono text-text-lighter text-xs">NN</div>
+                      )}
+                      {column.default_value && (
+                        <div
+                          className="truncate font-mono text-text-lighter text-xs"
+                          title={`default: ${column.default_value}`}
                         >
-                          {column}
-                          {tableMeta.find((c) => c.name === column) && (
-                            <span className="ml-1 text-text-lighter text-xs">
-                              ({tableMeta.find((c) => c.name === column)?.type})
-                            </span>
-                          )}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {queryResult.rows.map((row, rowIndex) => (
-                      <tr key={rowIndex} className="hover:bg-hover">
-                        {/* Row number */}
-                        <td className="border border-border px-2 py-1 text-text-lighter">
-                          {(currentPage - 1) * pageSize + rowIndex + 1}
-                        </td>
-                        {row.map((cell, cellIndex) => (
-                          <td
-                            key={cellIndex}
-                            className="max-w-[300px] truncate border border-border px-2 py-1"
-                            title={cell === null ? "NULL" : String(cell)}
-                          >
-                            {cell === null ? (
-                              <span className="text-text-lighter italic">NULL</span>
-                            ) : typeof cell === "object" ? (
-                              <span className="text-blue-500">{JSON.stringify(cell)}</span>
-                            ) : (
-                              String(cell)
-                            )}
-                          </td>
-                        ))}
-                      </tr>
+                          def: {column.default_value}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => addColumnFilter(column.name)}
+                      className="px-2 py-1 font-mono text-text-lighter text-xs opacity-60 transition-colors hover:text-text hover:opacity-100"
+                      title="Filter by this column"
+                    >
+                      <Filter size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Database Info View */}
+          {!isLoading && viewMode === "info" && (
+            <div className="flex-1 overflow-auto">
+              <div className="divide-y divide-border">
+                {/* Database stats */}
+                <div className="p-3">
+                  <div className="mb-1 font-mono text-sm">{fileName}</div>
+                  <div className="flex gap-4 font-mono text-text-lighter text-xs">
+                    <span>{dbInfo?.tables || 0} tables</span>
+                    <span>{dbInfo?.indexes || 0} indexes</span>
+                    <span>v{dbInfo?.version || "0"}</span>
+                    {selectedTable && <span>current: {selectedTable}</span>}
+                    {columnFilters.length > 0 && <span>{columnFilters.length} filters</span>}
+                  </div>
+                </div>
+
+                {/* Tables */}
+                <div className="p-3">
+                  <div className="mb-2 font-mono text-text-lighter text-xs">tables</div>
+                  <div className="space-y-1">
+                    {tables.map((table) => (
+                      <button
+                        key={table.name}
+                        onClick={() => {
+                          handleTableChange(table.name);
+                          setViewMode("data");
+                        }}
+                        className={`block w-full px-2 py-1 text-left font-mono text-xs transition-colors hover:bg-hover ${
+                          selectedTable === table.name ? "bg-selected" : ""
+                        }`}
+                      >
+                        {table.name}
+                      </button>
                     ))}
-                  </tbody>
-                </table>
-              )}
+                  </div>
+                </div>
+
+                {/* SQL History */}
+                {sqlHistory.length > 0 && (
+                  <div className="p-3">
+                    <div className="mb-2 font-mono text-text-lighter text-xs">recent queries</div>
+                    <div className="max-h-32 space-y-1 overflow-y-auto">
+                      {sqlHistory.map((query, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setCustomQuery(query);
+                            setIsCustomQuery(true);
+                            setViewMode("data");
+                          }}
+                          className="block w-full truncate px-2 py-1 text-left font-mono text-xs transition-colors hover:bg-hover"
+                          title={query}
+                        >
+                          {query}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {/* Pagination */}
-          {!isLoading && queryResult && !isCustomQuery && totalPages > 1 && (
-            <div className="flex items-center justify-between border-border border-t bg-secondary-bg px-4 py-2">
+          {!isLoading && viewMode === "data" && queryResult && !isCustomQuery && totalPages > 1 && (
+            <div className="flex items-center justify-between border-border border-t bg-secondary-bg px-3 py-2">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-text-lighter text-xs">
-                  {pageSize} rows per page
-                </span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
+                <Dropdown
+                  value={pageSize.toString()}
+                  options={[
+                    { value: "10", label: "10" },
+                    { value: "25", label: "25" },
+                    { value: "50", label: "50" },
+                    { value: "100", label: "100" },
+                    { value: "500", label: "500" },
+                  ]}
+                  onChange={(value) => {
+                    setPageSize(Number(value));
                     setCurrentPage(1);
                   }}
-                  className="rounded border border-border bg-primary-bg px-1.5 py-0.5 font-mono text-xs"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={500}>500</option>
-                </select>
+                  size="xs"
+                  className="min-w-16"
+                />
+                <span className="font-mono text-text-lighter text-xs">per page</span>
               </div>
 
               <div className="flex items-center gap-1">
-                <Button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  variant="ghost"
-                  size="sm"
-                  className="px-1.5 text-xs"
-                >
-                  First
-                </Button>
-                <Button
+                <button
                   onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  variant="ghost"
-                  size="sm"
-                  className="px-1.5 text-xs"
+                  className="px-2 py-1 font-mono text-text-lighter text-xs transition-colors hover:text-text disabled:opacity-50"
                 >
-                  Prev
-                </Button>
+                  ← Prev
+                </button>
 
                 <span className="px-2 font-mono text-xs">
-                  Page {currentPage} of {totalPages}
+                  {currentPage} / {totalPages}
                 </span>
 
-                <Button
+                <button
                   onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  variant="ghost"
-                  size="sm"
-                  className="px-1.5 text-xs"
+                  className="px-2 py-1 font-mono text-text-lighter text-xs transition-colors hover:text-text disabled:opacity-50"
                 >
-                  Next
-                </Button>
-                <Button
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                  variant="ghost"
-                  size="sm"
-                  className="px-1.5 text-xs"
-                >
-                  Last
-                </Button>
+                  Next →
+                </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Context Menus */}
+      <SqliteTableMenu onCreateRow={handleCreateRow} onDeleteTable={handleDeleteTable} />
+      <SqliteRowMenu onEditRow={handleEditRow} onDeleteRow={handleDeleteRow} />
+
+      {/* Modals */}
+      <CreateRowModal
+        isOpen={createRowModal.isOpen}
+        onClose={() => setCreateRowModal({ isOpen: false, tableName: "" })}
+        tableName={createRowModal.tableName}
+        columns={tableMeta.filter((col) => col.name.toLowerCase() !== "rowid")}
+        onSubmit={handleSubmitCreateRow}
+      />
+
+      <EditRowModal
+        isOpen={editRowModal.isOpen}
+        onClose={() => setEditRowModal({ isOpen: false, tableName: "", rowData: {} })}
+        tableName={editRowModal.tableName}
+        columns={tableMeta.filter((col) => col.name.toLowerCase() !== "rowid")}
+        initialData={editRowModal.rowData}
+        onSubmit={handleSubmitEditRow}
+      />
+
+      <CreateTableModal
+        isOpen={createTableModal}
+        onClose={() => setCreateTableModal(false)}
+        onSubmit={handleSubmitCreateTable}
+      />
     </div>
   );
 };

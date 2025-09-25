@@ -992,25 +992,6 @@ export function TextEditor() {
     }
   }, [useEditorCursorStore, content, onChange, updateBufferContent, activeBufferId]);
 
-  const handleInsertLine = useCallback(() => {
-    if (textareaRef.current) {
-      const cursorPos = textareaRef.current.selectionStart;
-      const newContent = `${content.slice(0, cursorPos)}\n${content.slice(cursorPos)}`;
-
-      onChange?.(newContent);
-      if (activeBufferId) {
-        updateBufferContent(activeBufferId, newContent);
-      }
-
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = cursorPos + 1;
-          handleSelectionChange();
-        }
-      }, 0);
-    }
-  }, [content, onChange, updateBufferContent, activeBufferId, handleSelectionChange]);
-
   const handleToggleBookmark = useCallback(() => {
     // Toggle bookmark - not implemented yet
     console.log("Toggle bookmark - not implemented yet");
@@ -1105,7 +1086,6 @@ export function TextEditor() {
           onToggleCase={handleToggleCase}
           onMoveLineUp={handleMoveLineUp}
           onMoveLineDown={handleMoveLineDown}
-          onInsertLine={handleInsertLine}
           onToggleBookmark={handleToggleBookmark}
         />,
         document.body,

@@ -39,7 +39,6 @@ interface EditorContextMenuProps {
   onToggleCase?: () => void;
   onMoveLineUp?: () => void;
   onMoveLineDown?: () => void;
-  onInsertLine?: () => void;
   onToggleBookmark?: () => void;
 }
 
@@ -62,7 +61,6 @@ const EditorContextMenu = ({
   onToggleCase,
   onMoveLineUp,
   onMoveLineDown,
-  onInsertLine,
   onToggleBookmark,
 }: EditorContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -219,11 +217,6 @@ const EditorContextMenu = ({
 
   const handleMoveLineDown = () => {
     if (onMoveLineDown) onMoveLineDown();
-    onClose();
-  };
-
-  const _handleInsertLine = () => {
-    if (onInsertLine) onInsertLine();
     onClose();
   };
 

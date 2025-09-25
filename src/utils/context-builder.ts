@@ -1,3 +1,4 @@
+import type { ChatMode, OutputStyle } from "@/stores/ai-chat/types";
 import type { ContextInfo } from "./types";
 
 // Build a comprehensive context prompt for the AI
@@ -127,9 +128,54 @@ export const buildContextPrompt = (context: ContextInfo): string => {
   return contextPrompt;
 };
 
-// Build system prompt for AI providers
-export const buildSystemPrompt = (contextPrompt: string): string => {
-  return `You are an expert coding assistant integrated into a code editor. You have access to the user's current project context and open files.
+// Build system prompt for AI providers with mode and output style support
+export const buildSystemPrompt = (
+  contextPrompt: string,
+  mode: ChatMode = "chat",
+  outputStyle: OutputStyle = "default",
+): string => {
+  let basePrompt = `You are an expert coding assistant integrated into a code editor. You have access to the user's current project context and open files.`;
+
+  // Mode-specific behavior
+  if (mode === "plan") {
+    basePrompt += `
+
+PLAN MODE: You are currently in Plan Mode. This means:
+- NEVER execute or modify code directly
+- Focus on analysis, planning, and providing detailed explanations
+- Create step-by-step plans for implementation
+- Identify potential issues and considerations
+- Provide comprehensive analysis without making changes
+- Use planning language like "would", "could", "should" instead of "will"`;
+  } else {
+    basePrompt += `
+
+CHAT MODE: You are in interactive Chat Mode where you can:
+- Analyze and modify code as needed
+- Execute actions and make changes
+- Provide direct implementation solutions`;
+  }
+
+  // Output style modifications
+  if (outputStyle === "explanatory") {
+    basePrompt += `
+
+OUTPUT STYLE - EXPLANATORY: Provide educational insights alongside your responses:
+- Include "## Insights" sections explaining the reasoning behind suggestions
+- Explain the "why" behind code patterns and decisions
+- Add context about best practices and alternatives
+- Help users learn while solving their problems`;
+  } else if (outputStyle === "learning") {
+    basePrompt += `
+
+OUTPUT STYLE - LEARNING: Collaborative learning mode:
+- Ask the user to contribute code when appropriate
+- Add TODO(human) markers for parts the user should implement
+- Encourage active participation in the coding process
+- Break down complex tasks into user-implementable steps`;
+  }
+
+  basePrompt += `
 
 Key capabilities:
 - Code analysis, debugging, and optimization
@@ -150,4 +196,6 @@ Guidelines:
 
 Current context:
 ${contextPrompt}`;
+
+  return basePrompt;
 };

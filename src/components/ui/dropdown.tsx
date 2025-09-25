@@ -15,6 +15,7 @@ interface DropdownProps {
   disabled?: boolean;
   size?: "xs" | "sm" | "md";
   searchable?: boolean;
+  openDirection?: "up" | "down" | "auto";
   CustomTrigger?: FC<{
     ref: RefObject<HTMLButtonElement | null>;
     onClick: () => void;
@@ -30,6 +31,7 @@ const Dropdown = ({
   disabled = false,
   size = "sm",
   searchable = false,
+  openDirection = "down",
   CustomTrigger,
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,15 +51,30 @@ const Dropdown = ({
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+
+      let yPosition: number;
+      if (openDirection === "up") {
+        // Position above the button with some spacing
+        yPosition = rect.top - 8;
+      } else if (openDirection === "down") {
+        // Position below the button with some spacing
+        yPosition = rect.bottom + 8;
+      } else {
+        // Auto: choose based on available space
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        yPosition = spaceBelow < 200 && spaceAbove > spaceBelow ? rect.top - 8 : rect.bottom + 8;
+      }
+
       const position = adjustPositionToFitViewport({
         x: rect.left,
-        y: rect.bottom + 8,
+        y: yPosition,
         width: rect.width,
         height: rect.height,
       });
 
       setDropdownPosition({
-        top: position.y,
+        top: openDirection === "up" ? position.y - 200 : position.y, // Adjust for dropdown height when opening up
         left: position.x,
         width: rect.width,
       });
@@ -69,7 +86,7 @@ const Dropdown = ({
       // Reset search when dropdown closes
       setSearchQuery("");
     }
-  }, [isOpen, searchable]);
+  }, [isOpen, searchable, openDirection]);
 
   const selectedOption = options.find((option) => option.value === value);
 

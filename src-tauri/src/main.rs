@@ -336,6 +336,10 @@ fn main() {
          // SQLite commands
          get_sqlite_tables,
          query_sqlite,
+         execute_sqlite,
+         insert_sqlite_row,
+         update_sqlite_row,
+         delete_sqlite_row,
          // LSP commands
          lsp_start,
          lsp_stop,

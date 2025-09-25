@@ -2,12 +2,14 @@ import { Send, Settings, Square } from "lucide-react";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useSettingsStore } from "@/settings/store";
 import { useAIChatStore } from "@/stores/ai-chat/store";
+import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useUIState } from "@/stores/ui-state-store";
 import { getModelById } from "@/types/ai-provider";
 import { cn } from "@/utils/cn";
 import Button from "../ui/button";
 import { ContextSelector } from "./context-selector";
 import { FileMentionDropdown } from "./file-mention-dropdown";
+import { ModeSelector } from "./mode-selector";
 import type { AIChatInputBarProps } from "./types";
 
 const AIChatInputBar = memo(function AIChatInputBar({
@@ -25,6 +27,7 @@ const AIChatInputBar = memo(function AIChatInputBar({
   // Get state from stores with optimized selectors
   const { settings } = useSettingsStore();
   const { openSettingsDialog } = useUIState();
+  const { fontSize, fontFamily } = useEditorSettingsStore();
 
   // Get active agent session data
   const activeAgentSession = useAIChatStore((state) => state.getActiveAgentSession());
@@ -54,6 +57,8 @@ const AIChatInputBar = memo(function AIChatInputBar({
   const selectNext = useAIChatStore((state) => state.selectNext);
   const selectPrevious = useAIChatStore((state) => state.selectPrevious);
   const getFilteredFiles = useAIChatStore((state) => state.getFilteredFiles);
+  const setAgentMode = useAIChatStore((state) => state.setAgentMode);
+  const setAgentOutputStyle = useAIChatStore((state) => state.setAgentOutputStyle);
 
   // Optimized function to get plain text from contentEditable div
   const getPlainTextFromDiv = useCallback(() => {
@@ -141,6 +146,39 @@ const AIChatInputBar = memo(function AIChatInputBar({
       }
     };
   }, [recalculateMentionPosition]);
+
+  // Sync contentEditable div with input state when it changes (e.g., when switching agents)
+  useEffect(() => {
+    if (!inputRef.current || isUpdatingContentRef.current) return;
+
+    const currentContent = getPlainTextFromDiv();
+    if (currentContent !== input) {
+      isUpdatingContentRef.current = true;
+
+      // Update contentEditable content
+      if (input === "") {
+        inputRef.current.innerHTML = "";
+      } else {
+        inputRef.current.textContent = input;
+      }
+
+      // Position cursor at the end
+      setTimeout(() => {
+        if (inputRef.current) {
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.selectNodeContents(inputRef.current);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          inputRef.current.focus();
+        }
+        isUpdatingContentRef.current = false;
+      }, 0);
+    }
+  }, [input, getPlainTextFromDiv]);
 
   // Click outside handler for context dropdown
   useEffect(() => {
@@ -332,7 +370,9 @@ const AIChatInputBar = memo(function AIChatInputBar({
         const mentionSpan = document.createElement("span");
         mentionSpan.setAttribute("data-mention", "true");
         mentionSpan.className =
-          "inline-flex items-center gap-1 rounded border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-xs text-blue-400 font-mono select-none";
+          "inline-flex items-center gap-1 rounded border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-blue-400 select-none";
+        mentionSpan.style.fontFamily = `${fontFamily}, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace`;
+        mentionSpan.style.fontSize = `${Math.max(fontSize - 4, 10)}px`; // Smaller than input text
         mentionSpan.textContent = file.name;
         inputRef.current.appendChild(mentionSpan);
 
@@ -372,8 +412,54 @@ const AIChatInputBar = memo(function AIChatInputBar({
     [input, mentionState.startIndex, mentionState.search.length, setInput, hideMention],
   );
 
+  // Handle slash commands
+  const handleSlashCommand = useCallback(
+    (command: string) => {
+      if (!activeAgentSession) return false;
+
+      const parts = command.slice(1).split(" "); // Remove leading '/'
+      const cmd = parts[0];
+      const args = parts.slice(1);
+
+      switch (cmd) {
+        case "plan":
+          setAgentMode(activeAgentSession.id, "plan");
+          setInput("");
+          return true;
+        case "chat":
+          setAgentMode(activeAgentSession.id, "chat");
+          setInput("");
+          return true;
+        case "output-style":
+          if (args.length === 0) {
+            // Show current output style or cycle through them
+            const styles = ["default", "explanatory", "learning"];
+            const currentIndex = styles.indexOf(activeAgentSession.outputStyle);
+            const nextStyle = styles[(currentIndex + 1) % styles.length];
+            setAgentOutputStyle(activeAgentSession.id, nextStyle as any);
+          } else {
+            const style = args[0];
+            if (["default", "explanatory", "learning"].includes(style)) {
+              setAgentOutputStyle(activeAgentSession.id, style as any);
+            }
+          }
+          setInput("");
+          return true;
+        default:
+          return false;
+      }
+    },
+    [activeAgentSession, setAgentMode, setAgentOutputStyle, setInput],
+  );
+
   const handleSendMessage = async () => {
     if (!input.trim() || !hasApiKey) return;
+
+    // Check for slash commands first
+    if (input.startsWith("/")) {
+      const handled = handleSlashCommand(input);
+      if (handled) return; // Command was processed, don't send as message
+    }
 
     // Trigger send animation
     setIsSendAnimating(true);
@@ -391,7 +477,7 @@ const AIChatInputBar = memo(function AIChatInputBar({
     >
       <div className="px-2 py-1.5">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center">
+          <div className="flex items-center justify-between">
             <ContextSelector
               buffers={buffers}
               selectedBufferIds={selectedBufferIds}
@@ -414,7 +500,7 @@ const AIChatInputBar = memo(function AIChatInputBar({
             }
             className={cn(
               "max-h-[120px] min-h-[60px] w-full resize-none overflow-y-auto border-none bg-transparent",
-              "p-1 text-text text-xs",
+              "p-1 text-text",
               "focus:outline-none",
               !hasApiKey ? "cursor-not-allowed opacity-50" : "cursor-text",
               // Custom styles for contentEditable placeholder
@@ -422,6 +508,9 @@ const AIChatInputBar = memo(function AIChatInputBar({
             )}
             style={
               {
+                // Use dynamic font settings (slightly smaller than editor for UI consistency)
+                fontFamily: `${fontFamily}, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace`,
+                fontSize: `${Math.max(fontSize - 2, 11)}px`,
                 // Ensure proper line height and text rendering
                 lineHeight: "1.4",
                 wordWrap: "break-word",
@@ -435,7 +524,9 @@ const AIChatInputBar = memo(function AIChatInputBar({
           />
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="min-w-0 flex-1">{/* Spacer for responsive layout */}</div>
+          <div className="flex items-center">
+            <ModeSelector />
+          </div>
           <div className="flex select-none items-center gap-1">
             {/* Queue indicator */}
             {queueCount > 0 && (

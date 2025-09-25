@@ -405,9 +405,9 @@ const AIChat = memo(function AIChat({
           setIsTyping(false);
           setStreamingMessageId(null);
           abortControllerRef.current = null;
-          // Update agent status to finished
+          // Update agent status to idle and process queue
           if (activeAgentSessionId) {
-            updateAgentStatus(activeAgentSessionId, "finished");
+            updateAgentStatus(activeAgentSessionId, "idle");
             // Process next message in queue if any
             processQueuedMessages(activeAgentSessionId);
           }
@@ -477,6 +477,9 @@ const AIChat = memo(function AIChat({
             ),
           });
         },
+        // Pass mode and output style from active agent session
+        activeAgentSession?.mode || "chat",
+        activeAgentSession?.outputStyle || "default",
       );
     } catch (error) {
       console.error("Failed to start streaming:", error);
@@ -493,8 +496,17 @@ const AIChat = memo(function AIChat({
   // Function to process queued messages
   const processQueuedMessages = useCallback(
     async (sessionId: string) => {
+      const state = useAIChatStore.getState();
+      const session = state.agentSessions.find((s) => s.id === sessionId);
+
+      // Only process queue if not already processing and agent is idle
+      if (!session || session.isTyping || session.streamingMessageId) {
+        return;
+      }
+
       const nextMessage = processNextMessage(sessionId);
       if (nextMessage) {
+        console.log("Processing next queued message:", nextMessage.content);
         // Small delay to avoid overwhelming the AI
         await new Promise((resolve) => setTimeout(resolve, 500));
         await processMessage(nextMessage.content);

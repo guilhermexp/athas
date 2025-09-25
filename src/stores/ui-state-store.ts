@@ -48,6 +48,13 @@ const initialState = {
   // Context Menus
   folderHeaderContextMenu: null as { x: number; y: number } | null,
   projectNameMenu: null as { x: number; y: number } | null,
+  sqliteTableMenu: null as { x: number; y: number; tableName: string } | null,
+  sqliteRowMenu: null as {
+    x: number;
+    y: number;
+    rowData: Record<string, any>;
+    tableName: string;
+  } | null,
 
   // Terminal Focus Management
   terminalFocusRequested: false,
@@ -79,6 +86,11 @@ export const useUIState = create(
     setBottomPaneActiveTab: (tab: BottomPaneTab) => set({ bottomPaneActiveTab: tab }),
 
     setProjectNameMenu: (v: { x: number; y: number } | null) => set({ projectNameMenu: v }),
+    setSqliteTableMenu: (v: { x: number; y: number; tableName: string } | null) =>
+      set({ sqliteTableMenu: v }),
+    setSqliteRowMenu: (
+      v: { x: number; y: number; rowData: Record<string, any>; tableName: string } | null,
+    ) => set({ sqliteRowMenu: v }),
 
     setActiveView: (view: "files" | "git" | "search" | "remote" | "extensions") => {
       set({
