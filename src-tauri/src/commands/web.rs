@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use tauri_plugin_http::reqwest::{Client, Method, header::{HeaderMap, HeaderName, HeaderValue}};
+use tauri_plugin_http::reqwest::{
+   Client, Method,
+   header::{HeaderMap, HeaderName, HeaderValue},
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

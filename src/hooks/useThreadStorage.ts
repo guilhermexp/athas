@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import type { AgentThread } from "@/components/agent-panel/types";
+import type { Thread } from "@/components/agent-panel/types";
 import {
   deleteThread,
   ensureThreadsDirectory,
@@ -76,7 +76,7 @@ export function useThreadStorage() {
    * Save a thread
    */
   const save = useCallback(
-    async (thread: AgentThread) => {
+    async (thread: Thread) => {
       try {
         setError(null);
         await saveThread(thread);
@@ -93,7 +93,7 @@ export function useThreadStorage() {
   /**
    * Load a thread
    */
-  const load = useCallback(async (threadId: string): Promise<AgentThread | null> => {
+  const load = useCallback(async (threadId: string): Promise<Thread | null> => {
     try {
       setError(null);
       return await loadThread(threadId);

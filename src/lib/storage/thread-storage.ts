@@ -5,7 +5,7 @@
 
 import { appConfigDir } from "@tauri-apps/api/path";
 import { exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
-import type { AgentThread } from "@/components/agent-panel/types";
+import type { MessageContent, Thread, ThreadMessage } from "@/components/agent-panel/types";
 
 const THREADS_DIR = "threads";
 const THREAD_FILE_EXT = ".json";
@@ -47,7 +47,7 @@ async function getThreadFilePath(threadId: string): Promise<string> {
 /**
  * Save thread to filesystem
  */
-export async function saveThread(thread: AgentThread): Promise<void> {
+export async function saveThread(thread: Thread): Promise<void> {
   try {
     await ensureThreadsDirectory();
     const filePath = await getThreadFilePath(thread.id);
@@ -71,7 +71,7 @@ export async function saveThread(thread: AgentThread): Promise<void> {
 /**
  * Load thread from filesystem
  */
-export async function loadThread(threadId: string): Promise<AgentThread | null> {
+export async function loadThread(threadId: string): Promise<Thread | null> {
   try {
     const filePath = await getThreadFilePath(threadId);
     const fileExists = await exists(filePath);
@@ -81,7 +81,7 @@ export async function loadThread(threadId: string): Promise<AgentThread | null> 
     }
 
     const content = await readTextFile(filePath);
-    const thread = JSON.parse(content) as AgentThread;
+    const thread = JSON.parse(content) as Thread;
 
     return thread;
   } catch (error) {
@@ -131,12 +131,15 @@ export async function listThreads(): Promise<
         .map(async (entry) => {
           try {
             const content = await readTextFile(`${threadsDir}/${entry.name}`);
-            const thread = JSON.parse(content) as AgentThread & { lastModified?: string };
+            const thread = JSON.parse(content) as Thread & { lastModified?: string };
 
             return {
               id: thread.id,
               title: thread.title,
-              createdAt: thread.createdAt,
+              createdAt:
+                typeof thread.createdAt === "string"
+                  ? thread.createdAt
+                  : thread.createdAt.toISOString(),
               lastModified: thread.lastModified,
               messageCount: thread.messages.length,
             };
@@ -191,15 +194,20 @@ export async function searchThreads(query: string): Promise<
       const titleMatches = thread.title.toLowerCase().includes(lowerQuery);
 
       // Search in messages
-      const matchedMessages = thread.messages.filter((msg) =>
-        msg.content.some((c) => c.type === "text" && c.text.toLowerCase().includes(lowerQuery)),
+      const matchedMessages = thread.messages.filter((msg: ThreadMessage) =>
+        msg.content.some(
+          (c: MessageContent) => c.type === "text" && c.text?.toLowerCase().includes(lowerQuery),
+        ),
       ).length;
 
       if (titleMatches || matchedMessages > 0) {
         results.push({
           id: thread.id,
           title: thread.title,
-          createdAt: thread.createdAt,
+          createdAt:
+            typeof thread.createdAt === "string"
+              ? thread.createdAt
+              : thread.createdAt.toISOString(),
           matchedMessages,
         });
       }
@@ -259,8 +267,8 @@ export async function exportThreadToMarkdown(threadId: string, exportPath: strin
 
       // Add text content
       const textContent = message.content
-        .filter((c) => c.type === "text")
-        .map((c) => c.text)
+        .filter((c: MessageContent) => c.type === "text")
+        .map((c: MessageContent) => c.text)
         .join("\n");
 
       if (textContent) {
@@ -327,7 +335,7 @@ export async function exportThreadToMarkdown(threadId: string, exportPath: strin
 export async function importThread(importPath: string): Promise<string> {
   try {
     const content = await readTextFile(importPath);
-    const thread = JSON.parse(content) as AgentThread;
+    const thread = JSON.parse(content) as Thread;
 
     // Generate new ID to avoid conflicts
     thread.id = `imported-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;

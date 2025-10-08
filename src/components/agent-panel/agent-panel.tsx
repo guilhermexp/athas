@@ -138,7 +138,7 @@ export const AgentPanel = memo(() => {
         modelId: selectedAgent.modelId,
         systemPrompt: selectedAgent.systemPrompt,
         enabledTools: selectedAgent.tools,
-        mcpServers: mcpServers,
+        mcpServers: new Map(mcpServers.map((server) => [server.id, server])),
         autoApproveTools: autoApproveTools,
         history: activeThread.messages,
       };

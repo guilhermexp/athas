@@ -69,7 +69,7 @@ let compiledTemplate: HandlebarsTemplateDelegate | null = null;
 function getCompiledTemplate(): HandlebarsTemplateDelegate {
   if (!compiledTemplate) {
     // Register custom helpers
-    Handlebars.registerHelper("ifEquals", function (arg1, arg2, options) {
+    Handlebars.registerHelper("ifEquals", function (this: any, arg1, arg2, options) {
       return arg1 === arg2 ? options.fn(this) : options.inverse(this);
     });
 

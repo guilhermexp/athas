@@ -18,7 +18,8 @@ struct McpProcess {
    #[allow(dead_code)]
    stdin: Option<tokio::process::ChildStdin>,
    #[allow(dead_code)]
-   response_channel: std::sync::Arc<TokioMutex<HashMap<String, tokio::sync::oneshot::Sender<serde_json::Value>>>>,
+   response_channel:
+      std::sync::Arc<TokioMutex<HashMap<String, tokio::sync::oneshot::Sender<serde_json::Value>>>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -147,7 +148,10 @@ impl McpBridge {
       Ok(())
    }
 
-   pub async fn get_server_tools(&self, server_id: &str) -> Result<Vec<crate::commands::mcp::McpTool>> {
+   pub async fn get_server_tools(
+      &self,
+      server_id: &str,
+   ) -> Result<Vec<crate::commands::mcp::McpTool>> {
       // For now, return mock tools - in a full implementation, this would:
       // 1. Send a "tools/list" request to the MCP server via stdin
       // 2. Parse the JSON-RPC response from stdout
@@ -172,13 +176,16 @@ impl McpBridge {
       // 1. Get the process for this server_id
       // 2. Generate a unique request ID
       // 3. Create a oneshot channel for the response
-      // 4. Send JSON-RPC request to stdin: {"jsonrpc": "2.0", "id": "...", "method": "tools/call", "params": {...}}
+      // 4. Send JSON-RPC request to stdin: {"jsonrpc": "2.0", "id": "...", "method": "tools/call",
+      //    "params": {...}}
       // 5. Wait for response on the channel (with timeout)
       // 6. Parse and return the result
 
       // For now, return a mock error
       Ok(crate::commands::mcp::McpToolResult {
-         content: serde_json::json!("MCP tool execution not yet fully implemented - this is a stub"),
+         content: serde_json::json!(
+            "MCP tool execution not yet fully implemented - this is a stub"
+         ),
          is_error: Some(true),
       })
    }
