@@ -67,6 +67,7 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const isInitializingRef = useRef(false);
   const currentConnectionIdRef = useRef<string | null>(null);
+  const shouldAutoScrollRef = useRef(true);
 
   const { updateSession, getSession } = useTerminalStore();
   const { currentTheme } = useThemeStore();
@@ -121,25 +122,33 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
 
     console.log("Creating xterm instance...");
     try {
+      // Get computed font family from CSS variables
+      const computedStyle = getComputedStyle(document.documentElement);
+      const fontMono =
+        computedStyle.getPropertyValue("--font-mono").trim() ||
+        '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace';
+
       const terminal = new Terminal({
-        fontFamily: `${editorFontFamily}, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace`,
+        fontFamily: editorFontFamily || fontMono,
         fontSize: fontSize,
-        fontWeight: "normal",
-        fontWeightBold: "bold",
-        lineHeight: 1.2,
+        fontWeight: "400",
+        fontWeightBold: "700",
+        lineHeight: 1.5,
         letterSpacing: 0,
         cursorBlink: true,
         cursorStyle: "bar",
         cursorWidth: 2,
-        allowTransparency: false,
+        allowTransparency: true,
         allowProposedApi: true,
         theme: getTerminalTheme(),
         scrollback: 10000,
         tabStopWidth: 8,
         drawBoldTextInBrightColors: true,
-        minimumContrastRatio: 4.5,
+        minimumContrastRatio: 1,
         convertEol: true,
         windowOptions: {},
+        scrollOnUserInput: false,
+        smoothScrollDuration: 0,
       });
 
       // Initialize addons
@@ -266,6 +275,9 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
 
         // Handle terminal input
         terminal.onData((data) => {
+          // Re-enable auto-scroll when user types
+          shouldAutoScrollRef.current = true;
+
           // Use the ref to always have the current connection ID
           const currentId = currentConnectionIdRef.current || connectionId;
           invoke("terminal_write", { id: currentId, data }).catch((e) => {
@@ -372,6 +384,19 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
         // Handle title changes
         terminal.onTitleChange((title) => {
           updateSession(sessionId, { title });
+        });
+
+        // Track scroll position to detect manual scrolling
+        terminal.onScroll(() => {
+          if (!terminal.buffer || !terminal.buffer.active) return;
+
+          const buffer = terminal.buffer.active;
+          const viewportY = buffer.viewportY;
+          const baseY = buffer.baseY;
+
+          // If viewport is at the bottom (baseY is the last line), enable auto-scroll
+          // Allow 1 line tolerance to account for rendering timing
+          shouldAutoScrollRef.current = viewportY >= baseY - 1;
         });
 
         setIsInitialized(true);
@@ -482,8 +507,17 @@ export const XtermTerminal: React.FC<XtermTerminalProps> = ({
   // Handle font changes from editor settings
   useEffect(() => {
     if (!xtermRef.current) return;
-    xtermRef.current.options.fontFamily = `${editorFontFamily}, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace`;
+    // Get computed font from CSS variables
+    const computedStyle = getComputedStyle(document.documentElement);
+    const fontMono =
+      computedStyle.getPropertyValue("--font-mono").trim() ||
+      '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace';
+
+    xtermRef.current.options.fontFamily = editorFontFamily || fontMono;
     xtermRef.current.options.fontSize = fontSize;
+    xtermRef.current.options.lineHeight = 1.5;
+    xtermRef.current.options.fontWeight = "400";
+    xtermRef.current.options.fontWeightBold = "700";
     fitAddonRef.current?.fit();
   }, [editorFontFamily, fontSize]);
 

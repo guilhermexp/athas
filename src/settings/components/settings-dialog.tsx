@@ -75,15 +75,15 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
     <Dialog
       onClose={onClose}
       title="Settings"
-      classNames={{ modal: "h-[600px] max-h-[90vh] w-[800px] max-w-[90vw]" }}
+      classNames={{ modal: "h-[640px] max-h-[90vh] w-[920px] max-w-[95vw]" }}
     >
       {/* Sidebar with vertical tabs */}
-      <div className="w-40 border-border border-r bg-secondary-bg">
+      <div className="w-56 border-border border-r bg-secondary-bg/80">
         <SettingsVerticalTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 overflow-y-auto p-4">{renderTabContent()}</div>
+      <div className="flex-1 overflow-y-auto p-5">{renderTabContent()}</div>
     </Dialog>
   );
 };

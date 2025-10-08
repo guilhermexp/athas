@@ -27,7 +27,7 @@ export const GeneralSettings = () => {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Section title="File Management">
         <SettingRow label="Auto Save" description="Automatically save files when editing">
           <Switch

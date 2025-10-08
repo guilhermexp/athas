@@ -17,15 +17,29 @@ pub enum Role {
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum ClaudeModel {
+   #[serde(rename = "claude-opus-4-1-20250514")]
+   #[strum(serialize = "claude-opus-4-1-20250514")]
+   Opus41,
    #[serde(rename = "claude-opus-4-20250514")]
    #[strum(serialize = "claude-opus-4-20250514")]
-   Opus,
+   Opus4,
+   #[serde(rename = "claude-sonnet-4-5-20250929")]
+   #[strum(serialize = "claude-sonnet-4-5-20250929")]
+   Sonnet45,
    #[serde(rename = "claude-sonnet-4-20250514")]
    #[strum(serialize = "claude-sonnet-4-20250514")]
-   Sonnet,
-   #[serde(rename = "claude-3-5-haiku-20241022")]
-   #[strum(serialize = "claude-3-5-haiku-20241022")]
-   Haiku,
+   Sonnet4,
+}
+
+impl ClaudeModel {
+   pub fn human_name(&self) -> &'static str {
+      match self {
+         ClaudeModel::Opus41 => "Opus 4.1",
+         ClaudeModel::Opus4 => "Opus 4",
+         ClaudeModel::Sonnet45 => "Sonnet 4.5",
+         ClaudeModel::Sonnet4 => "Sonnet 4",
+      }
+   }
 }
 
 // Basic structs used by others

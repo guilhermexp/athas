@@ -398,9 +398,8 @@ const TerminalContainer = ({
 
       {/* Terminal Sessions */}
       <div
-        className="relative bg-primary-bg"
+        className="relative flex-1 overflow-hidden bg-primary-bg"
         style={{
-          //height: "calc(100% - 28px)",
           transform: `scale(${zoomLevel})`,
           transformOrigin: "top left",
           width: `${100 / zoomLevel}%`,
@@ -418,7 +417,7 @@ const TerminalContainer = ({
                 >
                   <div
                     className={cn(
-                      "w-full pl-[16px]",
+                      "w-full",
                       terminal.splitMode && terminal.splitWithId && "w-1/2 border-border border-r",
                     )}
                   >
@@ -432,7 +431,7 @@ const TerminalContainer = ({
                     />
                   </div>
                   {terminal.splitMode && terminal.splitWithId && (
-                    <div className="w-1/2 pl-[16px]">
+                    <div className="w-1/2">
                       <TerminalSession
                         key={terminal.splitWithId}
                         terminal={{

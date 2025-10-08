@@ -33,6 +33,11 @@ export class ClaudeCodeStreamHandler {
       await this.ensureClaudeCodeRunning();
       const fullMessage = this.buildMessage(userMessage, context);
       await this.setupListeners();
+
+      // Reset activity time before sending message and starting timeout
+      this.lastActivityTime = Date.now();
+      console.log("🚀 Sending message to Claude Code and starting timeout");
+
       await invoke("send_claude_input", { input: fullMessage });
       this.setupTimeout();
     } catch (error) {
@@ -44,18 +49,32 @@ export class ClaudeCodeStreamHandler {
   private async ensureClaudeCodeRunning(): Promise<void> {
     try {
       const status = await invoke<ClaudeStatus>("get_claude_status");
+      console.log("📊 Claude Code status:", status);
 
       if (!status.running) {
         console.log("🚀 Starting Claude Code...");
-        const startStatus = await invoke<ClaudeStatus>("start_claude_code");
+        try {
+          const startStatus = await invoke<ClaudeStatus>("start_claude_code");
+          console.log("✅ Claude Code started:", startStatus);
 
-        if (!startStatus.running) {
-          throw new Error("Claude Code is currently unavailable");
+          if (!startStatus.running) {
+            throw new Error("Claude Code is currently unavailable");
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        } catch (startError: any) {
+          // If error is "already running", that's OK
+          if (startError?.toString().includes("already running")) {
+            console.log("✅ Claude Code is already running");
+            return;
+          }
+          throw startError;
         }
-
-        await new Promise((resolve) => setTimeout(resolve, 500));
+      } else {
+        console.log("✅ Claude Code is already running");
       }
-    } catch {
+    } catch (error) {
+      console.error("❌ ensureClaudeCodeRunning error:", error);
       throw new Error("Claude Code is currently unavailable");
     }
   }
@@ -72,6 +91,7 @@ export class ClaudeCodeStreamHandler {
   }
 
   private handleInterceptorMessage(message: InterceptorMessage): void {
+    console.log("📡 RAW Interceptor message:", JSON.stringify(message, null, 2));
     console.log(
       "📡 Interceptor message type:",
       message.type,
@@ -81,21 +101,32 @@ export class ClaudeCodeStreamHandler {
 
     switch (message.type) {
       case "stream_chunk":
+        console.log("🌊 Processing stream_chunk:", message.chunk);
         this.handleStreamChunk(message.chunk);
         break;
       case "response":
-        this.handleResponse(message.data?.parsed_response);
+        console.log("📨 Processing response:", message.data?.parsed_response);
+        this.handleResponseMessage(message.data);
+        break;
+      case "request":
+        // No-op; requests are logged above for traceability
         break;
       case "error":
         console.log("❌ Error from interceptor, cleaning up...");
         this.cleanup();
         this.handlers.onError(message.error || "Unknown error from interceptor");
         break;
+      default:
+        console.log("⚠️ Unknown message type:", message.type);
     }
   }
 
   private handleStreamChunk(chunk: any): void {
-    if (!chunk) return;
+    console.log("🌊 handleStreamChunk called with:", chunk);
+    if (!chunk) {
+      console.log("⚠️ Chunk is null/undefined");
+      return;
+    }
 
     this.lastActivityTime = Date.now();
 
@@ -114,6 +145,7 @@ export class ClaudeCodeStreamHandler {
     // Handle tool use blocks
     if (chunk.type === "content_block_start" && chunk.content_block?.type === "tool_use") {
       this.currentToolName = chunk.content_block.name || "unknown";
+      console.log("🔧 Tool use detected:", this.currentToolName);
       if (this.handlers.onToolUse) {
         this.handlers.onToolUse(this.currentToolName!, chunk.content_block.input);
       }
@@ -122,12 +154,14 @@ export class ClaudeCodeStreamHandler {
     // Handle tool completion
     if (chunk.type === "content_block_stop") {
       if (this.currentToolName && this.handlers.onToolComplete) {
+        console.log("✅ Tool complete:", this.currentToolName);
         this.handlers.onToolComplete(this.currentToolName!);
       }
       this.currentToolName = null;
     }
 
     if (chunk.delta?.text) {
+      console.log("📝 Text chunk received:", chunk.delta.text);
       this.handlers.onChunk(chunk.delta.text);
     }
 
@@ -141,34 +175,83 @@ export class ClaudeCodeStreamHandler {
       } else if (this.expectingMoreMessages) {
         console.log("📝 Follow-up message complete after tool use");
         this.expectingMoreMessages = false;
-        // Don't cleanup yet - there might be more messages
       } else {
         console.log(
           "⏳ Message complete, but not cleaning up yet - waiting for explicit completion signal",
         );
-        // Don't cleanup on message_stop anymore
       }
       this.currentStopReason = null;
     }
   }
 
-  private handleResponse(response: any): void {
-    if (!response) return;
+  private handleResponseMessage(data: any): void {
+    if (!data) return;
 
     this.lastActivityTime = Date.now();
 
     console.log("📨 Response data:", {
-      stop_reason: response.stop_reason,
-      usage: response.usage,
-      content_blocks: response.content?.length,
+      stop_reason: data.parsed_response?.stop_reason,
+      usage: data.parsed_response?.usage,
+      content_blocks: data.parsed_response?.content?.length,
     });
 
-    if (response.stop_reason === "tool_use") {
+    // Prefer parsed_response if present
+    const response = data.parsed_response;
+    if (response && Array.isArray(response.content) && response.content.length > 0) {
+      try {
+        for (const block of response.content) {
+          if (!block || typeof block !== "object") continue;
+          const kind = block.type || block.block_type || block.content_type;
+          if (kind === "text" && block.text) {
+            this.handlers.onChunk(block.text);
+          } else if (kind === "tool_use") {
+            this.currentToolName = block.name || "unknown";
+            if (this.handlers.onToolUse && this.currentToolName) {
+              this.handlers.onToolUse(this.currentToolName, block.input);
+            }
+            if (this.handlers.onToolComplete && this.currentToolName) {
+              this.handlers.onToolComplete(this.currentToolName);
+            }
+            this.currentToolName = null;
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to synthesize response content:", e);
+      }
+    }
+
+    // Fallback: some runs attach chunks only to response.streaming_chunks
+    if ((!response || !response.content) && Array.isArray(data.streaming_chunks)) {
+      try {
+        for (const chunk of data.streaming_chunks) {
+          if (!chunk) continue;
+          if (chunk.delta?.text) {
+            this.handlers.onChunk(chunk.delta.text);
+          }
+          const ctype = chunk.content_block?.type || chunk.content_block?.content_type;
+          if (ctype === "text" && (chunk.content_block as any)?.text) {
+            this.handlers.onChunk((chunk.content_block as any).text);
+          }
+          if (ctype === "tool_use") {
+            const name = (chunk.content_block as any)?.name || "unknown";
+            if (this.handlers.onToolUse)
+              this.handlers.onToolUse(name, (chunk.content_block as any)?.input);
+            if (this.handlers.onToolComplete) this.handlers.onToolComplete(name);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to read response.streaming_chunks:", e);
+      }
+    }
+
+    if (response?.stop_reason === "tool_use") {
       console.log("🔧 Tool use detected in response, expecting more messages...");
       this.expectingMoreMessages = true;
     } else {
-      console.log("📨 Response received, but not cleaning up - waiting for activity timeout");
-      // Don't cleanup immediately - wait for inactivity timeout
+      // Finalize immediately for non-streaming responses
+      console.log("✅ Final response received; completing conversation");
+      this.cleanup();
+      this.handlers.onComplete();
     }
   }
 

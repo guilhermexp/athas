@@ -6,7 +6,9 @@ import SettingsDialog from "@/settings/components/settings-dialog";
 import { useSettingsStore } from "@/settings/store";
 import { useProjectStore } from "@/stores/project-store";
 import { cn } from "@/utils/cn";
+import BranchSelector from "./branch-selector";
 import CustomMenuBar from "./menu-bar";
+import ProjectSelector from "./project-selector";
 
 interface CustomTitleBarProps {
   title?: string;
@@ -23,7 +25,7 @@ const CustomTitleBar = ({
   const { getProjectName } = useProjectStore();
   const { settings, updateSetting } = useSettingsStore();
 
-  const [projectName, setProjectName] = useState<string>("");
+  const [_projectName, setProjectName] = useState<string>("");
   const [menuBarActiveMenu, setMenuBarActiveMenu] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [currentWindow, setCurrentWindow] = useState<any>(null);
@@ -124,7 +126,7 @@ const CustomTitleBar = ({
 
         {/* Window controls - only show on Linux */}
         {isLinux && (
-          <div className="flex items-center">
+          <div className="window-controls flex items-center">
             <button
               onClick={handleMinimize}
               className="flex h-7 w-10 items-center justify-center transition-colors hover:bg-hover"
@@ -156,157 +158,136 @@ const CustomTitleBar = ({
     );
   }
 
-  // Full mode with custom controls
+  // Full mode with custom controls - Zed style
   if (isMacOS) {
     return (
       <div
         data-tauri-drag-region
-        className="relative z-50 flex h-8 select-none items-center justify-between bg-primary-bg pl-0.5"
+        className="relative z-50 flex h-8 select-none items-center justify-between bg-secondary-bg"
+        style={{ fontFamily: "var(--font-ui)" }}
       >
-        {!settings.nativeMenuBar && (
-          <CustomMenuBar activeMenu={menuBarActiveMenu} setActiveMenu={setMenuBarActiveMenu} />
-        )}
-
-        {/* macOS traffic light space holder */}
-        <div className="flex items-center space-x-2 pl-4" />
-
-        {/* Center - Project name for macOS */}
-        <div className="-translate-x-1/2 pointer-events-none absolute left-1/2 flex transform items-center">
-          {projectName && (
-            <span className="max-w-60 truncate text-center font-medium text-[10px] text-text">
-              {projectName}
-            </span>
+        {/* Left - Menu bar with traffic light spacing + Project/Branch selectors */}
+        <div className="flex items-center gap-1 pl-20">
+          {!settings.nativeMenuBar && (
+            <CustomMenuBar activeMenu={menuBarActiveMenu} setActiveMenu={setMenuBarActiveMenu} />
           )}
+          {/* Zed-style project and branch selectors */}
+          <ProjectSelector />
+          <BranchSelector />
         </div>
 
-        {/* Settings and AI Chat buttons */}
-        <div className="flex items-center gap-0.5">
-          <button
-            onClick={() => {
-              updateSetting("isAIChatVisible", !settings.isAIChatVisible);
-            }}
-            className={`flex items-center justify-center rounded p-1 transition-colors ${
-              settings.isAIChatVisible
-                ? "bg-selected text-text"
-                : "text-text-lighter hover:bg-hover hover:text-text"
-            }`}
-            style={{ minHeight: 0, minWidth: 0 }}
-            title="Toggle AI Chat"
-          >
-            <Sparkles size={14} />
-          </button>
+        {/* Center - Empty for macOS (optional, can show project name here too) */}
+        <div className="-translate-x-1/2 pointer-events-none absolute left-1/2 flex transform items-center">
+          {/* Mantém vazio ou pode duplicar o projectName aqui */}
+        </div>
+
+        {/* Right - Settings button */}
+        <div className="flex items-center gap-1 pr-3">
           <button
             onClick={onOpenSettings}
             className={cn(
-              "mr-4 flex items-center justify-center rounded p-1",
-              "text-text-lighter transition-colors hover:bg-hover hover:text-text",
+              "flex items-center justify-center rounded-md p-1.5",
+              "text-text-lighter/70 transition-colors hover:bg-hover/50 hover:text-text",
             )}
             style={{ minHeight: 0, minWidth: 0 }}
             title="Settings"
           >
-            <Settings size={14} />
+            <Settings size={15} strokeWidth={1.5} />
           </button>
         </div>
       </div>
     );
   }
 
-  // Windows/Linux full title bar
+  // Windows/Linux full title bar - Zed style
   return (
     <div
       data-tauri-drag-region
-      className={"z-50 flex h-7 select-none items-center justify-between bg-primary-bg"}
+      className="z-50 flex h-8 select-none items-center justify-between bg-secondary-bg"
+      style={{ fontFamily: "var(--font-ui)" }}
     >
       {!settings.nativeMenuBar && (
         <CustomMenuBar activeMenu={menuBarActiveMenu} setActiveMenu={setMenuBarActiveMenu} />
       )}
 
       {/* Left side */}
-      <div className="flex flex-1 items-center px-2">
+      <div className="flex flex-1 items-center gap-1 px-3">
         {/* Menu bar button */}
         {!settings.nativeMenuBar && settings.compactMenuBar && (
           <button
             onClick={() => {
               setMenuBarActiveMenu("File");
             }}
-            className={`mr-2 flex items-center justify-center rounded py-0.5 text-text`}
+            className="mr-2 flex items-center justify-center rounded-md p-1 text-text-lighter hover:bg-hover/50 hover:text-text"
             title="Open Menu Bar"
           >
-            <MenuIcon size={16} />
+            <MenuIcon size={15} strokeWidth={1.5} />
           </button>
         )}
 
-        {projectName && (
-          <span
-            className={cn(
-              "max-w-96 truncate font-medium text-text text-xs",
-              !settings.nativeMenuBar &&
-                !settings.compactMenuBar &&
-                "-translate-x-1/2 absolute left-1/2",
-            )}
-          >
-            {projectName}
-          </span>
-        )}
+        {/* Zed-style project and branch selectors */}
+        <ProjectSelector />
+        <BranchSelector />
       </div>
 
       {/* Right side */}
-      <div className="z-20 flex items-center gap-0.5">
-        {/* AI Chat button */}
+      <div className="z-20 flex items-center gap-1 pr-3">
+        {/* Agent Panel button */}
         <button
           onClick={() => {
-            updateSetting("isAIChatVisible", !settings.isAIChatVisible);
+            updateSetting("isAgentPanelVisible", !settings.isAgentPanelVisible);
           }}
-          className={`flex items-center justify-center rounded px-1 py-0.5 transition-colors ${
-            settings.isAIChatVisible
-              ? "bg-selected text-text"
-              : "text-text-lighter hover:bg-hover hover:text-text"
-          }`}
+          className={cn(
+            "flex items-center justify-center rounded-md p-1.5 transition-colors",
+            settings.isAgentPanelVisible
+              ? "bg-hover/80 text-text"
+              : "text-text-lighter/70 hover:bg-hover/50 hover:text-text",
+          )}
           style={{ minHeight: 0, minWidth: 0 }}
-          title="Toggle AI Chat"
+          title="Toggle Agent Panel"
         >
-          <Sparkles size={12} />
+          <Sparkles size={15} strokeWidth={1.5} />
         </button>
         {/* Settings button */}
         <button
           onClick={onOpenSettings}
           className={cn(
-            "mr-2 flex items-center justify-center rounded px-1 py-0.5",
-            "text-text-lighter transition-colors hover:bg-hover hover:text-text",
+            "flex items-center justify-center rounded-md p-1.5",
+            "text-text-lighter/70 transition-colors hover:bg-hover/50 hover:text-text",
           )}
           style={{ minHeight: 0, minWidth: 0 }}
           title="Settings"
         >
-          <Settings size={12} />
+          <Settings size={15} strokeWidth={1.5} />
         </button>
 
         {/* Window controls - only show on Linux */}
         {isLinux && (
-          <div className="flex items-center">
+          <div className="window-controls ml-2 flex items-center">
             <button
               onClick={handleMinimize}
-              className="flex h-7 w-10 items-center justify-center transition-colors hover:bg-hover"
+              className="flex h-8 w-10 items-center justify-center transition-colors hover:bg-hover/50"
               title="Minimize"
             >
-              <Minus className="h-3.5 w-3.5 text-text-lighter" />
+              <Minus className="h-4 w-4 text-text-lighter" strokeWidth={1.5} />
             </button>
             <button
               onClick={handleToggleMaximize}
-              className="flex h-7 w-10 items-center justify-center transition-colors hover:bg-hover"
+              className="flex h-8 w-10 items-center justify-center transition-colors hover:bg-hover/50"
               title={isMaximized ? "Restore" : "Maximize"}
             >
               {isMaximized ? (
-                <Minimize2 className="h-3.5 w-3.5 text-text-lighter" />
+                <Minimize2 className="h-4 w-4 text-text-lighter" strokeWidth={1.5} />
               ) : (
-                <Maximize2 className="h-3.5 w-3.5 text-text-lighter" />
+                <Maximize2 className="h-4 w-4 text-text-lighter" strokeWidth={1.5} />
               )}
             </button>
             <button
               onClick={handleClose}
-              className="group flex h-7 w-10 items-center justify-center transition-colors hover:bg-red-600"
+              className="group flex h-8 w-10 items-center justify-center transition-colors hover:bg-red-600"
               title="Close"
             >
-              <X className="h-3.5 w-3.5 text-text-lighter group-hover:text-white" />
+              <X className="h-4 w-4 text-text-lighter group-hover:text-white" strokeWidth={1.5} />
             </button>
           </div>
         )}

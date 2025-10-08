@@ -1,4 +1,4 @@
-import { Folder, GitBranch, Package, Search, Server } from "lucide-react";
+import { Bot, Folder, GitBranch, Package, Search, Server } from "lucide-react";
 import type { CoreFeaturesState } from "@/settings/models/feature.types";
 import Button from "../ui/button";
 
@@ -11,6 +11,8 @@ interface SidebarPaneSelectorProps {
   coreFeatures: CoreFeaturesState;
   onViewChange: (view: "files" | "git" | "search" | "remote" | "extensions") => void;
   onOpenExtensions: () => void;
+  onToggleAgentPanel?: () => void;
+  isAgentPanelVisible?: boolean;
 }
 
 export const SidebarPaneSelector = ({
@@ -22,6 +24,8 @@ export const SidebarPaneSelector = ({
   coreFeatures,
   onViewChange,
   onOpenExtensions,
+  onToggleAgentPanel,
+  isAgentPanelVisible = false,
 }: SidebarPaneSelectorProps) => {
   const isFilesActive =
     !isGitViewActive && !isSearchViewActive && !isRemoteViewActive && !isExtensionsViewActive;
@@ -111,6 +115,24 @@ export const SidebarPaneSelector = ({
       >
         <Package size={14} />
       </Button>
+
+      {/* Agent Panel Toggle */}
+      {onToggleAgentPanel && (
+        <Button
+          onClick={onToggleAgentPanel}
+          variant="ghost"
+          size="sm"
+          data-active={isAgentPanelVisible}
+          className={`flex h-6 w-6 items-center justify-center rounded p-0 text-xs ${
+            isAgentPanelVisible
+              ? "bg-selected text-text"
+              : "text-text-lighter hover:bg-hover hover:text-text"
+          }`}
+          title="Agent Panel"
+        >
+          <Bot size={14} />
+        </Button>
+      )}
     </div>
   );
 };

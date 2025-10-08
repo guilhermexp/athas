@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::{env, path::Path};
 use tauri::command;
+use tauri_plugin_shell::ShellExt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shell {
@@ -118,6 +119,56 @@ impl Shell {
 #[command]
 pub fn get_shells() -> Vec<Shell> {
    Shell::get_available_shells()
+}
+
+#[derive(Debug, Serialize)]
+pub struct CommandOutput {
+   pub stdout: String,
+   pub stderr: String,
+   pub exit_code: i32,
+}
+
+#[command]
+pub async fn execute_command(
+   app: tauri::AppHandle,
+   command: String,
+   cwd: Option<String>,
+) -> Result<CommandOutput, String> {
+   if command.trim().is_empty() {
+      return Err("Command cannot be empty".to_string());
+   }
+
+   let shell = app.shell();
+   let (program, args): (&str, Vec<&str>) = if cfg!(windows) {
+      ("cmd", vec!["/C", &command])
+   } else {
+      ("sh", vec!["-c", &command])
+   };
+
+   let mut sidecar = shell.command(program).args(args);
+
+   if let Some(dir) = cwd {
+      let dir_path = Path::new(&dir);
+      if !dir_path.exists() {
+         return Err(format!("Working directory does not exist: {}", dir));
+      }
+      sidecar = sidecar.current_dir(dir_path);
+   }
+
+   let output = sidecar
+      .output()
+      .await
+      .map_err(|e| format!("Failed to execute command: {}", e))?;
+
+   let exit_code = output.status.code().unwrap_or_default();
+   let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+   let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+   Ok(CommandOutput {
+      stdout,
+      stderr,
+      exit_code,
+   })
 }
 
 // need to find a way to make it open in a new tab

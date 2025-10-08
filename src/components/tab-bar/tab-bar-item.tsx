@@ -50,12 +50,13 @@ const TabBarItem = memo(function TabBarItem({
       <div
         ref={tabRef}
         className={cn(
-          "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap px-2 py-1",
-          isActive ? "bg-primary-bg" : "bg-secondary-bg",
-          buffer.isPinned ? "border-l-2 border-l-blue-500" : "",
+          "tab-bar-item group relative flex flex-shrink-0 cursor-pointer select-none items-center gap-2 whitespace-nowrap px-3 py-2",
+          "border-border/30 border-r transition-colors duration-150",
+          isActive ? "bg-primary-bg text-text" : "bg-transparent text-text-light hover:bg-hover/50",
+          buffer.isPinned ? "border-l-2 border-l-blue-500/60" : "",
           isDraggedTab ? "opacity-30" : "opacity-100",
         )}
-        style={{ minWidth: 120, maxWidth: 400 }}
+        style={{ minWidth: 140, maxWidth: 240, fontSize: "12px" }}
         onMouseDown={onMouseDown}
         onContextMenu={onContextMenu}
         draggable
@@ -63,31 +64,31 @@ const TabBarItem = memo(function TabBarItem({
         onDragEnd={onDragEnd}
         onAuxClick={handleAuxClick}
       >
-        {isActive && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent" />}
-        <div className="grid size-3 max-h-3 max-w-3 shrink-0 place-content-center py-3">
+        <div className="grid size-4 max-h-4 max-w-4 shrink-0 place-content-center">
           {buffer.path === "extensions://marketplace" ? (
-            <Package size={12} className="text-blue-500" />
+            <Package size={14} className="text-blue-400 opacity-80" />
           ) : buffer.isSQLite ? (
-            <Database size={12} className="text-text-lighter" />
+            <Database size={14} className="text-text-lighter opacity-70" />
           ) : (
             <FileIcon
               fileName={buffer.name}
               isDir={false}
-              className="text-text-lighter"
-              size={12}
+              className="text-text-lighter opacity-70"
+              size={14}
             />
           )}
         </div>
-        {buffer.isPinned && <Pin size={8} className="flex-shrink-0 text-blue-500" />}
+        {buffer.isPinned && <Pin size={10} className="flex-shrink-0 text-blue-400 opacity-70" />}
         <span
           className={cn(
-            "flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs",
-            isActive ? "text-text" : "text-text-light",
+            "flex-1 overflow-hidden text-ellipsis whitespace-nowrap",
+            isActive ? "font-medium text-text" : "font-normal text-text-light",
           )}
+          style={{ fontFamily: "var(--font-ui)", fontSize: "12px" }}
           title={buffer.path}
         >
           {buffer.name}
-          {buffer.isDirty && <span className="ml-1 text-text-lighter">•</span>}
+          {buffer.isDirty && <span className="ml-1.5 text-text-lighter">●</span>}
         </span>
         {!buffer.isPinned && (
           <button
@@ -98,8 +99,8 @@ const TabBarItem = memo(function TabBarItem({
             }}
             className={cn(
               "flex-shrink-0 cursor-pointer select-none rounded p-0.5",
-              "text-text-lighter transition-all duration-150",
-              "hover:bg-hover hover:text-text hover:opacity-100 group-hover:opacity-100",
+              "text-text-lighter/60 transition-all duration-150",
+              "hover:bg-hover/70 hover:text-text group-hover:opacity-100",
               {
                 "opacity-100": isActive,
                 "opacity-0": !isActive,
@@ -109,7 +110,7 @@ const TabBarItem = memo(function TabBarItem({
             tabIndex={-1}
             draggable={false}
           >
-            <X className="pointer-events-none select-none" size={12} />
+            <X className="pointer-events-none select-none" size={14} />
           </button>
         )}
       </div>

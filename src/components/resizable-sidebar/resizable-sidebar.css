@@ -4,7 +4,7 @@
 
 .resize-handle {
   @apply absolute top-0 h-full w-1 cursor-col-resize;
-  @apply transition-colors duration-150 hover:bg-blue-500/30;
+  @apply transition-colors duration-150 hover:bg-text-lighter/20;
 
   /* Add little offset (5px) to avoid overlap with FileTree scrollbar */
   @apply -right-[5px];
@@ -15,12 +15,13 @@
 }
 
 .resize-handle--resizing {
-  @apply bg-blue-500/50;
+  @apply bg-text-lighter/40;
 }
 
 .resize-handle__indicator {
-  @apply -translate-x-[1px] absolute top-0 right-0 h-full w-[3px] bg-blue-500;
+  @apply -translate-x-[1px] absolute top-0 right-0 h-full w-[3px];
   @apply opacity-0 transition-opacity duration-150;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .resize-handle:hover .resize-handle__indicator {

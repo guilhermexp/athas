@@ -414,7 +414,7 @@ const GitView = ({ repoPath, onFileSelect }: GitViewProps) => {
 
   return (
     <>
-      <div className="flex h-full select-none flex-col bg-secondary-bg font-mono text-xs">
+      <div className="flex h-full select-none flex-col bg-primary-bg font-mono text-xs">
         {/* Header */}
         <div
           className={cn(

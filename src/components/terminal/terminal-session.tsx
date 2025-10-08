@@ -57,9 +57,7 @@ const TerminalSession = ({
             // Additional ready callback if needed
           }}
           onTerminalRef={(ref) => {
-            // Store both xterm instance and focus method
             xtermInstanceRef.current = ref;
-            terminalRef.current = ref;
           }}
         />
       </TerminalErrorBoundary>

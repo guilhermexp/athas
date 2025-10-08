@@ -1,0 +1,207 @@
+/**
+ * Zed Editor Fonts Configuration
+ *
+ * Uses system fonts like Zed does:
+ * - UI: San Francisco (macOS) / Segoe UI (Windows) / system sans-serif
+ * - Code: SF Mono (macOS) / Consolas (Windows) / system monospace
+ */
+
+/* ========================================
+   ROOT VARIABLES (Zed System Fonts)
+   ======================================== */
+
+:root {
+  /* Font Families - System fonts like Zed */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+
+  /* Font Sizes - Matching Zed exactly */
+  /* Slightly larger defaults for overall readability */
+  --font-size-ui: 14px;           /* UI elements (file tree, menus, panels, buttons) */
+  --font-size-buffer: 15px;       /* Editor and terminal */
+  --font-size-tabs: 13px;         /* Tab bar */
+  --font-size-status: 12px;       /* Status bar */
+  --font-size-agent-ui: 14px;     /* Agent panel UI */
+  --font-size-agent-buffer: 13px; /* Agent panel messages */
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 600;
+
+  /* Line Heights - Matching Zed */
+  --line-height-buffer: 1.5;      /* Editor/terminal line height */
+  --line-height-ui: 1.5;          /* UI text */
+  --line-height-compact: 1.3;     /* Compact UI elements */
+
+  /* Legacy variables for compatibility */
+  --app-font-family: var(--font-mono);
+  --editor-font-family: var(--font-mono);
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospace elements */
+code,
+pre,
+kbd,
+samp,
+.font-mono {
+  font-family: var(--font-mono) !important;
+}
+
+/* ========================================
+   COMPONENT-SPECIFIC OVERRIDES
+   ======================================== */
+
+/* Editor and Terminal - Use buffer font settings */
+.editor-container,
+.terminal-container,
+.xterm,
+.cm-editor,
+.monaco-editor {
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-buffer) !important;
+  line-height: var(--line-height-buffer) !important;
+}
+
+/* Agent Panel */
+.agent-panel {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-agent-ui);
+}
+
+.agent-message {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-agent-buffer);
+  line-height: var(--line-height-buffer);
+}
+
+/* Code blocks in markdown */
+.markdown-body code,
+.markdown-body pre {
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-buffer) !important;
+}
+
+/* File explorer, sidebar, menus - all use UI size (13px) */
+.sidebar,
+.file-explorer,
+.menu,
+.dropdown,
+.tooltip,
+.context-menu {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
+  line-height: var(--line-height-ui);
+}
+
+/* Tabs */
+.tab-bar,
+.tab {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-tabs);
+  line-height: var(--line-height-compact);
+}
+
+/* Status bar */
+.status-bar {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-status);
+  line-height: var(--line-height-compact);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Font family utilities */
+.font-ui {
+  font-family: var(--font-ui) !important;
+}
+
+.font-code {
+  font-family: var(--font-mono) !important;
+}
+
+/* Font size utilities */
+.text-ui {
+  font-size: var(--font-size-ui);
+}
+
+.text-buffer {
+  font-size: var(--font-size-buffer);
+}
+
+.text-tabs {
+  font-size: var(--font-size-tabs);
+}
+
+.text-status {
+  font-size: var(--font-size-status);
+}
+
+/* Line height utilities */
+.leading-buffer {
+  line-height: var(--line-height-buffer);
+}
+
+.leading-ui {
+  line-height: var(--line-height-ui);
+}
+
+.leading-compact {
+  line-height: var(--line-height-compact);
+}
+
+/* ========================================
+   LIGATURES CONTROL
+   ======================================== */
+
+/* Disable ligatures in UI (Zed default for UI) */
+body,
+.font-ui {
+  font-feature-settings: "calt" 0;
+}
+
+/* Enable ligatures in code (Zed default for code) */
+.font-mono,
+code,
+pre,
+.editor-container,
+.terminal-container,
+.enable-ligatures {
+  font-feature-settings: "calt" 1, "liga" 1;
+}
+
+/* ========================================
+   RESPONSIVE FONT SIZES
+   ======================================== */
+
+/* No responsive adjustments - Zed uses fixed sizes */
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  body {
+    font-family: var(--font-ui);
+  }
+
+  code,
+  pre {
+    font-family: var(--font-mono);
+  }
+}

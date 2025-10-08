@@ -100,7 +100,7 @@ export function useMenuEventsWrapper() {
         }, 100);
       }
     },
-    onToggleAiChat: () => updateSetting("isAIChatVisible", !settings.isAIChatVisible),
+    onToggleAiChat: () => updateSetting("isAgentPanelVisible", !settings.isAgentPanelVisible),
     onSplitEditor: () => {
       // For now, we'll show a notification about split editor functionality
       console.log("Split Editor - would split the current editor view");

@@ -1,8 +1,11 @@
-/* Line-based editor styles */
+/* Line-based editor styles - Zed inspired */
 .editor-viewport {
-  font-family: "JetBrains Mono", monospace;
-  background-color: var(--color-background);
-  color: var(--color-text);
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-buffer) !important;
+  line-height: var(--line-height-buffer) !important;
+  background-color: var(--tw-primary-bg);
+  color: var(--tw-text);
+  padding: 8px 0 0 0;
 }
 
 .editor-line-wrapper {
@@ -13,12 +16,13 @@
   position: relative;
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
   white-space: pre;
+  padding: 0 12px 0 0;
 }
 
 .editor-line.selected {
-  background-color: var(--color-selection, rgba(100, 149, 237, 0.2));
+  background-color: var(--tw-selected, rgba(64, 64, 64, 0.3));
 }
 
 .editor-line-content {
@@ -26,19 +30,23 @@
   min-width: 100%;
 }
 
-/* Line Gutter */
+/* Line Gutter - Zed style */
 .editor-gutter {
   background-color: transparent;
-  color: var(--color-gutter-text, rgba(128, 128, 128, 0.6));
+  color: var(--tw-text-lighter, #666);
   text-align: right;
-  padding-right: 8px;
-  padding-left: 8px;
+  padding-right: 16px;
+  padding-left: 12px;
   user-select: none;
   height: 100%;
+  min-width: 48px;
+  font-size: 12px;
+  opacity: 0.5;
 }
 
 .editor-gutter .line-number {
-  font-size: 0.9em;
+  font-size: inherit;
+  font-weight: 400;
 }
 
 .editor-gutter.has-breakpoint {
@@ -67,9 +75,11 @@
   contain: layout style;
 }
 
-/* Cursor styles */
+/* Cursor styles - Zed style solid cursor */
 .editor-cursor {
-  animation: blink 1s step-end infinite;
+  animation: blink 1.2s step-end infinite;
+  background-color: var(--tw-cursor, #e5e5e5);
+  width: 2px;
 }
 
 .editor-cursor.moving {
@@ -87,9 +97,9 @@
   }
 }
 
-/* Selection styles */
+/* Selection styles - Zed blue */
 .selection {
-  background-color: var(--color-selection, rgba(100, 149, 237, 0.3));
+  background-color: rgba(100, 149, 237, 0.25);
   position: absolute;
   pointer-events: none;
 }
@@ -147,89 +157,62 @@
   border-left: 3px solid rgba(0, 255, 0, 0.5);
 }
 
-/* Syntax highlighting token styles for decoration overlays */
-.editor-decoration-inline.token-keyword {
-  background-color: rgba(0, 0, 255, 0.15);
-}
-
-.editor-decoration-inline.token-string {
-  background-color: rgba(0, 128, 0, 0.15);
-}
-
-.editor-decoration-inline.token-number {
-  background-color: rgba(9, 134, 88, 0.15);
-}
-
-.editor-decoration-inline.token-comment {
-  background-color: rgba(112, 128, 144, 0.15);
-}
-
-.editor-decoration-inline.token-function {
-  background-color: rgba(121, 94, 38, 0.15);
-}
-
-.editor-decoration-inline.token-variable {
-  background-color: rgba(0, 16, 128, 0.15);
-}
-
-.editor-decoration-inline.token-operator {
-  background-color: rgba(0, 0, 0, 0.08);
-}
-
-.editor-decoration-inline.token-punctuation {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.editor-decoration-inline.token-type {
-  background-color: rgba(38, 127, 153, 0.15);
-}
-
+/* Syntax highlighting token styles for decoration overlays - Zed subtle style */
+.editor-decoration-inline.token-keyword,
+.editor-decoration-inline.token-string,
+.editor-decoration-inline.token-number,
+.editor-decoration-inline.token-comment,
+.editor-decoration-inline.token-function,
+.editor-decoration-inline.token-variable,
+.editor-decoration-inline.token-operator,
+.editor-decoration-inline.token-punctuation,
+.editor-decoration-inline.token-type,
 .editor-decoration-inline.token-class {
-  background-color: rgba(38, 127, 153, 0.2);
+  background-color: transparent;
 }
 
-/* Syntax highlighting token styles for text spans */
+/* Syntax highlighting uses theme colors from CSS variables */
 .token-keyword {
-  color: #0000ff;
-  font-weight: bold;
+  color: var(--color-syntax-keyword);
+  font-weight: normal;
 }
 
 .token-string {
-  color: #008000;
+  color: var(--color-syntax-string);
 }
 
 .token-number {
-  color: #098658;
+  color: var(--color-syntax-number);
 }
 
 .token-comment {
-  color: #708090;
+  color: var(--color-syntax-comment);
   font-style: italic;
 }
 
 .token-function {
-  color: #795e26;
+  color: var(--color-syntax-function);
 }
 
 .token-variable {
-  color: #001080;
+  color: var(--color-syntax-variable);
 }
 
 .token-operator {
-  color: #000000;
+  color: var(--color-syntax-operator, var(--tw-text));
 }
 
 .token-punctuation {
-  color: #000000;
+  color: var(--color-syntax-punctuation, var(--tw-text-lighter));
 }
 
 .token-type {
-  color: #267f99;
+  color: var(--color-syntax-type);
 }
 
 .token-class {
-  color: #267f99;
-  font-weight: bold;
+  color: var(--color-syntax-type);
+  font-weight: normal;
 }
 
 /* Hide native selected style */

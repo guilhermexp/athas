@@ -88,15 +88,16 @@ const BottomPane = ({ diagnostics, onDiagnosticClick }: BottomPaneProps) => {
         onMouseDown={handleMouseDown}
         className={cn(
           "group absolute top-0 right-0 left-0 h-1",
-          "cursor-ns-resize transition-colors duration-150 hover:bg-blue-500/30",
-          isResizing && "bg-blue-500/50",
+          "cursor-ns-resize transition-colors duration-150",
+          isResizing && "bg-text-lighter/40",
         )}
       >
         <div
           className={cn(
             "-translate-y-[1px] absolute top-0 right-0 left-0 h-[3px]",
-            "bg-blue-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100",
+            "opacity-0 transition-opacity duration-150 group-hover:opacity-100",
           )}
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
         />
       </div>
 

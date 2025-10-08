@@ -29,9 +29,10 @@ interface Settings {
   // AI
   aiProviderId: string;
   aiModelId: string;
-  aiChatWidth: number;
-  isAIChatVisible: boolean;
   aiCompletion: boolean;
+  // Agent Panel
+  isAgentPanelVisible: boolean;
+  agentPanelWidth: number;
   // Keyboard
   vimMode: boolean;
   // Language
@@ -73,9 +74,10 @@ const defaultSettings: Settings = {
   // AI
   aiProviderId: "openai",
   aiModelId: "gpt-4o-mini",
-  aiChatWidth: 400,
-  isAIChatVisible: false,
   aiCompletion: true,
+  // Agent Panel
+  isAgentPanelVisible: false,
+  agentPanelWidth: 400,
   // Keyboard
   vimMode: false,
   // Language
@@ -105,6 +107,13 @@ const defaultSettings: Settings = {
   hiddenDirectoryPatterns: [],
 };
 
+const mergeCoreFeatures = (coreFeatures?: CoreFeaturesState): CoreFeaturesState => {
+  return {
+    ...defaultSettings.coreFeatures,
+    ...(coreFeatures ?? {}),
+  };
+};
+
 // Theme class constants
 const ALL_THEME_CLASSES = ["force-athas-light", "force-athas-dark"];
 
@@ -119,6 +128,14 @@ const getStore = async () => {
     // Initialize defaults if not present
     for (const [key, value] of Object.entries(defaultSettings)) {
       const current = await storeInstance.get(key);
+      if (key === "coreFeatures") {
+        const merged = mergeCoreFeatures(current as CoreFeaturesState | undefined);
+        if (JSON.stringify(current) !== JSON.stringify(merged)) {
+          await storeInstance.set(key, merged);
+        }
+        continue;
+      }
+
       if (current === null || current === undefined) {
         await storeInstance.set(key, value);
       }
@@ -134,7 +151,11 @@ const saveSettingsToStore = async (settings: Partial<Settings>) => {
 
     // Map through and set each setting
     for (const [key, value] of Object.entries(settings)) {
-      await store.set(key, value);
+      if (key === "coreFeatures") {
+        await store.set(key, mergeCoreFeatures(value as CoreFeaturesState | undefined));
+      } else {
+        await store.set(key, value);
+      }
     }
 
     await store.save();
@@ -211,7 +232,11 @@ const initializeSettings = async () => {
     for (const key of Object.keys(defaultSettings) as Array<keyof Settings>) {
       const value = await store.get(key);
       if (value !== null && value !== undefined) {
-        (loadedSettings as any)[key] = value as Settings[typeof key];
+        if (key === "coreFeatures") {
+          loadedSettings.coreFeatures = mergeCoreFeatures(value as CoreFeaturesState | undefined);
+        } else {
+          (loadedSettings as any)[key] = value as Settings[typeof key];
+        }
       }
     }
 
@@ -255,7 +280,11 @@ export const useSettingsStore = create(
         updateSettingsFromJSON: (jsonString: string): boolean => {
           try {
             const parsedSettings = JSON.parse(jsonString);
-            const validatedSettings = { ...defaultSettings, ...parsedSettings };
+            const validatedSettings = {
+              ...defaultSettings,
+              ...parsedSettings,
+              coreFeatures: mergeCoreFeatures(parsedSettings.coreFeatures),
+            } as Settings;
 
             set((state) => {
               state.settings = validatedSettings;
@@ -270,8 +299,12 @@ export const useSettingsStore = create(
         },
 
         initializeSettings: (loadedSettings: Settings) => {
+          const normalizedSettings = {
+            ...loadedSettings,
+            coreFeatures: mergeCoreFeatures(loadedSettings.coreFeatures),
+          } as Settings;
           set((state) => {
-            state.settings = loadedSettings;
+            state.settings = normalizedSettings;
           });
         },
 
@@ -279,12 +312,20 @@ export const useSettingsStore = create(
         updateSetting: async <K extends keyof Settings>(key: K, value: Settings[K]) => {
           console.log(`Updating setting ${key} to:`, value);
           set((state) => {
-            state.settings[key] = value;
+            if (key === "coreFeatures") {
+              state.settings.coreFeatures = mergeCoreFeatures(value as CoreFeaturesState);
+            } else {
+              state.settings[key] = value;
+            }
           });
 
           if (key === "theme") applyTheme(value as Theme);
 
-          await saveSettingsToStore({ [key]: value });
+          if (key === "coreFeatures") {
+            await saveSettingsToStore({ [key]: mergeCoreFeatures(value as CoreFeaturesState) });
+          } else {
+            await saveSettingsToStore({ [key]: value });
+          }
         },
       }),
     ),

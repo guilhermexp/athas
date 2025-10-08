@@ -1,5 +1,7 @@
-import type { ChatMode, OutputStyle } from "@/stores/ai-chat/types";
 import type { ContextInfo } from "./types";
+
+type ChatMode = "chat" | "plan";
+type OutputStyle = "default" | "explanatory" | "learning";
 
 // Build a comprehensive context prompt for the AI
 export const buildContextPrompt = (context: ContextInfo): string => {

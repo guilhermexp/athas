@@ -1,11 +1,13 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use acp_bridge::AcpBridge;
 use claude_bridge::ClaudeCodeBridge;
 use commands::*;
 use file_watcher::FileWatcher;
 use log::{debug, info};
 use lsp::LspManager;
+use mcp_bridge::McpBridge;
 use ssh::{ssh_connect, ssh_disconnect, ssh_disconnect_only, ssh_write_file};
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
@@ -14,11 +16,13 @@ use tauri_plugin_store::StoreExt;
 use tokio::sync::Mutex;
 use xterm_terminal::XtermManager;
 
+mod acp_bridge;
 mod claude_bridge;
 mod commands;
 mod file_watcher;
 mod logger;
 mod lsp;
+mod mcp_bridge;
 mod menu;
 use crate::shell::get_shells;
 mod ssh;
@@ -65,6 +69,14 @@ fn main() {
          // Set up Claude bridge
          let claude_bridge = Arc::new(Mutex::new(ClaudeCodeBridge::new(app.handle().clone())));
          app.manage(claude_bridge.clone());
+
+         // Set up ACP bridge
+         let acp_bridge = Arc::new(Mutex::new(AcpBridge::new(app.handle().clone())));
+         app.manage(acp_bridge.clone());
+
+         // Set up MCP bridge
+         let mcp_bridge = Arc::new(Mutex::new(McpBridge::new(app.handle().clone())));
+         app.manage(mcp_bridge.clone());
 
          // Set up LSP manager
          app.manage(LspManager::new(app.handle().clone()));
@@ -255,6 +267,15 @@ fn main() {
          // File system commands
          move_file,
          rename_file,
+         read_file_contents,
+         write_file_contents,
+         list_directory,
+         search_files,
+         create_directory,
+         delete_path,
+         copy_path,
+         move_path,
+         grep_search,
          // Git commands
          git_status,
          git_add,
@@ -290,6 +311,7 @@ fn main() {
          git_stage_hunk,
          git_unstage_hunk,
          git_blame_file,
+         git_blame_line,
          // GitHub commands
          store_github_token,
          get_github_token,
@@ -307,6 +329,7 @@ fn main() {
          close_xterm_terminal,
          // Other commands for terminal (switching shells)
          get_shells,
+         execute_command,
          // execute_shell,
          // SSH commands
          ssh_connect,
@@ -318,6 +341,15 @@ fn main() {
          stop_claude_code,
          send_claude_input,
          get_claude_status,
+         // ACP commands
+         start_acp_agent,
+         stop_acp_agent,
+         send_acp_request,
+         // MCP commands
+         start_mcp_server,
+         stop_mcp_server,
+         get_mcp_server_tools,
+         call_mcp_tool,
          // Theme commands
          get_system_theme,
          load_toml_themes,
@@ -327,6 +359,8 @@ fn main() {
          get_temp_dir,
          write_temp_file,
          delete_temp_file,
+         // Zed config import
+         import_zed_settings,
          // Font commands
          get_system_fonts,
          get_monospace_fonts,
@@ -349,9 +383,14 @@ fn main() {
          lsp_document_change,
          lsp_document_close,
          lsp_is_language_supported,
+         get_diagnostics,
          // Fuzzy matching commands
          fuzzy_match,
+         fuzzy_find_files,
          filter_completions,
+         // Web commands
+         fetch_url,
+         web_search,
          // Format commands
          format_code,
          // Menu commands

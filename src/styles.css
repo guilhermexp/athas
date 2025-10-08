@@ -3,6 +3,9 @@
 /* Define layer order */
 @layer base, utilities, themes;
 
+/* Zed Fonts - IBM Plex Sans (UI) + Lilex (Code) */
+@import "./styles/zed-fonts.css";
+
 /* utils like animations */
 @import "./styles/utils.css";
 @import "./styles/token-theme.css";
@@ -78,17 +81,17 @@
 
     /* Force Athas Dark theme */
     .force-athas-dark {
-        --tw-primary-bg: #1a1a1a;
-        --tw-secondary-bg: #2a2a2a;
-        --tw-text: #e5e5e5;
-        --tw-text-light: #b3b3b3;
-        --tw-text-lighter: #808080;
-        --tw-border: #404040;
-        --tw-hover: #333333;
-        --tw-selected: #404040;
+        --tw-primary-bg: #1f1f20;
+        --tw-secondary-bg: #272728;
+        --tw-text: #ededed;
+        --tw-text-light: #bcbcbc;
+        --tw-text-lighter: #8d8d8f;
+        --tw-border: #3a3a3c;
+        --tw-hover: #303031;
+        --tw-selected: #3c3c3e;
 
         /* Paper/Welcome screen specific colors - Dark */
-        --tw-paper-bg: #1a1a1a;
+        --tw-paper-bg: #1f1f20;
 
         --tw-paper-texture-overlay: rgb(100 100 100 / 0.02);
 
@@ -96,7 +99,7 @@
         --tw-accent: #60a5fa;
 
         /* Cursor color - Dark */
-        --tw-cursor: #e5e5e5;
+        --tw-cursor: #ededed;
 
         /* Diagnostic colors */
         --tw-error: #f87171;
@@ -121,17 +124,17 @@
         --tw-syntax-variable: #ffa657;
         --tw-syntax-tag: #7ee787;
         --tw-syntax-attribute: #d2a8ff;
-        --tw-syntax-punctuation: #b3b3b3;
+        --tw-syntax-punctuation: #bcbcbc;
 
         /* Terminal ANSI colors - harmonized with syntax highlighting */
-        --tw-terminal-black: #1a1a1a;
+        --tw-terminal-black: #1f1f20;
         --tw-terminal-red: #ff7b72;
         --tw-terminal-green: #7ee787;
         --tw-terminal-yellow: #ffa657;
         --tw-terminal-blue: #79c0ff;
         --tw-terminal-magenta: #d2a8ff;
         --tw-terminal-cyan: #a5d6ff;
-        --tw-terminal-white: #b3b3b3;
+        --tw-terminal-white: #bcbcbc;
         --tw-terminal-bright-black: #8b949e;
         --tw-terminal-bright-red: #f87171;
         --tw-terminal-bright-green: #86efac;
@@ -139,7 +142,7 @@
         --tw-terminal-bright-blue: #60a5fa;
         --tw-terminal-bright-magenta: #c084fc;
         --tw-terminal-bright-cyan: #67e8f9;
-        --tw-terminal-bright-white: #e5e5e5;
+        --tw-terminal-bright-white: #ededed;
     }
 }
 
@@ -245,43 +248,21 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    font-family:
-        var(--app-font-family, "JetBrains Mono"), "JetBrains Mono", monospace;
     overscroll-behavior: none !important;
-    /* Prevent elastic bounce globally */
     background: transparent;
-    /* Allow transparency for rounded corners */
+    /* Font config now in zed-fonts.css */
 }
 
 button {
     cursor: pointer;
 }
 
-/* Apply app-wide font family to all elements */
-* {
-    font-family: var(--app-font-family, "JetBrains Mono"), "JetBrains Mono", monospace;
-}
-
-/* Override Tailwind's font-mono class to use our custom variable */
-.font-mono {
-    font-family: var(--app-font-family, "JetBrains Mono"), "JetBrains Mono", monospace !important;
-}
-
-/* Specific overrides for components that should use editor font */
-.editor-container,
-.monaco-editor,
-.editor-input,
-.line-numbers,
-.hover-tooltip {
-    font-family: var(--editor-font-family, "JetBrains Mono"), "JetBrains Mono", monospace !important;
-}
+/* Font overrides now in zed-fonts.css */
 
 /* CSS variables that themes can override */
 @layer base {
     :root {
-        /* Font defaults */
-        --app-font-family: "JetBrains Mono", monospace;
-        --editor-font-family: "JetBrains Mono", monospace;
+        /* Font config moved to zed-fonts.css */
 
         /* Default light theme colors */
         --tw-primary-bg: #ffffff;
@@ -757,6 +738,18 @@ button {
 /* Window container styling - rounded but no borders */
 .window-container {
     overflow: hidden;
+}
+
+/* Ensure proper alignment for window controls */
+.window-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Fix header alignment issues */
+.z-50.flex.h-8.select-none {
+    align-items: center !important;
 }
 
 /* fero - commented because i dont think this really needed */

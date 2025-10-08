@@ -43,9 +43,9 @@ export function useKeyboardShortcutsWrapper() {
     },
     setIsRightPaneVisible: (value) => {
       if (typeof value === "function") {
-        updateSetting("isAIChatVisible", value(settings.isAIChatVisible));
+        updateSetting("isAgentPanelVisible", value(settings.isAgentPanelVisible));
       } else {
-        updateSetting("isAIChatVisible", value);
+        updateSetting("isAgentPanelVisible", value);
       }
     },
     setIsCommandBarVisible: (value) => {

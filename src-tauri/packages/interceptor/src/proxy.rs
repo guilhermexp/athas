@@ -295,10 +295,50 @@ pub async fn proxy_handler(
    let body_str = std::str::from_utf8(&body_bytes)
       .context("Request body is not valid UTF-8")?
       .to_string();
-   let parsed_request: ParsedRequest =
+
+   // Log model in request
+   if let Ok(raw_json) = serde_json::from_str::<serde_json::Value>(&body_str)
+      && let Some(model_str) = raw_json.get("model").and_then(|m| m.as_str())
+   {
+      let pretty = match model_str {
+         "claude-sonnet-4-5-20250929" => "Sonnet 4.5",
+         "claude-opus-4-1-20250514" => "Opus 4.1",
+         _ => "",
+      };
+      if pretty.is_empty() {
+         log::info!("🔍 Model in request {}: {}", request_id, model_str);
+      } else {
+         log::info!(
+            "🔍 Model in request {}: {} ({})",
+            request_id,
+            model_str,
+            pretty
+         );
+      }
+   }
+
+   let mut parsed_request: ParsedRequest =
       serde_json::from_str(&body_str).context("Failed to parse request JSON")?;
 
+   log::info!(
+      "🤖 Request {} - Model: {} ({})",
+      request_id,
+      parsed_request.model,
+      parsed_request.model.human_name()
+   );
    log_user_messages(&parsed_request.messages);
+
+   // Force streaming for all requests to ensure real-time updates
+   let original_stream = parsed_request.stream;
+   parsed_request.stream = true;
+
+   if !original_stream {
+      debug!("⚡ Forcing stream=true for request {}", request_id);
+   }
+
+   // Serialize the modified request with stream=true
+   let modified_body =
+      serde_json::to_vec(&parsed_request).context("Failed to serialize modified request")?;
 
    let intercepted = create_intercepted_request(
       request_id,
@@ -321,11 +361,11 @@ pub async fn proxy_handler(
    let method_reqwest =
       reqwest::Method::from_bytes(method.as_str().as_bytes()).context("Invalid HTTP method")?;
 
-   // we forward the request to anthropic in this block
+   // we forward the request to anthropic in this block (with stream=true)
    let response = client
       .request(method_reqwest, &url)
       .headers(forward_headers)
-      .body(body_bytes.to_vec())
+      .body(modified_body)
       .send()
       .await?;
 

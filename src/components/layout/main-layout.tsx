@@ -12,9 +12,11 @@ import DiffViewer from "@/version-control/diff-viewer/views/diff-viewer";
 import { stageHunk, unstageHunk } from "@/version-control/git/controllers/git";
 import type { GitHunk } from "@/version-control/git/models/git-types";
 
-// Lazy load AI Chat for better performance
-const AIChat = lazy(() => import("../ai-chat/ai-chat"));
+// Lazy load Agent Panel for better performance
+const AgentPanel = lazy(() => import("../agent-panel/agent-panel"));
 
+import { useTerminalPanelStore } from "@/stores/terminal-panel-store";
+import { isTerminalBufferPath, terminalIdFromPath } from "@/utils/terminal-editor-integration";
 import BottomPane from "../bottom-pane";
 import CommandBar from "../command/components/command-bar";
 import CommandPalette from "../command/components/command-palette";
@@ -30,6 +32,7 @@ import { ImageViewer } from "../image-viewer/image-viewer";
 import ResizableRightPane from "../resizable-right-pane";
 import ResizableSidebar from "../resizable-sidebar/resizable-sidebar";
 import TabBar from "../tab-bar/tab-bar";
+import TerminalSession from "../terminal/terminal-session";
 import { VimSearchBar } from "../vim-search/vim-search-bar";
 import CustomTitleBarWithSettings from "../window/custom-title-bar";
 import { MainSidebar } from "./main-sidebar";
@@ -117,33 +120,57 @@ export function MainLayout() {
 
       <div className="z-10 flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-row overflow-hidden">
-          {/* Left sidebar or AI chat based on settings */}
-          {sidebarPosition === "right" ? (
-            <ResizableRightPane position="left" isVisible={settings.isAIChatVisible}>
-              <Suspense
-                fallback={
-                  <div className="flex h-full items-center justify-center text-text-lighter text-xs">
-                    Loading AI Chat...
-                  </div>
-                }
-              >
-                <AIChat mode="chat" />
-              </Suspense>
-            </ResizableRightPane>
-          ) : (
-            isSidebarVisible && (
-              <ResizableSidebar>
-                <MainSidebar />
-              </ResizableSidebar>
-            )
-          )}
+          {/* Left sidebar */}
+          {sidebarPosition === "right"
+            ? null
+            : isSidebarVisible && (
+                <ResizableSidebar>
+                  <MainSidebar />
+                </ResizableSidebar>
+              )}
 
           {/* Main content area */}
-          <div className="flex h-full flex-1 flex-col overflow-hidden">
+          <div
+            className="flex h-full flex-1 flex-col overflow-hidden"
+            onDragOver={(e) => {
+              if (e.dataTransfer.types.includes("application/terminal-tab")) {
+                e.preventDefault();
+              }
+            }}
+            onDrop={(e) => {
+              const data = e.dataTransfer.getData("application/terminal-tab");
+              if (data) {
+                e.preventDefault();
+                try {
+                  const payload = JSON.parse(data) as { id: string; name: string };
+                  const { openTerminalInEditor } =
+                    require("@/utils/terminal-editor-integration") as typeof import("@/utils/terminal-editor-integration");
+                  openTerminalInEditor(payload.id);
+                } catch {}
+              }
+            }}
+          >
             <TabBar />
             {(() => {
               if (!activeBuffer) {
                 return <div className="flex flex-1 items-center justify-center"></div>;
+              }
+              // Render terminal buffer inside editor area
+              if (isTerminalBufferPath(activeBuffer.path)) {
+                const termId = terminalIdFromPath(activeBuffer.path);
+                const term = useTerminalPanelStore.getState().terminalsById.get(termId);
+                return (
+                  <TerminalSession
+                    terminal={{
+                      id: termId,
+                      name: term?.name ?? activeBuffer.name,
+                      currentDirectory: term?.currentDirectory ?? "/",
+                      isActive: true,
+                      createdAt: term?.createdAt ?? new Date(),
+                    }}
+                    isActive={true}
+                  />
+                );
               }
               if (activeBuffer.isDiff) {
                 return (
@@ -168,7 +195,7 @@ export function MainLayout() {
             })()}
           </div>
 
-          {/* Right sidebar or AI chat based on settings */}
+          {/* Right sidebar or Agent Panel based on settings */}
           {sidebarPosition === "right" ? (
             isSidebarVisible && (
               <ResizableRightPane position="right">
@@ -176,15 +203,16 @@ export function MainLayout() {
               </ResizableRightPane>
             )
           ) : (
-            <ResizableRightPane position="right" isVisible={settings.isAIChatVisible}>
+            /* Agent Panel */
+            <ResizableRightPane position="right" isVisible={settings.isAgentPanelVisible}>
               <Suspense
                 fallback={
                   <div className="flex h-full items-center justify-center text-text-lighter text-xs">
-                    Loading AI Chat...
+                    Loading Agent Panel...
                   </div>
                 }
               >
-                <AIChat mode="chat" />
+                <AgentPanel />
               </Suspense>
             </ResizableRightPane>
           )}

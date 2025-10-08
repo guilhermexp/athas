@@ -1,8 +1,9 @@
-import { AlertCircle, GitCommit as GitCommitIcon, Send } from "lucide-react";
+import { AlertCircle, ChevronDown, Download, GitCommit as GitCommitIcon, Send } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
-import { commitChanges } from "@/version-control/git/controllers/git";
+import { commitChanges, fetchChanges } from "@/version-control/git/controllers/git";
+import { useGitStore } from "@/version-control/git/controllers/git-store";
 
 interface GitCommitPanelProps {
   stagedFilesCount: number;
@@ -14,6 +15,8 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
   const [commitMessage, setCommitMessage] = useState("");
   const [isCommitting, setIsCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+  const { gitStatus } = useGitStore();
 
   const handleCommit = async () => {
     if (!repoPath || !commitMessage.trim() || stagedFilesCount === 0) return;
@@ -52,12 +55,42 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
   return (
     <div className="border-border border-t bg-secondary-bg">
       <div className="p-3">
-        <div className="mb-2 flex items-center gap-2">
-          <GitCommitIcon size={12} className="text-text-lighter" />
-          <span className="font-medium text-text text-xs">
-            Commit {stagedFilesCount} file{stagedFilesCount !== 1 ? "s" : ""}
-          </span>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <GitCommitIcon size={12} className="text-text-lighter" />
+            <span className="font-medium text-text text-xs">
+              Commit {stagedFilesCount} file{stagedFilesCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+          {/* Quick Fetch action (matches screenshot layout) */}
+          {repoPath && (
+            <button
+              onClick={async () => {
+                setIsFetching(true);
+                try {
+                  await fetchChanges(repoPath);
+                } finally {
+                  setIsFetching(false);
+                }
+              }}
+              className={cn(
+                "flex items-center gap-1 rounded px-2 py-1",
+                "text-text-lighter hover:bg-hover hover:text-text",
+              )}
+              title="Fetch"
+            >
+              <Download size={12} className={isFetching ? "animate-spin" : ""} />
+              <span className="text-xs">Fetch</span>
+            </button>
+          )}
         </div>
+
+        {/* Branch indicator under header */}
+        {repoPath && gitStatus?.branch && (
+          <div className="mb-2 text-[10px] text-text-lighter">
+            {`${repoPath.split("/").pop() || "repo"}/${gitStatus.branch}`}
+          </div>
+        )}
 
         {error && (
           <div
@@ -76,7 +109,7 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
             value={commitMessage}
             onChange={(e) => setCommitMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Enter commit message..."
+            placeholder="Enter commit message"
             className={cn(
               "w-full resize-none border border-border bg-primary-bg px-2 py-1.5",
               "font-mono text-text text-xs focus:border-blue-500 focus:outline-none",
@@ -107,7 +140,8 @@ const GitCommitPanel = ({ stagedFilesCount, repoPath, onCommitSuccess }: GitComm
               ) : (
                 <>
                   <Send size={12} />
-                  Commit
+                  Commit Tracked
+                  <ChevronDown size={12} />
                 </>
               )}
             </button>

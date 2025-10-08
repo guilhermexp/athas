@@ -1,6 +1,6 @@
 export interface GitFile {
   path: string;
-  status: "modified" | "added" | "deleted" | "untracked" | "renamed";
+  status: "modified" | "added" | "deleted" | "untracked" | "renamed" | "conflict";
   staged: boolean;
 }
 

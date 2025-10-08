@@ -14,11 +14,13 @@ import { useEditorSearchStore } from "@/stores/editor-search-store";
 import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useLspStore } from "@/stores/lsp-store";
 import { useZoomStore } from "@/stores/zoom-store";
+import { cn } from "@/utils/cn";
 import { useGitGutter } from "@/version-control/git/controllers/use-git-gutter";
 import FindBar from "../find-bar";
 import Breadcrumb from "./breadcrumb";
 import { TextEditor } from "./core/text-editor";
 import { EditorStylesheet } from "./editor-stylesheet";
+import MarkdownPreview from "./markdown-preview";
 import { HoverTooltip } from "./overlays/hover-tooltip";
 
 interface CodeEditorProps {
@@ -40,6 +42,7 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
   const { setRefs, setContent, setFileInfo } = useEditorInstanceStore();
   // No longer need to sync content - editor-view-store computes from buffer
   const { setDisabled } = useEditorSettingsStore.use.actions();
+  const cleanMarkdownPreview = useEditorSettingsStore.use.cleanMarkdownPreview();
 
   const buffers = useBufferStore.use.buffers();
   const activeBufferId = useBufferStore.use.activeBufferId();
@@ -251,6 +254,10 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
     return <div className="flex flex-1 items-center justify-center text-text"></div>;
   }
 
+  const isMarkdownFile =
+    activeBuffer.path.endsWith(".md") || activeBuffer.path.endsWith(".markdown");
+  const showMarkdownPreview = cleanMarkdownPreview && isMarkdownFile;
+
   return (
     <>
       <EditorStylesheet />
@@ -279,11 +286,23 @@ const CodeEditor = ({ className }: CodeEditorProps) => {
           {/* Main editor layout */}
           <div className="flex h-full">
             {/* Editor content area */}
-            <div className="editor-wrapper relative flex-1 overflow-hidden">
-              <div className="relative h-full flex-1 bg-primary-bg">
+            <div
+              className={cn(
+                "editor-wrapper relative overflow-hidden",
+                showMarkdownPreview ? "w-1/2 border-border/40 border-r" : "flex-1",
+              )}
+            >
+              <div className="relative h-full bg-primary-bg">
                 <TextEditor />
               </div>
             </div>
+
+            {/* Markdown Preview */}
+            {showMarkdownPreview && (
+              <div className="w-1/2 overflow-hidden">
+                <MarkdownPreview content={value} />
+              </div>
+            )}
           </div>
         </div>
       </div>

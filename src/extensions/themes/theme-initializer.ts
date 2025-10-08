@@ -1,4 +1,12 @@
 import { extensionManager } from "../extension-manager";
+import {
+  cursorDark,
+  macosClassicDark,
+  macosClassicLight,
+  oneDarkPro,
+  oneDarkProMonokaiDarker,
+  supaglass,
+} from "./builtin-themes";
 import { themeLoader } from "./theme-loader";
 import { themeRegistry } from "./theme-registry";
 
@@ -66,6 +74,18 @@ export const initializeThemeSystem = async () => {
     } catch (error) {
       console.error("initializeThemeSystem: Failed to load themes:", error);
     }
+
+    // Register additional built-in themes (JS-based)
+    console.log("initializeThemeSystem: Registering JS-based themes...");
+    themeRegistry.registerTheme(supaglass);
+    themeRegistry.registerTheme(cursorDark);
+    themeRegistry.registerTheme(oneDarkPro);
+    themeRegistry.registerTheme(oneDarkProMonokaiDarker);
+    themeRegistry.registerTheme(macosClassicLight);
+    themeRegistry.registerTheme(macosClassicDark);
+    console.log(
+      "initializeThemeSystem: Registered 6 themes (Supaglass, Cursor Dark, One Dark Pro, One Dark Pro Monokai Darker, macOS Classic Light, macOS Classic Dark)",
+    );
 
     // Check what's in the registry
     console.log("initializeThemeSystem: Themes in registry:", themeRegistry.getAllThemes());

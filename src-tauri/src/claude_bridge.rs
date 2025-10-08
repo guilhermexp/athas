@@ -64,11 +64,19 @@ impl ClaudeCodeBridge {
       let message_handler = tokio::spawn(async move {
          let mut rx = rx;
          while let Some(message) = rx.recv().await {
+            log::info!(
+               "📨 Received message from interceptor, type: {}",
+               message.type_name()
+            );
+
             // Forward to WebSocket clients
             let _ = broadcast_tx.send(message.clone());
 
             // Emit to frontend
-            let _ = app_handle.emit("claude-message", message);
+            match app_handle.emit("claude-message", &message) {
+               Ok(_) => log::info!("✅ Successfully emitted claude-message event to frontend"),
+               Err(e) => log::error!("❌ Failed to emit claude-message event: {}", e),
+            }
          }
       });
 

@@ -73,7 +73,7 @@ const tabs: TabItem[] = [
 
 export const SettingsVerticalTabs = ({ activeTab, onTabChange }: SettingsVerticalTabsProps) => {
   return (
-    <div className="p-1.5">
+    <nav className="space-y-1 p-2">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -83,17 +83,23 @@ export const SettingsVerticalTabs = ({ activeTab, onTabChange }: SettingsVertica
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              "flex w-full items-center gap-2 rounded border px-2 py-1.5 text-left text-xs transition-colors",
+              "group flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
               isActive
-                ? "border-blue-500/30 bg-blue-500/20 text-blue-400"
-                : "border-transparent text-text-lighter hover:bg-hover hover:text-text",
+                ? "bg-hover/70 text-text ring-1 ring-border"
+                : "text-text-lighter hover:bg-hover/50 hover:text-text",
             )}
           >
-            <Icon size={14} />
-            <span>{tab.label}</span>
+            <span
+              className={cn(
+                "h-4 w-0.5 rounded-sm",
+                isActive ? "bg-blue-400" : "bg-transparent group-hover:bg-border",
+              )}
+            />
+            <Icon size={14} className={cn(isActive ? "text-text" : "text-text-lighter")} />
+            <span className="truncate">{tab.label}</span>
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 };

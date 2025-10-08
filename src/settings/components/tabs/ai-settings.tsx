@@ -6,7 +6,7 @@ import Dropdown from "@/components/ui/dropdown";
 import Section, { SettingRow } from "@/components/ui/section";
 import Switch from "@/components/ui/switch";
 import { useSettingsStore } from "@/settings/store";
-import { useAIChatStore } from "@/stores/ai-chat/store";
+import { useApiKeysStore } from "@/stores/api-keys-store";
 import {
   getAvailableProviders,
   getModelById,
@@ -41,10 +41,8 @@ export const AISettings = () => {
     providerId: null,
   });
 
-  // API Key functions from AI chat store
-  const saveApiKey = useAIChatStore((state) => state.saveApiKey);
-  const removeApiKey = useAIChatStore((state) => state.removeApiKey);
-  const hasProviderApiKey = useAIChatStore((state) => state.hasProviderApiKey);
+  // API Key functions from API keys store
+  const { saveApiKey, removeApiKey, hasProviderApiKey } = useApiKeysStore();
 
   const currentProvider = getAvailableProviders().find((p) => p.id === settings.aiProviderId);
   const currentModel = getModelById(settings.aiProviderId, settings.aiModelId);

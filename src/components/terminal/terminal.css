@@ -1,13 +1,37 @@
-/* Terminal-specific styles to contain xterm.js */
+/* Terminal-specific styles to contain xterm.js - Optimized */
 .xterm-container {
   position: relative;
   overflow: hidden;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-buffer) !important;
+  line-height: var(--line-height-buffer) !important;
+  padding: 8px;
+  background: var(--color-primary-bg);
+  /* Prevent GPU compositing issues */
+  will-change: auto;
+  transform: translateZ(0);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Ensure xterm doesn't overflow its container */
 .xterm-container .xterm {
-  height: 100%;
-  width: 100%;
+  flex: 1;
+  min-height: 0;
+  width: 100% !important;
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-buffer) !important;
+  line-height: var(--line-height-buffer) !important;
+}
+
+/* Xterm text layer */
+.xterm-container .xterm .xterm-rows {
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-buffer) !important;
+  line-height: var(--line-height-buffer) !important;
+  letter-spacing: 0 !important;
 }
 
 /* Override any xterm styles that might cause full-screen issues */
@@ -19,37 +43,53 @@
 
 /* Style the terminal viewport for better appearance */
 .xterm-container .xterm-viewport {
-  /* Keep default background */
+  background: transparent !important;
+  overflow-y: auto;
 }
 
-/* Improve scrollbar styling */
+/* Terminal helper layer */
+.xterm-container .xterm-helpers {
+  z-index: 10;
+}
+
+/* Ensure consistent rendering across all layers */
+.xterm-container .xterm-char-measure-element {
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size-buffer) !important;
+  line-height: var(--line-height-buffer) !important;
+}
+
+/* Improve scrollbar styling - Zed style */
 .xterm-container .xterm-viewport::-webkit-scrollbar {
-  width: 12px;
+  width: 8px;
   background-color: transparent;
 }
 
 .xterm-container .xterm-viewport::-webkit-scrollbar-track {
-  border-left: 1px solid var(--color-border);
+  background-color: transparent;
 }
 
 .xterm-container .xterm-viewport::-webkit-scrollbar-thumb {
   background-color: var(--color-border);
-  border-radius: 6px;
-  border: 2px solid var(--color-hover);
+  border-radius: 4px;
 }
 
 .xterm-container .xterm-viewport::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-text-lighter);
 }
 
-/* Terminal cursor improvements */
+/* Terminal cursor - Zed style */
 .xterm-container .xterm-cursor-layer {
-  /* Cursor will use theme colors */
+  z-index: 20;
 }
 
-/* Better selection styling */
+.xterm-container .xterm-cursor {
+  mix-blend-mode: difference;
+}
+
+/* Selection styling - Zed style */
 .xterm-container .xterm-selection-layer {
-  /* Selection will use theme colors */
+  z-index: 15;
 }
 
 /* Ensure terminal search stays on top */
@@ -57,17 +97,46 @@
   z-index: 100;
 }
 
-/* xterm.js WebLinksAddon creates a canvas layer for links */
+/* xterm.js WebLinksAddon - Zed style links */
 .xterm .xterm-link-layer {
   z-index: 10;
 }
 
-/* When hovering over a link, xterm applies this class */
 .xterm-screen .xterm-decoration-overview-ruler {
   display: none;
 }
 
-/* Override xterm cursor when hovering links */
 .xterm.xterm-cursor-pointer {
   cursor: pointer !important;
+}
+
+/* Remove any default padding/margins from xterm internals */
+.xterm-container .xterm-rows {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ensure text renders crisply with performance optimizations */
+.xterm-container canvas {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Optimize for smooth scrolling */
+  image-rendering: optimizeSpeed;
+  /* Prevent subpixel rendering issues */
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Fix any potential overflow issues */
+.xterm-container .xterm-helper-textarea {
+  position: absolute;
+  opacity: 0;
+  left: -9999em;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: -10;
+  white-space: nowrap;
+  overflow: hidden;
+  resize: none;
 }

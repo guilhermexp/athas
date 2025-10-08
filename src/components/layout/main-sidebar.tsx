@@ -155,6 +155,11 @@ export const MainSidebar = memo(() => {
         coreFeatures={settings.coreFeatures}
         onViewChange={setActiveView}
         onOpenExtensions={onOpenExtensions}
+        onToggleAgentPanel={() => {
+          const { updateSetting } = useSettingsStore.getState();
+          updateSetting("isAgentPanelVisible", !settings.isAgentPanelVisible);
+        }}
+        isAgentPanelVisible={settings.isAgentPanelVisible}
       />
 
       {/* Remote Window Header */}

@@ -1,5 +1,6 @@
 import {
   Check,
+  CheckSquare,
   Edit3,
   FileIcon,
   FilePlus,
@@ -8,6 +9,7 @@ import {
   Minus,
   Plus,
   RotateCcw,
+  Square,
   Trash2,
 } from "lucide-react";
 import type React from "react";
@@ -158,14 +160,36 @@ const GitStatusPanel = ({
     setContextMenu(null);
   });
 
+  // Calculate total changes count (Zed-style)
+  const totalChanges = files.length;
+
   return (
     <div className="select-none space-y-0">
-      {/* Staged Changes */}
+      {/* Total Changes Header - Zed Style */}
+      {totalChanges > 0 && (
+        <div className="flex items-center justify-between border-border border-b bg-secondary-bg px-3 py-2">
+          <span className="font-medium text-text text-xs">{totalChanges} Changes</span>
+          <div className="flex items-center gap-2">
+            {unstagedFiles.length > 0 && (
+              <button
+                onClick={handleStageAll}
+                disabled={isLoading}
+                className="rounded px-2 py-0.5 text-text-lighter text-xs transition-colors hover:bg-hover hover:text-text disabled:opacity-50"
+                title="Stage All"
+              >
+                Stage All
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tracked (Staged) Changes - Zed naming */}
       <div className="border-border border-b">
         <div className="flex items-center gap-2 bg-secondary-bg px-3 py-1 text-text-lighter">
           <span className="flex items-center gap-1">
             <Check size={10} />
-            <span className="cursor-default">staged ({stagedFiles.length})</span>
+            <span className="cursor-default text-xs">Tracked ({stagedFiles.length})</span>
           </span>
           <div className="flex-1" />
           {stagedFiles.length > 0 && (
@@ -181,15 +205,15 @@ const GitStatusPanel = ({
         </div>
 
         {stagedFiles.length === 0 ? (
-          <div className="cursor-default bg-primary-bg px-3 py-2 text-[10px] text-text-lighter italic">
-            No staged changes
+          <div className="cursor-default bg-primary-bg px-3 py-2 text-text-lighter text-xs italic">
+            No tracked changes
           </div>
         ) : (
           <div className="bg-primary-bg">
             {stagedFiles.map((file, index) => (
               <div
                 key={`staged-${file.path}-${index}`}
-                className="group flex cursor-pointer items-center gap-2 px-3 py-1 hover:bg-hover"
+                className="group flex cursor-pointer items-center gap-2 px-3 py-1.5 hover:bg-hover"
                 onClick={(e) => {
                   if (e.button === 0) {
                     onFileSelect?.(file.path, true);
@@ -197,11 +221,27 @@ const GitStatusPanel = ({
                 }}
                 onContextMenu={(e) => handleContextMenu(e, file.path, true)}
               >
-                <span className="w-3 text-center font-medium text-[10px] text-text-lighter">
+                {/* Stage toggle checkbox (checked for staged) */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUnstageFile(file.path);
+                  }}
+                  disabled={isLoading}
+                  className="flex h-3 w-3 items-center justify-center text-text-lighter transition-colors hover:text-text disabled:opacity-50"
+                  title="Unstage"
+                >
+                  <CheckSquare size={10} />
+                </button>
+                <span className="w-3 text-center font-medium font-mono text-text-lighter text-xs">
                   {getStatusText(file)}
                 </span>
                 {getFileIcon(file)}
-                <span className="flex-1 truncate text-[10px] text-text" title={file.path}>
+                <span
+                  className="flex-1 truncate text-text text-xs"
+                  title={file.path}
+                  style={{ textDecoration: file.status === "deleted" ? "line-through" : "none" }}
+                >
                   {file.path.split("/").pop()}
                 </span>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100">
@@ -260,11 +300,27 @@ const GitStatusPanel = ({
                 }}
                 onContextMenu={(e) => handleContextMenu(e, file.path, false)}
               >
-                <span className="w-3 text-center font-medium text-[10px] text-text-lighter">
+                {/* Stage toggle checkbox (unchecked for unstaged) */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStageFile(file.path);
+                  }}
+                  disabled={isLoading}
+                  className="flex h-3 w-3 items-center justify-center text-text-lighter transition-colors hover:text-text disabled:opacity-50"
+                  title="Stage"
+                >
+                  <Square size={10} />
+                </button>
+                <span className="w-3 text-center font-medium font-mono text-text-lighter text-xs">
                   {getStatusText(file)}
                 </span>
                 {getFileIcon(file)}
-                <span className="flex-1 truncate text-[10px] text-text" title={file.path}>
+                <span
+                  className="flex-1 truncate text-text text-xs"
+                  title={file.path}
+                  style={{ textDecoration: file.status === "deleted" ? "line-through" : "none" }}
+                >
                   {file.path.split("/").pop()}
                 </span>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100">

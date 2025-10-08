@@ -3,6 +3,36 @@ use nucleo_matcher::{
    pattern::{Atom, AtomKind, CaseMatching, Normalization},
 };
 use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+use walkdir::{DirEntry, WalkDir};
+
+const MAX_INDEXED_ENTRIES: usize = 10_000;
+
+fn should_skip_directory(entry: &DirEntry) -> bool {
+   if entry.depth() == 0 {
+      return false;
+   }
+
+   if !entry.file_type().is_dir() {
+      return false;
+   }
+
+   match entry.file_name().to_str() {
+      Some(name) => matches!(
+         name,
+         ".git" | "node_modules" | "dist" | "build" | "target" | ".next" | "out"
+      ),
+      None => false,
+   }
+}
+
+fn relative_path(path: &Path, base: &Path) -> String {
+   path
+      .strip_prefix(base)
+      .unwrap_or(path)
+      .to_string_lossy()
+      .replace('\\', "/")
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FuzzyMatchItem {
@@ -74,6 +104,81 @@ pub fn fuzzy_match(request: FuzzyMatchRequest) -> Vec<FuzzyMatchItem> {
    matches.sort_by(|a, b| b.score.cmp(&a.score));
 
    matches
+}
+
+#[tauri::command]
+pub fn fuzzy_find_files(
+   root_path: String,
+   query: String,
+   max_results: Option<usize>,
+) -> Result<Vec<String>, String> {
+   let root = PathBuf::from(&root_path);
+   if !root.exists() {
+      return Err("Root path does not exist".to_string());
+   }
+
+   let limit = max_results.unwrap_or(20).clamp(1, 200);
+   let mut entries: Vec<String> = Vec::new();
+
+   if root.is_file() {
+      let base = root.parent().unwrap_or(Path::new(""));
+      entries.push(relative_path(&root, base));
+   } else {
+      let base = root.clone();
+      for entry in WalkDir::new(&root)
+         .follow_links(false)
+         .into_iter()
+         .filter_entry(|e| !should_skip_directory(e))
+         .filter_map(|e| e.ok())
+      {
+         if entries.len() >= MAX_INDEXED_ENTRIES {
+            break;
+         }
+
+         let rel = relative_path(entry.path(), &base);
+         if rel.is_empty() {
+            continue;
+         }
+
+         entries.push(rel);
+      }
+   }
+
+   if query.trim().is_empty() {
+      entries.sort();
+      entries.truncate(limit);
+      return Ok(entries);
+   }
+
+   let atom = Atom::new(
+      &query,
+      CaseMatching::Smart,
+      Normalization::Smart,
+      AtomKind::Fuzzy,
+      false,
+   );
+
+   let mut matcher = Matcher::new(Config::DEFAULT);
+   let mut scored: Vec<(i64, String)> = Vec::new();
+
+   for item in entries {
+      let mut indices = Vec::new();
+      let mut buf = Vec::new();
+      let utf32 = Utf32Str::new(&item, &mut buf);
+
+      if let Some(score) = atom.indices(utf32, &mut matcher, &mut indices) {
+         scored.push((score as i64, item));
+      }
+   }
+
+   if scored.is_empty() {
+      return Ok(Vec::new());
+   }
+
+   scored.sort_by(|a, b| b.0.cmp(&a.0));
+   scored.truncate(limit);
+
+   Ok(scored.into_iter().map(|(_, item)| item).collect())
 }
 
 #[derive(Debug, Serialize, Deserialize)]

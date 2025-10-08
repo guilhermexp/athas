@@ -1,5 +1,6 @@
 use crate::lsp::{LspManager, types::LspResult};
 use lsp_types::{CompletionItem, Hover};
+use serde::Serialize;
 use std::path::PathBuf;
 use tauri::State;
 
@@ -108,4 +109,25 @@ pub fn lsp_is_language_supported(file_path: String) -> bool {
       extension,
       "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs" | "json"
    )
+}
+
+#[derive(Debug, Serialize)]
+pub struct DiagnosticItem {
+   pub file: String,
+   pub line: u32,
+   pub column: u32,
+   pub severity: String,
+   pub message: String,
+   pub source: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_diagnostics(
+   _lsp_manager: State<'_, LspManager>,
+   _path: Option<String>,
+   _severity: Option<String>,
+) -> Result<Vec<DiagnosticItem>, String> {
+   // LSP diagnostics caching is not yet implemented.
+   // Return an empty list so the frontend can handle the message gracefully.
+   Ok(Vec::new())
 }

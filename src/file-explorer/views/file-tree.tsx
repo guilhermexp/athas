@@ -293,26 +293,45 @@ const FileTree = ({
     [gitStatus, rootFolderPath],
   );
 
+  /**
+   * Get Git-aware label color for file/folder
+   * Replicated from Zed's entry_git_aware_label_color (items.rs:1841-1854)
+   *
+   * Priority:
+   * 1. Ignored → text-text-lighter (grayed out)
+   * 2. Conflict → text-red-500 (red)
+   * 3. Modified → text-[#d69e2e] (yellow/amber)
+   * 4. Created/Untracked → text-[#28a745] (green)
+   * 5. Default → text-text
+   */
   const getGitStatusColor = useCallback(
     (file: FileEntry): string => {
+      // Check if file is ignored (git ignored)
+      if (file.ignored) {
+        return "text-text-lighter";
+      }
+
       // First check if this file itself has git status
       const gitFile = getGitFileStatus(file.path);
       if (gitFile) {
-        switch (gitFile.status) {
-          case "modified":
-            return gitFile.staged
-              ? "text-[var(--color-git-modified-staged)]"
-              : "text-[var(--color-git-modified)]";
-          case "added":
-            return "text-[var(--color-git-added)]";
-          case "deleted":
-            return "text-[var(--color-git-deleted)]";
-          case "untracked":
-            return "text-[var(--color-git-untracked)]";
-          case "renamed":
-            return "text-[var(--color-git-renamed)]";
-          default:
-            return "";
+        // Check for conflict first (highest priority)
+        if (gitFile.status === "conflict") {
+          return "text-red-500";
+        }
+
+        // Modified status
+        if (gitFile.status === "modified" || gitFile.status === "renamed") {
+          return "text-[#d69e2e]";
+        }
+
+        // Created/Added/Untracked status
+        if (gitFile.status === "added" || gitFile.status === "untracked") {
+          return "text-[#28a745]";
+        }
+
+        // Deleted gets red color
+        if (gitFile.status === "deleted") {
+          return "text-red-500";
         }
       }
 
@@ -320,26 +339,24 @@ const FileTree = ({
       if (file.isDir) {
         const dirChange = hasGitChangesInDirectory(file.path);
         if (dirChange) {
-          switch (dirChange.status) {
-            case "modified":
-              return dirChange.staged
-                ? "text-[var(--color-git-modified-staged)]"
-                : "text-[var(--color-git-modified)]";
-            case "added":
-              return "text-[var(--color-git-added)]";
-            case "deleted":
-              return "text-[var(--color-git-deleted)]";
-            case "untracked":
-              return "text-[var(--color-git-untracked)]";
-            case "renamed":
-              return "text-[var(--color-git-renamed)]";
-            default:
-              return "";
+          // Same logic as above for directory changes
+          if (dirChange.status === "conflict") {
+            return "text-red-500";
+          }
+          if (dirChange.status === "modified" || dirChange.status === "renamed") {
+            return "text-[#d69e2e]";
+          }
+          if (dirChange.status === "added" || dirChange.status === "untracked") {
+            return "text-[#28a745]";
+          }
+          if (dirChange.status === "deleted") {
+            return "text-red-500";
           }
         }
       }
 
-      return "";
+      // Default color (no changes)
+      return "text-text";
     },
     [getGitFileStatus, hasGitChangesInDirectory],
   );
@@ -598,8 +615,8 @@ const FileTree = ({
       >
         {file.isEditing || file.isRenaming ? (
           <div
-            className={cn("flex min-h-[22px] w-full items-center", "gap-1.5 px-1.5 py-1")}
-            style={{ paddingLeft: `${14 + depth * 20}px`, paddingRight: "8px" }}
+            className={cn("flex min-h-[24px] w-full items-center", "gap-2 px-2 py-1")}
+            style={{ paddingLeft: `${8 + depth * 16}px`, paddingRight: "8px" }}
           >
             <FileIcon
               fileName={file.isDir ? "folder" : "file"}
@@ -636,7 +653,7 @@ const FileTree = ({
               onBlur={() => handleBlur(file)}
               className={cn(
                 "flex-1 border-text border-b border-none bg-transparent",
-                "font-mono text-text text-xs outline-none focus:border-text-lighter",
+                "text-[13px] text-text outline-none focus:border-text-lighter",
               )}
               placeholder={file.isDir ? "folder name" : "file name"}
             />
@@ -646,6 +663,17 @@ const FileTree = ({
             type="button"
             data-file-path={file.path}
             data-is-dir={file.isDir}
+            draggable={!file.isDir}
+            onDragStart={(e) => {
+              // Native drag & drop for dragging files to editor
+              if (!file.isDir) {
+                try {
+                  const payload = { type: "file", path: file.path, name: file.name };
+                  e.dataTransfer.setData("application/file-path", JSON.stringify(payload));
+                  e.dataTransfer.effectAllowed = "copy";
+                } catch {}
+              }
+            }}
             onMouseDown={(e) => {
               // Track initial mouse position for drag threshold
               if (e.button === 0) {
@@ -681,10 +709,10 @@ const FileTree = ({
             onClick={(e) => handleFileClick(e, file.path, file.isDir)}
             onContextMenu={(e) => handleContextMenu(e, file.path, file.isDir)}
             className={cn(
-              "flex min-h-[22px] w-full min-w-max cursor-pointer",
-              "select-none items-center gap-1.5",
+              "flex min-h-[24px] w-full min-w-max cursor-pointer",
+              "select-none items-center gap-2",
               "whitespace-nowrap border-none bg-transparent",
-              "px-1.5 py-1 text-left font-mono text-text text-xs",
+              "px-2 py-1 text-left text-[13px]",
               "shadow-none outline-none transition-colors duration-150",
               "hover:bg-hover focus:outline-none",
               activePath === file.path && "bg-selected",
@@ -699,7 +727,7 @@ const FileTree = ({
             data-depth={depth}
             style={
               {
-                paddingLeft: `${14 + depth * 20}px`,
+                paddingLeft: `${8 + depth * 16}px`,
                 paddingRight: "8px",
                 "--depth": depth,
               } as React.CSSProperties & { "--depth": number }
@@ -873,7 +901,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <FilePlus size={12} />
@@ -892,7 +920,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <FolderPlus size={12} />
@@ -911,7 +939,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <Upload size={12} />
@@ -930,7 +958,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <RefreshCw size={12} />
@@ -950,7 +978,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <Terminal size={12} />
@@ -965,7 +993,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <Search size={12} />
@@ -1005,7 +1033,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <FolderOpen size={12} />
@@ -1027,7 +1055,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <Copy size={12} />
@@ -1046,7 +1074,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <FileText size={12} />
@@ -1077,7 +1105,7 @@ const FileTree = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5",
-                    "text-left font-mono text-text text-xs hover:bg-hover",
+                    "text-left text-[13px] text-text hover:bg-hover",
                   )}
                 >
                   <Info size={12} />

@@ -1,12 +1,15 @@
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { BookOpen } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useFileSystemStore } from "@/file-system/controllers/store";
 import { useSettingsStore } from "@/settings/store";
 import { useBufferStore } from "@/stores/buffer-store";
 import { useEditorCursorStore } from "@/stores/editor-cursor-store";
+import { useEditorSettingsStore } from "@/stores/editor-settings-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import type { Buffer } from "@/types/buffer";
+import { cn } from "@/utils/cn";
 import TabBarItem from "./tab-bar-item";
 import TabContextMenu from "./tab-context-menu";
 import TabDragPreview from "./tab-drag-preview";
@@ -37,9 +40,12 @@ const TabBar = ({ paneId }: TabBarProps) => {
     handleCloseAllTabs,
     handleCloseTabsToRight,
     reorderBuffers,
+    openBuffer,
   } = useBufferStore.use.actions();
   const { settings } = useSettingsStore();
   const { updateActivePath } = useSidebarStore();
+  const cleanMarkdownPreview = useEditorSettingsStore.use.cleanMarkdownPreview();
+  const { setCleanMarkdownPreview } = useEditorSettingsStore.use.actions();
 
   // Drag state
   const [dragState, setDragState] = useState<{
@@ -406,16 +412,67 @@ const TabBar = ({ paneId }: TabBarProps) => {
 
   const MemoizedTabContextMenu = useMemo(() => TabContextMenu, []);
 
+  const { isDragging, draggedIndex, dropTargetIndex, currentPosition } = dragState;
+
+  const handleExternalDragOver = useCallback((e: React.DragEvent) => {
+    if (
+      e.dataTransfer.types.includes("application/terminal-tab") ||
+      e.dataTransfer.types.includes("application/file-path")
+    ) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
+
+  const handleExternalDrop = useCallback(
+    (e: React.DragEvent) => {
+      // Handle terminal tab drops
+      const terminalData = e.dataTransfer.getData("application/terminal-tab");
+      if (terminalData) {
+        e.preventDefault();
+        try {
+          const payload = JSON.parse(terminalData) as { id: string; name: string };
+          const { openTerminalInEditor } =
+            require("@/utils/terminal-editor-integration") as typeof import("@/utils/terminal-editor-integration");
+          openTerminalInEditor(payload.id);
+          return;
+        } catch {}
+      }
+
+      // Handle file drops
+      const fileData = e.dataTransfer.getData("application/file-path");
+      if (fileData) {
+        e.preventDefault();
+        try {
+          const payload = JSON.parse(fileData) as { type: string; path: string; name: string };
+          openBuffer(payload.path, payload.name, "", false, false, false, false);
+        } catch {}
+      }
+    },
+    [openBuffer],
+  );
+
   if (buffers.length === 0) {
     return null;
   }
 
-  const { isDragging, draggedIndex, dropTargetIndex, currentPosition } = dragState;
+  const activeBuffer = buffers.find((b) => b.id === activeBufferId);
+  const isMarkdownFile =
+    activeBuffer?.path.endsWith(".md") || activeBuffer?.path.endsWith(".markdown");
 
   return (
     <>
-      <div className="relative">
-        <div ref={tabBarRef} className="scrollbar-hidden flex overflow-x-auto bg-secondary-bg">
+      <div className="relative border-border/50 border-b">
+        <div
+          ref={tabBarRef}
+          className="scrollbar-hidden flex overflow-x-auto"
+          style={{
+            backgroundColor: "var(--tw-secondary-bg)",
+            height: "36px",
+          }}
+          onDragOver={handleExternalDragOver}
+          onDrop={handleExternalDrop}
+        >
           {sortedBuffers.map((buffer, index) => {
             const isActive = buffer.id === activeBufferId;
             const isDraggedTab = isDragging && draggedIndex === index;
@@ -449,6 +506,24 @@ const TabBar = ({ paneId }: TabBarProps) => {
             <div className="relative">
               <div className="drop-indicator absolute top-1 bottom-1 left-0 z-20 w-0.5 bg-accent" />
             </div>
+          )}
+
+          {/* Markdown Preview Toggle Button */}
+          {isMarkdownFile && (
+            <button
+              type="button"
+              onClick={() => setCleanMarkdownPreview(!cleanMarkdownPreview)}
+              className={cn(
+                "mr-2 ml-auto flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-all",
+                cleanMarkdownPreview
+                  ? "bg-accent/20 text-accent hover:bg-accent/30"
+                  : "text-text-lighter/70 hover:bg-primary-bg/50 hover:text-text",
+              )}
+              title={cleanMarkdownPreview ? "Hide markdown preview" : "Show markdown preview"}
+            >
+              <BookOpen size={14} />
+              <span className="hidden sm:inline">Preview</span>
+            </button>
           )}
         </div>
 

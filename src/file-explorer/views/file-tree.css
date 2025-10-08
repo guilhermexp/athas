@@ -26,10 +26,13 @@
   pointer-events: auto !important;
 }
 
-/* Apply app-wide font family to file tree */
+/* Apply Zed-style font family - sans-serif instead of monospace */
 .file-tree-container,
 .file-tree-container * {
-  font-family: var(--app-font-family, monospace) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.01em !important;
 }
 
 /* Sticky parent folders - simple and clean */
@@ -84,78 +87,41 @@
   background-color: var(--color-selected) !important;
 }
 
-/* Hide vertical lines on sticky folders specifically */
-.file-tree-item-dir.file-tree-item[data-depth]::after {
-  display: none !important;
-}
-
-/* Vertical nesting lines - show all parent levels */
+/* Zed-inspired minimal file tree - no vertical lines */
 .file-tree-item {
   position: relative;
 }
 
-/* Vertical lines aligned with icons */
-.file-tree-item[data-depth="1"]::after {
-  content: "";
-  position: absolute;
-  left: 20px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-  opacity: 0.8;
-  pointer-events: none;
-  z-index: 100;
+/* Compact row height matching Zed */
+.file-tree-container button {
+  min-height: 24px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
 }
 
-.file-tree-item[data-depth="2"]::after {
-  content: "";
-  position: absolute;
-  left: 40px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
+/* Icon spacing matching Zed */
+.file-tree-container button svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
   opacity: 0.8;
-  pointer-events: none;
-  z-index: 100;
 }
 
-.file-tree-item[data-depth="3"]::after {
-  content: "";
-  position: absolute;
-  left: 60px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-  opacity: 0.8;
-  pointer-events: none;
-  z-index: 100;
+/* Text color and opacity matching Zed's muted appearance */
+.file-tree-container button span {
+  color: var(--tw-text-light, #b3b3b3);
+  opacity: 0.95;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-.file-tree-item[data-depth="4"]::after {
-  content: "";
-  position: absolute;
-  left: 80px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-  opacity: 0.8;
-  pointer-events: none;
-  z-index: 100;
+/* Active/selected state */
+.file-tree-container button.bg-selected span {
+  color: var(--tw-text, #ffffff);
+  opacity: 1;
 }
 
-.file-tree-item[data-depth="5"]::after {
-  content: "";
-  position: absolute;
-  left: 100px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-  opacity: 0.8;
-  pointer-events: none;
-  z-index: 100;
+/* Folder text slightly bolder */
+.file-tree-container .file-tree-item-dir span {
+  font-weight: 500;
 }
